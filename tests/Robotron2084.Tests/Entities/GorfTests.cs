@@ -204,7 +204,7 @@ public sealed class GorfTests
     [InlineData(17)]
     [InlineData(22)]
     [InlineData(1)]
-    public void GivenANumberToDrop_ItDropsExactlyThatManyInAll_SharedOverItsStops(int gruntDropCount)
+    public void GivenANumberToDrop_ItDropsExactlyThatManyInAll_Gradually(int gruntDropCount)
     {
         // The wave itself has no grunts, and a bound that would drop only a few by chance: the exact number wins.
         var (playField, _) = RunAGorfAcrossDroppingExactly(new WaveParameters(1, 0, GorfGruntDropCount: gruntDropCount), 4,
@@ -214,12 +214,60 @@ public sealed class GorfTests
     }
 
     [Fact]
-    public void AnyLeftOverGoToTheFirstStops()
+    public void GivenANumberToDrop_ItDropsThemGradually_OneAtATime_SpreadAcrossItsWayAcross()
     {
-        // 17 over three stops: 6, 6 and 5.
-        var (playField, _) = RunAGorfAcrossDroppingExactly(new WaveParameters(1, 0, GorfGruntDropCount: 17), 4, 17, 0, 0, 0);
+        var playField = CreateFieldInPlay(new WaveParameters(1, 0, GorfGruntDropCount: 15));
+        var gorf = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 4, 15);
+        playField.FieldEntities.Add(gorf);
 
-        Assert.Equal(17, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
+        var previous = 0;
+        var dropTicks = new List<int>();
+        for (var tick = 0; tick < 5000 && gorf.IsAlive(); tick++)
+        {
+            playField.Update(OneTickGameTime);
+            var alive = playField.FieldEntities.Grunts.Count(entity => !entity.IsDead());
+            Assert.True(alive - previous <= 1, "grunts should come one at a time");
+            if (alive > previous) dropTicks.Add(tick);
+
+            previous = alive;
+        }
+
+        Assert.Equal(15, previous);
+        Assert.True(dropTicks[^1] - dropTicks[0] > 100, "the drops should be spread across Gorf's way across");
+    }
+
+    [Fact]
+    public void AGorfThatIsShotBeforeItHasDroppedThemAll_DropsTheRestWhereItDies()
+    {
+        var playField = CreateFieldInPlay(new WaveParameters(1, 0, GorfGruntDropCount: 15));
+        var gorf = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 4, 15);
+        playField.FieldEntities.Add(gorf);
+        for (var tick = 0; tick < 5000 && playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()) < 3; tick++)
+            playField.Update(OneTickGameTime);
+        Assert.True(gorf.IsAlive());
+
+        gorf.Kill();
+
+        Assert.Equal(15, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
+    }
+
+    [Fact]
+    public void TheWaveIsNotWonUntilAllTheGruntsItIsOwedAreDead()
+    {
+        var playField = CreateFieldInPlay(new WaveParameters(1, 0, GorfGruntDropCount: 15));
+        var gorf = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 4, 15);
+        playField.FieldEntities.Add(gorf);
+        for (var tick = 0; tick < 5000 && gorf.IsAlive(); tick++)
+        {
+            playField.Update(OneTickGameTime);
+            Assert.False(playField.IsWaveCleared()); // Gorf is still crossing, or the grunts are still alive
+        }
+
+        Assert.False(playField.IsWaveCleared()); // Gorf has gone, but the grunts it dropped are alive
+        foreach (var grunt in playField.FieldEntities.Grunts.ToList()) grunt.Kill();
+        playField.Update(OneTickGameTime);
+
+        Assert.True(playField.IsWaveCleared());
     }
 
     [Fact]
