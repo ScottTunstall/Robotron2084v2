@@ -23,6 +23,8 @@ namespace Robotron2084.States;
 ///     the grunts, the hulk, the spheroid/tank/enforcer scene, the brain's
 ///     reprogramming and the score electrodes, all on the title's solid $CC wall with the
 ///     player's score and lives in the HUD.
+///     It plays the port's copy of HISTO (<see cref="AttractStoryline" />), in which each page waits until the page
+///     before it is done; in the arcade's own timing that changes nothing (notes §147).
 ///     Draw order follows the screen's own layering: wall, HUD, the title string (the
 ///     ROM prints it in SPGSUB and the page script never clears above row 48), the
 ///     character objects, then the story text and the score-row name popups on top.
@@ -49,7 +51,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         _playfieldWall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColourCycle());
         _gameSession = GameSession.CreateNewGame(_humanPlayerInputSource, 1);
-        _attractMovie = new AttractMovie(AttractMovieData.Histo, gameServices.Random);
+        _attractMovie = new AttractMovie(AttractStoryline.Create(AttractMovieData.Histo), gameServices.Random);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
