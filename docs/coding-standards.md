@@ -645,6 +645,36 @@ labels found in each so far (verified 2026-11-07):
 | `RRS22.ASM` | The object mover `OPB80` and `OPRC80` |
 | `RRB10.ASM`, `RRH11.ASM`, `RRG23.ASM` | The brain, the hulk and the grunt/wave code (see the entity docs) |
 
+**Both sources are always cited (CMT-11).** Every `Original source:` bullet has a `Disassembly:` bullet next to it, and
+the disassembly bullet is never left as "not separately labelled" without searching `asm/robomame.asm` by address as
+well as by name: the disassembly names its routines differently from the original (for example the original's
+`SPWAKE` is the unlabelled loop at `$79DD`, and its `PR57V` is `BLIT_LARGE_CHARACTER` at `$6023`). The attract movie in
+the disassembly (verified 2026-11-07):
+
+| Disassembly | Address | Original |
+|---|---|---|
+| `STORYLINE_SCRIPT` | `$7FA3` | `RRSCRIPT.ASM` `HISTO` |
+| unlabelled page-script loop | `$79DD` (started at `$79D4`), jump table `$7A08` | `SPWAKE`, `SCMTAB` |
+| `CLEAR_AREA_READY_FOR_TEXT_PRINTING` | `$7A9C` | `CLRMP` |
+| `SET_TEXT_COLOUR_FROM_SCRIPT` | `$7A5A` | `COLORP` (`TEXCOL`) |
+| `PRINT_CHARACTER_NAME_FROM_SCRIPT` | `$7A60` | `MESSP` |
+| `SET_X_COORD_TO_20_AND_ADD_11_PIXELS_TO_Y_COORD` | `$7AB6` | `NEWLNP` |
+| `CREATE_14_GRUNTS_FOR_DEMO` | `$7A29` | `GRNTME`, `GRPROC` |
+| `STORYLINE_CONCLUDES` | `$7A84` | `ENDP` |
+| `INTRODUCE_STORY_CHARACTERS` | `$7AC1` | `SCRPP` |
+| `INTRODUCE_GAME_CHARACTER_FROM_SCRIPT` | `$7B0F` | `OSTART` |
+| `INVOKE_ACTION_FROM_CHARACTER_INTRO_SCRIPT`, opcode table | `$7B39`, `$7B58` | the object-script reader, `SCTABL` |
+| opcode routines | 0 `$8DA0`, SETOB `$7D31`, SETIM `$7D4B`, walks `$7D19` to `$7D2B`, SETPOS `$7CC1`, SETXV `$7CB2`, SETYV `$7CB9`, CYCLE `$7C8F`, REST `$7C87`, DIE `KILL_OBJECT` `$7C81`, EXP `$7C6F`, JUMP `$7C68`, HIB `$7C54`, REBORN `$7C5C`, FORK `$7C4E`, LFIRE `$7C1F`, RFIRE `$7C26`, LOOPER `$7C37`, GHOST `EXECUTE_CHARACTER_STORYLINE` `$7C05`, SETRP `$7CCB`, MONO `$7B90`, RPROG `$7CD9` | the opcodes `SETOB` to `PDEAD` |
+| unlabelled brain walkers | `$7D76` to `$7DDC` | `BRL` to `BRWALK` |
+| unlabelled step routine | `$7DDF` | `DYDX` |
+| unlabelled animation frame table | `$7DEF` | `ANATAB` |
+| unlabelled family and hulk walker | `$7DF2` to `$7E40` | `ANAL` to `ANASUB` |
+| walk tables | family `$03CF`, hulk `$01CC` | `HUMANA`, `HLKANA` |
+| unlabelled descriptors | from `$7E41` | `MOMMY`, `BRAIN` and the rest |
+| `MAKE_ENEMY_EXPLODE` | `$5C1F` | the explosion `EXP` calls |
+| message pointer table | `$6377` | the message numbers in `RRFRED.ASM`, text in `RRET.ASM` |
+| `BLIT_LARGE_CHARACTER` | `$6023` | `PR57V` (`RRF.ASM`) |
+
 Add a row or a label here the first time you verify a new one, so that no one has to ask again.
 
 **CMT-12. An interface is a contract: its docs say what, never how.** A member's `<summary>` on an interface
