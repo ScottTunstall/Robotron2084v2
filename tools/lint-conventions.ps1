@@ -11,6 +11,8 @@
     NUM-2  the arcade clock written as a literal: a timer that adds 5 per port tick or compares
            against 6 for a ROM frame, or a name that calls the clock unit a "fifth" or a "sixth"
            (Core/ArcadeClock is the one definition).
+    NUM-8  trigonometry: Sin, Cos, Tan or their inverses, which the author has banned from the code
+           (movement is worked out in integers).
 
 .EXAMPLE
     ./tools/lint-conventions.ps1
@@ -50,6 +52,17 @@ foreach ($file in $sourceFiles)
     {
         $relative = Resolve-Path -LiteralPath $file.FullName -Relative
         $hits.Add("NUM-2 ${relative}:$($match.LineNumber) $($match.Line.Trim())")
+    }
+}
+
+# ---- NUM-8: no trigonometry -------------------------------------------------
+$trigonometryPattern = '\b(Math|MathF|MathHelper)\.(Sin|Cos|Tan|Asin|Acos|Atan2?|SinCos)\b'
+foreach ($file in $sourceFiles)
+{
+    foreach ($match in @(Select-String -LiteralPath $file.FullName -Pattern $trigonometryPattern))
+    {
+        $relative = Resolve-Path -LiteralPath $file.FullName -Relative
+        $hits.Add("NUM-8 ${relative}:$($match.LineNumber) $($match.Line.Trim())")
     }
 }
 
