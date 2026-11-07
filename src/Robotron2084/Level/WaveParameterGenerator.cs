@@ -99,7 +99,8 @@ public sealed class WaveParameterGenerator
             ElectrodeCount: GorfTuning.IntroWaveElectrodeCount,
             GorfCount: 1,
             GorfGruntDropCount: gruntsOfTheNextWave,
-            GorfAvoidsPlayer: true);
+            GorfAvoidsPlayer: true,
+            GorfAppearanceLines: GorfTuning.IntroAppearanceLines);
     }
 
     /// <summary>Reads the replacement table.</summary>

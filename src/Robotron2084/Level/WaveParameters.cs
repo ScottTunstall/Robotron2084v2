@@ -25,7 +25,9 @@ namespace Robotron2084.Level;
 ///     <c>PlayfieldWallsOpen</c> says whether doors open in the playfield's walls and let grunts in en masse (port only,
 ///     notes §151). Any wave can have it. <c>GorfAvoidsPlayer</c> says that Gorf, when it appears, is never on the same
 ///     level as the player, so it is not on a collision course with the player (port only, notes §152). Without it,
-///     Gorf may appear on the player's level and the player has to move out of its way. Times are counted in fiftieths of a second, and the port turns them into its
+///     Gorf may appear on the player's level and the player has to move out of its way. <c>GorfAppearanceLines</c> are
+///     speech lines (<c>Content/Speech/</c>), one of which, picked by chance, the wave's first Gorf says when it first
+///     appears; null says nothing (port only, notes §153). Times are counted in fiftieths of a second, and the port turns them into its
 ///     own ticks where they are used.</item>
 ///     </list>
 /// </remarks>
@@ -60,7 +62,8 @@ public sealed record WaveParameters(
     int GorfCount = 0,
     int GorfGruntDropCount = 0,
     bool PlayfieldWallsOpen = false,
-    bool GorfAvoidsPlayer = false)
+    bool GorfAvoidsPlayer = false,
+    IReadOnlyList<string>? GorfAppearanceLines = null)
 {
     /// <summary>Gets whether the wave has Gorf: the author's own robot, which the arcade's waves never have.</summary>
     /// <remarks>

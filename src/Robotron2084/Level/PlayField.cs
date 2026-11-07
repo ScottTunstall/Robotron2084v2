@@ -56,6 +56,7 @@ public sealed class PlayField : ICollisionScene
     private readonly WaveMaterialisation _waveMaterialisation;
     private readonly MidWaveSpawner _midWaveSpawner;
     private readonly WallDoors? _wallDoors;
+    private Action<string> _lineSayer = Speech.Say;
     private readonly List<GorfReturn> _gorfReturns = [];
     private readonly PlayerAppear _playerAppear = new();
 
@@ -412,6 +413,20 @@ public sealed class PlayField : ICollisionScene
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
         _midWaveSpawner.SpawnGrunt(from, landing);
+    }
+
+    /// <summary>Has a speech line said, on the speech voice that nothing on the sound board can cut off (port only, notes §153).</summary>
+    /// <param name="lineName">The name of the line (<see cref="SpeechLinePaths" />).</param>
+    public void SayLine(string lineName)
+    {
+        _lineSayer(lineName);
+    }
+
+    /// <summary>Changes what has a line said. It is what a test uses to hear the lines without a speech voice.</summary>
+    /// <param name="lineSayer">What to call with the name of each line.</param>
+    internal void SetLineSayer(Action<string> lineSayer)
+    {
+        _lineSayer = lineSayer;
     }
 
     /// <summary>

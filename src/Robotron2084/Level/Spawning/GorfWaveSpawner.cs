@@ -19,8 +19,14 @@ public sealed class GorfWaveSpawner : IWaveSpawner
         Rectangle? playerBoxToAvoid = null;
         if (playField.WaveParameters.GorfAvoidsPlayer) playerBoxToAvoid = playField.Player.GetBounds();
 
+        var lines = playField.WaveParameters.GorfAppearanceLines;
         for (var i = 0; i < playField.WaveParameters.GorfCount; i++)
+        {
+            string? lineToSay = null;
+            if (i == 0 && lines is { Count: > 0 }) lineToSay = lines[waveSpawnContext.Random.Next(lines.Count)];
+
             waveSpawnContext.FieldEntities.Add(new Gorf(playField.TextureSet, waveSpawnContext.Random, playField.GetPlayfieldBounds(),
-                playField.WaveParameters.MaxDropsX2, playField.WaveParameters.GorfGruntDropCount, 0, playerBoxToAvoid));
+                playField.WaveParameters.MaxDropsX2, playField.WaveParameters.GorfGruntDropCount, 0, playerBoxToAvoid, lineToSay));
+        }
     }
 }
