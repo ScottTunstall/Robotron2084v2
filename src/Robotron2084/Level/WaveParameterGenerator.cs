@@ -90,22 +90,31 @@ public sealed class WaveParameterGenerator
 
     /// <summary>
     ///     Makes the wave that introduces Gorf: a placeholder with Gorf alone, which drops as many grunts in all as the
-    ///     wave after it has (the arcade's first wave). It looks like that wave too (its wall and electrode colours).
+    ///     wave after it has (the arcade's first wave).
     /// </summary>
+    /// <remarks>
+    ///     It starts from that wave's parameters, so it looks like that wave (its wall and electrode colours) and its grunts
+    ///     move as that wave's do: the same wait between steps, and the same lowest the wait can fall to as the wave goes
+    ///     on. The counts of robots are then set by hand.
+    /// </remarks>
     private WaveParameters CreateGorfIntroWave()
     {
         var nextWave = GenerateArcadeWave(WaveNumbering.ToArcadeWave(WaveNumbering.FirstArcadeWave));
         var gruntsOfTheNextWave = nextWave.GruntCount;
-        return new WaveParameters(
-            WaveNumbering.ToArcadeWave(WaveNumbering.GorfIntroWave),
-            ElectrodeCount: GorfTuning.IntroWaveElectrodeCount,
-            MommyCount: nextWave.MommyCount,
-            DaddyCount: nextWave.DaddyCount,
-            MikeyCount: nextWave.MikeyCount,
-            GorfCount: 1,
-            GorfGruntDropCount: gruntsOfTheNextWave,
-            GorfAvoidsPlayer: true,
-            GorfAppearanceLines: GorfTuning.IntroAppearanceLines);
+        return nextWave with
+        {
+            WaveNumber = WaveNumbering.ToArcadeWave(WaveNumbering.GorfIntroWave),
+            GruntCount = 0,
+            HulkCount = 0,
+            SpheroidCount = 0,
+            QuarkCount = 0,
+            BrainCount = 0,
+            ElectrodeCount = GorfTuning.IntroWaveElectrodeCount,
+            GorfCount = 1,
+            GorfGruntDropCount = gruntsOfTheNextWave,
+            GorfAvoidsPlayer = true,
+            GorfAppearanceLines = GorfTuning.IntroAppearanceLines
+        };
     }
 
     /// <summary>Reads the replacement table.</summary>
