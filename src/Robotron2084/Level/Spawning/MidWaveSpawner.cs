@@ -84,8 +84,16 @@ internal sealed class MidWaveSpawner
     /// <summary>A grunt comes through a door in the wall: it appears just inside the wall, in the opening.</summary>
     /// <param name="position">Where the grunt's top-left corner is.</param>
     /// <remarks>
-    ///     Port only: the arcade has no doors (notes §151). The grunt is kept inside the playfield, and the wave's limit
-    ///     on grunts does not hold it back, since the wave's flag asked for it.
+    ///     <list type="bullet">
+    ///         <item>Port only: the arcade has no doors (notes §151).</item>
+    ///         <item>The grunt is kept inside the playfield.</item>
+    ///         <item>The wave's limit on grunts does not hold it back, since the wave's flag asked for it.</item>
+    ///         <item>
+    ///             It starts at its slowest: the longest wait between steps the wave gives its grunts at the start
+    ///             (<see cref="WaveParameters.GruntMoveDelay" />), whatever the grunts already on the field have since been
+    ///             speeded up to.
+    ///         </item>
+    ///     </list>
     /// </remarks>
     public void SpawnDoorwayGrunt(IntVector2 position)
     {
