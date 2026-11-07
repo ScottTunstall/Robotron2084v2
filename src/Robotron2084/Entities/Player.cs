@@ -116,7 +116,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRX7.ASM</c> <c>PDTHV</c>, the flash and the fade.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
+    ///         <item>Disassembly: <c>KILL_PLAYER</c> (<c>$30EF</c>).</item>
     ///     </list>
     /// </remarks>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -254,7 +254,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRF.ASM</c> <c>PDEATH</c>.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
+    ///         <item>Disassembly: <c>KILL_PLAYER</c> (<c>$30EF</c>).</item>
     ///     </list>
     ///     It is the white palette index, then a palette index picked at random, then the palette index that fades to black.
     /// </remarks>
@@ -332,7 +332,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRX7.ASM</c> the death routine.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
+    ///         <item>Disassembly: <c>KILL_PLAYER</c> (<c>$30EF</c>).</item>
     ///     </list>
     ///     The fade takes over one palette index. That palette index's own colour changes are stopped while the fade runs,
     ///     and are started again when it is over.
@@ -425,7 +425,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///             Original source: <c>RRX7.ASM</c>, the death routine. The routines that change the palette's colours are
     ///             in RRS22.ASM.
     ///         </item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
+    ///         <item>Disassembly: <c>KILL_PLAYER</c> (<c>$30EF</c>).</item>
     ///     </list>
     ///     The other colour changes carry on as normal. Only the fade palette index's own changes are stopped.
     /// </remarks>

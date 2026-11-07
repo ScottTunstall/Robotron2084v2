@@ -105,7 +105,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    ///         <item>Disassembly: <c>HULK_CHANGE_DIRECTION</c> (<c>$0106</c>).</item>
     ///     </list>
     /// </remarks>
     private const int ShoveSidewaysDoubleFactor = 2;
@@ -114,7 +114,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    ///         <item>Disassembly: <c>HULK_CHANGE_DIRECTION</c> (<c>$0106</c>).</item>
     ///     </list>
     /// </remarks>
     private const int ShoveSidewaysDoubleRandomRange = 2;
@@ -126,7 +126,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    ///         <item>Disassembly: <c>HULK_CHANGE_DIRECTION</c> (<c>$0106</c>).</item>
     ///     </list>
     /// </remarks>
     private const int ShoveVerticalQuadrupleFactor = 4;
@@ -135,7 +135,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    ///         <item>Disassembly: <c>HULK_CHANGE_DIRECTION</c> (<c>$0106</c>).</item>
     ///     </list>
     /// </remarks>
     private const int ShoveVerticalQuadrupleRandomBelow = 3;
@@ -144,7 +144,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKIL</c>.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    ///         <item>Disassembly: <c>HULK_CHANGE_DIRECTION</c> (<c>$0106</c>).</item>
     ///     </list>
     /// </remarks>
     private const int ShoveVerticalQuadrupleRandomRange = 4;
@@ -316,7 +316,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///             Original source: <c>RRH11.ASM</c> <c>HULKIL</c>. A sideways shove is 1 arcade pixel, and 2 about half
     ///             the time. A shove up or down is 1 arcade pixel, and 4 about three quarters of the time.
     ///         </item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    ///         <item>Disassembly: <c>HULK_CHANGE_DIRECTION</c> (<c>$0106</c>).</item>
     ///     </list>
     /// </remarks>
     public void ApplyKnockback(Direction8 direction)
@@ -488,7 +488,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRH11.ASM</c> <c>HULKND</c>.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    ///         <item>Disassembly: <c>HULK_CHANGE_DIRECTION</c> (<c>$0106</c>).</item>
     ///     </list>
     /// </remarks>
     private int GetRandomNewDirectionSteps()
@@ -562,7 +562,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///             Original source: <c>RRH11.ASM</c> <c>HULKND</c>/<c>HND10</c>. The walk starts again from its first
     ///             animation frame.
     ///         </item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>HULK_CHANGE_DIRECTION</c>.</item>
+    ///         <item>Disassembly: <c>HULK_CHANGE_DIRECTION</c> (<c>$0106</c>).</item>
     ///     </list>
     /// </remarks>
     private void TurnToNewDirection(PlayField playField)

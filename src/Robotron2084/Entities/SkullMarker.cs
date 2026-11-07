@@ -17,7 +17,10 @@ namespace Robotron2084.Entities;
 ///             Original source: <c>RRH11.ASM</c>, routine <c>HUMKIL</c> (draws <c>SKULP</c> and plays
 ///             <c>HKSND</c>)
 ///         </item>
-///         <item>Disassembly: Not separately labelled in <c>asm/robomame.asm</c>.</item>
+///         <item>
+///             Disassembly: <c>FAMILY_MEMBER_SAVED_KILLED_OR_PROGGED</c> (<c>$033D</c>), which sets the "family death"
+///             animation frame (<c>$0437</c>) at <c>$0397</c> and its countdown of <c>$5A</c> at <c>$0393</c>
+///         </item>
 ///     </list>
 /// </remarks>
 public sealed class SkullMarker : IEntity

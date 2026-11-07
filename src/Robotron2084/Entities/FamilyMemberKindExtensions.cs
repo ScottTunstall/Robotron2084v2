@@ -7,7 +7,8 @@ namespace Robotron2084.Entities;
 /// <summary>What depends on which family member it is: how big it is, and the animation frames it is drawn with.</summary>
 public static class FamilyMemberKindExtensions
 {
-    /// <summary>The walk animation frames the family member is drawn with (notes §49).</summary>
+    /// <summary>Gets the walk animation frames the family member is drawn with.</summary>
+    /// <remarks>See notes §49.</remarks>
     /// <param name="kind">Which family member.</param>
     /// <param name="textureSet">The texture set that holds them.</param>
     public static Texture2D[] GetAnimationFrames(this FamilyMemberKind kind, TextureSet textureSet)

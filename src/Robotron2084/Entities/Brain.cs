@@ -290,8 +290,8 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>Where the brain's top-left corner is.</summary>
     /// <remarks>
     ///     <list type="bullet">
-    ///         <item>Original source: <c>OBJX</c> and <c>OBJY</c>.</item>
-    ///         <item>Disassembly: the blitter destination at offsets <c>$04</c> and <c>$05</c> of the object.</item>
+    ///         <item>Original source: <c>RRF.ASM</c> <c>OBJX</c> and <c>OBJY</c>.</item>
+    ///         <item>Disassembly: no address in the disassembly (names of the original source only); the object's blitter destination is at offsets <c>$04</c> and <c>$05</c> of the object.</item>
     ///     </list>
     /// </remarks>
     public IntVector2 Position => _position;

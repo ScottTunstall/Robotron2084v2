@@ -7,7 +7,7 @@ namespace Robotron2084.Entities;
 ///             Original source: <c>EXSTV</c> (explosion) and <c>APSTV</c> (appear) in <c>RRX7.ASM</c>, <c>HEXSTV</c> and
 ///             <c>HAPSTV</c> in <c>RRHX4.ASM</c>, and <c>EXSTZ</c> and <c>APSTZ</c> in <c>RRDX2.ASM</c>
 ///         </item>
-///         <item>Disassembly: see <see cref="StripEngine" /> for the addresses of the three routines</item>
+///         <item>Disassembly: the three strip routines at <c>$5B40</c>, <c>$F000</c> and <c>$4680</c></item>
 ///     </list>
 /// </remarks>
 public enum StripEffectKind

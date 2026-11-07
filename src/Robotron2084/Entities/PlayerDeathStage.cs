@@ -6,7 +6,7 @@ namespace Robotron2084.Entities;
 /// <remarks>
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRF.ASM</c> <c>PDEATH</c>.</item>
-///         <item>Disassembly: <c>asm/robomame.asm</c> <c>KILL_PLAYER</c>.</item>
+///         <item>Disassembly: <c>KILL_PLAYER</c> (<c>$30EF</c>).</item>
 ///     </list>
 ///     The white flash and the coloured flash are repeated several times before the fade. The fade is made by changing
 ///     the colour of one palette index (<see cref="PlayerTuning.PlayerDeathFadePaletteIndex" />).

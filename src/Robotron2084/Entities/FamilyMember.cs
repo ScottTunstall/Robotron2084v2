@@ -151,7 +151,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     ///             Original source: <c>RRB10.ASM</c> <c>BMUT</c>. The family member is taken off the family list while the
     ///             brain has hold of it.
     ///         </item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c>.</item>
+    ///         <item>Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>).</item>
     ///     </list>
     /// </remarks>
     public bool IsBeingReprogrammed { get; private set; }
@@ -296,7 +296,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRB10.ASM</c> <c>PROGST</c>.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c>.</item>
+    ///         <item>Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>).</item>
     ///     </list>
     /// </remarks>
     internal void FinishReprogramming()
@@ -327,7 +327,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Original source: <c>RRB10.ASM</c> <c>BMUT</c>, which lifts the family member up and drops it.</item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c>.</item>
+    ///         <item>Disassembly: <c>BEGIN_PROGRAMMING_FAMILY_MEMBER</c> (<c>$1CC2</c>).</item>
     ///     </list>
     /// </remarks>
     internal void MoveTo(IntVector2 position)

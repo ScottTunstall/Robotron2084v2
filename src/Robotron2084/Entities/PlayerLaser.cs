@@ -62,7 +62,14 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
         return new Rectangle(_position.X, _position.Y, Size, Size);
     }
 
-    /// <summary>The sprite for the way this laser is flying. The arcade has four laser sprites (<c>LTAB</c>, notes §19).</summary>
+    /// <summary>The sprite for the way this laser is flying.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>The arcade has four laser sprites (notes §19).</item>
+    ///         <item>Original source: <c>RRG23.ASM</c> <c>LTAB</c></item>
+    ///         <item>Disassembly: the four laser sprites from <c>$35C1</c> to <c>$35DC</c></item>
+    ///     </list>
+    /// </remarks>
     public Texture2D GetCurrentAnimationFrameTexture()
     {
         return Direction switch

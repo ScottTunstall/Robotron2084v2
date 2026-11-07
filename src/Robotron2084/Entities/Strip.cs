@@ -18,7 +18,7 @@ namespace Robotron2084.Entities;
 ///             Original source: <c>AWRITE</c> in <c>RRX7.ASM</c>, <c>RRHX4.ASM</c> and <c>RRDX2.ASM</c>, which draw each strip
 ///             of a sprite as it comes apart or comes together
 ///         </item>
-///         <item>Disassembly: see <see cref="StripEngine" /> for the addresses of the three routines</item>
+///         <item>Disassembly: the three strip routines at <c>$5B40</c>, <c>$F000</c> and <c>$4680</c></item>
 ///     </list>
 /// </remarks>
 public readonly record struct Strip(int SourceIndex, int X, int Y);
