@@ -11,7 +11,7 @@ namespace Robotron2084.AttractMode;
 ///         <item><see cref="AttractSequence.Grunts" />: no grunt is left.</item>
 ///         <item>
 ///             <see cref="AttractSequence.Hulk" />: no family member and no skull is left. The hulk has caught Daddy and
-///             Mikey. The hulk itself walks off during the next page, as in the arcade.
+///             Mikey. The hulk itself is not waited for: it walks off while the pages after it play, as in the arcade.
 ///         </item>
 ///         <item><see cref="AttractSequence.SpheroidsAndQuarks" />: no spheroid, quark, tank or enforcer is left.</item>
 ///         <item><see cref="AttractSequence.Electrodes" />: the hero has blown up.</item>

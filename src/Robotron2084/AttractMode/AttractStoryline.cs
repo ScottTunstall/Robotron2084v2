@@ -6,22 +6,27 @@ namespace Robotron2084.AttractMode;
 /// <remarks>
 ///     <list type="bullet">
 ///         <item>
-///             Each page waits (<see cref="PageScriptOpcodes.WaitUntilDone" />) however long the page before it takes, as
-///             well as for the arcade's own pause.
+///             The pages play in this order: the introduction, the family, the grunts, the hulk, the spheroids and
+///             quarks, the brain, and the electrodes.
 ///         </item>
-///         <item>Port only (notes §147).</item>
 ///         <item>
-///             The pages after the family, grunts, hulk and spheroid pages wait for those pages to be done
-///             (<see cref="AttractSequenceDoneRules" />). In the arcade each is always done by the end of its pause,
-///             so the waits change nothing there; they stop the next page starting early if a page ever takes longer.
+///             A wait (<see cref="PageScriptOpcodes.WaitUntilDone" />, <see cref="AttractSequenceDoneRules" />) is put in
+///             front of the grunts, hulk, spheroid and brain pages. It waits for the family, grunts, hulk and spheroids
+///             and quarks to be done, in that order. Each lasts however long its page takes, as well as the arcade's own
+///             pause.
 ///         </item>
 ///         <item>
 ///             The movie ends when the electrodes page is done, the hero having blown up, and the pause after it,
-///             instead of after a fixed time. The pause makes the arcade's own gap between the hero blowing up and the
-///             end.
+///             instead of after a fixed time.
 ///         </item>
+///         <item>
+///             The arcade's pages are always done by the end of their pause, so the waits change nothing there. They stop
+///             a page starting early if the page before it ever takes longer.
+///         </item>
+///         <item>Each wait is placed by the arcade's bytes around it. A wait whose bytes are not in the script is left out.</item>
+///         <item>Port only (notes §147).</item>
 ///     </list>
-///     Each wait is placed by the arcade's bytes around it. A wait whose bytes are not in the script is left out.
+///     A page's own documentation never names the page that comes after it. The order is kept here.
 /// </remarks>
 public static class AttractStoryline
 {
@@ -32,38 +37,54 @@ public static class AttractStoryline
     /// </summary>
     public const byte EndPauseArcadeFrames = 30;
 
-    /// <summary>
-    ///     The start of the brain page: CLEARM row 88, COLOR palette index 15, then the "B" of "BEWARE". The
-    ///     spheroid page's wait goes in front of it.
-    /// </summary>
+    /// <summary>The bytes that start the brain page.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>They are CLEARM row 88, COLOR palette index 15, then the "B" of "BEWARE".</item>
+    ///         <item>Original source: the page script <c>HISTO</c> (notes §95.4)</item>
+    ///         <item>Disassembly: not separately labelled (the page script starts at $7FA3)</item>
+    ///     </list>
+    /// </remarks>
     private static readonly byte[] BrainPageStart = [PageScriptOpcodes.Clear, 0x58, 0x80, PageScriptOpcodes.Colour, 0xFF, 0x42];
 
-    /// <summary>
-    ///     The end of the electrodes page: a sleep of 208 50ths of a second, one of 173, then DONE. It is replaced by the
-    ///     wait for the hero to blow up.
-    /// </summary>
+    /// <summary>The bytes that end the electrodes page and the movie.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>They are a sleep of 208 50ths of a second, one of 173, then DONE.</item>
+    ///         <item>Original source: the page script <c>HISTO</c> (notes §95.4)</item>
+    ///         <item>Disassembly: not separately labelled (the page script starts at $7FA3)</item>
+    ///     </list>
+    /// </remarks>
     private static readonly byte[] ElectrodesPageEnd = [0xD0, 0xAD, PageScriptOpcodes.Done];
 
-    /// <summary>
-    ///     The start of the grunts page: CLEARM row 88, COLOR palette index 3, then GRUNTS. The family page's wait goes
-    ///     in front of it.
-    /// </summary>
+    /// <summary>The bytes that start the grunts page.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>They are CLEARM row 88, COLOR palette index 3, then GRUNTS.</item>
+    ///         <item>Original source: the page script <c>HISTO</c> (notes §95.4)</item>
+    ///         <item>Disassembly: not separately labelled (the page script starts at $7FA3)</item>
+    ///     </list>
+    /// </remarks>
     private static readonly byte[] GruntsPageStart =
         [PageScriptOpcodes.Clear, 0x58, 0x80, PageScriptOpcodes.Colour, 0x33, PageScriptOpcodes.Grunts];
 
-    /// <summary>The bytes that start the hulk page. The grunts page's wait goes in front of them.</summary>
+    /// <summary>The bytes that start the hulk page.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>They are CLEARM row 88, COLOR palette index 5, then <c>SCRPT SCHULK</c> (<c>$85A1</c>).</item>
+    ///         <item>Original source: the page script <c>HISTO</c>, and the object script <c>SCHULK</c> (notes §95.4 and §95.5)</item>
+    ///         <item>Disassembly: not separately labelled (the page script starts at $7FA3)</item>
     ///     </list>
     /// </remarks>
     private static readonly byte[] HulkPageStart =
         [PageScriptOpcodes.Clear, 0x58, 0x80, PageScriptOpcodes.Colour, 0x55, PageScriptOpcodes.StartScript, 0x85, 0xA1];
 
-    /// <summary>The bytes that start the spheroid page. The hulk page's wait goes in front of them.</summary>
+    /// <summary>The bytes that start the spheroid page.</summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>They are CLEARM row 112, COLOR palette index 13, then <c>SCRPT SCSC</c> (<c>$85BD</c>).</item>
+    ///         <item>Original source: the page script <c>HISTO</c>, and the object script <c>SCSC</c> (notes §95.4 and §95.5)</item>
+    ///         <item>Disassembly: not separately labelled (the page script starts at $7FA3)</item>
     ///     </list>
     /// </remarks>
     private static readonly byte[] SpheroidPageStart =

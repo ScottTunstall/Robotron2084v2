@@ -1,7 +1,7 @@
 namespace Robotron2084.AttractMode;
 
 /// <summary>
-///     A part of the attract movie that the page script can wait for, however long it takes, so that the next part
+///     A part of the attract movie that the page script can wait for, however long it takes, so that whatever follows it
 ///     never starts before it is done (<see cref="PageScriptOpcodes.WaitUntilDone" />). What "done" means for each is
 ///     in <see cref="AttractSequenceDoneRules" />.
 /// </summary>
