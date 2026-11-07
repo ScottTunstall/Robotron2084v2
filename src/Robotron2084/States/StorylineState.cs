@@ -37,8 +37,9 @@ public sealed class StorylineState : IGameState, IAttractState
     private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
     private readonly List<StripEffect> _stripEffects = [];
     private readonly IPlayerInputSource _humanPlayerInputSource;
-    private readonly AttractMovie _attractMovie;
+    private AttractMovie _attractMovie;
     private readonly GameServices _gameServices;
+    private readonly byte[] _storylineScript;
     private readonly GameSession _gameSession;
     private readonly TextureSet _textureSet;
     private readonly PlayfieldWall _playfieldWall;
@@ -51,7 +52,8 @@ public sealed class StorylineState : IGameState, IAttractState
 
         _playfieldWall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColourCycle());
         _gameSession = GameSession.CreateNewGame(_humanPlayerInputSource, 1);
-        _attractMovie = new AttractMovie(AttractStoryline.Create(AttractMovieData.Histo), gameServices.Random);
+        _storylineScript = AttractStoryline.Create(AttractMovieData.Histo);
+        _attractMovie = new AttractMovie(_storylineScript, gameServices.Random);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -103,13 +105,7 @@ public sealed class StorylineState : IGameState, IAttractState
             return;
         }
 
-        // Page Down (dev key): skip on to the start of the next page of the story. The strips of the page being
-        // left are dropped with it.
-        if (DeveloperKeys.AttractSkipPage)
-        {
-            _attractMovie.SkipToNextPage();
-            _stripEffects.Clear();
-        }
+        HandlePageKeys();
 
         _attractMovie.Update(gameTime);
 
@@ -151,6 +147,29 @@ public sealed class StorylineState : IGameState, IAttractState
         // HISTO ends with DONE2, which the ROM answers with RUNIT: the machine
         // starts its phony-player game.
         if (_attractMovie.IsFinished()) gameStateManager.TransitionTo(new AttractState(_gameServices));
+    }
+
+    /// <summary>
+    ///     Right and Left (dev keys): go on to the start of the next page of the story, or back to the start of the one
+    ///     before. The strips of the page being left are dropped with it.
+    /// </summary>
+    private void HandlePageKeys()
+    {
+        var currentPage = _attractMovie.AttractPageMachine.PagesStarted;
+        if (DeveloperKeys.AttractNextPage) GoToPage(currentPage + 1);
+        else if (DeveloperKeys.AttractPreviousPage) GoToPage(currentPage - 1);
+    }
+
+    /// <summary>
+    ///     Starts the story again from the start of a page. A page cannot be run backwards, so the movie is made afresh and
+    ///     run on to the page.
+    /// </summary>
+    /// <param name="page">The page, counted from 1. A number below 1 starts the first page.</param>
+    private void GoToPage(int page)
+    {
+        var pageToShow = Math.Max(1, page);
+        _attractMovie = AttractMovie.CreateAtPage(_storylineScript, _gameServices.Random, pageToShow);
+        _stripEffects.Clear();
     }
 
     /// <summary>The movie interior, in canvas pixels: a strip that falls outside it is dropped (the ROM's clip).</summary>
