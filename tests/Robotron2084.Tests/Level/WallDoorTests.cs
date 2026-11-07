@@ -161,4 +161,23 @@ public sealed class WallDoorTests
 
         Assert.All(gruntTicks, gruntTick => Assert.Contains(gruntTick, wideOpenTicks));
     }
+
+    [Fact]
+    public void AGruntThroughADoor_StartsAtTheSlowestTheWaveAllows_WhateverTheOthersHaveBeenSpeededUpTo()
+    {
+        var waveParameters = new WaveParameters(1, 6, GruntMoveDelay: 15);
+        var playField = new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(5).Build();
+        var gameTime = new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
+        for (var tick = 0; tick < 400 && playField.RobotsFrozen(); tick++) playField.Update(gameTime);
+
+        // The grunts already on the field are speeded up, as they are every time a grunt is killed.
+        foreach (var grunt in playField.FieldEntities.Grunts) grunt.SpeedUpAsWaveGoesOn(4, 8);
+        Assert.All(playField.FieldEntities.Grunts, grunt => Assert.True(grunt.MoveIntervalMaxBeats < 15));
+        var knownGrunts = playField.FieldEntities.Grunts.ToList();
+
+        playField.SpawnDoorwayGrunt(new IntVector2(Playfield.X + 100, Playfield.Y + 100));
+
+        var newcomer = Assert.Single(playField.FieldEntities.Grunts.Except(knownGrunts));
+        Assert.Equal(waveParameters.GruntMoveDelay, newcomer.MoveIntervalMaxBeats);
+    }
 }
