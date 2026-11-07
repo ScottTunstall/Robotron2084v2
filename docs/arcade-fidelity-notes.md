@@ -11248,3 +11248,11 @@ This is the port's own. The arcade's walls never open.
 **Wave 1 has no doors** (author, 2026-11-07: *"on level one just have GORF dropping grunts, no wall opening"*). Wave 1 is Gorf dropping grunts and nothing else: `PlayfieldWallsOpen` (§151) is off for it, ready for another wave. A door's rows of grunts now come in a grunt's depth further in each, so grunts coming through one opening never stand on top of one another (they used to, and a stack of them looked stuck).
 
 **Wave 1 has electrodes, and Gorf never drops a grunt onto one** (author, 2026-11-07: *"Have electrodes on the first level. But GORF cannot drop Grunts onto them"*). Wave 1 has `GorfTuning.IntroWaveElectrodeCount` (10) electrodes, placed as in any wave. Before a drop, Gorf checks the box its grunts pass through on the way down, from its body to the ground and as wide as the row of grunts; if an electrode is in it, the drop waits until Gorf has moved on to somewhere clear (it checks again on each step). A drop that has not happened by the time Gorf is shot is part of what the next Gorf owes.
+
+## §153 — GORF SPEAKS WHEN IT FIRST APPEARS IN WAVE 1, BEYOND THE ARCADE (author, 2026-11-07)
+
+**Author:** *"For the first level, I want GORF to say - on his first appearance - one of the following: LONG LIVE GORF, \"I am the Gorfian Empire.\", \"Gorfian robots... attack! attack!\", \"You cannot escape the Gorfian robots.\", \"Gorfians take no prisoners!\", \"You will meet a Gorfian doom\" - all are sound samples already captured\"*.
+
+- **The wave record** has `GorfAppearanceLines`: speech lines, one of which, picked by chance, the wave's first Gorf says when it first appears. Null says nothing. Wave 1 sets it to `GorfTuning.IntroAppearanceLines`: `LONGLIVEGORF`, `IAMTHEGORFIANEMPIRE`, `GORFIANROBOTSATTACK`, `CANNOTESCAPEGORF`, `GORFIANSTAKENOPRISONERS` and `GORFIANDOOM` (the files in `Content/Speech/`, §149).
+- **When.** The line is picked when the wave is set up and said the first time the Gorf runs, which is when the game goes live, so it is said once. The Gorf that comes back after one is shot, and a Gorf that starts again after the player dies, say nothing.
+- **How.** `PlayField.SayLine` hands the line to the speech service, whose voice the sound board never cuts off and which never cuts a line off (§149), so the line plays right through.
