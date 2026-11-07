@@ -1,15 +1,17 @@
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Content;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Audio;
 
-/// <summary>Speaks lines from WAV files, on its own <see cref="SoundEffectInstance" />, apart from the sound board.</summary>
+/// <summary>Speaks lines from the content pipeline, on its own <see cref="SoundEffectInstance" />, apart from the sound board.</summary>
 /// <remarks>
 ///     <list type="bullet">
 ///         <item>Port only: the arcade has no speech sound chip, so this is not in the arcade game.</item>
 ///         <item>
-///             A line is a WAV file in the <see cref="SpeechFolderName" /> folder beside the game. Its name is the file's
-///             name without the extension, in capitals. The files are 16-bit PCM.
+///             A line is a sound file in <c>Content/Speech/</c>. The pipeline builds it, and
+///             <see cref="SpeechLinePaths" /> lists them. A line's name is the file's name without the extension, in
+///             capitals.
 ///         </item>
 ///         <item>A line that has no file is skipped: the voice does not speak and is free for the next line.</item>
 ///         <item>The voice is not played through the sound board, so nothing sent to the board can stop it.</item>
@@ -17,32 +19,25 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public sealed class SoundEffectSpeechVoice : ISpeechVoice, IDisposable
 {
-    /// <summary>The name of the folder, beside the game, that holds the WAV files.</summary>
-    public const string SpeechFolderName = "Speech";
-
     private readonly Dictionary<string, SoundEffect> _soundEffectsByLineName = new();
     private SoundEffectInstance? _soundEffectInstance;
 
-    /// <summary>Loads every WAV file in the speech folder.</summary>
-    /// <param name="speechFolderPath">The full path of the folder. A folder that does not exist holds no lines.</param>
+    /// <summary>Loads every speech line the pipeline built.</summary>
+    /// <param name="contentManager">The content manager that loads the built files.</param>
     /// <exception cref="NoAudioHardwareException">The computer has no sound output.</exception>
-    public SoundEffectSpeechVoice(string speechFolderPath)
+    public SoundEffectSpeechVoice(ContentManager contentManager)
     {
-        if (!Directory.Exists(speechFolderPath)) return;
-
-        foreach (var wavPath in Directory.GetFiles(speechFolderPath, "*.wav"))
+        foreach (var linePath in SpeechLinePaths.All)
         {
-            var lineName = Path.GetFileNameWithoutExtension(wavPath).ToUpperInvariant();
-            using var wavStream = File.OpenRead(wavPath);
-            _soundEffectsByLineName[lineName] = SoundEffect.FromStream(wavStream);
+            var lineName = Path.GetFileName(linePath).ToUpperInvariant();
+            _soundEffectsByLineName[lineName] = contentManager.Load<SoundEffect>(linePath);
         }
     }
 
-    /// <summary>Stops the voice and frees the lines.</summary>
+    /// <summary>Stops the voice. The content manager frees the lines.</summary>
     public void Dispose()
     {
         _soundEffectInstance?.Dispose();
-        foreach (var soundEffect in _soundEffectsByLineName.Values) soundEffect.Dispose();
     }
 
     /// <inheritdoc />
