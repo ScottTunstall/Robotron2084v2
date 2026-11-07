@@ -258,7 +258,7 @@ public sealed class RobotronGame : Game
         if (!WasPressed(keyboardState, Keys.F10)) return;
 
         // The page's own F10 closes it, and the service pages handle their own way out.
-        if (_gameStateManager.CurrentGameState is DeveloperToolsState or SettingsState or DefineInputsState or SoundTestState)
+        if (_gameStateManager.CurrentGameState is DeveloperToolsState or SettingsState or DefineInputsState or SoundTestState or SpeechTestState)
             return;
 
         _gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices, _controlSettingsStore, _gameSettingsStore));
