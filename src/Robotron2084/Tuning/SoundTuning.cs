@@ -10,6 +10,13 @@ public static class SoundTuning
     public const float MasterVolume = 0.5f;
 
     /// <summary>
+    ///     How loud the speech plays, from 0 (silent) to 1 (as loud as the output allows). It is separate from the
+    ///     sound board's volume.
+    /// </summary>
+    /// <remarks>Port only.</remarks>
+    public const float SpeechVolume = 0.8f;
+
+    /// <summary>
     ///     How far towards one speaker a sound from the playfield's edge is placed: 0 keeps every sound in the
     ///     middle, 1 puts a sound from the very edge wholly in one speaker.
     /// </summary>
