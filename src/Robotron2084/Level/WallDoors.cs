@@ -29,6 +29,7 @@ public sealed class WallDoors
     private readonly Rectangle _playfieldBounds;
     private readonly Random _random;
     private int _gruntsLeftForThisDoor;
+    private int _rowsLetThroughThisDoor;
     private int _gruntTimerTicks;
     private int _openingsMade;
     private int _ticksUntilNextOpening;
@@ -89,7 +90,11 @@ public sealed class WallDoors
     /// <summary>Gets where a grunt's top-left corner goes when it comes through a door: just inside the wall, in the opening.</summary>
     /// <param name="door">The door.</param>
     /// <param name="lane">Which place across the opening, counted from 0. The grunts of a row stand side by side.</param>
-    private IntVector2 GetGruntPlace(WallDoor door, int lane)
+    /// <param name="row">
+    ///     Which row, counted from 0. Each row is a grunt's depth further in than the one before, so a grunt never comes
+    ///     through on top of one that has not yet walked away from the opening.
+    /// </param>
+    private IntVector2 GetGruntPlace(WallDoor door, int lane, int row)
     {
         var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
         var gruntHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
@@ -102,12 +107,17 @@ public sealed class WallDoors
         var offsetFromMiddle = (2 * lane - (lanes - 1)) * spacing / 2;
         var alongTheWall = door.Centre + offsetFromMiddle - gruntLength / 2;
 
+        var gruntDepth = gruntWidth;
+        if (isInTopOrBottomWall) gruntDepth = gruntHeight;
+
+        var inward = row * (gruntDepth + WallDoorTuning.GruntGapPixels);
+
         return door.Side switch
         {
-            WallDoorSide.North => new IntVector2(alongTheWall, _playfieldBounds.Y),
-            WallDoorSide.South => new IntVector2(alongTheWall, _playfieldBounds.Bottom - gruntHeight),
-            WallDoorSide.West => new IntVector2(_playfieldBounds.X, alongTheWall),
-            _ => new IntVector2(_playfieldBounds.Right - gruntWidth, alongTheWall)
+            WallDoorSide.North => new IntVector2(alongTheWall, _playfieldBounds.Y + inward),
+            WallDoorSide.South => new IntVector2(alongTheWall, _playfieldBounds.Bottom - gruntHeight - inward),
+            WallDoorSide.West => new IntVector2(_playfieldBounds.X + inward, alongTheWall),
+            _ => new IntVector2(_playfieldBounds.Right - gruntWidth - inward, alongTheWall)
         };
     }
 
@@ -121,8 +131,10 @@ public sealed class WallDoors
         if (_gruntTimerTicks > 0) return;
 
         var gruntsInThisRow = Math.Min(GetLaneCount(wideOpenDoor), _gruntsLeftForThisDoor);
-        for (var lane = 0; lane < gruntsInThisRow; lane++) _spawnGrunt(GetGruntPlace(wideOpenDoor, lane));
+        for (var lane = 0; lane < gruntsInThisRow; lane++)
+            _spawnGrunt(GetGruntPlace(wideOpenDoor, lane, _rowsLetThroughThisDoor));
 
+        _rowsLetThroughThisDoor++;
         _gruntsLeftForThisDoor -= gruntsInThisRow;
         _gruntTimerTicks = WallDoorTuning.GruntIntervalTicks;
     }
@@ -142,6 +154,7 @@ public sealed class WallDoors
         _doors.Add(new WallDoor(side, GetRandomCentre(side, gapLength), gapLength));
         _openingsMade++;
         _gruntsLeftForThisDoor = WallDoorTuning.GruntsPerOpening;
+        _rowsLetThroughThisDoor = 0;
         _gruntTimerTicks = WallDoorTuning.GruntIntervalTicks;
         _ticksUntilNextOpening = GetRandomWaitTicks();
     }

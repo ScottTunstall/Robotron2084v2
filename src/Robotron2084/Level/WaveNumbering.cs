@@ -12,6 +12,10 @@ namespace Robotron2084.Level;
 ///             arcade's tables, colours and rules is looked up by the arcade's number instead, which
 ///             <see cref="ToArcadeWave" /> works out.
 ///         </item>
+///         <item>
+///             The arcade's first brain wave (its wave 5) comes one wave later still, so the port's wave 6 is the arcade's
+///             wave 6 and the port's wave 7 is the brain wave (notes §150).
+///         </item>
 ///         <item>The attract demo plays the arcade's waves from the start, with the arcade's numbers.</item>
 ///     </list>
 /// </remarks>
@@ -30,11 +34,20 @@ public static class WaveNumbering
         return wave == GorfIntroWave;
     }
 
+    /// <summary>The port's number for the arcade's first brain wave, which the port moves one wave later.</summary>
+    public const int FirstBrainWave = 6;
+
     /// <summary>Gets the arcade's number for a wave, which its tables and rules are looked up by.</summary>
     /// <param name="wave">The port's wave number.</param>
-    /// <returns>The arcade's number, counted from 1. The wave that introduces Gorf has none of its own, so it gets 1.</returns>
+    /// <returns>
+    ///     The arcade's number, counted from 1. The wave that introduces Gorf has none of its own, so it gets 1. The
+    ///     arcade's first brain wave and the wave after it have changed places (<see cref="FirstBrainWave" />).
+    /// </returns>
     public static int ToArcadeWave(int wave)
     {
+        if (wave == FirstBrainWave) return wave;
+        if (wave == FirstBrainWave + 1) return wave - GorfIntroWave - 1;
+
         return Math.Max(1, wave - GorfIntroWave);
     }
 }
