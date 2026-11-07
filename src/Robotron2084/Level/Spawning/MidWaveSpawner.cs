@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Entities;
@@ -81,6 +82,21 @@ internal sealed class MidWaveSpawner
         var grunt = new Grunt(_playField.TextureSet, new IntVector2(x, startY), _random, _playField.WaveParameters.GruntMoveDelay);
         grunt.BeginFall(landingY);
         _fieldEntities.Add(grunt);
+    }
+
+    /// <summary>A Gorf comes on to drop the grunts a Gorf that was shot did not drop.</summary>
+    /// <param name="gruntsOwed">How many grunts it drops.</param>
+    /// <param name="dropIntervalSteps">How many steps there are between its drops.</param>
+    /// <remarks>
+    ///     Port only (notes §152). It keeps clear of the player when the wave says so, as the first Gorf did.
+    /// </remarks>
+    public void SpawnReturningGorf(int gruntsOwed, int dropIntervalSteps)
+    {
+        Rectangle? playerBoxToAvoid = null;
+        if (_playField.WaveParameters.GorfAvoidsPlayer) playerBoxToAvoid = _playField.Player.GetBounds();
+
+        _fieldEntities.Add(new Gorf(_playField.TextureSet, _random, _playField.GetPlayfieldBounds(),
+            _playField.WaveParameters.MaxDropsX2, gruntsOwed, dropIntervalSteps, playerBoxToAvoid));
     }
 
     /// <summary>A grunt comes through a door in the wall: it appears just inside the wall, in the opening.</summary>

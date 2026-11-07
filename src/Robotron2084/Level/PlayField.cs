@@ -56,6 +56,7 @@ public sealed class PlayField : ICollisionScene
     private readonly WaveMaterialisation _waveMaterialisation;
     private readonly MidWaveSpawner _midWaveSpawner;
     private readonly WallDoors? _wallDoors;
+    private readonly List<GorfReturn> _gorfReturns = [];
     private readonly PlayerAppear _playerAppear = new();
 
     /// <summary>True when a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
@@ -336,7 +337,8 @@ public sealed class PlayField : ICollisionScene
     public bool IsWaveCleared()
     {
         var areDoorsDone = !(_wallDoors?.IsBusy() ?? false);
-        return FieldEntities.AreEnemiesGone() && areDoorsDone;
+        var isNoGorfToReturn = _gorfReturns.Count == 0;
+        return FieldEntities.AreEnemiesGone() && areDoorsDone && isNoGorfToReturn;
     }
 
     /// <summary>
@@ -410,6 +412,16 @@ public sealed class PlayField : ICollisionScene
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
         _midWaveSpawner.SpawnGrunt(from, landing);
+    }
+
+    /// <summary>
+    ///     A Gorf was shot with grunts still to drop: a new one comes on a little later to drop them (port only, notes §152).
+    /// </summary>
+    /// <param name="gruntsOwed">How many grunts the new Gorf drops.</param>
+    /// <param name="dropIntervalSteps">How many steps there are between its drops.</param>
+    internal void ScheduleGorfReturn(int gruntsOwed, int dropIntervalSteps)
+    {
+        _gorfReturns.Add(new GorfReturn(gruntsOwed, dropIntervalSteps, GorfTuning.ReturnDelayTicks));
     }
 
     /// <summary>A grunt comes through a door in the wall (port only, notes §151).</summary>
@@ -499,6 +511,7 @@ public sealed class PlayField : ICollisionScene
 
         PlayfieldWall.Update(gameTime);
         if (!RobotsFrozen()) _wallDoors?.Update();
+        if (!RobotsFrozen()) LetGorfsReturn();
 
         Player.Update(gameTime, this);
         // RRG23 LSPROC asks for LASSND as each laser starts (R5 $3221).
@@ -511,6 +524,16 @@ public sealed class PlayField : ICollisionScene
 
         // Prune: remove Dead entries from every list (pruning = count decrement, spec).
         FieldEntities.PruneDead();
+    }
+
+    /// <summary>Counts down to each Gorf that is to come back, and puts it on the field when its time is up.</summary>
+    private void LetGorfsReturn()
+    {
+        foreach (var gorfReturn in _gorfReturns) gorfReturn.Tick();
+
+        var due = _gorfReturns.Where(gorfReturn => gorfReturn.IsDue()).ToList();
+        _gorfReturns.RemoveAll(gorfReturn => gorfReturn.IsDue());
+        foreach (var gorfReturn in due) _midWaveSpawner.SpawnReturningGorf(gorfReturn.GruntsOwed, gorfReturn.DropIntervalSteps);
     }
 
     /// <summary>Says whether any family member is standing on the field and free.</summary>

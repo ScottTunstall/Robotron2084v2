@@ -97,7 +97,8 @@ public sealed class WaveParameterGenerator
             WaveNumbering.ToArcadeWave(WaveNumbering.GorfIntroWave),
             GorfCount: 1,
             GorfGruntDropCount: gruntsOfTheNextWave,
-            PlayfieldWallsOpen: true);
+            PlayfieldWallsOpen: true,
+            GorfAvoidsPlayer: true);
     }
 
     /// <summary>Reads the replacement table.</summary>

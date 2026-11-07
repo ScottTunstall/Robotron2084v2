@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using Robotron2084.Entities;
 
 namespace Robotron2084.Level.Spawning;
@@ -15,8 +16,11 @@ public sealed class GorfWaveSpawner : IWaveSpawner
         var playField = waveSpawnContext.PlayField;
         if (!playField.WaveParameters.HasGorf()) return;
 
+        Rectangle? playerBoxToAvoid = null;
+        if (playField.WaveParameters.GorfAvoidsPlayer) playerBoxToAvoid = playField.Player.GetBounds();
+
         for (var i = 0; i < playField.WaveParameters.GorfCount; i++)
             waveSpawnContext.FieldEntities.Add(new Gorf(playField.TextureSet, waveSpawnContext.Random, playField.GetPlayfieldBounds(),
-                playField.WaveParameters.MaxDropsX2, playField.WaveParameters.GorfGruntDropCount));
+                playField.WaveParameters.MaxDropsX2, playField.WaveParameters.GorfGruntDropCount, 0, playerBoxToAvoid));
     }
 }

@@ -23,7 +23,9 @@ namespace Robotron2084.Level;
 ///     robots, which no wave has yet. <c>GorfGruntDropCount</c> is how many grunts in all each Gorf drops: 0 leaves
 ///     it to chance, as in any other wave, and a number makes it drop exactly that many, shared over its stops.
 ///     <c>PlayfieldWallsOpen</c> says whether doors open in the playfield's walls and let grunts in en masse (port only,
-///     notes §151). Any wave can have it. Times are counted in fiftieths of a second, and the port turns them into its
+///     notes §151). Any wave can have it. <c>GorfAvoidsPlayer</c> says that Gorf, when it appears, is never on the same
+///     level as the player, so it is not on a collision course with the player (port only, notes §152). Without it,
+///     Gorf may appear on the player's level and the player has to move out of its way. Times are counted in fiftieths of a second, and the port turns them into its
 ///     own ticks where they are used.</item>
 ///     </list>
 /// </remarks>
@@ -57,7 +59,8 @@ public sealed record WaveParameters(
     int BerzerkRobotCount = 0,
     int GorfCount = 0,
     int GorfGruntDropCount = 0,
-    bool PlayfieldWallsOpen = false)
+    bool PlayfieldWallsOpen = false,
+    bool GorfAvoidsPlayer = false)
 {
     /// <summary>Gets whether the wave has Gorf: the author's own robot, which the arcade's waves never have.</summary>
     /// <remarks>
