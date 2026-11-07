@@ -11191,3 +11191,15 @@ the difficulty should be judged in play.
 - Gorf's hop never used them: `GorfPath.GetHopHeight` is whole-number arithmetic (§138.2).
 - The only use in the code was `StereoPanner`, which placed a sound between the speakers with `Cos` and `Sin`. It now uses square roots, which keep the same rule: the two volumes, each squared, add up to 1, so a sound is about 71% in each speaker in the middle and wholly in one at either end. The sound code still works in floating point; only the trigonometry is gone.
 - `tools/lint-conventions.ps1` reports any `Sin`, `Cos`, `Tan` or their inverses (`Math`, `MathF` or `MathHelper`).
+
+## §149 — SPEECH: A SEPARATE VOICE THAT THE SOUND BOARD NEVER CUTS OFF, BEYOND THE ARCADE (author, 2026-11-07)
+
+**Author:** *"I want the speech samples to play separately, to not be constrained by the one channel of the main game sound effects"* — then — *"the speech samples must play out. Meanwhile the other existing sound effects must be mono channel as they are in the arcade. Think of it as a different speech sound chip installed, uninterrupted by what the main one does. The sound effects must NEVER cut off the speech, but sound effects should - as one channel - cut off each other"*.
+
+This is the port's own. The arcade has no speech chip.
+
+- **A second voice.** `Speech` (a service, like `Sound`) gives lines to a `SpeechChannel`, which gives them one at a time to an `ISpeechVoice`. The real voice, `SoundEffectSpeechVoice`, plays WAV files on its own `SoundEffectInstance`. It does not use the sound board's `DynamicSoundEffectInstance`, so nothing sent to the board can stop it.
+- **A line plays out.** A line asked for while another is being spoken waits, and lines are spoken in the order they were asked for. Nothing cuts a line off.
+- **The sound board is unchanged.** It stays one voice, as in the arcade, and its sounds cut each other off as before. It is still placed between the speakers by `StereoPanner` (the port's own choice, earlier than this note); whether that should become plain mono is still to be decided.
+- **The lines.** A line is a 16-bit PCM WAV file in a `Speech` folder beside the game (the project copies `Speech/*.wav` there). Its name is the file's name without `.wav`, in capitals. A name with no file is skipped. Nothing in the game asks for a line yet: `Speech.Say("NAME")` is the call.
+- **Not decided.** Whether the attract mode's silence setting should also silence the speech; what a game event's line names are.
