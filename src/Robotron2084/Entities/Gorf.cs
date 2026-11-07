@@ -45,6 +45,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private readonly ArcadeFrameTimer _animationArcadeFrameTimer = new();
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly int _directionSignX;
+    private readonly Queue<int> _dropCounts = new();
     private readonly Queue<int> _dropSteps = new();
     private readonly int _groundY;
     private readonly int _maxDropsX2;
@@ -67,7 +68,11 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     This wave's limit on how many grunts it drops at once. The number is picked the way a spheroid
     ///     picks its enforcers.
     /// </param>
-    public Gorf(TextureSet textureSet, Random random, Rectangle playfieldBounds, int maxDropsX2)
+    /// <param name="gruntDropCount">
+    ///     How many grunts it drops in all, shared over its stops with the first stops getting any left over. 0 leaves
+    ///     each stop to chance (<paramref name="maxDropsX2" />).
+    /// </param>
+    public Gorf(TextureSet textureSet, Random random, Rectangle playfieldBounds, int maxDropsX2, int gruntDropCount = 0)
     {
         _textureSet = textureSet;
         _playfieldBounds = playfieldBounds;
@@ -87,7 +92,10 @@ public sealed class Gorf : IExplodable, IRemovable
         _totalSteps = (playfieldBounds.Width + CollisionSize.Width) / StepPixels;
 
         for (var stop = 1; stop <= GorfTuning.DropStops; stop++)
+        {
             _dropSteps.Enqueue(stop * _totalSteps / (GorfTuning.DropStops + 1));
+            if (gruntDropCount > 0) _dropCounts.Enqueue(GetShareOfDrops(gruntDropCount, stop - 1));
+        }
     }
 
     /// <summary>
@@ -192,21 +200,41 @@ public sealed class Gorf : IExplodable, IRemovable
         if (_dropSteps.Count > 0 && _stepCount >= _dropSteps.Peek())
         {
             _dropSteps.Dequeue();
-            DropGrunts(playField);
+            DropGrunts(playField, GetDropCount());
         }
 
         if (_stepCount >= _totalSteps) Kill();
     }
 
+    /// <summary>Gets how many grunts one stop drops, out of the exact number Gorf drops in all.</summary>
+    /// <param name="total">How many grunts Gorf drops in all.</param>
+    /// <param name="stopIndex">Which stop, counted from 0. Any grunts left over go to the first stops.</param>
+    private static int GetShareOfDrops(int total, int stopIndex)
+    {
+        var share = total / GorfTuning.DropStops;
+        var isOneOfTheFirstStops = stopIndex < total % GorfTuning.DropStops;
+        if (isOneOfTheFirstStops) share++;
+
+        return share;
+    }
+
+    /// <summary>
+    ///     Gets how many grunts this stop drops: its exact share when Gorf was given a number to drop in all. Otherwise
+    ///     it is picked the way a spheroid picks its enforcers (a random number from 1 up to the wave's limit, halved and
+    ///     rounded up) and is never more than <see cref="GorfTuning.MaxGruntsPerDrop" />.
+    /// </summary>
+    private int GetDropCount()
+    {
+        if (_dropCounts.Count > 0) return _dropCounts.Dequeue();
+
+        return Math.Min(GorfTuning.MaxGruntsPerDrop, (_random.Next(_maxDropsX2) + 2) / 2);
+    }
+
     /// <summary>Drops some grunts side by side from Gorf's body.</summary>
     /// <param name="playField">The playfield, which puts the grunts on the field and holds them back when the wave is full.</param>
-    /// <remarks>
-    ///     How many is picked the way a spheroid picks its enforcers: a random number from 1 up to the wave's limit, halved
-    ///     and rounded up. It is never more than <see cref="GorfTuning.MaxGruntsPerDrop" />.
-    /// </remarks>
-    private void DropGrunts(PlayField playField)
+    /// <param name="count">How many grunts to drop.</param>
+    private void DropGrunts(PlayField playField, int count)
     {
-        var count = Math.Min(GorfTuning.MaxGruntsPerDrop, (_random.Next(_maxDropsX2) + 2) / 2);
         var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
         var gruntHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
         var spacing = gruntWidth + GorfTuning.DropGapPixels;
