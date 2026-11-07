@@ -227,16 +227,15 @@ public sealed class RobotronGame : Game
     ///     sitting out the title's 12-second idle, and Page Up is how the hulk's walk (movie frame ~2574) is reached
     ///     in seconds rather than after the text crawl. They are live on the attract screens only: Insert is also
     ///     the skip-a-wave key and Delete clears a line on the DEFINE INPUTS page, so they must not act anywhere else.
-    ///     Right and Left take the STORYLINE movie on to its next page and back to the one before.
+    ///     Right and Left step through the whole attract sequence by hand (<see cref="AttractNavigation" />).
     ///     The function keys are left to the game's own start, test and settings keys (F1/F2/F3, F4, F5, F6, F10) and
     ///     the display keys (F8, F11).
     /// </remarks>
     private void HandleAttractDeveloperKeys(KeyboardState keyboardState)
     {
         var onAttractScreen = _gameStateManager.CurrentGameState is IAttractState;
+        HandleAttractNavigationKeys(keyboardState);
         DeveloperKeys.AttractFastForward = onAttractScreen && keyboardState.IsKeyDown(Keys.PageUp);
-        DeveloperKeys.AttractNextPage = onAttractScreen && WasPressed(keyboardState, Keys.Right);
-        DeveloperKeys.AttractPreviousPage = onAttractScreen && WasPressed(keyboardState, Keys.Left);
         if (!onAttractScreen) return;
 
         if (WasPressed(keyboardState, Keys.End))
@@ -246,6 +245,25 @@ public sealed class RobotronGame : Game
         else if (WasPressed(keyboardState, Keys.Insert))
             _gameStateManager.TransitionTo(new HighScoreTableState(_gameServices));
         else if (WasPressed(keyboardState, Keys.Delete)) StartEndOfGameFlow();
+    }
+
+    /// <summary>
+    ///     Right goes on to the next screen of the attract sequence and Left back to the one before (port only).
+    ///     They are live on the attract screens, and on the demo game's wave-clear screen.
+    /// </summary>
+    /// <param name="keyboardState">This tick's keyboard.</param>
+    private void HandleAttractNavigationKeys(KeyboardState keyboardState)
+    {
+        var step = AttractNavigation.GetStep(_gameStateManager.CurrentGameState);
+        if (step is not { } currentStep) return;
+
+        var direction = 0;
+        if (WasPressed(keyboardState, Keys.Right)) direction = 1;
+        else if (WasPressed(keyboardState, Keys.Left)) direction = -1;
+        if (direction == 0) return;
+
+        var nextStep = AttractNavigation.GetNeighbourStep(currentStep, direction);
+        _gameStateManager.TransitionTo(AttractNavigation.CreateState(nextStep, _gameServices));
     }
 
     /// <summary>
