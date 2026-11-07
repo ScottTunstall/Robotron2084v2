@@ -54,6 +54,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private readonly TextureSet _textureSet;
     private readonly int _totalSteps;
     private IntVector2 _position;
+    private PlayField? _playField;
     private int _stepCount;
     private int _stepInHop;
 
@@ -69,8 +70,9 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     picks its enforcers.
     /// </param>
     /// <param name="gruntDropCount">
-    ///     How many grunts it drops in all, shared over its stops with the first stops getting any left over. 0 leaves
-    ///     each stop to chance (<paramref name="maxDropsX2" />).
+    ///     How many grunts it drops in all, one at a time, evenly spaced along its way across, so they come gradually. It
+    ///     drops any it has not dropped yet if it is killed first. 0 leaves its three stops to chance
+    ///     (<paramref name="maxDropsX2" />).
     /// </param>
     public Gorf(TextureSet textureSet, Random random, Rectangle playfieldBounds, int maxDropsX2, int gruntDropCount = 0)
     {
@@ -91,11 +93,8 @@ public sealed class Gorf : IExplodable, IRemovable
         _position = new IntVector2(startX, _groundY);
         _totalSteps = (playfieldBounds.Width + CollisionSize.Width) / StepPixels;
 
-        for (var stop = 1; stop <= GorfTuning.DropStops; stop++)
-        {
-            _dropSteps.Enqueue(stop * _totalSteps / (GorfTuning.DropStops + 1));
-            if (gruntDropCount > 0) _dropCounts.Enqueue(GetShareOfDrops(gruntDropCount, stop - 1));
-        }
+        if (gruntDropCount > 0) PlanGradualDrops(gruntDropCount);
+        else PlanDropStops();
     }
 
     /// <summary>
@@ -155,12 +154,21 @@ public sealed class Gorf : IExplodable, IRemovable
         return GetBounds();
     }
 
-    /// <summary>Kills Gorf at once, with no flash and no death animation.</summary>
+    /// <summary>
+    ///     Kills Gorf at once, with no flash and no death animation. Any grunts it was to drop and has not dropped yet fall
+    ///     from where it was, so a wave that is owed a number of grunts still gets them all.
+    /// </summary>
     public void Kill()
     {
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        if (_playField is null || _dropCounts.Count == 0) return;
+
+        var gruntsOwed = _dropCounts.Sum();
+        _dropCounts.Clear();
+        _dropSteps.Clear();
+        DropGrunts(_playField, gruntsOwed);
     }
 
     /// <summary>
@@ -173,6 +181,8 @@ public sealed class Gorf : IExplodable, IRemovable
     public void Update(GameTime gameTime, PlayField playField)
     {
         if (!this.IsAlive() || playField.RobotsFrozen()) return;
+
+        _playField = playField;
 
         if (_animationArcadeFrameTimer.Tick(GorfTuning.AnimationIntervalArcadeFrames)) ShowNextAnimationFrame();
         if (_beatArcadeFrameTimer.Tick(GorfTuning.BeatIntervalArcadeFrames)) ActOnBeat(playField);
@@ -197,7 +207,7 @@ public sealed class Gorf : IExplodable, IRemovable
         _position = new IntVector2(_position.X + _directionSignX * StepPixels, _groundY - height);
         if (_stepInHop == GorfTuning.HopSteps) _stepInHop = 0;
 
-        if (_dropSteps.Count > 0 && _stepCount >= _dropSteps.Peek())
+        while (_dropSteps.Count > 0 && _stepCount >= _dropSteps.Peek())
         {
             _dropSteps.Dequeue();
             DropGrunts(playField, GetDropCount());
@@ -206,16 +216,22 @@ public sealed class Gorf : IExplodable, IRemovable
         if (_stepCount >= _totalSteps) Kill();
     }
 
-    /// <summary>Gets how many grunts one stop drops, out of the exact number Gorf drops in all.</summary>
-    /// <param name="total">How many grunts Gorf drops in all.</param>
-    /// <param name="stopIndex">Which stop, counted from 0. Any grunts left over go to the first stops.</param>
-    private static int GetShareOfDrops(int total, int stopIndex)
+    /// <summary>Plans the usual drops: <see cref="GorfTuning.DropStops" /> stops, evenly spaced, each dropping a number by chance.</summary>
+    private void PlanDropStops()
     {
-        var share = total / GorfTuning.DropStops;
-        var isOneOfTheFirstStops = stopIndex < total % GorfTuning.DropStops;
-        if (isOneOfTheFirstStops) share++;
+        for (var stop = 1; stop <= GorfTuning.DropStops; stop++)
+            _dropSteps.Enqueue(stop * _totalSteps / (GorfTuning.DropStops + 1));
+    }
 
-        return share;
+    /// <summary>Plans an exact number of drops: one grunt at a time, evenly spaced along the way across.</summary>
+    /// <param name="gruntDropCount">How many grunts to drop in all.</param>
+    private void PlanGradualDrops(int gruntDropCount)
+    {
+        for (var drop = 1; drop <= gruntDropCount; drop++)
+        {
+            _dropSteps.Enqueue(drop * _totalSteps / (gruntDropCount + 1));
+            _dropCounts.Enqueue(1);
+        }
     }
 
     /// <summary>
