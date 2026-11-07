@@ -103,6 +103,14 @@ public sealed class StorylineState : IGameState, IAttractState
             return;
         }
 
+        // Page Down (dev key): skip on to the start of the next page of the story. The strips of the page being
+        // left are dropped with it.
+        if (DeveloperKeys.AttractSkipPage)
+        {
+            _attractMovie.SkipToNextPage();
+            _stripEffects.Clear();
+        }
+
         _attractMovie.Update(gameTime);
 
         // Page Up held (dev key, notes §97): run the movie's clock extra
