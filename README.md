@@ -49,8 +49,9 @@ The house rules, learned the hard way over ~90 documented decode rounds:
 | **Humans** | Mommy, Daddy and Mikey, walking their ROM cadence, rescued or lost for score — and converted into progs when a brain catches them |
 | **Effects** | The three-engine strip explosion (rows, columns, diagonal chevron), the wave-start materialisation ("appear"), the wave-complete colour-cycling **tunnel**, the score bursts, the player's own `PDTHV` flash-and-fade |
 | **Presentation** | The arcade HUD (score layout, blanked leading zeros, the mini-man spare lives, "<n> WAVE"), arcade font glyphs, 1- and 2-player alternating games with the ROM's turn-passing and "PLAYER n" announcement |
-| **Attract** | The arcade's whole attract sequence, driven by its own script: the title screen, then the **story movie** — the 2084 text crawl, the hero, the family and their name popups, the grunts, the hulk, the spheroid/tank/enforcer scene with a human reprogrammed into a prog, and the score posts (~96 s) — then the machine's phony-player demo game. Both script interpreters run the ROM's own bytes |
+| **Attract** | The arcade's whole attract sequence, driven by its own script: the title screen, then the **story movie** — the 2084 text crawl, the hero, the family and their name popups, the grunts, the hulk, the spheroid/tank/enforcer scene with a human reprogrammed into a prog, and the score posts (~96 s) — then the machine's phony-player demo game. Both script interpreters run the ROM's own bytes. Each page waits until the page before it is done, however long that takes (in the arcade's own timing the waits change nothing, and a test checks it frame for frame) |
 | **Sound** | The ROM's priority sound sequencer ($D3C7/$D3E0) and its tables drive a **native C# sound board**, ported routine by routine from the sound ROM's own source (`VSNDRM3.SRC`: the wave table synth, square wave, noise, radio, hyper and scream routines) and timed in the board's clock cycles — it matches the real ROM change for change, needs no ROM, and plays through MonoGame on Windows and Linux. Sounds are placed in stereo by their maker's position |
+| **Speech** | **Port-only** (the arcade has no speech chip): a separate voice, apart from the sound board, plays the speech lines in `Content/Speech/` (built by the content pipeline). A line is never cut off by a sound effect or by the next line; sound effects still cut each other off, as on the arcade's one-voice board. Nothing in the game asks for a line yet — the `F6` SPEECH TEST page plays them |
 | **Game adjustment** | The cabinet's service-mode GAME ADJUSTMENT page (minus its coin/pricing rows), on `F5`: extra-man score, turns per player, difficulty of play (the ROM's own `$2C20` wave-table scaling) and the factory/high-score resets, plus a port-only attract-sound switch. Saved to `settings.ini` |
 
 **Deliberately absent:** the self-test and bookkeeping screens, coin counting and the pricing rows of
@@ -100,7 +101,7 @@ write it up, including what was wrong before.
 | Path | What it is |
 |---|---|
 | `src/Robotron2084/` | The game: `Entities/`, `Level/`, `States/`, `Rendering/`, `Audio/`, `Input/`, `Tuning/GameplayConstants.cs` |
-| `tests/Robotron2084.Tests/` | **270 tests** — ROM contracts (timings, counts, layouts), not smoke checks |
+| `tests/Robotron2084.Tests/` | **Over 800 tests** — ROM contracts (timings, counts, layouts), not smoke checks |
 | `docs/arcade-fidelity-notes.md` | The master decode log (91 sections, ROM-vs-port, with retractions) |
 | `docs/handoff-*.md`, `status.md`, `rebuild-ledger.md` | Session handoffs, the current state, and the per-checkpoint ledger |
 | `docs/coding-standards.md`, `docs/refactoring-ledger.md` | The coding rules, and the record of code changed to meet them: every renamed member, old name to new |
@@ -122,10 +123,18 @@ dotnet build Robotron2084.slnx                     # 0 warnings, warnings-as-err
 `1` / `2` start a one- or two-player game · `F11` cycle window scale · `Esc` quit.
 **The title screen (notes §101):** `F1` one player game · `F2` two player game
 (alternate) · `F3` two player game (simultaneous — the mode is offered, the sharing
-is not built yet) · `F5` game settings (notes §131) · `F10` define inputs. All five
-work from **every** attract screen — title, storyline movie, demo game and high score
-table — and `P` pauses a game (the arcade has no pause; port-only).
-**Define inputs (`F10`, notes §101):** every MOVE/SHOOT UP, DN, LEFT, RIGHT of both
+is not built yet) · `F4` sound test · `F5` game settings (notes §131) · `F6` speech
+test (port-only) · `F10` developer tools. `F1` to `F6` work from **every** attract screen —
+title, storyline movie, demo game and high score table — and `F10` opens the developer
+tools from every screen. `P` pauses a game (the arcade has no pause; port-only).
+**Developer tools (`F10`, notes §101):** a menu of the attract screens (the two title
+panes, the story, the demo, the high scores), `DEFINE INPUTS`, `GAME ADJUSTMENT`, `SOUND TEST`
+and `SPEECH TEST`. `Up`/`Down` and `Enter` choose, `1` to `9` choose a line directly and
+`F10` closes it.
+**Sound test (`F4`) and speech test (`F6`):** every board sound (and the transporter), or every
+speech line, one at a time. `Enter`, `Space`, `Right` or `Down` advance, `Left` or `Up` go
+back, `A` is auto-up and `F10` returns to the developer tools.
+**Define inputs (from the developer tools, notes §101):** every MOVE/SHOOT UP, DN, LEFT, RIGHT of both
 players on its own line. `Up`/`Down` scroll (player 2's block is beneath player 1's,
 then the pause line), `Enter` arms the highlighted line and the next key, pad button
 or stick push becomes it, `Del` clears the line, `R` restores the factory scheme and
@@ -151,16 +160,17 @@ reloaded at start-up.
 storyline movie · `Home` jump straight into the attract demo game · `PgUp` (held)
 fast-forward the movie 8× — the hulk's walk arrives in ~7 s instead of ~51 s ·
 `Ins` jump straight to the high score table · `Del` jump straight to the end of a
-game (the GAME OVER page and the initials ceremony). These work on the attract
+game (the GAME OVER page and the initials ceremony) · `PgDn` on the storyline movie skips
+on to the start of the next page (seven pages), so each can be looked at in turn. These work on the attract
 screens only. In a game `Ins` skips a wave (the port's old `P` test key moved when
 `P` became PAUSE).
-**Sound:** on — the native sound board plays through MonoGame on Windows and Linux.
+**Sound:** on — the native sound board plays through MonoGame on Windows and Linux. The speech voice is separate from it (notes §149).
 
 ### The gates (run before every checkpoint)
 
 ```bash
 dotnet build Robotron2084.slnx                                     # 0 warnings
-./tests/Robotron2084.Tests/bin/Debug/net10.0/Robotron2084.Tests.exe # 400 tests
+./tests/Robotron2084.Tests/bin/Debug/net10.0/Robotron2084.Tests.exe # over 800 tests
 ./src/Robotron2084/bin/Debug/net10.0/Robotron2084.exe              # launch smoke
 python tools/verify-playfield.py                                   # a started wave really draws
 python tools/verify-fonts.py                                       # all 82 glyph masters, pixel for pixel
