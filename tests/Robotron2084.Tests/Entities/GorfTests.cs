@@ -147,12 +147,19 @@ public sealed class GorfTests
     private static (PlayField PlayField, Gorf Gorf) RunAGorfAcross(WaveParameters waveParameters, int maxDropsX2,
         params int[] randomNumbers)
     {
+        return RunAGorfAcrossDroppingExactly(waveParameters, maxDropsX2, 0, randomNumbers);
+    }
+
+    private static (PlayField PlayField, Gorf Gorf) RunAGorfAcrossDroppingExactly(WaveParameters waveParameters,
+        int maxDropsX2, int gruntDropCount, params int[] randomNumbers)
+    {
         var playField = CreateFieldInPlay(waveParameters);
         foreach (var grunt in
                  playField.FieldEntities.Grunts
                      .ToList()) grunt.Kill(); // the wave's own grunts: only the ones Gorf drops are counted
 
-        var gorf = new Gorf(TestTextures.SharedTextureSet, new ScriptedRandom(randomNumbers), playField.GetPlayfieldBounds(), maxDropsX2);
+        var gorf = new Gorf(TestTextures.SharedTextureSet, new ScriptedRandom(randomNumbers), playField.GetPlayfieldBounds(), maxDropsX2,
+            gruntDropCount);
         playField.FieldEntities.Add(gorf);
         RunUntilGone(playField, gorf);
         return (playField, gorf);
@@ -190,6 +197,29 @@ public sealed class GorfTests
 
         Assert.Equal(6, small.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
         Assert.Equal(18, big.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
+    }
+
+    [Theory]
+    [InlineData(15)]
+    [InlineData(17)]
+    [InlineData(22)]
+    [InlineData(1)]
+    public void GivenANumberToDrop_ItDropsExactlyThatManyInAll_SharedOverItsStops(int gruntDropCount)
+    {
+        // The wave itself has no grunts, and a bound that would drop only a few by chance: the exact number wins.
+        var (playField, _) = RunAGorfAcrossDroppingExactly(new WaveParameters(1, 0, GorfGruntDropCount: gruntDropCount), 4,
+            gruntDropCount, 0, 0, 0);
+
+        Assert.Equal(gruntDropCount, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
+    }
+
+    [Fact]
+    public void AnyLeftOverGoToTheFirstStops()
+    {
+        // 17 over three stops: 6, 6 and 5.
+        var (playField, _) = RunAGorfAcrossDroppingExactly(new WaveParameters(1, 0, GorfGruntDropCount: 17), 4, 17, 0, 0, 0);
+
+        Assert.Equal(17, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
     }
 
     [Fact]

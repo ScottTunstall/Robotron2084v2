@@ -21,6 +21,19 @@ public sealed class WaveNumberingTests
         Assert.Equal(0, waveParameters.ElectrodeCount);
     }
 
+    [Fact]
+    public void TheGorfIntroduction_DropsAsManyGruntsAsTheWaveAfterItHas()
+    {
+        var generator = new WaveParameterGenerator();
+
+        var intro = generator.Generate(WaveNumbering.GorfIntroWave);
+        var nextWave = generator.Generate(WaveNumbering.FirstArcadeWave);
+
+        Assert.Equal(nextWave.GruntCount, intro.GorfGruntDropCount);
+        Assert.True(intro.GorfGruntDropCount > 0);
+        Assert.Equal(0, intro.GruntCount); // the wave starts with none: they are all dropped by Gorf
+    }
+
     [Theory]
     [InlineData(2, 1)]
     [InlineData(3, 2)]
