@@ -160,9 +160,9 @@ reloaded at start-up.
 storyline movie · `Home` jump straight into the attract demo game · `PgUp` (held)
 fast-forward the movie 8× — the hulk's walk arrives in ~7 s instead of ~51 s ·
 `Ins` jump straight to the high score table · `Del` jump straight to the end of a
-game (the GAME OVER page and the initials ceremony) · `Right` and `Left` on the storyline movie
-go on to the start of the next page or back to the start of the one before (seven pages), so each can be
-looked at in turn. These work on the attract
+game (the GAME OVER page and the initials ceremony) · `Right` and `Left` on any attract screen
+step through the whole sequence by hand — the title page on its two text panes, the seven pages of the
+story, the demo game, the high score table, and round again — so every screen can be looked at in turn. These work on the attract
 screens only. In a game `Ins` skips a wave (the port's old `P` test key moved when
 `P` became PAUSE).
 **Sound:** on — the native sound board plays through MonoGame on Windows and Linux. The speech voice is separate from it (notes §149).
