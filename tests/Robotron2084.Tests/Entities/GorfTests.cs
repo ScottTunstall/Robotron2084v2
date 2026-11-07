@@ -413,4 +413,48 @@ public sealed class GorfTests
 
         Assert.Equal(0, gorf.AnimationFrameIndex);
     }
+
+    [Fact]
+    public void AGruntIsNeverDroppedOntoAnElectrode_ItsDropWaitsUntilGorfHasMovedOn()
+    {
+        var playField = CreateFieldInPlay(new WaveParameters(1, 0));
+        var gorf = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 4, 15);
+        playField.FieldEntities.Add(gorf);
+        var bodyHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height);
+        var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
+        var bounds = playField.GetPlayfieldBounds();
+        var groundTop = gorf.Position.Y;
+
+        // Electrodes right under the middle of Gorf's way across, so the drops that fall there must wait.
+        var electrodes = new List<Electrode>();
+        for (var x = bounds.X + bounds.Width / 2 - 60; x < bounds.X + bounds.Width / 2 + 60; x += 16)
+        {
+            var electrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(x, groundTop + bodyHeight / 2));
+            electrodes.Add(electrode);
+            playField.FieldEntities.Add(electrode);
+        }
+
+        var known = new HashSet<Grunt>();
+        for (var tick = 0; tick < 6000 && (gorf.IsAlive() || playField.FieldEntities.Gorfs.Any(other => other.IsAlive())); tick++)
+        {
+            playField.Update(OneTickGameTime);
+            foreach (var grunt in playField.FieldEntities.Grunts.Where(grunt => known.Add(grunt)))
+            {
+                var column = new Rectangle(grunt.Position.X, grunt.Position.Y, gruntWidth, groundTop + bodyHeight - grunt.Position.Y);
+                Assert.DoesNotContain(electrodes, electrode => electrode.GetBounds().Intersects(column));
+            }
+        }
+
+        Assert.True(known.Count > 5, "Gorf should still drop grunts, in the clear places");
+    }
+
+    [Fact]
+    public void WaveOneHasElectrodes_ButNoneOfTheArcadesRobots()
+    {
+        var waveParameters = new WaveParameterGenerator().Generate(1);
+
+        Assert.Equal(GorfTuning.IntroWaveElectrodeCount, waveParameters.ElectrodeCount);
+        Assert.True(waveParameters.ElectrodeCount > 0);
+        Assert.Equal(0, waveParameters.GruntCount);
+    }
 }

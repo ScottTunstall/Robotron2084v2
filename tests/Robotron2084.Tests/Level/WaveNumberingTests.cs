@@ -7,7 +7,7 @@ namespace Robotron2084.Tests.Level;
 public sealed class WaveNumberingTests
 {
     [Fact]
-    public void WaveOne_IsTheGorfIntroduction_WithGorfAloneUntilTheAuthorSpecifiesIt()
+    public void WaveOne_IsTheGorfIntroduction_WithGorfAndElectrodesAndNoneOfTheArcadesRobots_UntilTheAuthorSpecifiesIt()
     {
         var waveParameters = new WaveParameterGenerator().Generate(1);
 
@@ -18,7 +18,6 @@ public sealed class WaveNumberingTests
         Assert.Equal(0, waveParameters.SpheroidCount);
         Assert.Equal(0, waveParameters.QuarkCount);
         Assert.Equal(0, waveParameters.BrainCount);
-        Assert.Equal(0, waveParameters.ElectrodeCount);
         Assert.False(waveParameters.PlayfieldWallsOpen);
     }
 
