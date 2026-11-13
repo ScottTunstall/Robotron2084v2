@@ -32,7 +32,7 @@ public sealed class AttractScreenTests
     ///     front of), the arcade's own rule applies instead — no key restarts the machine under a
     ///     player mid-game — and so do the screens that finish a game, which the cabinet also runs
     ///     outside the attract cycle: the game-over message, the CONG initials entry (notes §116) and
-    ///     the ONLY5P page, plus the port-only definitions and GAME ADJUSTMENT pages, the sound test and
+    ///     the ONLY5P page, plus the port-only definitions and GAME ADJUSTMENT pages, the sprite test, the sound test and
     ///     the speech test, and the DEVELOPER TOOLS page — which is opened by F10 from every screen, so it deliberately
     ///     does NOT take the attract cycle's F1/F2/F3 (its own number keys choose an option).
     /// </summary>
@@ -45,6 +45,7 @@ public sealed class AttractScreenTests
         typeof(EntriesMaximumState),
         typeof(DefineInputsState),
         typeof(SettingsState),
+        typeof(SpriteTestState),
         typeof(SoundTestState),
         typeof(SpeechTestState),
         typeof(DeveloperToolsState)
