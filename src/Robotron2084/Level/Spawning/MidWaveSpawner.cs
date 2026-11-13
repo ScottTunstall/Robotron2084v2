@@ -62,16 +62,14 @@ internal sealed class MidWaveSpawner
     ///     A new robot's drop (notes §138.2): there is no arcade routine for it. The grunt is kept inside the playfield, and
     ///     is not dropped at all when the wave
     ///     already holds as many grunts as it is allowed: the wave's own number (which the difficulty moves), or
-    ///     <see cref="GorfTuning.MinGruntCount" /> if that is fewer. A wave that is owed an exact number of grunts
-    ///     (<see cref="WaveParameters.GorfGruntDropCount" />) has no limit: every one of them is dropped.
+    ///     <see cref="GorfTuning.MinGruntCount" /> if that is fewer.
     /// </remarks>
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
         var waveParameters = _playField.WaveParameters;
-        var isOwedAnExactNumber = waveParameters.GorfGruntDropCount > 0;
         var gruntLimit = Math.Max(waveParameters.GruntCount, GorfTuning.MinGruntCount);
         var isWaveFull = _fieldEntities.Grunts.Count(entity => !entity.IsDead()) >= gruntLimit;
-        if (isWaveFull && !isOwedAnExactNumber) return;
+        if (isWaveFull) return;
 
         var bounds = _playField.GetPlayfieldBounds();
         var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
@@ -88,15 +86,13 @@ internal sealed class MidWaveSpawner
     /// <param name="gruntsOwed">How many grunts it drops.</param>
     /// <param name="dropIntervalSteps">How many steps there are between its drops.</param>
     /// <remarks>
-    ///     Port only (notes §152). It keeps clear of the player when the wave says so, as the first Gorf did.
+    ///     Port only (notes §152).
     /// </remarks>
     public void SpawnReturningGorf(int gruntsOwed, int dropIntervalSteps)
     {
-        Rectangle? playerBoxToAvoid = null;
-        if (_playField.WaveParameters.GorfAvoidsPlayer) playerBoxToAvoid = _playField.Player.GetBounds();
 
         _fieldEntities.Add(new Gorf(_playField.TextureSet, _random, _playField.GetPlayfieldBounds(),
-            _playField.WaveParameters.MaxDropsX2, gruntsOwed, dropIntervalSteps, playerBoxToAvoid));
+            _playField.WaveParameters.MaxDropsX2, gruntsOwed, dropIntervalSteps));
     }
 
     /// <summary>A grunt comes through a door in the wall: it appears just inside the wall, in the opening.</summary>
