@@ -25,9 +25,8 @@ namespace Robotron2084.States;
 ///     traced large title letters cycles through the same seven (notes §104). The ROM's OTHER attract page (the wall
 ///     + "ROBOTRON 2084" + "SAVE THE LAST HUMAN FAMILY", notes §94.1) is a different screen and is not
 ///     drawn here.
-///     Port conventions kept on top: **1** starts a one-player game and **2** a two-player game (the
-///     arcade's START 1 / START 2 buttons, ROM RRG23 START1/START2; fire is the one-player alias),
-///     the port's F1/F2/F3 start keys (notes §101; F10 is the DEVELOPER TOOLS page's key now, and is
+///     Port conventions kept on top: **1**, **2** or fire (the arcade's START 1 / START 2 buttons, ROM RRG23
+///     START1/START2) open the menu page, where the game is chosen (F10 is the DEVELOPER TOOLS page's key, and is
 ///     live on every screen), and after
 ///     <see cref="AttractTuning.TitleIdleSeconds" /> of no start press the arcade's attract movie
 ///     takes over (notes §95/§96).
@@ -113,9 +112,6 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
 
     private readonly TimeSpan _arcadeTextDuration = TimeSpan.FromSeconds(AttractTuning.TitleArcadeTextSeconds);
     private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
-    private readonly ControlSettings _controlSettings;
-    private readonly GameSettings _gameSettings;
-    private readonly HighScoreStore _highScoreStore;
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(AttractTuning.TitleIdleSeconds);
     private readonly IPlayerInputSource _playerInputSource;
 
@@ -154,9 +150,6 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
         _isShowingArcadeText = pinnedPane != TitleTextPane.Port;
         _playerInputSource = gameServices.PlayerInputSource;
         _textureSet = gameServices.TextureSet;
-        _highScoreStore = gameServices.HighScoreStore;
-        _controlSettings = gameServices.ControlSettings;
-        _gameSettings = gameServices.GameSettings;
         _williamsLogoBorder = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_textureSet.WilliamsLogoTexture));
         _largeTitleLetterAppear = LargeTitleLetterAppear.CreateFromMasks(
             _textureSet.LargeTitleLettersRimTexture,
@@ -218,16 +211,11 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
 
         var playerInputState = _playerInputSource.Poll();
 
-        // The arcade's coin-door buttons: START 1 / START 2 pick the number of
-        // players (ROM RRG23 START1/START2 → PLRCNT), and the ROM then runs the
-        // alternating 2-player game. Fire is kept as a 1-player alias (a port
-        // convention — spec.txt's "press fire", which the arcade does not have).
-        // The shell's F1/F2/F3 (notes §101) are the same three modes and work from
-        // every attract screen, this one included.
-        if (ChooseMode(_buttonEdgeDetector.Advance(playerInputState)) is { } chosen)
+        // START 1, START 2 or fire opens the menu page, where the game is chosen (port only: the arcade's START
+        // buttons start a game themselves).
+        if (_buttonEdgeDetector.Advance(playerInputState).AnyPressed())
         {
-            gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _textureSet,
-                _highScoreStore, _gameServices.Random));
+            gameStateManager.TransitionTo(new MainMenuState(_gameServices));
             return;
         }
 
@@ -271,16 +259,6 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
         }
     }
 
-    /// <summary>The game mode this tick's presses start, if any: START 1 or fire for one player, START 2 for two.</summary>
-    private static GameMode? ChooseMode(ButtonPresses presses)
-    {
-        if (presses.StartOnePlayerPressed) return GameMode.OnePlayer;
-
-        if (presses.StartTwoPlayersPressed) return GameMode.TwoPlayerAlternate;
-
-        return presses.FirePressed ? GameMode.OnePlayer : null;
-    }
-
     /// <summary>
     ///     Pane 1 — the arcade's own lines: the operator's welcome message and the credit strings, all
     ///     in the page's text colour (the ROM's `$66` — notes §106) except the copyright, which gets an
@@ -319,7 +297,7 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
     /// <summary>
     ///     Pane 2 — the port's own lines: its two LARGE-font credit lines (notes §102.1).
     ///     Port-only and labelled as such; they take the arcade pane's place in its message rows, and
-    ///     the arcade's START buttons and the port's F-keys (notes §101) keep working exactly as they
+    ///     the arcade's START buttons keep working exactly as they
     ///     did either way.
     /// </summary>
     private void DrawPortText(SpriteBatch spriteBatch)

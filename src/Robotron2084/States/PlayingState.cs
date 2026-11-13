@@ -82,7 +82,7 @@ public sealed class PlayingState : IGameState
     ///     Starts a game in one of the port's three modes (notes §101), giving each player
     ///     their OWN input source — which is the point of the DEFINITIONS page, since player
     ///     2 no longer has to share player 1's controls. The mode is what F1/F2/F3 select on
-    ///     the title and from anywhere in the attract cycle; TWO PLAYER SIMULTANEOUS is
+    ///     the menu page; TWO PLAYER SIMULTANEOUS is
     ///     carried as far as this call and the second input (the simultaneous field itself is not built yet).
     /// </summary>
     /// <param name="controlSettings">The keys and buttons the players have chosen.</param>

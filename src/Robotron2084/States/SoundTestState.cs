@@ -11,7 +11,7 @@ using Robotron2084.Palette;
 namespace Robotron2084.States;
 
 /// <summary>
-///     The SOUND TEST page (opened with F4 from the attract screens, closed with F10 to the DEVELOPER
+///     The SOUND TEST page (opened from the DEVELOPER TOOLS page, and closed with F10 back to the DEVELOPER
 ///     TOOLS page): the arcade's own sound test
 ///     with every sound the board has, each named as the sound ROM's source names it.
 /// </summary>

@@ -105,12 +105,12 @@ public sealed class StorylineState : IGameState, IAttractState
 
     public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
-        // A human at the coin door takes the machine back to the title, exactly as
-        // the arcade's coin/start handler does while attract is running.
+        // A human at the coin door opens the menu page, as the arcade's coin/start handler
+        // takes the machine back while attract is running.
         var familyMember = _humanPlayerInputSource.Poll();
         if (_buttonEdgeDetector.Advance(familyMember).AnyPressed())
         {
-            gameStateManager.TransitionTo(new TitleScreenState(_gameServices));
+            gameStateManager.TransitionTo(new MainMenuState(_gameServices));
             return;
         }
 

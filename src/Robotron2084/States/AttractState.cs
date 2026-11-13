@@ -64,12 +64,12 @@ public sealed class AttractState : IGameState, IAttractState
 
     public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
-        // A human at the coin door takes the machine back (arcade: start works
-        // any time attract is running).
+        // A human at the coin door opens the menu page (arcade: start works
+        // any time attract is running; port: the game is chosen on the menu).
         var humanInputState = _humanPlayerInputSource.Poll();
         if (_buttonEdgeDetector.Advance(humanInputState).AnyPressed())
         {
-            gameStateManager.TransitionTo(new TitleScreenState(_gameServices));
+            gameStateManager.TransitionTo(new MainMenuState(_gameServices));
             return;
         }
 
