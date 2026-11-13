@@ -15,9 +15,9 @@ public sealed class PlayFieldRobotRegistryTests
 {
     /// <summary>
     ///     The lists the update and draw passes hold that no robot kind owns: the family, its two markers,
-    ///     the explosions and the spheroid/quark bursts.
+    ///     the explosions, the spheroid/quark bursts and the Gorfs (which no wave brings).
     /// </summary>
-    private const int NonRobotLists = 5;
+    private const int NonRobotLists = 6;
 
     /// <summary>
     ///     The kinds the wave table brings, and the count each row must read.
@@ -32,8 +32,7 @@ public sealed class PlayFieldRobotRegistryTests
         (RobotKind.Quark, static waveParameters => waveParameters.QuarkCount),
         (RobotKind.Tank, static waveParameters => waveParameters.TankCount),
         (RobotKind.Brain, static waveParameters => waveParameters.BrainCount),
-        (RobotKind.BerzerkRobot, static waveParameters => waveParameters.BerzerkRobotCount),
-        (RobotKind.Gorf, static waveParameters => waveParameters.GorfCount)
+        (RobotKind.BerzerkRobot, static waveParameters => waveParameters.BerzerkRobotCount)
     ];
 
     /// <summary>
@@ -54,8 +53,7 @@ public sealed class PlayFieldRobotRegistryTests
         (RobotKind.Spark, ScoreValues.Spark),
         (RobotKind.TankShell, ScoreValues.TankShell),
         (RobotKind.CruiseMissile, ScoreValues.CruiseMissile),
-        (RobotKind.BerzerkRobot, ScoreValues.BerzerkRobot),
-        (RobotKind.Gorf, ScoreValues.Gorf)
+        (RobotKind.BerzerkRobot, ScoreValues.BerzerkRobot)
     ];
 
     /// <summary>
@@ -71,8 +69,7 @@ public sealed class PlayFieldRobotRegistryTests
         RobotKind.Spark,
         RobotKind.TankShell,
         RobotKind.CruiseMissile,
-        RobotKind.BerzerkRobot,
-        RobotKind.Gorf
+        RobotKind.BerzerkRobot
     ];
 
     /// <summary>
@@ -93,8 +90,7 @@ public sealed class PlayFieldRobotRegistryTests
         (RobotKind.Spark, typeof(Spark)),
         (RobotKind.TankShell, typeof(TankShell)),
         (RobotKind.CruiseMissile, typeof(CruiseMissile)),
-        (RobotKind.BerzerkRobot, typeof(BerzerkRobot)),
-        (RobotKind.Gorf, typeof(Gorf))
+        (RobotKind.BerzerkRobot, typeof(BerzerkRobot))
     ];
 
     private static WaveParameters OneOfEverything()
@@ -108,8 +104,7 @@ public sealed class PlayFieldRobotRegistryTests
             SpheroidCount: 11,
             QuarkCount: 13,
             TankCount: 17,
-            BerzerkRobotCount: 19,
-            GorfCount: 23);
+            BerzerkRobotCount: 19);
     }
 
     private static PlayField CreateField()
