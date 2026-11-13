@@ -21,8 +21,8 @@ namespace Robotron2084.States;
 ///     shows them: the title page on its arcade pane (the ROBOTRON 2084 presentation page as the cabinet
 ///     prints it), the title page on the pane that carries the port's credit, the STORY movie, the
 ///     machine playing itself, the HIGH SCORE table, the DEFINE INPUTS page, the GAME ADJUSTMENT
-///     page with the gameplay settings (notes §131), the SOUND TEST page and the SPEECH TEST page (notes §149).
-///     Keys: Up/Down (or the stick) moves the cursor, Enter (or A) chooses, and 1 to 9 choose a line
+///     page with the gameplay settings (notes §131), the SPRITE TEST page, the SOUND TEST page and the SPEECH TEST page (notes §149).
+///     Keys: Up/Down (or the stick) moves the cursor, Enter (or A) chooses, and 1 to 9, then 0, choose a line
 ///     directly. F10 closes the page — back to the title, the one attract screen this page's options
 ///     do not already reach — which is why the shell's F10 switch leaves this page to the page itself.
 /// </summary>
@@ -34,7 +34,7 @@ public sealed class DeveloperToolsState : IGameState
     // prints its cursor (column $0C), and it is that page's own cursor glyph — the small font's "->".
     private const int CursorColumn = 57;
 
-    private const string DirectLine = "1 TO 9 - CHOOSE AN OPTION DIRECTLY";
+    private const string DirectLine = "1 TO 9 AND 0 - CHOOSE AN OPTION DIRECTLY";
     private const string ExitLine = "F10 - CLOSE THIS PAGE";
     private const int ExitRow = 342;
     private const int FirstLineRow = 58;
@@ -46,7 +46,7 @@ public sealed class DeveloperToolsState : IGameState
 
     private const int LabelColumn = 75;
 
-    private const int LineStep = 26;
+    private const int LineStep = 22;
 
     // The page's own colours (notes §108) are the GAME ADJUSTMENT page's: WHITE (palette index 9) for the
     // heading, the instructions and the exit line, GREEN (palette index 6) for the options themselves. No palette index
@@ -60,16 +60,16 @@ public sealed class DeveloperToolsState : IGameState
     private const string Title = "DEVELOPER TOOLS";
     private const int TitleRow = 12;
 
-    /// <summary>The number keys that choose a line directly, in list order.</summary>
+    /// <summary>The number keys that choose a line directly, in list order: 1 to 9, then 0 for the tenth.</summary>
     private static readonly Keys[] DirectKeys =
     [
-        Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9
+        Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9, Keys.D0
     ];
 
     /// <summary>
     ///     The page's options in list order: the attract cycle's own screens in the order the cycle
     ///     shows them (notes §94/§95), then the two service pages — the port's control definitions
-    ///     and the arcade's GAME ADJUSTMENT settings (notes §131) — then the SOUND TEST page and the SPEECH TEST
+    ///     and the arcade's GAME ADJUSTMENT settings (notes §131) — then the SPRITE TEST page, the SOUND TEST page and the SPEECH TEST
     ///     page (notes §149).
     /// </summary>
     private static readonly string[] Options =
@@ -81,6 +81,7 @@ public sealed class DeveloperToolsState : IGameState
         "HIGH SCORES",
         "DEFINE INPUTS",
         "GAME ADJUSTMENT",
+        "SPRITE TEST",
         "SOUND TEST",
         "SPEECH TEST"
     ];
@@ -181,48 +182,33 @@ public sealed class DeveloperToolsState : IGameState
     /// <summary>Leaves the page for the screen the highlighted option names.</summary>
     private void Choose(int line, GameStateManager gameStateManager)
     {
-        switch (line)
-        {
-            case 0:
-                // The title page as the cabinet prints it: its own pane, held open (notes §107).
-                gameStateManager.TransitionTo(new TitleScreenState(_gameServices, TitleTextPane.Arcade));
-                break;
+        gameStateManager.TransitionTo(CreateScreen(line));
+    }
 
-            case 1:
-                // The title page on the pane that carries the port's credit.
-                gameStateManager.TransitionTo(new TitleScreenState(_gameServices, TitleTextPane.Port));
-                break;
-
-            case 2:
-                gameStateManager.TransitionTo(new StorylineState(_gameServices));
-                break;
-
-            case 3:
-                gameStateManager.TransitionTo(new AttractState(_gameServices));
-                break;
-
-            case 4:
-                gameStateManager.TransitionTo(new HighScoreTableState(_gameServices));
-                break;
-
-            case 5:
-                gameStateManager.TransitionTo(new DefineInputsState(_gameServices, _controlSettingsStore));
-                break;
-
-            case 6:
-                // The arcade's service-mode settings: the gameplay adjustments (notes §131).
-                gameStateManager.TransitionTo(new SettingsState(_gameServices, _gameSettingsStore));
-                break;
-
-            case 7:
-                gameStateManager.TransitionTo(new SoundTestState(_gameServices));
-                break;
-
-            case 8:
-                // Port only: the speech lines, one at a time (notes §149).
-                gameStateManager.TransitionTo(new SpeechTestState(_gameServices));
-                break;
-        }
+    /// <summary>Makes the screen an option opens.</summary>
+    /// <param name="line">The option's place in <see cref="Options" />.</param>
+    /// <returns>The screen.</returns>
+    internal IGameState CreateScreen(int line)
+    {
+        Func<IGameState>[] screenMakers =
+        [
+            // The title page as the cabinet prints it: its own pane, held open (notes §107).
+            () => new TitleScreenState(_gameServices, TitleTextPane.Arcade),
+            // The title page on the pane that carries the port's credit.
+            () => new TitleScreenState(_gameServices, TitleTextPane.Port),
+            () => new StorylineState(_gameServices),
+            () => new AttractState(_gameServices),
+            () => new HighScoreTableState(_gameServices),
+            () => new DefineInputsState(_gameServices, _controlSettingsStore),
+            // The arcade's service-mode settings: the gameplay adjustments (notes §131).
+            () => new SettingsState(_gameServices, _gameSettingsStore),
+            // Port only: every sprite, animating as it does in the game.
+            () => new SpriteTestState(_gameServices),
+            () => new SoundTestState(_gameServices),
+            // Port only: the speech lines, one at a time (notes §149).
+            () => new SpeechTestState(_gameServices)
+        ];
+        return screenMakers[line]();
     }
 
     /// <summary>
