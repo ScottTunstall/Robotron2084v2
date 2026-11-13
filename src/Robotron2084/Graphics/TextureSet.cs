@@ -148,6 +148,7 @@ public sealed class TextureSet
         LargeTitleLettersCoreTexture = textureSource.Load("Sprites/Title_LargeTitleLetters_Core");
         LargeTitleLettersRimTexture = textureSource.Load("Sprites/Title_LargeTitleLetters_Rim");
         Title2084Texture = textureSource.Load("Sprites/Title_2084");
+        MainMenuRobotTexture = textureSource.Load("Sprites/MainMenuRobot");
         WilliamsLogoTexture = textureSource.Load("Sprites/WilliamsLogo");
 
         LaserBarTexture = textureSource.Create(6, 1, TextureFactory.BuildLaserBarPattern(Color.White));
@@ -324,6 +325,12 @@ public sealed class TextureSet
     ///     large title letters cycles.
     /// </summary>
     public Texture2D Title2084Texture { get; }
+
+    /// <summary>
+    ///     The robot at the top of the menu page: a pixel-art picture of the cabinet art's robot, in its own colours,
+    ///     with the sky cut away. Port only.
+    /// </summary>
+    public Texture2D MainMenuRobotTexture { get; }
 
     /// <summary>
     ///     The attract page's large title letters — "ROBOTRON:" — as two WHITE MASKS at 1x arcade pixels,

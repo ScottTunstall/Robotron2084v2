@@ -189,6 +189,7 @@ public static class TexturePaths
         "Sprites/Hulk_7",
         "Sprites/Hulk_8",
         "Sprites/Hulk_9",
+        "Sprites/MainMenuRobot",
         "Sprites/Mikey_1",
         "Sprites/Mikey_10",
         "Sprites/Mikey_11",
