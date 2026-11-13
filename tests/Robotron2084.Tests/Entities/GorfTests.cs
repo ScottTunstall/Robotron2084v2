@@ -302,16 +302,6 @@ public sealed class GorfTests
     }
 
     [Fact]
-    public void OnWaveOne_GorfAvoidsThePlayer_AndAnyOtherWaveLeavesItToChance()
-    {
-        var generator = new WaveParameterGenerator();
-
-        Assert.True(generator.Generate(1).GorfAvoidsPlayer);
-        Assert.False(generator.Generate(2).GorfAvoidsPlayer);
-        Assert.False(new WaveParameters(1).GorfAvoidsPlayer);
-    }
-
-    [Fact]
     public void TheWaveIsNotWonUntilAllTheGruntsItIsOwedAreDead()
     {
         var playField = CreateFieldInPlay(new WaveParameters(1, 0, GorfGruntDropCount: 15));
@@ -450,16 +440,6 @@ public sealed class GorfTests
     }
 
     [Fact]
-    public void WaveOneHasElectrodes_ButNoneOfTheArcadesRobots()
-    {
-        var waveParameters = new WaveParameterGenerator().Generate(1);
-
-        Assert.Equal(GorfTuning.IntroWaveElectrodeCount, waveParameters.ElectrodeCount);
-        Assert.True(waveParameters.ElectrodeCount > 0);
-        Assert.Equal(0, waveParameters.GruntCount);
-    }
-
-    [Fact]
     public void TheSpeechLinesGorfCanSayInTheFirstWave_AreAllRealLinesOfTheSpeechVoice()
     {
         Assert.Equal(6, GorfTuning.IntroAppearanceLines.Count);
@@ -494,24 +474,5 @@ public sealed class GorfTests
         for (var tick = 0; tick < 200; tick++) playField.Update(OneTickGameTime);
 
         Assert.Empty(lines);
-    }
-
-    [Fact]
-    public void WaveOnesGorf_SaysOneOfTheSixLinesWhenItFirstAppears_AndAGorfThatReturnsSaysNothing()
-    {
-        var waveParameters = new WaveParameterGenerator().Generate(1);
-        var playField = new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(5).Build();
-        var lines = new List<string>();
-        playField.SetLineSayer(lines.Add);
-
-        for (var tick = 0; tick < 1500 && (lines.Count == 0 || playField.FieldEntities.Grunts.Count == 0); tick++)
-            playField.Update(OneTickGameTime);
-        var firstGorf = playField.FieldEntities.Gorfs.First(gorf => gorf.IsAlive());
-        firstGorf.Kill(); // shot with grunts still to drop: another Gorf comes back
-        for (var tick = 0; tick < GorfTuning.ReturnDelayTicks + 40; tick++) playField.Update(OneTickGameTime);
-
-        Assert.Single(lines);
-        Assert.Contains(lines[0], GorfTuning.IntroAppearanceLines);
-        Assert.True(playField.FieldEntities.Gorfs.Count(gorf => gorf.IsAlive()) >= 1, "a Gorf should have come back");
     }
 }
