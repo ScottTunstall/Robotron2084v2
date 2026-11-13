@@ -16,7 +16,7 @@ namespace Robotron2084.Entities;
 /// <seealso cref="PlayerLaser" />
 /// <remarks>
 ///     It has no <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. <see cref="_deathArcadeFrameTimer" /> times the stages of its death,
-///     <see cref="_walkAnimationTicks" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> each animation frame is shown, and
+///     <see cref="_walkAnimationCountUp" /> counts the arcade frames each animation frame is shown, and
 ///     <see cref="_invincibilityFlickerTicks" /> counts the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> of its blinking.
 ///     <list type="bullet">
 ///         <item>
@@ -29,10 +29,20 @@ namespace Robotron2084.Entities;
 public sealed class Player : IEntity, IAnimationFrameSource
 {
     /// <summary>
-    ///     How many <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> of walking each animation
-    ///     frame is shown for.
+    ///     How many <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">arcade frames</see> of walking each
+    ///     animation frame is shown for.
     /// </summary>
-    private const int WalkAnimationIntervalTicks = 3;
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRF.ASM</c> <c>PLAYER</c>. The routine runs once each arcade frame, and counts up to
+    ///             this while the player moves; the next animation frame shows when the count starts again from 0. A
+    ///             player standing still does not count.
+    ///         </item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>MOVE_PLAYER</c>, <c>$300B</c> to <c>$302E</c>.</item>
+    ///     </list>
+    /// </remarks>
+    internal const int WalkAnimationIntervalArcadeFrames = 2;
 
     /// <summary>
     ///     How big the player is, in port pixels. It is the size of the player's sprite.
@@ -73,8 +83,14 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     private IntVector2 _position;
 
-    private int
-                                        _walkAnimationTicks = 1; // How many ticks of walking the current walk animation frame has been shown for.
+    /// <summary>
+    ///     How many arcade frames of walking the animation frame showing has been shown for, counting from 0 and starting
+    ///     again at <see cref="WalkAnimationIntervalArcadeFrames" />. The first animation frame has already been shown for one.
+    /// </summary>
+    private int _walkAnimationCountUp = 1;
+
+    /// <summary>Times the arcade frames the walk animation counts.</summary>
+    private readonly ArcadeFrameTimer _walkAnimationArcadeFrameTimer = new();
 
     private int _walkCycleIndex;
 
@@ -273,8 +289,23 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <remarks>The arcade numbers its animation frames from 1 to 12, so the arcade's number is one more than this.</remarks>
     internal int GetWalkAnimationFrameIndex()
     {
-        return (int)_walkSequence * 3 + WalkCycle[_walkCycleIndex];
+        return GetWalkAnimationFrameIndex(_walkSequence, _walkCycleIndex);
     }
+
+    /// <summary>
+    ///     Works out which animation frame a walk shows at a step of its cycle, as a place in
+    ///     <see cref="TextureSet.PlayerAnimationFrameTextures" />.
+    /// </summary>
+    /// <param name="walkSequence">The walk.</param>
+    /// <param name="walkCycleIndex">The step of the walk's cycle, from 0 to <see cref="WalkCycleLength" /> less 1.</param>
+    /// <returns>The place of the animation frame, counting from 0.</returns>
+    internal static int GetWalkAnimationFrameIndex(WalkSequence walkSequence, int walkCycleIndex)
+    {
+        return (int)walkSequence * 3 + WalkCycle[walkCycleIndex];
+    }
+
+    /// <summary>How many steps a walk's cycle has before it starts again.</summary>
+    internal static int WalkCycleLength => WalkCycle.Length;
 
     /// <summary>Starts the death animation, even when <see cref="InvincibleForTesting" /> is on.</summary>
     internal void StartDeathForTesting()
@@ -389,29 +420,35 @@ public sealed class Player : IEntity, IAnimationFrameSource
                                               PlayerTuning.InvincibilityFlickerHiddenTicks);
     }
 
-    /// <summary>Moves the walk animation on. When the move stick is not being pushed, the animation frame stays as it is.</summary>
+    /// <summary>
+    ///     Moves the walk animation on, once each arcade frame, as the arcade does. When the move stick is not being
+    ///     pushed, the animation frame stays as it is and the count stops.
+    /// </summary>
     /// <param name="move">The way the move stick is pushed: left, right or neither, and up, down or neither.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRF.ASM</c> <c>PLAYER</c>.</item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>MOVE_PLAYER</c>, <c>$2FFC</c> to <c>$302E</c>.</item>
+    ///     </list>
+    /// </remarks>
     private void AdvanceWalkAnimation(IntVector2 move)
     {
         if (move == IntVector2.Zero) return;
+        if (!_walkAnimationArcadeFrameTimer.Tick(ArcadeClock.MoveIntervalArcadeFrames)) return;
 
         var walkSequence = GetWalkSequence(FacingDirection);
         if (walkSequence != _walkSequence)
         {
-            // The Player has turned, so the walk starts again from the first animation frame for the new direction.
+            // The Player has turned, so the walk starts again from its first animation frame, shown at once.
             _walkSequence = walkSequence;
             _walkCycleIndex = 0;
-            _walkAnimationTicks = 1;
+            _walkAnimationCountUp = 1;
+            return;
         }
-        else if (_walkAnimationTicks >= WalkAnimationIntervalTicks)
-        {
-            _walkAnimationTicks = 1;
-            _walkCycleIndex = (_walkCycleIndex + 1) % WalkCycle.Length;
-        }
-        else
-        {
-            _walkAnimationTicks++;
-        }
+
+        if (_walkAnimationCountUp == 0) _walkCycleIndex = (_walkCycleIndex + 1) % WalkCycle.Length;
+
+        _walkAnimationCountUp = (_walkAnimationCountUp + 1) % WalkAnimationIntervalArcadeFrames;
     }
 
     /// <summary>

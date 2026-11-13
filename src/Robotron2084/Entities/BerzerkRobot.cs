@@ -24,7 +24,7 @@ namespace Robotron2084.Entities;
 public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts. It is the same as a grunt's.</summary>
-    private const int BeatIntervalArcadeFrames = 4;
+    internal const int BeatIntervalArcadeFrames = 4;
 
     /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the robot waits between steps, when it is not told a number. It is the same as a grunt's.</summary>
     private const int DefaultMoveIntervalMaxBeats = 15;
@@ -132,7 +132,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     {
         if (!_hasMoved) return _textureSet.BerzerkRobotIdleAnimationFrameTextures[_animationStep % _textureSet.BerzerkRobotIdleAnimationFrameTextures.Length];
 
-        var frames = GetWalkFrames(WalkSequence);
+        var frames = GetWalkFrames(_textureSet, WalkSequence);
         return frames[GetWalkFrameIndex(WalkSequence, _animationStep)];
     }
 
@@ -170,6 +170,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>Works out which animation frame of a walk to show.</summary>
+    /// <param name="textureSet">The textures the frames come from.</param>
     /// <param name="walkSequence">The way the robot is walking.</param>
     /// <param name="animationStep">How many steps the robot has taken.</param>
     /// <returns>The place of the animation frame in that walk's set.</returns>
@@ -230,15 +231,16 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>Gets the set of animation frames for a walk.</summary>
+    /// <param name="textureSet">The textures the frames come from.</param>
     /// <param name="walkSequence">The way the robot is walking.</param>
-    private Texture2D[] GetWalkFrames(WalkSequence walkSequence)
+    internal static Texture2D[] GetWalkFrames(TextureSet textureSet, WalkSequence walkSequence)
     {
         return walkSequence switch
         {
-            WalkSequence.Right => _textureSet.BerzerkRobotWalkRightAnimationFrameTextures,
-            WalkSequence.Left => _textureSet.BerzerkRobotWalkLeftAnimationFrameTextures,
-            WalkSequence.Up => _textureSet.BerzerkRobotWalkUpAnimationFrameTextures,
-            _ => _textureSet.BerzerkRobotWalkDownAnimationFrameTextures
+            WalkSequence.Right => textureSet.BerzerkRobotWalkRightAnimationFrameTextures,
+            WalkSequence.Left => textureSet.BerzerkRobotWalkLeftAnimationFrameTextures,
+            WalkSequence.Up => textureSet.BerzerkRobotWalkUpAnimationFrameTextures,
+            _ => textureSet.BerzerkRobotWalkDownAnimationFrameTextures
         };
     }
 

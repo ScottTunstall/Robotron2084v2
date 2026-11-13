@@ -22,7 +22,7 @@ namespace Robotron2084.Entities;
 public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>How long each shrivel animation frame is shown for.</summary>
-    private static readonly int[] ShrivelIntervalArcadeFrames = [6, 3, 2];
+    internal static readonly int[] ShrivelIntervalArcadeFrames = [6, 3, 2];
 
     /// <summary>
     ///     How big the electrode is, in port pixels. It is the size of the sprite for this wave's shape of electrode.

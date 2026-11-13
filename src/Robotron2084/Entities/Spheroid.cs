@@ -131,7 +131,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
     ///     </list>
     /// </remarks>
-    private const int SpinLastAnimationFrame = 4;
+    internal const int SpinLastAnimationFrame = 4;
 
     /// <summary>
     ///     How big the spheroid is, in port pixels. It is the size of the spheroid's sprite.

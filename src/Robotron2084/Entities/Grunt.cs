@@ -23,7 +23,7 @@ namespace Robotron2084.Entities;
 public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
-    private const int BeatIntervalArcadeFrames = 4;
+    internal const int BeatIntervalArcadeFrames = 4;
 
     /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a grunt waits between steps, when it is not told a number.</summary>
     private const int DefaultMoveIntervalMaxBeats = 15;
@@ -47,7 +47,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     private const int LivePollArcadeFrames = 2;
 
     /// <summary>How many walk animation frames a grunt has.</summary>
-    private const int WalkAnimationFrameCount = 4;
+    internal const int WalkAnimationFrameCount = 4;
 
     /// <summary>
     ///     How big the grunt is, in port pixels. It is the size of the grunt's sprite.

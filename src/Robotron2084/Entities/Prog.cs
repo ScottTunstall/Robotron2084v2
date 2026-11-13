@@ -39,7 +39,7 @@ public sealed class Prog : IExplodable, IRemovable
     ///     </list>
     ///     The arcade runs the prog's routine this often.
     /// </remarks>
-    private const int BeatIntervalArcadeFrames = 3;
+    internal const int BeatIntervalArcadeFrames = 3;
 
     /// <summary>The nearest to the right wall, in columns, that the top-left corner of a prog's explosion may be.</summary>
     /// <remarks>
@@ -129,7 +129,7 @@ public sealed class Prog : IExplodable, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
     ///     </list>
     /// </remarks>
-    private const int StepXColumns = 2;
+    internal const int StepXColumns = 2;
 
     /// <summary>How far a prog goes on a step up or down, in rows.</summary>
     /// <remarks>
@@ -393,15 +393,37 @@ public sealed class Prog : IExplodable, IRemovable
     /// </summary>
     internal int GetWalkAnimationFrameIndex()
     {
-        var walkSequence = _direction switch
+        return GetWalkAnimationFrameIndex(GetWalkSequence(_direction), _walkCycleIndex);
+    }
+
+    /// <summary>Works out which walk a prog shows for the way it is going.</summary>
+    /// <param name="direction">The way the prog is going.</param>
+    /// <returns>The walk to show. A prog only goes left, right, up or down, so any other way shows the up walk.</returns>
+    internal static WalkSequence GetWalkSequence(Direction8 direction)
+    {
+        return direction switch
         {
             Direction8.Left => WalkSequence.Left,
             Direction8.Right => WalkSequence.Right,
             Direction8.Down => WalkSequence.Down,
             _ => WalkSequence.Up
         };
-        return (int)walkSequence * 3 + WalkCycle[_walkCycleIndex];
     }
+
+    /// <summary>
+    ///     Works out which animation frame a walk shows at a step of its cycle, as a place in the prog's family member's
+    ///     animation frames.
+    /// </summary>
+    /// <param name="walkSequence">The walk.</param>
+    /// <param name="walkCycleIndex">The step of the walk's cycle, from 0 to <see cref="WalkCycleLength" /> less 1.</param>
+    /// <returns>The place of the animation frame, counting from 0.</returns>
+    internal static int GetWalkAnimationFrameIndex(WalkSequence walkSequence, int walkCycleIndex)
+    {
+        return (int)walkSequence * 3 + WalkCycle[walkCycleIndex];
+    }
+
+    /// <summary>How many steps a walk's cycle has before it starts again.</summary>
+    internal static int WalkCycleLength => WalkCycle.Length;
 
     /// <summary>
     ///     Says whether a box is wholly inside the playfield. If the prog's next step would not be, the prog does not

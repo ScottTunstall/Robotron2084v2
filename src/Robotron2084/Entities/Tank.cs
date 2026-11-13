@@ -209,14 +209,18 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_TANK</c> (<c>$4D99</c>).</item>
     ///     </list>
     /// </remarks>
-    internal int TreadFrameIndex
+    internal int TreadFrameIndex =>
+        GetTreadFrameIndex(_treadAnimationFrameCounter, _textureSet.TankAnimationFrameTextures.Length, _stepDirection.X < 0);
+
+    /// <summary>Works out which tread animation frame a tank shows, as a place in <see cref="TextureSet.TankAnimationFrameTextures" />.</summary>
+    /// <param name="treadAnimationFrameCounter">How many beats the treads have moved on, counting from 0.</param>
+    /// <param name="animationFrameCount">How many tread animation frames there are.</param>
+    /// <param name="isGoingLeft">True when the tank is going left, which plays the treads backwards.</param>
+    /// <returns>The place of the animation frame, counting from 0.</returns>
+    internal static int GetTreadFrameIndex(int treadAnimationFrameCounter, int animationFrameCount, bool isGoingLeft)
     {
-        get
-        {
-            var animationFrameCount = _textureSet.TankAnimationFrameTextures.Length;
-            var forward = _treadAnimationFrameCounter % animationFrameCount;
-            return _stepDirection.X < 0 ? animationFrameCount - 1 - forward : forward;
-        }
+        var forward = treadAnimationFrameCounter % animationFrameCount;
+        return isGoingLeft ? animationFrameCount - 1 - forward : forward;
     }
 
     /// <summary>

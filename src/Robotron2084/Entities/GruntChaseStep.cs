@@ -53,7 +53,7 @@ internal static class GruntChaseStep
     private static readonly int RowPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
     /// <summary>How far one step moves a robot sideways, in port pixels.</summary>
-    private static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(StepColumns);
+    internal static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(StepColumns);
 
     /// <summary>How far one step moves a robot up or down, in port pixels.</summary>
     private static readonly int StepYPixels = ScreenSize.ToPortPixelsFromArcadePixels(StepRows);

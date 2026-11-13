@@ -36,7 +36,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>INITIALISE_FAMILY_MEMBERS</c> (<c>$02B2</c>).</item>
     ///     </list>
     /// </remarks>
-    private const int BeatIntervalArcadeFrames = 16;
+    internal const int BeatIntervalArcadeFrames = 16;
 
     /// <summary>
     ///     The most <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> a family member waits before
@@ -51,7 +51,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     private const int PossibleDirections = 8;
 
     /// <summary>How many steps each direction block of the walk table has.</summary>
-    private const int SubStepsPerDirection = 4;
+    internal const int SubStepsPerDirection = 4;
 
     /// <summary>
     ///     Which set of three animation frames each direction block uses. Walking diagonally uses the left set or the
@@ -359,8 +359,8 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     {
         StepCount++;
 
-        var (dx, dy, frame) = Steps[(_directionBlock * SubStepsPerDirection) + _subStep];
-        _animationFrameIndex = AnimationFramesPerSet * AnimationFrameGroupByDirection[_directionBlock] + frame;
+        var (dx, dy, _) = Steps[(_directionBlock * SubStepsPerDirection) + _subStep];
+        _animationFrameIndex = GetWalkAnimationFrameIndex(_directionBlock, _subStep);
 
         // The walk table is in arcade pixels, so the step is changed to port pixels.
         var possibleNextPosition = _position + new IntVector2(dx, dy) * ScreenSize.ToPortPixelsFromArcadePixels(1);
@@ -375,6 +375,46 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
         _position = possibleNextPosition;
         _subStep = (_subStep + 1) % SubStepsPerDirection;
         if (--_newDirectionStepsRemaining <= 0) PickNewDirection();
+    }
+
+    /// <summary>
+    ///     Works out which animation frame a family member shows on a step of its walk, as a place in its own animation
+    ///     frames.
+    /// </summary>
+    /// <param name="directionBlock">The walk table's block for the way it is walking (<see cref="GetDirectionBlock" />).</param>
+    /// <param name="subStep">The step of the block, from 0 to <see cref="SubStepsPerDirection" /> less 1.</param>
+    /// <returns>The place of the animation frame, counting from 0.</returns>
+    internal static int GetWalkAnimationFrameIndex(int directionBlock, int subStep)
+    {
+        var frame = Steps[(directionBlock * SubStepsPerDirection) + subStep].Frame;
+        return AnimationFramesPerSet * AnimationFrameGroupByDirection[directionBlock] + frame;
+    }
+
+    /// <summary>Gets how far a step of a family member's walk goes sideways.</summary>
+    /// <param name="directionBlock">The walk table's block for the way it is walking (<see cref="GetDirectionBlock" />).</param>
+    /// <param name="subStep">The step of the block, from 0 to <see cref="SubStepsPerDirection" /> less 1.</param>
+    /// <returns>How far it goes, in arcade pixels: less than 0 to the left, more than 0 to the right.</returns>
+    internal static int GetSidewaysStepArcadePixels(int directionBlock, int subStep)
+    {
+        return Steps[(directionBlock * SubStepsPerDirection) + subStep].Dx;
+    }
+
+    /// <summary>Works out which block of the walk table is the walk in a direction.</summary>
+    /// <param name="direction">The way the family member walks.</param>
+    /// <returns>The block, from 0 to 7, in the walk table's order: left, right, down, up, then the four diagonals.</returns>
+    internal static int GetDirectionBlock(Direction8 direction)
+    {
+        return direction switch
+        {
+            Direction8.Left => 0,
+            Direction8.Right => 1,
+            Direction8.Down => 2,
+            Direction8.Up => 3,
+            Direction8.UpLeft => 4,
+            Direction8.UpRight => 5,
+            Direction8.DownRight => 6,
+            _ => 7
+        };
     }
 
     /// <summary>Picks a new direction at random, and picks at random how many steps to take before the next change.</summary>

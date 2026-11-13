@@ -175,7 +175,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///         <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>).</item>
     ///     </list>
     /// </remarks>
-    private static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(1);
+    internal static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(1);
 
     /// <summary>How far the brain moves up or down on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, in port pixels.</summary>
     /// <remarks>
@@ -280,7 +280,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
         _targetSlot = targetFamilySlot;
-        _beatIntervalArcadeFrames = BeatExecutionArcadeFrames + beatWaitArcadeFrames;
+        _beatIntervalArcadeFrames = GetBeatIntervalArcadeFrames(beatWaitArcadeFrames);
         _fireBeatsRemaining = ArcadeRandom.PickUpTo(random, fireIntervalBeats);
     }
 
@@ -513,7 +513,30 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </summary>
     internal int GetWalkAnimationFrameIndex()
     {
-        return (int)_walkSequence * 3 + WalkCycle[_walkCycleIndex];
+        return GetWalkAnimationFrameIndex(_walkSequence, _walkCycleIndex);
+    }
+
+    /// <summary>
+    ///     Works out which animation frame a walk shows at a step of its cycle, as a place in
+    ///     <see cref="TextureSet.BrainAnimationFrameTextures" />.
+    /// </summary>
+    /// <param name="walkSequence">The walk.</param>
+    /// <param name="walkCycleIndex">The step of the walk's cycle, from 0 to <see cref="WalkCycleLength" /> less 1.</param>
+    /// <returns>The place of the animation frame, counting from 0.</returns>
+    internal static int GetWalkAnimationFrameIndex(WalkSequence walkSequence, int walkCycleIndex)
+    {
+        return (int)walkSequence * 3 + WalkCycle[walkCycleIndex];
+    }
+
+    /// <summary>How many steps a walk's cycle has before it starts again.</summary>
+    internal static int WalkCycleLength => WalkCycle.Length;
+
+    /// <summary>Works out the time from one of a brain's beats to the next.</summary>
+    /// <param name="beatWaitArcadeFrames">The wave's wait between beats, in arcade frames.</param>
+    /// <returns>The time from one beat to the next, in arcade frames: the wait, plus the frame the beat itself takes.</returns>
+    internal static int GetBeatIntervalArcadeFrames(int beatWaitArcadeFrames)
+    {
+        return BeatExecutionArcadeFrames + beatWaitArcadeFrames;
     }
 
     /// <summary>
@@ -549,7 +572,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>Gets the walk that matches a step. Left and right win over up and down.</summary>
     /// <param name="step">The step the brain tried to take.</param>
     /// <returns>The walk for the way the step goes.</returns>
-    private static WalkSequence GetWalkSequence(IntVector2 step)
+    internal static WalkSequence GetWalkSequence(IntVector2 step)
     {
         var isMovingSideways = step.X != 0;
         if (isMovingSideways)

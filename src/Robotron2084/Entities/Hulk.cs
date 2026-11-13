@@ -439,9 +439,18 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         _position = position;
     }
 
+    /// <summary>Gets how far a sideways step goes. Sideways steps go short, long, short, long.</summary>
+    /// <param name="walkCycleIndex">The step of the walk's cycle, counting from 0.</param>
+    /// <returns>The length of the step, in arcade pixels.</returns>
+    internal static int GetSidewaysStepArcadePixels(int walkCycleIndex)
+    {
+        var isShortStep = walkCycleIndex % 2 == 0;
+        return isShortStep ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels;
+    }
+
     /// <summary>Gets the walk animation frames for a direction, in the order they are shown.</summary>
     /// <param name="direction">The way the hulk is walking.</param>
-    private static int[] GetFrames(Direction8 direction)
+    internal static int[] GetFrames(Direction8 direction)
     {
         return direction switch
         {
@@ -463,12 +472,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         // Show this step's walk animation frame, then move. Sideways steps go short, long, short, long.
         _animationFrameIndex = GetFrames(Direction)[_walkCycleIndex];
         var stepArcadePixels = VerticalStepArcadePixels;
-        if (_isMovingHorizontally)
-        {
-            var isShortStep = _walkCycleIndex % 2 == 0;
-            stepArcadePixels = SidewaysLongStepArcadePixels;
-            if (isShortStep) stepArcadePixels = SidewaysShortStepArcadePixels;
-        }
+        if (_isMovingHorizontally) stepArcadePixels = GetSidewaysStepArcadePixels(_walkCycleIndex);
 
         _walkCycleIndex = (_walkCycleIndex + 1) % WalkPatternLength;
         var next = _position + Direction.ToIntVector() * ScreenSize.ToPortPixelsFromArcadePixels(stepArcadePixels);

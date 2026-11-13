@@ -59,7 +59,6 @@ public sealed class Gorf : IExplodable, IRemovable
     private int _pendingDropCount;
     private string? _lineToSay;
     private int _stepCount;
-    private int _stepInHop;
 
     /// <summary>
     ///     Makes a Gorf just off the screen, on a random side and at a random height, and works out where on its way it
@@ -225,6 +224,18 @@ public sealed class Gorf : IExplodable, IRemovable
         playField.SayLine(lineName);
     }
 
+    /// <summary>
+    ///     Gets how high above the ground Gorf is after a number of steps. Each hop takes <see cref="GorfTuning.HopSteps" />
+    ///     steps, and Gorf is back on the ground at the end of each.
+    /// </summary>
+    /// <param name="stepsTaken">How many steps Gorf has taken, counting from 1.</param>
+    /// <returns>The height, in port pixels.</returns>
+    internal static int GetHopRisePixels(int stepsTaken)
+    {
+        var stepInHop = (stepsTaken - 1) % GorfTuning.HopSteps + 1;
+        return GorfPath.GetHopHeight(stepInHop, GorfTuning.HopSteps, HopPixels);
+    }
+
     /// <summary>How many more times it will drop grunts.</summary>
     internal int GetDropStopsRemaining()
     {
@@ -239,10 +250,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private void ActOnBeat(PlayField playField)
     {
         _stepCount++;
-        _stepInHop++;
-        var height = GorfPath.GetHopHeight(_stepInHop, GorfTuning.HopSteps, HopPixels);
-        _position = new IntVector2(_position.X + _directionSignX * StepPixels, _groundY - height);
-        if (_stepInHop == GorfTuning.HopSteps) _stepInHop = 0;
+        _position = new IntVector2(_position.X + _directionSignX * StepPixels, _groundY - GetHopRisePixels(_stepCount));
 
         while (_dropSteps.Count > 0 && _stepCount >= _dropSteps.Peek())
         {
