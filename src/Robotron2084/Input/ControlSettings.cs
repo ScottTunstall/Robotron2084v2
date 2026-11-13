@@ -34,7 +34,7 @@ public sealed class ControlSettings
 
     /// <summary>
     ///     The keyboard keys that start player 1's game. Fixed, not rebindable: the arcade's START 1 /
-    ///     START 2 are cabinet buttons on their own keys, and the title screen offers F1/F2/F3 as well.
+    ///     START 2 are cabinet buttons on their own keys. On an attract screen they open the menu page.
     /// </summary>
     private const Keys StartOneKey = Keys.D1;
 
@@ -77,8 +77,8 @@ public sealed class ControlSettings
 
     /// <summary>
     ///     Reads one player's controls into the state the game consumes. The start buttons
-    ///     are NOT bindable (the arcade's START 1 / START 2 have their own keys, and the
-    ///     title also offers F1/F2/F3), so they stay hardwired here, as do the two
+    ///     are NOT bindable (the arcade's START 1 / START 2 have their own keys), so they stay
+    ///     hardwired here, as do the two
     ///     long-standing port aliases: Space as a fire button and <c>Insert</c> as the
     ///     skip-wave test key (<c>P</c> is PAUSE, not skip-wave).
     /// </summary>
