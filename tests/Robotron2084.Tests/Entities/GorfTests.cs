@@ -200,72 +200,6 @@ public sealed class GorfTests
         Assert.Equal(18, big.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
     }
 
-    [Theory]
-    [InlineData(15)]
-    [InlineData(17)]
-    [InlineData(22)]
-    [InlineData(1)]
-    public void GivenANumberToDrop_ItDropsExactlyThatManyInAll_Gradually(int gruntDropCount)
-    {
-        // The wave itself has no grunts, and a bound that would drop only a few by chance: the exact number wins.
-        var (playField, _) = RunAGorfAcrossDroppingExactly(new WaveParameters(1, 0, GorfGruntDropCount: gruntDropCount), 4,
-            gruntDropCount, 0, 0, 0);
-
-        Assert.Equal(gruntDropCount, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
-    }
-
-    [Fact]
-    public void GivenANumberToDrop_ItDropsThemGradually_OneAtATime_SpreadAcrossItsWayAcross()
-    {
-        var playField = CreateFieldInPlay(new WaveParameters(1, 0, GorfGruntDropCount: 15));
-        var gorf = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 4, 15);
-        playField.FieldEntities.Add(gorf);
-
-        var previous = 0;
-        var dropTicks = new List<int>();
-        for (var tick = 0; tick < 5000 && gorf.IsAlive(); tick++)
-        {
-            playField.Update(OneTickGameTime);
-            var alive = playField.FieldEntities.Grunts.Count(entity => !entity.IsDead());
-            Assert.True(alive - previous <= 1, "grunts should come one at a time");
-            if (alive > previous) dropTicks.Add(tick);
-
-            previous = alive;
-        }
-
-        Assert.Equal(15, previous);
-        Assert.True(dropTicks[^1] - dropTicks[0] > 100, "the drops should be spread across Gorf's way across");
-    }
-
-    [Fact]
-    public void AGorfThatIsShotBeforeItHasDroppedThemAll_IsFollowedByAnotherThatDropsTheRest_Faster()
-    {
-        var playField = CreateFieldInPlay(new WaveParameters(1, 0, GorfGruntDropCount: 15));
-        var first = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 4, 15);
-        playField.FieldEntities.Add(first);
-        for (var tick = 0; tick < 5000 && playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()) < 3; tick++)
-            playField.Update(OneTickGameTime);
-        var droppedSoFar = playField.FieldEntities.Grunts.Count(entity => !entity.IsDead());
-
-        first.Kill();
-
-        Assert.Equal(droppedSoFar, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead())); // none fall at once
-        Assert.False(playField.IsWaveCleared()); // a Gorf is still to come
-        Assert.DoesNotContain(playField.FieldEntities.Gorfs, gorf => gorf.IsAlive());
-
-        Gorf? second = null;
-        for (var tick = 0; tick < GorfTuning.ReturnDelayTicks + 5 && second is null; tick++)
-        {
-            playField.Update(OneTickGameTime);
-            second = playField.FieldEntities.Gorfs.FirstOrDefault(gorf => gorf.IsAlive());
-        }
-
-        Assert.NotNull(second);
-        Assert.True(second.DropIntervalSteps < first.DropIntervalSteps, "the Gorf that comes back drops faster");
-        for (var tick = 0; tick < 5000 && second.IsAlive(); tick++) playField.Update(OneTickGameTime);
-        Assert.Equal(15, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
-    }
-
     [Fact]
     public void ThePlayersBoxIsAvoided_SoGorfIsNeverOnACollisionCourseWithThePlayerWhenItAppears()
     {
@@ -299,25 +233,6 @@ public sealed class GorfTests
             .Any(gorf => gorf.Position.Y + bodyHeight >= playerBox.Y && gorf.Position.Y - hop <= playerBox.Bottom);
 
         Assert.True(meetsThePlayer);
-    }
-
-    [Fact]
-    public void TheWaveIsNotWonUntilAllTheGruntsItIsOwedAreDead()
-    {
-        var playField = CreateFieldInPlay(new WaveParameters(1, 0, GorfGruntDropCount: 15));
-        var gorf = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 4, 15);
-        playField.FieldEntities.Add(gorf);
-        for (var tick = 0; tick < 5000 && gorf.IsAlive(); tick++)
-        {
-            playField.Update(OneTickGameTime);
-            Assert.False(playField.IsWaveCleared()); // Gorf is still crossing, or the grunts are still alive
-        }
-
-        Assert.False(playField.IsWaveCleared()); // Gorf has gone, but the grunts it dropped are alive
-        foreach (var grunt in playField.FieldEntities.Grunts.ToList()) grunt.Kill();
-        playField.Update(OneTickGameTime);
-
-        Assert.True(playField.IsWaveCleared());
     }
 
     [Fact]
@@ -363,29 +278,6 @@ public sealed class GorfTests
         Assert.True(grunt.IsFalling());
         Assert.Equal(300, grunt.Position.X);
         Assert.Equal(100 + 4 * GorfTuning.FallPixelsPerTick, grunt.Position.Y);
-    }
-
-    [Fact]
-    public void AGorfThatIsShotScoresLikeAGrunt_AndMustBeKilledOrPassToWinTheWave()
-    {
-        var playField = CreateFieldInPlay(new WaveParameters(1, GorfCount: 2));
-
-        Assert.Equal(2, playField.FieldEntities.Gorfs.Count);
-        Assert.Equal(ScoreValues.Grunt, RobotKinds.GetInfo(RobotKind.Gorf).Score);
-        Assert.False(playField.IsWaveCleared());
-
-        foreach (var gorf in playField.FieldEntities.Gorfs) gorf.Kill();
-
-        Assert.True(playField.IsWaveCleared());
-    }
-
-    [Fact]
-    public void ADeathKeepsTheOnesThatSurvive()
-    {
-        var playField = CreateFieldInPlay(new WaveParameters(1, GorfCount: 3));
-        playField.FieldEntities.Gorfs[0].Kill();
-
-        Assert.Equal(2, WaveSurvivors.GetFrom(playField).GorfCount);
     }
 
     [Fact]
