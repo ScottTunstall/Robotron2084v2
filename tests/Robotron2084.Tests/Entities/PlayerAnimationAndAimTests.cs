@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
+using Robotron2084.Entities;
 using Robotron2084.Input;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -12,7 +13,7 @@ namespace Robotron2084.Tests.Entities;
 ///     (2026-09-12 playtest request). Port frame N = R5 frame N (ROM image
 ///     table $35EB + (N-1)*4, images $361B..$382B). Walk sequences: left
 ///     1,2,1,3 / right 4,5,4,6 / down 7,8,7,9 / up 10,11,10,12 (diagonals
-///     reuse the horizontal sequence), 3 ticks per frame, frozen while the
+///     reuse the horizontal sequence), 2 arcade frames per frame, frozen while the
 ///     stick is centred, wave start = frame 7 (first DOWN frame).
 /// </summary>
 public sealed class PlayerAnimationAndAimTests
@@ -31,22 +32,26 @@ public sealed class PlayerAnimationAndAimTests
     }
 
     [Fact]
-    public void Player_WalkCycle_IsThreeTicksPerFrame_InTheArcadeABACPattern()
+    public void Player_WalkCycle_IsTwoArcadeFramesPerFrame_InTheArcadeABACPattern()
     {
         var playField = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(-1, 0), false)));
         playField.SkipWaveStart();
 
-        // Left walk = frames 1,2,1,3 → PlayerAnimationFrames indices 0,1,0,2,
-        // each drawn for exactly 3 movement ticks.
-        int[] expected = { 0, 0, 0, 1, 1, 1, 0, 0, 0, 2, 2, 2 };
-
-        for (var tick = 0; tick < expected.Length; tick++)
+        // Two seconds of walking left: 100 arcade frames, so 100 runs of MOVE_PLAYER.
+        var ticks = 2 * ArcadeClock.PortTicksPerSecond;
+        var arcadeFrames = 2 * ArcadeClock.ArcadeFramesPerSecond;
+        List<int> runs = [playField.Player.GetWalkAnimationFrameIndex()];
+        for (var tick = 0; tick < ticks; tick++)
         {
             playField.Update(new GameTime());
-            Assert.True(
-                playField.Player.GetWalkAnimationFrameIndex() == expected[tick],
-                $"tick {tick + 1}: expected frame index {expected[tick]}, got {playField.Player.GetWalkAnimationFrameIndex()}");
+            var frame = playField.Player.GetWalkAnimationFrameIndex();
+            if (frame != runs[^1]) runs.Add(frame);
         }
+
+        // It starts on the first DOWN frame and turns to the left walk at once. Left walk = frames 1,2,1,3, which are
+        // PlayerAnimationFrames indices 0,1,0,2; after the turn the next frame shows every second arcade frame.
+        Assert.Equal([6, 0, 1, 0, 2, 0], runs.Take(6));
+        Assert.Equal(1 + 1 + (arcadeFrames - 1) / Player.WalkAnimationIntervalArcadeFrames, runs.Count);
     }
 
     [Fact]
