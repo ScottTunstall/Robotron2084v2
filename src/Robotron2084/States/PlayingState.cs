@@ -125,12 +125,12 @@ public sealed class PlayingState : IGameState
                 "PAUSED",
                 HudLayout.PausedMessageColumn,
                 HudLayout.PausedMessageRow,
-                GetMessagePaletteIndex());
+                WavePaletteTables.GetElectrodePaletteIndex(_gameSession.GetCurrent().Wave));
 
         if (_playerOutMessageTicks > 0)
         {
             // ROM string 75: "PLAYER n" at $3F79 then "GAME OVER" at $3E86.
-            var messagePaletteIndex = GetMessagePaletteIndex();
+            var messagePaletteIndex = WavePaletteTables.GetElectrodePaletteIndex(_gameSession.GetCurrent().Wave);
             ArcadeHud.DrawMessageText(spriteBatch, _textureSet, $"PLAYER {_playerOutNumber}",
                 HudLayout.PlayerTurnMessageColumn, HudLayout.PlayerGameOverMessageRow, messagePaletteIndex);
             ArcadeHud.DrawMessageText(spriteBatch, _textureSet, "GAME OVER", HudLayout.GameOverMessageColumn,
@@ -146,7 +146,7 @@ public sealed class PlayingState : IGameState
                 $"PLAYER {_gameSession.GetCurrent().Number}",
                 HudLayout.PlayerTurnMessageColumn,
                 HudLayout.PlayerTurnMessageRow,
-                GetMessagePaletteIndex());
+                WavePaletteTables.GetElectrodePaletteIndex(_gameSession.GetCurrent().Wave));
         }
     }
 
@@ -280,16 +280,6 @@ public sealed class PlayingState : IGameState
         // Bozo mercy first, then the difficulty adjustment — the ROM's own order ($2B26 before $2B7C).
         var waveParameters = ApplyBozoMode(_waveParameterGenerator.Generate(playerSlot.Wave), playerSlot);
         return DifficultyTuning.Apply(waveParameters, _gameSettings.Difficulty, playerSlot.Lives);
-    }
-
-    /// <summary>
-    ///     Gets the palette index of the wave's messages: the arcade's electrode colour for the wave. It is looked up by the
-    ///     arcade's wave number (<see cref="WaveNumbering" />), since the port's waves come one later.
-    /// </summary>
-    private int GetMessagePaletteIndex()
-    {
-        var arcadeWave = WaveNumbering.ToArcadeWave(_gameSession.GetCurrent().Wave);
-        return WavePaletteTables.GetElectrodePaletteIndex(arcadeWave);
     }
 
     /// <summary>
