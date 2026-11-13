@@ -12,7 +12,6 @@
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.5.1" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.5.1" PrivateAssets="all" />
-    <PackageReference Include="Roslynator.Analyzers" Version="5.0.0" PrivateAssets="all" />
   </ItemGroup>
 
 </Project>
