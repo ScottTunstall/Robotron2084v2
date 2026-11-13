@@ -52,8 +52,5 @@ public enum RobotKind
     CruiseMissile,
 
     /// <summary>A robot of the author's own that moves like a grunt. The arcade has no such robot.</summary>
-    BerzerkRobot,
-
-    /// <summary>A robot of the author's own that stands and flaps, and drops grunts. The arcade has no such robot.</summary>
-    Gorf
+    BerzerkRobot
 }

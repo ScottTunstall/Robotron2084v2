@@ -38,10 +38,6 @@ public static class WaveSurvivors
         {
             GruntCount = CountAlive(fieldEntities.Grunts),
             BerzerkRobotCount = CountAlive(fieldEntities.BerzerkRobots),
-            GorfCount = CountAlive(fieldEntities.Gorfs),
-            GorfGruntDropCount = 0, // a Gorf that starts again drops by chance: the drops already made are not counted
-            GorfAppearanceLines = null, // a Gorf that starts again is not appearing for the first time
-            PlayfieldWallsOpen = false, // the doors have done their part: what came through them is on the field
             ElectrodeCount = CountAlive(fieldEntities.Electrodes),
             MikeyCount = CountFamilyMembers(fieldEntities, FamilyMemberKind.Mikey),
             MommyCount = CountFamilyMembers(fieldEntities, FamilyMemberKind.Mommy),

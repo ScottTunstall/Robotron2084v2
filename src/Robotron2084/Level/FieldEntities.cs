@@ -327,7 +327,6 @@ public sealed class FieldEntities
             RobotKind.Electrode => Electrodes,
             RobotKind.Grunt => Grunts,
             RobotKind.BerzerkRobot => BerzerkRobots,
-            RobotKind.Gorf => Gorfs,
             RobotKind.Hulk => Hulks,
             RobotKind.Spheroid => Spheroids,
             RobotKind.Enforcer => Enforcers,

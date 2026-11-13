@@ -55,7 +55,6 @@ public sealed class PlayField : ICollisionScene
     private readonly LaserWallFlares _laserWallFlares = new();
     private readonly WaveMaterialisation _waveMaterialisation;
     private readonly MidWaveSpawner _midWaveSpawner;
-    private readonly WallDoors? _wallDoors;
     private Action<string> _lineSayer = Speech.Say;
     private readonly List<GorfReturn> _gorfReturns = [];
     private readonly PlayerAppear _playerAppear = new();
@@ -128,7 +127,6 @@ public sealed class PlayField : ICollisionScene
         _midWaveSpawner = new MidWaveSpawner(this, FieldEntities, random);
         _collisionResponder = new CollisionResponder(this);
         PlayfieldWall = new PlayfieldWall(innerBounds, wallColourCycle);
-        if (waveParameters.PlayfieldWallsOpen) _wallDoors = new WallDoors(innerBounds, random, SpawnDoorwayGrunt);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
         Player = new Player(TextureSet, playerStart, startingLives, random) { InvincibleForTesting = playerInvincibleForTesting };
@@ -280,8 +278,7 @@ public sealed class PlayField : ICollisionScene
     public void DrawWall(SpriteBatch spriteBatch)
     {
         PlayfieldWall.Draw(spriteBatch, TextureSet.WallPixelTexture,
-            GamePalette?.GetColour(WavePaletteTables.GetWallPaletteIndex(WaveParameters.WaveNumber)),
-            _wallDoors?.Doors);
+            GamePalette?.GetColour(WavePaletteTables.GetWallPaletteIndex(WaveParameters.WaveNumber)));
     }
 
     /// <summary>Lists the player's lasers that are in flight.</summary>
@@ -337,9 +334,8 @@ public sealed class PlayField : ICollisionScene
     /// </summary>
     public bool IsWaveCleared()
     {
-        var areDoorsDone = !(_wallDoors?.IsBusy() ?? false);
         var isNoGorfToReturn = _gorfReturns.Count == 0;
-        return FieldEntities.AreEnemiesGone() && areDoorsDone && isNoGorfToReturn;
+        return FieldEntities.AreEnemiesGone() && isNoGorfToReturn;
     }
 
     /// <summary>
@@ -525,7 +521,6 @@ public sealed class PlayField : ICollisionScene
         _laserWallFlares.Update();
 
         PlayfieldWall.Update(gameTime);
-        if (!RobotsFrozen()) _wallDoors?.Update();
         if (!RobotsFrozen()) LetGorfsReturn();
 
         Player.Update(gameTime, this);

@@ -19,15 +19,9 @@ namespace Robotron2084.Level;
 ///     can use. <c>MaxDropsX2</c> is the arcade's <c>ENFNUM</c>: a spheroid or quark picks a random number up to
 ///     it and drops half of it, rounded up. <c>TankCount</c> is the tanks already on the field when a life
 ///     starts. The wave table never has any, because quarks drop them, but a death keeps the ones that
-///     were alive (notes §134). <c>BerzerkRobotCount</c> and <c>GorfCount</c> are the author's own
-///     robots, which no wave has yet. <c>GorfGruntDropCount</c> is how many grunts in all each Gorf drops: 0 leaves
-///     it to chance, as in any other wave, and a number makes it drop exactly that many, shared over its stops.
-///     <c>PlayfieldWallsOpen</c> says whether doors open in the playfield's walls and let grunts in en masse (port only,
-///     notes §151). Any wave can have it. <c>GorfAvoidsPlayer</c> says that Gorf, when it appears, is never on the same
-///     level as the player, so it is not on a collision course with the player (port only, notes §152). Without it,
-///     Gorf may appear on the player's level and the player has to move out of its way. <c>GorfAppearanceLines</c> are
-///     speech lines (<c>Content/Speech/</c>), one of which, picked by chance, the wave's first Gorf says when it first
-///     appears; null says nothing (port only, notes §153). Times are counted in fiftieths of a second, and the port turns them into its
+///     were alive (notes §134). <c>BerzerkRobotCount</c> is the author's own
+///     robot, which no wave has yet.
+///     Times are counted in fiftieths of a second, and the port turns them into its
 ///     own ticks where they are used.</item>
 ///     </list>
 /// </remarks>
@@ -58,25 +52,8 @@ public sealed record WaveParameters(
     int QuarkMaxSpeed = 50,
     int EnemySpeedBonus = 0,
     int TankCount = 0,
-    int BerzerkRobotCount = 0,
-    int GorfCount = 0,
-    int GorfGruntDropCount = 0,
-    bool PlayfieldWallsOpen = false,
-    bool GorfAvoidsPlayer = false,
-    IReadOnlyList<string>? GorfAppearanceLines = null)
+    int BerzerkRobotCount = 0)
 {
-    /// <summary>Gets whether the wave has Gorf: the author's own robot, which the arcade's waves never have.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Port only.</item>
-    ///         <item>It is true when <see cref="GorfCount" /> is more than 0, so the flag and the count cannot disagree.</item>
-    ///     </list>
-    /// </remarks>
-    public bool HasGorf()
-    {
-        return GorfCount > 0;
-    }
-
     /// <summary>Makes the parameters for a wave from the arcade's wave table.</summary>
     /// <param name="waveNumber">The wave number.</param>
     /// <param name="waveTableRow">The wave table's row for it.</param>

@@ -151,16 +151,7 @@ public static class RobotKinds
             SoundTables.RobotHit,
             true,
             new BerzerkRobotWaveSpawner(),
-            RobotListSetUpOrder: 5),
-
-        // The author's own robot (notes §138.2): it stands and animates, and dies to a laser.
-        new(RobotKind.Gorf,
-            static parameters => parameters.GorfCount,
-            ScoreValues.Gorf,
-            static (playField, targetEntity, direction) => playField.KillWithStripExplosion(targetEntity, direction),
-            SoundTables.RobotHit,
-            true,
-            new GorfWaveSpawner())
+            RobotListSetUpOrder: 5)
     ];
 
     /// <summary>Finds the row for a kind.</summary>
