@@ -129,7 +129,7 @@ public sealed class RobotronGame : Game
         _controlSettings = _controlSettingsStore.Load();
 
         // The GAME ADJUSTMENT settings (notes §131) are read from settings.ini at
-        // startup and edited by the settings page (F5); the title hands them to the
+        // startup and edited by the settings page (SETTINGS on the menu page); the menu hands them to the
         // next game, so a change is live from the next START.
         _gameSettingsStore = new GameSettingsStore();
         _gameSettings = _gameSettingsStore.Load();
@@ -228,7 +228,7 @@ public sealed class RobotronGame : Game
     ///     in seconds rather than after the text crawl. They are live on the attract screens only: Insert is also
     ///     the skip-a-wave key and Delete clears a line on the DEFINE INPUTS page, so they must not act anywhere else.
     ///     Right and Left step through the whole attract sequence by hand (<see cref="AttractNavigation" />).
-    ///     The function keys are left to the game's own start, test and settings keys (F1/F2/F3, F4, F5, F6, F10) and
+    ///     The function keys are left to the menu page's keys (F1 to F5), the SPEECH TEST key (F6), F10 and
     ///     the display keys (F8, F11).
     /// </remarks>
     private void HandleAttractDeveloperKeys(KeyboardState keyboardState)
@@ -305,19 +305,16 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>
-    ///     The game's start keys, live on EVERY attract screen (notes §101): F1 one player, F2 two players
-    ///     alternating turns, F3 the arcade's two-player game (selected now, played later), F5 the GAME
-    ///     ADJUSTMENT page (notes §131), F4 the SOUND TEST page, and 5 drops a coin in the slot
-    ///     (the port has no credits, so it only makes the
-    ///     coin sound, one of the eight at random).
+    ///     The keys live on EVERY attract screen: Enter opens the menu page (<see cref="MainMenuState" />), where a
+    ///     game is started; 5 drops a coin in the slot (the port has no credits, so it only makes the coin sound, one of
+    ///     the eight at random); and F6 opens the SPEECH TEST page.
     ///     F10 is NOT one of them: it opens the DEVELOPER TOOLS page from every screen, attract screens
     ///     included (see <see cref="HandleDeveloperToolsKey" />).
     /// </summary>
     /// <param name="keyboardState">This tick's keyboard.</param>
     /// <remarks>
-    ///     Handling them here rather than in the title means the attract movie, the demo and the high
-    ///     score table can all be interrupted by a real player sitting down — or by the operator opening
-    ///     the settings.
+    ///     Handling them here rather than in each screen means the attract movie, the demo and the high score table can
+    ///     all be interrupted. Alt+Enter is the full-screen key, so Enter with Alt held does not open the menu.
     /// </remarks>
     private void HandleStartKeys(KeyboardState keyboardState)
     {
@@ -329,18 +326,9 @@ public sealed class RobotronGame : Game
             return;
         }
 
-        GameMode? mode = WasPressed(keyboardState, Keys.F1) ? GameMode.OnePlayer
-            : WasPressed(keyboardState, Keys.F2) ? GameMode.TwoPlayerAlternate
-            : WasPressed(keyboardState, Keys.F3) ? GameMode.TwoPlayerSimultaneous
-            : null;
-
-        if (mode is { } chosen)
-            _gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, chosen, _textureSet,
-                _highScoreStore, _random));
-        else if (WasPressed(keyboardState, Keys.F4))
-            _gameStateManager.TransitionTo(new SoundTestState(_gameServices));
-        else if (WasPressed(keyboardState, Keys.F5))
-            _gameStateManager.TransitionTo(new SettingsState(_gameServices, _gameSettingsStore));
+        var isAltHeld = keyboardState.IsKeyDown(Keys.LeftAlt) || keyboardState.IsKeyDown(Keys.RightAlt);
+        if (WasPressed(keyboardState, Keys.Enter) && !isAltHeld)
+            _gameStateManager.TransitionTo(new MainMenuState(_gameServices, _gameSettingsStore));
         else if (WasPressed(keyboardState, Keys.F6))
             _gameStateManager.TransitionTo(new SpeechTestState(_gameServices));
     }
