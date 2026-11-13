@@ -1,3 +1,4 @@
+using Robotron2084.Level;
 using Robotron2084.Persistence;
 using Xunit;
 
@@ -137,5 +138,24 @@ public sealed class GameSettingsStoreTests
 
         Assert.Equal(1, loaded.Difficulty);
         Assert.Equal(25, loaded.ExtraLifeEvery); // untouched
+    }
+
+    [Fact]
+    public void TheGameStyleIsClassicUnlessTheFileSaysExtended_AndAnythingElseIsIgnored()
+    {
+        Assert.Equal(GameStyle.Classic, GameSettingsStore.Parse(["[game]"]).GameStyle);
+        Assert.Equal(GameStyle.Extended, GameSettingsStore.Parse(["[game]", "gamestyle=1"]).GameStyle);
+        Assert.Equal(GameStyle.Classic, GameSettingsStore.Parse(["[game]", "gamestyle=0"]).GameStyle);
+        Assert.Equal(GameStyle.Classic, GameSettingsStore.Parse(["[game]", "gamestyle=7"]).GameStyle);
+    }
+
+    [Fact]
+    public void TheGameStyleSurvivesARoundTrip()
+    {
+        var gameSettings = new GameSettings { GameStyle = GameStyle.Extended };
+
+        var loaded = GameSettingsStore.Parse(GameSettingsStore.Write(gameSettings).Split('\n'));
+
+        Assert.Equal(GameStyle.Extended, loaded.GameStyle);
     }
 }

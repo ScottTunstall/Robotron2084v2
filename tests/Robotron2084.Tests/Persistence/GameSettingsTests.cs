@@ -1,3 +1,4 @@
+using Robotron2084.Level;
 using Robotron2084.Persistence;
 using Xunit;
 
@@ -131,5 +132,21 @@ public sealed class GameSettingsTests
     public void OnlyTheRomsFiveStopsAreValidExtraLifeValues(int value, bool expected)
     {
         Assert.Equal(expected, GameSettings.IsExtraLifeEveryValue(value));
+    }
+
+    [Fact]
+    public void TheGameStyleStartsClassic_AndTogglesToExtendedAndBack_AndRestoringTheFactorySettingsLeavesIt()
+    {
+        var gameSettings = GameSettings.CreateFactoryDefaults();
+        Assert.Equal(GameStyle.Classic, gameSettings.GameStyle);
+
+        gameSettings.ToggleGameStyle();
+        Assert.Equal(GameStyle.Extended, gameSettings.GameStyle);
+
+        gameSettings.ResetToFactory();
+        Assert.Equal(GameStyle.Extended, gameSettings.GameStyle);
+
+        gameSettings.ToggleGameStyle();
+        Assert.Equal(GameStyle.Classic, gameSettings.GameStyle);
     }
 }
