@@ -28,6 +28,8 @@ namespace Robotron2084.Persistence;
 ///             three things the arcade always does. All three are on from the factory, which is the arcade as it shipped.
 ///         </item>
 ///     </list>
+///     It also keeps the game style chosen on the menu page (<see cref="GameStyle" />), which is not a GAME ADJUSTMENT
+///     row.
 ///     The ranges and the factory values are the ROM's (<c>GAME_ADJUSTMENT_SETTING_METADATA</c>, $6FD5;
 ///     the recommended stops are named in the option lists at $7041/$7079). The ROM packs each value into
 ///     two CMOS bytes as BCD digits; the port keeps plain integers and writes them beside the controls and
@@ -82,6 +84,13 @@ public sealed class GameSettings
     ///     value of <see cref="TurnsPerPlayer" />, and the value it is set back to when the settings are restored.
     /// </summary>
     public const int FactoryTurnsPerPlayer = 3;
+
+    /// <summary>
+    ///     Factory game style: <see cref="Level.GameStyle.Classic" />, the arcade's game. It is the starting value of
+    ///     <see cref="GameStyle" />. Restoring the factory settings leaves the game style alone, as it is not a GAME
+    ///     ADJUSTMENT row.
+    /// </summary>
+    public const Level.GameStyle FactoryGameStyle = Level.GameStyle.Classic;
 
     /// <summary>
     ///     DIFFICULTY OF PLAY's ceiling — "EXTRA CONSERVATIVE" (ROM metadata $7079: 10). It is the biggest value
@@ -155,6 +164,9 @@ public sealed class GameSettings
     /// <summary>How many lives a player starts with (ROM <c>NSHIP</c>/<c>PLAS</c>), 1-20.</summary>
     public int TurnsPerPlayer { get; set; } = FactoryTurnsPerPlayer;
 
+    /// <summary>Which game is played: the arcade's, or the one with the author's changes (port only).</summary>
+    public Level.GameStyle GameStyle { get; set; } = FactoryGameStyle;
+
     /// <summary>A fresh cabinet's settings.</summary>
     public static GameSettings CreateFactoryDefaults()
     {
@@ -213,6 +225,14 @@ public sealed class GameSettings
     public void BumpTurnsPerPlayer(int direction)
     {
         TurnsPerPlayer = Math.Clamp(TurnsPerPlayer + direction, MinTurnsPerPlayer, MaxTurnsPerPlayer);
+    }
+
+    /// <summary>Switches the game style from CLASSIC to EXTENDED, or back.</summary>
+    public void ToggleGameStyle()
+    {
+        var isClassic = GameStyle == Level.GameStyle.Classic;
+        GameStyle = Level.GameStyle.Classic;
+        if (isClassic) GameStyle = Level.GameStyle.Extended;
     }
 
     /// <summary>The EXTRA MAN EVERY score in points, as the game compares scores (<c>0</c> = never).</summary>

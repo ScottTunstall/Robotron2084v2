@@ -96,10 +96,11 @@ public sealed class GameSettingsStore
     {
         var text = new StringBuilder();
         text.AppendLine("; Robotron 2084 (port) game gameSettings - see notes section 131.");
-        text.AppendLine("; Edit by hand, or press F5 on the title screen and use the GAME ADJUSTMENT page.");
+        text.AppendLine("; Edit by hand, or choose SETTINGS on the menu page and use the GAME ADJUSTMENT page.");
         text.AppendLine("; Difficulty 0-10 (5 recommended), turns per player 1-20 (3 recommended), and");
         text.AppendLine("; extramanevery in thousands of points: 0, 20, 25, 30 or 50. attractsound is 1 or 0.");
         text.AppendLine("; tankshellbug, brainschasemikeybug and bozomode are 1 (as the arcade) or 0.");
+        text.AppendLine("; gamestyle is 0 for CLASSIC (the arcade's game) or 1 for EXTENDED, as chosen on the menu page.");
         text.AppendLine();
         text.AppendLine($"[{Section}]");
         text.AppendLine($"extramanevery={gameSettings.ExtraLifeEvery}");
@@ -109,6 +110,7 @@ public sealed class GameSettingsStore
         text.AppendLine($"tankshellbug={GetFlag(gameSettings.TankShellBugEnabled)}");
         text.AppendLine($"brainschasemikeybug={GetFlag(gameSettings.BrainsChaseMikeyBugEnabled)}");
         text.AppendLine($"bozomode={GetFlag(gameSettings.BozoModeEnabled)}");
+        text.AppendLine($"gamestyle={(int)gameSettings.GameStyle}");
         return text.ToString();
     }
 
@@ -152,6 +154,10 @@ public sealed class GameSettingsStore
 
             case "brainschasemikeybug" when value is 0 or 1:
                 gameSettings.BrainsChaseMikeyBugEnabled = value == 1;
+                break;
+
+            case "gamestyle" when Enum.IsDefined((Level.GameStyle)value):
+                gameSettings.GameStyle = (Level.GameStyle)value;
                 break;
 
             case "bozomode" when value is 0 or 1:
