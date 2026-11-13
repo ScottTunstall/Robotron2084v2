@@ -4,8 +4,8 @@ using Xunit;
 namespace Robotron2084.Tests.States;
 
 /// <summary>
-///     The attract cycle and the author's start keys (notes §101). <c>RobotronGame.Update</c>
-///     reads F1 (one player) / F2 (two players, alternating) / F3 (two players, simultaneous)
+///     The attract cycle and its keys. <c>RobotronGame.Update</c> reads Enter (which opens the menu page), the
+///     coin key and F6
 ///     on EVERY screen of the attract cycle — the author's question of
 ///     2026-09-20 — and it recognises those screens by the <see cref="IAttractState" /> marker,
 ///     so a screen that joins the cycle without the marker silently loses the keys.
@@ -34,7 +34,8 @@ public sealed class AttractScreenTests
     ///     outside the attract cycle: the game-over message, the CONG initials entry (notes §116) and
     ///     the ONLY5P page, plus the port-only definitions and GAME ADJUSTMENT pages, the sprite test, the sound test and
     ///     the speech test, and the DEVELOPER TOOLS page — which is opened by F10 from every screen, so it deliberately
-    ///     does NOT take the attract cycle's F1/F2/F3 (its own number keys choose an option).
+    ///     does NOT take the attract cycle's keys (its own number keys choose an option), and the menu page, whose own
+    ///     keys choose its lines.
     /// </summary>
     private static readonly Type[] NotAttractScreens =
     [
@@ -45,6 +46,7 @@ public sealed class AttractScreenTests
         typeof(EntriesMaximumState),
         typeof(DefineInputsState),
         typeof(SettingsState),
+        typeof(MainMenuState),
         typeof(SpriteTestState),
         typeof(SoundTestState),
         typeof(SpeechTestState),
@@ -76,7 +78,7 @@ public sealed class AttractScreenTests
         Assert.True(
             unexplained.Length == 0,
             $"new screen(s) {string.Join(", ", unexplained.Select(screen => screen.Name))} — add them to "
-            + $"{nameof(AttractScreens)} (they take F1/F2/F3, so they also need IAttractState) or to "
+            + $"{nameof(AttractScreens)} (they take the attract keys, so they also need IAttractState) or to "
             + $"{nameof(NotAttractScreens)} (they do not)");
     }
 
