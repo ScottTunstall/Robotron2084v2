@@ -849,6 +849,13 @@ in every file. Before writing a new helper, search for an existing one that does
 **CON-2. Same name, same meaning; different meaning, different name.** Two constants with the same value for
 the same ROM string (`GameOverTextColumn` / `GameOverMessageColumn`) are one constant.
 
+**UI-1. Anything that can be toggled or stepped can be changed with LEFT and RIGHT.** Where a page lets the user
+switch a value, or step it up or down (CLASSIC / EXTENDED, an on/off setting, a number), the arrow keys LEFT and RIGHT and
+a controller's pad LEFT and RIGHT change it, as they do on the GAME ADJUSTMENT page. A hotkey or ENTER may do it as well,
+but never instead. LEFT goes one way and RIGHT the other; for a two-way switch, either changes it. A page that already
+uses LEFT and RIGHT for something else (the developer's page-stepping keys on the attract screens) must say so where it
+is handled.
+
 ## 10. Process
 
 **PROC-1. Not a licence to churn (§114).** Do not reformat or sweep-rename code without a reason. Any file you
