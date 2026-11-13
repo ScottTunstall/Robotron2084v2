@@ -6,6 +6,12 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
+  <!-- Roslynator and the threading analyzers (VSTHRD) for every project. -->
+  <ItemGroup>
+    <PackageReference Include="Roslynator.Analyzers" Version="5.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" PrivateAssets="all" />
+  </ItemGroup>
+
   <!-- CA1502's threshold lives in a code-metrics config file, not in .editorconfig
        (notes §99). MSBuildThisFileDirectory keeps the path correct from every project. -->
   <ItemGroup>
