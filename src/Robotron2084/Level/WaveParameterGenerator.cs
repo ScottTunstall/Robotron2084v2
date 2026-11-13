@@ -45,36 +45,15 @@ public sealed class WaveParameterGenerator
         _customWaveTable = LoadTable(customWaveTablePath);
     }
 
-    /// <summary>Works out what a wave of the port's numbering contains (<see cref="WaveNumbering" />).</summary>
-    /// <param name="waveNumber">The port's wave number, starting at 1.</param>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Wave 1 is the introduction to Gorf. It is a placeholder until the author specifies it: Gorf alone,
-    ///             and none of the arcade's robots but some electrodes and as many family members as the wave after it
-    ///             has, which drops as many grunts as the wave after it
-    ///             has (notes §150). Its
-    ///             walls stay shut: the doors (notes §151) are for other waves.
-    ///         </item>
-    ///         <item>Every other wave is the arcade's wave one number lower.</item>
-    ///     </list>
-    /// </remarks>
+    /// <summary>Works out what a wave contains.</summary>
+    /// <param name="waveNumber">The wave number, starting at 1.</param>
     public WaveParameters Generate(int waveNumber)
-    {
-        if (WaveNumbering.IsGorfIntroWave(waveNumber)) return CreateGorfIntroWave();
-
-        return GenerateArcadeWave(WaveNumbering.ToArcadeWave(waveNumber));
-    }
-
-    /// <summary>Works out what one of the arcade's waves contains.</summary>
-    /// <param name="arcadeWave">The arcade's wave number, starting at 1.</param>
-    public WaveParameters GenerateArcadeWave(int arcadeWave)
     {
         if (_customWaveTable is { Length: > 0 } table)
         {
-            var customWaveTableRow = table[(arcadeWave - 1) % table.Length];
+            var customWaveTableRow = table[(waveNumber - 1) % table.Length];
             return new WaveParameters(
-                arcadeWave,
+                waveNumber,
                 customWaveTableRow.GruntCount,
                 HulkCount: customWaveTableRow.HulkCount,
                 SpheroidCount: customWaveTableRow.SpheroidCount,
@@ -82,39 +61,10 @@ public sealed class WaveParameterGenerator
                 ElectrodeCount: customWaveTableRow.ElectrodeCount,
                 MaxEnforcersPerSpheroid: customWaveTableRow.MaxEnforcersPerSpheroid,
                 MaxTanksPerQuark: customWaveTableRow.MaxTanksPerQuark,
-                EnemySpeedBonus: Math.Min(arcadeWave - 1, SpawnTuning.EnemySpeedBonusMaxPerWave));
+                EnemySpeedBonus: Math.Min(waveNumber - 1, SpawnTuning.EnemySpeedBonusMaxPerWave));
         }
 
-        return WaveParameters.CreateFromWave(arcadeWave, WaveTable.GetParameters(arcadeWave));
-    }
-
-    /// <summary>
-    ///     Makes the wave that introduces Gorf: a placeholder with Gorf alone, which drops as many grunts in all as the
-    ///     wave after it has (the arcade's first wave).
-    /// </summary>
-    /// <remarks>
-    ///     It starts from that wave's parameters, so it looks like that wave (its wall and electrode colours) and its grunts
-    ///     move as that wave's do: the same wait between steps, and the same lowest the wait can fall to as the wave goes
-    ///     on. The counts of robots are then set by hand.
-    /// </remarks>
-    private WaveParameters CreateGorfIntroWave()
-    {
-        var nextWave = GenerateArcadeWave(WaveNumbering.ToArcadeWave(WaveNumbering.FirstArcadeWave));
-        var gruntsOfTheNextWave = nextWave.GruntCount;
-        return nextWave with
-        {
-            WaveNumber = WaveNumbering.ToArcadeWave(WaveNumbering.GorfIntroWave),
-            GruntCount = 0,
-            HulkCount = 0,
-            SpheroidCount = 0,
-            QuarkCount = 0,
-            BrainCount = 0,
-            ElectrodeCount = GorfTuning.IntroWaveElectrodeCount,
-            GorfCount = 1,
-            GorfGruntDropCount = gruntsOfTheNextWave,
-            GorfAvoidsPlayer = true,
-            GorfAppearanceLines = GorfTuning.IntroAppearanceLines
-        };
+        return WaveParameters.CreateFromWave(waveNumber, WaveTable.GetParameters(waveNumber));
     }
 
     /// <summary>Reads the replacement table.</summary>
