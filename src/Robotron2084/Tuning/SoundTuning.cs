@@ -1,4 +1,4 @@
-namespace Robotron2084.Audio;
+namespace Robotron2084.Tuning;
 
 /// <summary>
 ///     How the sound board is played through the computer's speakers: the port's own settings, plus the one property

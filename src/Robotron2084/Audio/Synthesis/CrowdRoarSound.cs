@@ -331,10 +331,11 @@ internal sealed class CrowdRoarSound
     }
 
     /// <summary>
-    ///     Plays one noise until it ends: <c>NINIT2</c> then the loop <c>WIN</c>, which writes the whistle's
-    ///     output after every step of the noise.
-    /// </summary>
-    /// <returns>The output changes.</returns>
+    ///     <summary>
+    ///         Plays one noise until it ends: <c>NINIT2</c> then the loop <c>WIN</c>, which writes the whistle's
+    ///         output after every step of the noise.
+    ///     </summary>
+    ///     <returns>The output changes.</returns>
     private IEnumerable<OutputChange> RunNoise()
     {
         _boardOutput.Wait(StartNoiseCycles);

@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Robotron2084.Audio.Models;
+using Robotron2084.Tuning;
 
 namespace Robotron2084.Audio;
 

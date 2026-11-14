@@ -57,7 +57,7 @@ public sealed class BlitterDraw
     /// <summary>
     ///     The rectangle an animation frame is DRAWN in inside an entity's collision box: centred in the box, at the
     ///     render scale. It is the ONE definition of where a sprite sits in its box — the drawer uses it, and so
-    ///     does pixel-perfect collision (<see cref="SpriteMask.Overlaps" />), so the two cannot drift apart
+    ///     does pixel-perfect collision (<see cref="SpriteMask.Overlap" />), so the two cannot drift apart
     ///     (notes §118).
     /// </summary>
     /// <param name="bounds">The entity's collision box, in screen pixels.</param>

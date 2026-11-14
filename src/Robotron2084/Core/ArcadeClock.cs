@@ -43,10 +43,10 @@ public static class ArcadeClock
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
-    ///             A tick is one call of <c>RobotronGame.Update</c>.
+    ///             A tick is one call of <see cref="Robotron2084.RobotronGame.Update(Microsoft.Xna.Framework.GameTime)" />.
     ///         </item>
     ///         <item>The game's code only runs during a tick, so nothing can happen between two ticks.</item>
-    ///         <item><c>RobotronGame</c> sets MonoGame's fixed time step from this.</item>
+    ///         <item><see cref="Robotron2084.RobotronGame" /> sets MonoGame's fixed time step from this.</item>
     ///     </list>
     /// </remarks>
     public const int PortTicksPerSecond = 60;

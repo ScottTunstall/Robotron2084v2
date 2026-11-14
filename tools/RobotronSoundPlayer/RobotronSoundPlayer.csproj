@@ -9,10 +9,10 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <!-- The audio project supplies the sound tables and the sequencer, so the player asks for each sound
+  <!-- The game supplies the sound tables and the sequencer, so the player asks for each sound
        exactly as the game does. MonoGame comes with it, and plays the sound on Windows and Linux. -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Robotron2084.Audio\Robotron2084.Audio.csproj" />
+    <ProjectReference Include="..\..\src\Robotron2084\Robotron2084.csproj" />
   </ItemGroup>
 
 </Project>
