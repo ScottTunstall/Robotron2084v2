@@ -10,8 +10,8 @@ public sealed class SpeechTestStateTests
     [Fact]
     public void TheGorfPageHasTheGorfLines_AndTheBerzerkPageHasTheBerzerkLines()
     {
-        var gorf = SpeechTestState.GetLineNames(SpeechTestState.GorfFolder);
-        var berzerk = SpeechTestState.GetLineNames(SpeechTestState.BerzerkFolder);
+        var gorf = SpeechFolders.GetLineNames(SpeechFolders.Gorf);
+        var berzerk = SpeechFolders.GetLineNames(SpeechFolders.Berzerk);
 
         Assert.Contains("GOTYOU", gorf);
         Assert.DoesNotContain("GOTYOU", berzerk);
@@ -22,8 +22,8 @@ public sealed class SpeechTestStateTests
     [Fact]
     public void EveryLineIsOnExactlyOnePage()
     {
-        var onPages = SpeechTestState.GetLineNames(SpeechTestState.GorfFolder).Count +
-                      SpeechTestState.GetLineNames(SpeechTestState.BerzerkFolder).Count;
+        var onPages = SpeechFolders.GetLineNames(SpeechFolders.Gorf).Count +
+                      SpeechFolders.GetLineNames(SpeechFolders.Berzerk).Count;
 
         Assert.Equal(SpeechLinePaths.All.Length, onPages);
     }
@@ -31,6 +31,6 @@ public sealed class SpeechTestStateTests
     [Fact]
     public void APageForAFolderThatHasNoLinesHasNone()
     {
-        Assert.Empty(SpeechTestState.GetLineNames("Nobody"));
+        Assert.Empty(SpeechFolders.GetLineNames("Nobody"));
     }
 }
