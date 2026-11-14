@@ -11,8 +11,8 @@ using Robotron2084.Persistence;
 namespace Robotron2084.States;
 
 /// <summary>
-///     The GAME ADJUSTMENT page (notes §131) — the cabinet's service-mode settings, opened with F5 on
-///     the menu page and closed with F10, which goes back to the DEVELOPER TOOLS page that leads
+///     The GAME ADJUSTMENT page (notes §131) — the cabinet's service-mode settings, opened from
+///     the menu page or the DEVELOPER TOOLS page and closed with F10, which goes back to the DEVELOPER TOOLS page that leads
 ///     to every service page.
 ///     It is the same page the arcade's own GAME ADJUSTMENT screen is: a left column of setting names
 ///     with their values in a second column, the page's own "->" cursor at the left of the line the

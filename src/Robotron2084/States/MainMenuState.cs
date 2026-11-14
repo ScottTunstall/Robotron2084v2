@@ -24,8 +24,8 @@ namespace Robotron2084.States;
 ///             controller's A button does what the row says: starts the game shown, switches the style, or opens a page.
 ///         </item>
 ///         <item>
-///             The function keys are shortcuts. F1, F2 and F3 start a one player, two player (alternate) and two player
-///             (simultaneous) game at once; F4 switches CLASSIC and EXTENDED; F5 opens SETTINGS. F10 is the game's own key
+///             The only function keys are shortcuts to start a game. F1, F2 and F3 start a one player, two player (alternate) and two player
+///             (simultaneous) game at once. F10 is the game's own key
 ///             for the DEVELOPER TOOLS page on every screen, so this page does not handle it.
 ///         </item>
 ///         <item>The game style is saved as soon as it changes. The game shown starts as one player each time the page opens.</item>
@@ -128,8 +128,8 @@ public sealed class MainMenuState : IGameState
         return line switch
         {
             MainMenuLine.StartGame => "PLAYER MODE",
-            MainMenuLine.GameStyle => "F4 - GAME STYLE",
-            MainMenuLine.Settings => "F5 - SETTINGS",
+            MainMenuLine.GameStyle => "GAME STYLE",
+            MainMenuLine.Settings => "SETTINGS",
             _ => "F10 - DEVELOPER TOOLS"
         };
     }
@@ -153,9 +153,9 @@ public sealed class MainMenuState : IGameState
     {
         return gameMode switch
         {
-            GameMode.OnePlayer => "ONE PLAYER",
-            GameMode.TwoPlayerAlternate => "TWO PLAYER (ALTERNATE)",
-            _ => "TWO PLAYER (SIMULTANEOUS)"
+            GameMode.OnePlayer => "START ONE PLAYER GAME (F1)",
+            GameMode.TwoPlayerAlternate => "START TWO PLAYER ALTERNATE (F2)",
+            _ => "START TWO PLAYER SIMULTANEOUS (F3)"
         };
     }
 
@@ -210,11 +210,11 @@ public sealed class MainMenuState : IGameState
     }
 
     /// <summary>
-    ///     Does what a function key says, if one went down: F1, F2 or F3 starts that game, F4 switches the game style and F5
-    ///     opens SETTINGS.
+    ///     Starts the game a function key names, if one went down: F1 a one player game, F2 a two player game in turn, F3 a two
+    ///     player game at once.
     /// </summary>
     /// <param name="now">This tick's input.</param>
-    /// <param name="gameStateManager">The screens, for a key that opens another.</param>
+    /// <param name="gameStateManager">The screens, for the game it starts.</param>
     /// <returns>True when the page has been left for another.</returns>
     private bool HandleShortcuts(InputSnapshot now, GameStateManager gameStateManager)
     {
@@ -225,10 +225,6 @@ public sealed class MainMenuState : IGameState
             _gameMode = gameMode;
             return Choose(MainMenuLine.StartGame, gameStateManager);
         }
-
-        if (WasKeyPressed(now, Keys.F4)) return Choose(MainMenuLine.GameStyle, gameStateManager);
-
-        if (WasKeyPressed(now, Keys.F5)) return Choose(MainMenuLine.Settings, gameStateManager);
 
         return false;
     }
