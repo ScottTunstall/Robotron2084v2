@@ -19,8 +19,8 @@ namespace Robotron2084;
 /// <remarks>
 ///     Port-only (no arcade counterpart). Every state draws into a <see cref="ScreenSize.Width" /> x
 ///     <see cref="ScreenSize.Height" /> canvas, which is blitted to the window at ONE uniform scale and centred
-///     there, so the game screen is never stretched and the window may be any size. <b>F8</b> cycles the canvas fit
-///     (Integer = the largest whole multiple, Fill = the exact fraction), <b>F11</b> and <b>Alt+Enter</b> toggle
+///     there, so the game screen is never stretched and the window may be any size. The canvas is the largest whole
+///     multiple that fits. <b>Alt+Enter</b> toggles
 ///     full screen, <b>Escape</b> exits. It also owns the shared instances every state passes onward:
 ///     <see cref="TextureSet" />, the input source and the high score store, all created once in LoadContent.
 /// </remarks>
@@ -28,6 +28,14 @@ namespace Robotron2084;
 /// <seealso cref="ScreenSize" />
 public sealed class RobotronGame : Game
 {
+    /// <summary>The function keys that start a game on an attract screen, each with the game it starts.</summary>
+    private static readonly (Keys Key, GameMode GameMode)[] StartGameKeys =
+    [
+        (Keys.F1, GameMode.OnePlayer),
+        (Keys.F2, GameMode.TwoPlayerAlternate),
+        (Keys.F3, GameMode.TwoPlayerSimultaneous)
+    ];
+
     private readonly GraphicsDeviceManager _graphicsDeviceManager;
     private Rectangle _canvasBounds = new(0, 0, ScreenSize.Width, ScreenSize.Height);
     private ControlSettings _controlSettings = null!;
@@ -40,8 +48,10 @@ public sealed class RobotronGame : Game
     private bool _isFullScreen;
     private PaletteAnimator _paletteAnimator = null!;
     private KeyboardState _previousKeyboardState;
+    private GamePadState _previousPadOneState;
+    private GamePadState _previousPadTwoState;
     private RenderTarget2D _renderTarget2D = null!;
-    private ScaleMode _scaleMode = ScaleMode.Integer;
+    private const ScaleMode CanvasScaleMode = ScaleMode.Integer;
     private GameServices _gameServices = null!;
 
     /// <summary>The one source of random numbers the whole game shares.</summary>
@@ -155,6 +165,8 @@ public sealed class RobotronGame : Game
         HandleDeveloperToolsKey(keyboardState);
 
         _previousKeyboardState = keyboardState;
+        _previousPadOneState = GamePad.GetState(PlayerIndex.One);
+        _previousPadTwoState = GamePad.GetState(PlayerIndex.Two);
 
         // The attract-cycle sound switch (notes §131): while the attract sequence is on screen and
         // ATTRACT MODE SOUND is off, the sound service ignores every request — a real game keeps its
@@ -213,7 +225,7 @@ public sealed class RobotronGame : Game
     private void FitCanvas()
     {
         _canvasBounds =
-            Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, _scaleMode);
+            Presentation.CanvasDestination(Window.ClientBounds.Width, Window.ClientBounds.Height, CanvasScaleMode);
     }
 
     /// <summary>
@@ -228,8 +240,7 @@ public sealed class RobotronGame : Game
     ///     in seconds rather than after the text crawl. They are live on the attract screens only: Insert is also
     ///     the skip-a-wave key and Delete clears a line on the DEFINE INPUTS page, so they must not act anywhere else.
     ///     Right and Left step through the whole attract sequence by hand (<see cref="AttractNavigation" />).
-    ///     The function keys are left to the menu page's keys (F1 to F5), the SPEECH TEST key (F6), F10 and
-    ///     the display keys (F8, F11).
+    ///     The only function keys are F1, F2 and F3 (start a game) and F10 (the DEVELOPER TOOLS page).
     /// </remarks>
     private void HandleAttractDeveloperKeys(KeyboardState keyboardState)
     {
@@ -248,7 +259,8 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>
-    ///     Right goes on to the next screen of the attract sequence and Left back to the one before (port only).
+    ///     Right (or a controller's pad right) goes on to the next screen of the attract sequence and Left (or pad left) back to
+    ///     the one before (port only).
     ///     They are live on the attract screens, and on the demo game's wave-clear screen.
     /// </summary>
     /// <param name="keyboardState">This tick's keyboard.</param>
@@ -258,8 +270,8 @@ public sealed class RobotronGame : Game
         if (step is not { } currentStep) return;
 
         var direction = 0;
-        if (WasPressed(keyboardState, Keys.Right)) direction = 1;
-        else if (WasPressed(keyboardState, Keys.Left)) direction = -1;
+        if (WasPressed(keyboardState, Keys.Right) || WasPadPressed(Buttons.DPadRight)) direction = 1;
+        else if (WasPressed(keyboardState, Keys.Left) || WasPadPressed(Buttons.DPadLeft)) direction = -1;
         if (direction == 0) return;
 
         var nextStep = AttractNavigation.GetNeighbourStep(currentStep, direction);
@@ -285,31 +297,21 @@ public sealed class RobotronGame : Game
         _gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices, _controlSettingsStore, _gameSettingsStore));
     }
 
-    /// <summary>The port-only presentation keys: full screen, and the canvas fit.</summary>
+    /// <summary>The port-only presentation key: Alt+Enter toggles full screen.</summary>
     /// <param name="keyboardState">This tick's keyboard.</param>
     private void HandlePresentationKeys(KeyboardState keyboardState)
     {
-        // F11 is the Windows convention for full screen and Alt+Enter is the game
-        // convention; F8 cycles the canvas fit between the largest whole multiple
-        // (crisp, the default) and the exact uniform fraction (fills the window).
         var altHeld = keyboardState.IsKeyDown(Keys.LeftAlt) || keyboardState.IsKeyDown(Keys.RightAlt);
-        if (WasPressed(keyboardState, Keys.F11) || (altHeld && WasPressed(keyboardState, Keys.Enter)))
-        {
-            ToggleFullScreen();
-        }
-        else if (WasPressed(keyboardState, Keys.F8))
-        {
-            _scaleMode = Presentation.NextScaleMode(_scaleMode);
-            FitCanvas();
-        }
+        if (altHeld && WasPressed(keyboardState, Keys.Enter)) ToggleFullScreen();
     }
 
     /// <summary>
-    ///     The keys live on EVERY attract screen: Enter opens the menu page (<see cref="MainMenuState" />), where a
-    ///     game is started; 5 drops a coin in the slot (the port has no credits, so it only makes the coin sound, one of
-    ///     the eight at random); and F6 opens the SPEECH TEST page.
+    ///     The keys live on EVERY attract screen: F1 starts a one player game, F2 a two player game with the players
+    ///     taking turns and F3 a two player game with both playing at once; Enter opens the menu page
+    ///     (<see cref="MainMenuState" />); and 5 drops a coin in the slot (the port has no credits, so it only makes the
+    ///     coin sound, one of the eight at random).
     ///     F10 is NOT one of them: it opens the DEVELOPER TOOLS page from every screen, attract screens
-    ///     included (see <see cref="HandleDeveloperToolsKey" />).
+    ///     included (see <see cref="HandleDeveloperToolsKey" />). No other function key does anything.
     /// </summary>
     /// <param name="keyboardState">This tick's keyboard.</param>
     /// <remarks>
@@ -326,11 +328,18 @@ public sealed class RobotronGame : Game
             return;
         }
 
+        foreach (var (key, gameMode) in StartGameKeys)
+        {
+            if (!WasPressed(keyboardState, key)) continue;
+
+            _gameStateManager.TransitionTo(PlayingState.CreateNewGame(_controlSettings, _gameSettings, gameMode, _textureSet,
+                _highScoreStore, _random));
+            return;
+        }
+
         var isAltHeld = keyboardState.IsKeyDown(Keys.LeftAlt) || keyboardState.IsKeyDown(Keys.RightAlt);
         if (WasPressed(keyboardState, Keys.Enter) && !isAltHeld)
             _gameStateManager.TransitionTo(new MainMenuState(_gameServices, _gameSettingsStore));
-        else if (WasPressed(keyboardState, Keys.F6))
-            _gameStateManager.TransitionTo(new SpeechTestState(_gameServices));
     }
 
     /// <summary>Drops straight into the end of a game, with a score that has to qualify (notes §116).</summary>
@@ -361,6 +370,14 @@ public sealed class RobotronGame : Game
     }
 
     /// <summary>True on the tick <paramref name="key" /> goes down (press, not hold).</summary>
+    /// <summary>True on the tick a button goes down on either controller.</summary>
+    private bool WasPadPressed(Buttons button)
+    {
+        var isPadOnePressed = GamePad.GetState(PlayerIndex.One).IsButtonDown(button) && !_previousPadOneState.IsButtonDown(button);
+        var isPadTwoPressed = GamePad.GetState(PlayerIndex.Two).IsButtonDown(button) && !_previousPadTwoState.IsButtonDown(button);
+        return isPadOnePressed || isPadTwoPressed;
+    }
+
     private bool WasPressed(KeyboardState keyboardState, Keys key)
     {
         return !_previousKeyboardState.IsKeyDown(key) && keyboardState.IsKeyDown(key);
