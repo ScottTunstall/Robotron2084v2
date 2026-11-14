@@ -44,6 +44,9 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
     private const string CopyrightLine = "COPYRIGHT 1982 WILLIAMS ELECTRONICS INC.";
     private const int CopyrightRow = 308;
 
+    /// <summary>The prompt that takes the copyright line's place now and then (port only).</summary>
+    private const string MenuPromptLine = "PRESS ENTER FOR GAME MENU";
+
     /// <summary>
     ///     The copyright line's OWN colour. Palette index 2 is the page's own BLUE (`$C0`) — the
     ///     colour the ROM's string script writes for a credit line (`04 22` in front of "CREDITS: n" at
@@ -133,6 +136,11 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
     /// <summary>True while the ARCADE's text pane is up; it alternates with the port's (notes §107).</summary>
     private bool _isShowingArcadeText = true;
 
+    private TimeSpan _footerElapsed;
+
+    /// <summary>True while the prompt, not the copyright line, is on the page's bottom row.</summary>
+    private bool _isShowingMenuPrompt;
+
     private TimeSpan _textElapsed;
 
     /// <summary>
@@ -200,11 +208,15 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
             DrawArcadeText(spriteBatch);
         else
             DrawPortText(spriteBatch);
+
+        DrawFooter(spriteBatch);
     }
 
     public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
         if (_textureSet.BlitterDraw.GamePalette is { } live) _presentationPagePalette.Update(live);
+
+        AdvanceFooter(gameTime);
 
         _williamsLogoBorder.Tick();
         _largeTitleLetterAppear.Update();
@@ -271,13 +283,38 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
         DrawCentredLargeText(spriteBatch, WelcomeLineTwo, WelcomeRowTwo, TextPaletteIndex);
         DrawCentredSmallText(spriteBatch, DesignedByLine, DesignedByRow, TextPaletteIndex);
         DrawCentredSmallText(spriteBatch, ForWilliamsLine, ForWilliamsRow, TextPaletteIndex);
-        DrawCentredSmallText(spriteBatch, CopyrightLine, CopyrightRow, CopyrightPaletteIndex);
     }
 
     /// <summary>Centres a large-font line horizontally and prints it in one palette index.</summary>
     private void DrawCentredLargeText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
     {
         _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, text, GetCentredX(text, true), y, paletteIndex);
+    }
+
+    /// <summary>Counts the bottom row's time, and swaps the copyright line and the prompt when it is up.</summary>
+    private void AdvanceFooter(GameTime gameTime)
+    {
+        _footerElapsed += gameTime.ElapsedGameTime;
+        if (_footerElapsed < TimeSpan.FromSeconds(AttractTuning.TitleFooterSeconds)) return;
+
+        _footerElapsed = TimeSpan.Zero;
+        _isShowingMenuPrompt = !_isShowingMenuPrompt;
+    }
+
+    /// <summary>
+    ///     Draws the page's bottom row, under either pane: the copyright line, and now and then (every
+    ///     <see cref="AttractTuning.TitleFooterSeconds" />) the prompt for the menu page in its place. The prompt is in
+    ///     the copyright line's colour, so it cycles with it. Port only.
+    /// </summary>
+    private void DrawFooter(SpriteBatch spriteBatch)
+    {
+        if (_isShowingMenuPrompt)
+        {
+            DrawCentredSmallText(spriteBatch, MenuPromptLine, CopyrightRow, CopyrightPaletteIndex);
+            return;
+        }
+
+        DrawCentredSmallText(spriteBatch, CopyrightLine, CopyrightRow, CopyrightPaletteIndex);
     }
 
     private void DrawCentredSmallText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
