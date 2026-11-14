@@ -3166,62 +3166,236 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/WilliamsLogo.png
 
-#begin Speech/cannotescapegorf.ogg
+#begin Speech/Berzerk/a.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Speech/cannotescapegorf.ogg
+/build:Speech/Berzerk/a.ogg
 
-#begin Speech/gorfiandoom.ogg
+#begin Speech/Berzerk/alert.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Speech/gorfiandoom.ogg
+/build:Speech/Berzerk/alert.ogg
 
-#begin Speech/gorfianrobotsattack.ogg
+#begin Speech/Berzerk/attack.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Speech/gorfianrobotsattack.ogg
+/build:Speech/Berzerk/attack.ogg
 
-#begin Speech/gorfiansconquer.ogg
+#begin Speech/Berzerk/charge.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Speech/gorfiansconquer.ogg
+/build:Speech/Berzerk/charge.ogg
 
-#begin Speech/gorfianstakenoprisoners.ogg
+#begin Speech/Berzerk/chicken.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Speech/gorfianstakenoprisoners.ogg
+/build:Speech/Berzerk/chicken.ogg
 
-#begin Speech/gotyou.ogg
+#begin Speech/Berzerk/coins.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Speech/gotyou.ogg
+/build:Speech/Berzerk/coins.ogg
 
-#begin Speech/hahahaha.ogg
+#begin Speech/Berzerk/destroy.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Speech/hahahaha.ogg
+/build:Speech/Berzerk/destroy.ogg
 
-#begin Speech/iamthegorfianempire.ogg
+#begin Speech/Berzerk/detected.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Speech/iamthegorfianempire.ogg
+/build:Speech/Berzerk/detected.ogg
 
-#begin Speech/longlivegorf.ogg
+#begin Speech/Berzerk/escape.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Speech/longlivegorf.ogg
+/build:Speech/Berzerk/escape.ogg
 
-#begin Speech/prepareyourself.ogg
+#begin Speech/Berzerk/fight.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Speech/prepareyourself.ogg
+/build:Speech/Berzerk/fight.ogg
+
+#begin Speech/Berzerk/get.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/get.ogg
+
+#begin Speech/Berzerk/got.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/got.ogg
+
+#begin Speech/Berzerk/help.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/help.ogg
+
+#begin Speech/Berzerk/humanoid.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/humanoid.ogg
+
+#begin Speech/Berzerk/in.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/in.ogg
+
+#begin Speech/Berzerk/intruder.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/intruder.ogg
+
+#begin Speech/Berzerk/is.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/is.ogg
+
+#begin Speech/Berzerk/it.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/it.ogg
+
+#begin Speech/Berzerk/kill.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/kill.ogg
+
+#begin Speech/Berzerk/like.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/like.ogg
+
+#begin Speech/Berzerk/must.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/must.ogg
+
+#begin Speech/Berzerk/no.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/no.ogg
+
+#begin Speech/Berzerk/not.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/not.ogg
+
+#begin Speech/Berzerk/pocket.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/pocket.ogg
+
+#begin Speech/Berzerk/robot.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/robot.ogg
+
+#begin Speech/Berzerk/shoot.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/shoot.ogg
+
+#begin Speech/Berzerk/the.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/the.ogg
+
+#begin Speech/Berzerk/there.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/there.ogg
+
+#begin Speech/Berzerk/where.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/where.ogg
+
+#begin Speech/GORF/cannotescapegorf.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/GORF/cannotescapegorf.ogg
+
+#begin Speech/GORF/gorfiandoom.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/GORF/gorfiandoom.ogg
+
+#begin Speech/GORF/gorfianrobotsattack.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/GORF/gorfianrobotsattack.ogg
+
+#begin Speech/GORF/gorfiansconquer.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/GORF/gorfiansconquer.ogg
+
+#begin Speech/GORF/gorfianstakenoprisoners.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/GORF/gorfianstakenoprisoners.ogg
+
+#begin Speech/GORF/gotyou.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/GORF/gotyou.ogg
+
+#begin Speech/GORF/hahahaha.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/GORF/hahahaha.ogg
+
+#begin Speech/GORF/iamthegorfianempire.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/GORF/iamthegorfianempire.ogg
+
+#begin Speech/GORF/longlivegorf.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/GORF/longlivegorf.ogg
+
+#begin Speech/GORF/prepareyourself.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/GORF/prepareyourself.ogg
