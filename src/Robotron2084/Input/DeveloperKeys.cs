@@ -32,8 +32,8 @@ namespace Robotron2084.Input;
 ///             a score high enough to qualify (notes §116).
 ///         </item>
 ///     </list>
-///     The function keys belong to the game: F1 to F5 are the menu page's keys, F6 opens the SPEECH TEST page from
-///     every attract screen (port only, notes §149), and F10 opens the DEVELOPER TOOLS page from EVERY screen.
+///     The only function keys are F1, F2 and F3, which start a one player, two player (alternate) and two player
+///     (simultaneous) game on every attract screen, and F10, which opens the DEVELOPER TOOLS page from EVERY screen.
 /// </summary>
 public static class DeveloperKeys
 {
