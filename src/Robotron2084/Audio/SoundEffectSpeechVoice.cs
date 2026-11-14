@@ -47,7 +47,7 @@ public sealed class SoundEffectSpeechVoice : ISpeechVoice, IDisposable
     }
 
     /// <inheritdoc />
-    public void Speak(string lineName)
+    public void Speak(string lineName, float pitchOctaves)
     {
         var hasLine = _soundEffectsByLineName.TryGetValue(lineName.ToUpperInvariant(), out var soundEffect);
         if (!hasLine || soundEffect is null) return;
@@ -55,6 +55,7 @@ public sealed class SoundEffectSpeechVoice : ISpeechVoice, IDisposable
         _soundEffectInstance?.Dispose();
         _soundEffectInstance = soundEffect.CreateInstance();
         _soundEffectInstance.Volume = SoundTuning.SpeechVolume;
+        _soundEffectInstance.Pitch = pitchOctaves;
         _soundEffectInstance.Play();
     }
 }
