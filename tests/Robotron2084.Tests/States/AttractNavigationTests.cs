@@ -1,5 +1,5 @@
 using Robotron2084.AttractMode;
-using Robotron2084.Level.Attract;
+using Robotron2084.AttractMode.Models;
 using Robotron2084.States;
 using Xunit;
 
@@ -52,8 +52,8 @@ public sealed class AttractNavigationTests
     [Fact]
     public void TheStoryPageCount_IsTheNumberOfPagesTheStoryReallyHas()
     {
-        var script = AttractStoryline.Create(AttractMovieData.Histo);
-        var attractMovie = new AttractMovie(script, new Random(3));
+        var script = AttractStoryline.Create(AttractMovieData.Rom.Histo);
+        var attractMovie = new AttractMovie(AttractMovieData.Rom, script, new Random(3));
         for (var page = 1; page <= AttractNavigation.StoryPageCount; page++) attractMovie.SkipToNextPage();
 
         Assert.Equal(AttractNavigation.StoryPageCount, attractMovie.AttractPageMachine.PagesStarted);

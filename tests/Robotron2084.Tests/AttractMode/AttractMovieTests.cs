@@ -1,7 +1,6 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.AttractMode.Models;
 using Robotron2084.AttractMode;
-using Robotron2084.Level.Attract;
 using Xunit;
 
 namespace Robotron2084.Tests.AttractMode;
@@ -32,7 +31,7 @@ public sealed class AttractMovieTests
     [Fact]
     public void IntroScreen_PrintsTheRomsPrologueText()
     {
-        var attractMovie = new AttractMovie(AttractMovieData.Histo, new Random(7));
+        var attractMovie = new AttractMovie(AttractMovieData.Rom, AttractMovieData.Rom.Histo, new Random(7));
 
         List<string>? prologue = null;
         for (var tick = 0; tick < 8000 && prologue is null; tick++)
@@ -61,7 +60,7 @@ public sealed class AttractMovieTests
     [Fact]
     public void IntroScreen_KeepsTheTitleBandClearOfTheStoryText()
     {
-        var attractMovie = new AttractMovie(AttractMovieData.Histo, new Random(7));
+        var attractMovie = new AttractMovie(AttractMovieData.Rom, AttractMovieData.Rom.Histo, new Random(7));
 
         for (var tick = 0; tick < 1500; tick++)
         {
@@ -76,7 +75,7 @@ public sealed class AttractMovieTests
     [Fact]
     public void Storyline_ReachesDoneAndPlaysEveryScene()
     {
-        var attractMovie = new AttractMovie(AttractMovieData.Histo, new Random(3));
+        var attractMovie = new AttractMovie(AttractMovieData.Rom, AttractMovieData.Rom.Histo, new Random(3));
         var seen = new HashSet<MovieAnimation>();
         var messages = new HashSet<string>();
         var exploded = false;
@@ -114,7 +113,7 @@ public sealed class AttractMovieTests
     [Fact]
     public void ObjectMachine_WalksTheHeroLeftWithTheRomsOwnStepSize()
     {
-        var attractObjectMachine = new AttractObjectMachine(new Random(11));
+        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(11));
 
         // DUMYOU ($8739) — the title's "dumb player": YOU at (104,106), MLEFT $80,
         // DIE. YOU's descriptor walks the BR* way: step 1 (half a column) every 2
@@ -149,7 +148,7 @@ public sealed class AttractMovieTests
     [Fact]
     public void ObjectMachine_WalkCostsExactlyOneStepIntervalPerStep()
     {
-        var attractObjectMachine = new AttractObjectMachine(new Random(4));
+        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(4));
 
         // DUMYOU again: 128 left steps at YOU's 2-frame nap, then DIE — so the
         // object is gone on frame 256 exactly. ANA2/BANA2 only SLEEP again while
@@ -171,7 +170,7 @@ public sealed class AttractMovieTests
     [Fact]
     public void ObjectMachine_ReprogramShakeIsAWholeScript_AndDoesNotRunOnIntoTheNext()
     {
-        var attractObjectMachine = new AttractObjectMachine(new Random(3));
+        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(3));
 
         // PSHAKE ($868C) is a ONE-BYTE script — `FCB RPROG` — GHOSTed onto the family member
         // the brain is reprogramming. RPROG OWNS the process until the shake ends:
@@ -206,7 +205,7 @@ public sealed class AttractMovieTests
     [Fact]
     public void ObjectMachine_WalksAGruntAndExplodesIt()
     {
-        var attractObjectMachine = new AttractObjectMachine(new Random(11));
+        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(11));
 
         // GS1 ($84F5): the grunt walks left down its HUMANA steps, then GSSS1 ends
         // in EXP.
@@ -240,7 +239,7 @@ public sealed class AttractMovieTests
     {
         // "A", then a $5F sleep (95 fiftieths of a second), then "B" — the ROM's SPWAKE.
         byte[] script = [0x41, 0x5F, 0x42];
-        var attractPageMachine = new AttractPageMachine(script, new AttractObjectMachine(new Random(1)), new Random(1));
+        var attractPageMachine = new AttractPageMachine(AttractMovieData.Rom, script, new AttractObjectMachine(AttractMovieData.Rom, new Random(1)), new Random(1));
 
         for (var frame = 0; frame < 3; frame++) attractPageMachine.StepFrame();
 

@@ -1,7 +1,6 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.AttractMode.Models;
 using Robotron2084.AttractMode;
-using Robotron2084.Level.Attract;
 using Xunit;
 
 namespace Robotron2084.Tests.AttractMode;
@@ -31,8 +30,8 @@ public sealed class AttractStorylineTests
     [Fact]
     public void WithTheDoneWaits_TheStorylinePlaysExactlyAsTheArcadesDoes()
     {
-        var arcadeMovie = new AttractMovie(AttractMovieData.Histo, new Random(5));
-        var portMovie = new AttractMovie(AttractStoryline.Create(AttractMovieData.Histo), new Random(5));
+        var arcadeMovie = new AttractMovie(AttractMovieData.Rom, AttractMovieData.Rom.Histo, new Random(5));
+        var portMovie = new AttractMovie(AttractMovieData.Rom, AttractStoryline.Create(AttractMovieData.Rom.Histo), new Random(5));
 
         for (var tick = 0; tick < TickLimit && !arcadeMovie.IsFinished(); tick++)
         {
@@ -49,7 +48,7 @@ public sealed class AttractStorylineTests
     [Fact]
     public void TheDoneWaits_GoAtTheEndOfTheFamilyGruntsHulkAndSpheroidPages_AndTheEndOfTheMovie()
     {
-        var script = AttractStoryline.Create(AttractMovieData.Histo);
+        var script = AttractStoryline.Create(AttractMovieData.Rom.Histo);
 
         var waits = new List<AttractSequence>();
         for (var index = 0; index < script.Length - 1; index++)
@@ -69,8 +68,8 @@ public sealed class AttractStorylineTests
     {
         // Wait for the grunts, then print "A". GS1 ($84F5) is a grunt that walks for a while and is then shot (EXP).
         byte[] script = [PageScriptOpcodes.WaitUntilDone, (byte)AttractSequence.Grunts, 0x41];
-        var attractObjectMachine = new AttractObjectMachine(new Random(11));
-        var attractPageMachine = new AttractPageMachine(script, attractObjectMachine, new Random(11));
+        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(11));
+        var attractPageMachine = new AttractPageMachine(AttractMovieData.Rom, script, attractObjectMachine, new Random(11));
         attractObjectMachine.StartScript(0x84F5);
         attractObjectMachine.StepFrame(); // the script's first step makes its object a grunt (SETOB)
         Assert.True(attractObjectMachine.HasLiveObjectWith(MovieAnimation.Grunt));

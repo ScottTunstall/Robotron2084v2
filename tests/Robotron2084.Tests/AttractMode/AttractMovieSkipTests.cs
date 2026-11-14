@@ -1,5 +1,5 @@
 using Robotron2084.AttractMode;
-using Robotron2084.Level.Attract;
+using Robotron2084.AttractMode.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.AttractMode;
@@ -12,7 +12,7 @@ public sealed class AttractMovieSkipTests
 
     private static AttractMovie CreateMovie()
     {
-        return new AttractMovie(AttractStoryline.Create(AttractMovieData.Histo), new Random(3));
+        return new AttractMovie(AttractMovieData.Rom, AttractStoryline.Create(AttractMovieData.Rom.Histo), new Random(3));
     }
 
     [Fact]
@@ -32,20 +32,20 @@ public sealed class AttractMovieSkipTests
     [Fact]
     public void CreateAtPage_StartsExactlyThatPage()
     {
-        var script = AttractStoryline.Create(AttractMovieData.Histo);
+        var script = AttractStoryline.Create(AttractMovieData.Rom.Histo);
 
         for (var page = 1; page <= PageCount; page++)
-            Assert.Equal(page, AttractMovie.CreateAtPage(script, new Random(3), page).AttractPageMachine.PagesStarted);
+            Assert.Equal(page, AttractMovie.CreateAtPage(AttractMovieData.Rom, script, new Random(3), page).AttractPageMachine.PagesStarted);
     }
 
     [Fact]
     public void CreateAtPage_GivesTheSameTextAsSkippingToThatPageStepByStep()
     {
-        var script = AttractStoryline.Create(AttractMovieData.Histo);
-        var stepByStep = new AttractMovie(script, new Random(3));
+        var script = AttractStoryline.Create(AttractMovieData.Rom.Histo);
+        var stepByStep = new AttractMovie(AttractMovieData.Rom, script, new Random(3));
         for (var page = 1; page <= 4; page++) stepByStep.SkipToNextPage();
 
-        var atPage = AttractMovie.CreateAtPage(script, new Random(3), 4);
+        var atPage = AttractMovie.CreateAtPage(AttractMovieData.Rom, script, new Random(3), 4);
 
         Assert.Equal(stepByStep.AttractPageMachine.TextCells, atPage.AttractPageMachine.TextCells);
         Assert.Equal(stepByStep.ArcadeFrames, atPage.ArcadeFrames);
