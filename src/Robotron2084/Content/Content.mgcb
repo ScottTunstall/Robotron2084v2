@@ -3250,6 +3250,12 @@
 /processorParam:Quality=Best
 /build:Speech/Berzerk/humanoid.ogg
 
+#begin Speech/Berzerk/humanoids.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/humanoids.ogg
+
 #begin Speech/Berzerk/in.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
