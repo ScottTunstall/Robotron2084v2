@@ -165,6 +165,19 @@ place, so they can change without touching the objects.
 
 **STR-14. Declare a variable as close to its first use as possible.** Declare each one on the line that first gives it a value, not in a block of locals at the top of the method. A variable needed in two separate parts of a method is declared before the first of them.
 
+**STR-15. What a class needs to work, it is given in its constructor.** A dependency a class cannot do its job without
+(the texture set, the random source, the place it announces events to) is a required constructor parameter. Do not hand it over
+afterwards through a settable property, and do not give it a default that quietly does nothing. A property that has to be
+set before the class works is a hidden step that a caller can forget.
+
+**STR-16. Every game entity takes an `IGameEvents`, and announces what happens to it.** A game entity is a thing with
+behaviour in the game: the player, the family, the robots, the electrodes, the shots. The entity takes an `IGameEvents`
+as a required constructor parameter (STR-15), right after the texture set, and raises a `GameEvent` from its own state changes
+(`Kill`, `Rescue`, a knock-back), only when the change really happens. It never decides what the game does about the event
+(sound, speech, score): listeners do that. A new kind of entity adds a `GameEventKind` for what is worth announcing
+about it, or uses `RobotKilled` with its `RobotKind`. The entity's xmldoc says which kinds it announces, and nothing about who listens.
+The purely visual effects (explosions, score bursts, skulls, markers, ghosts) are not game entities and do not take one.
+
 ## 3. Naming (§114)
 
 **NAM-1. Methods are verb phrases in the domain's own words**: `SetRandomOffsets`, `GetRandomDirection`,
