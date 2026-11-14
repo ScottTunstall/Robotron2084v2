@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
-using Robotron2084.Tuning;
+using Robotron2084.Audio;
 
 namespace RobotronSoundPlayer;
 

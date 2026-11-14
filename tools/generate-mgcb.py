@@ -6,7 +6,7 @@ Content/Speech/**/*.ogg (the GORF and Berzerk folders) and emits:
   1. src/Robotron2084/Content/Content.mgcb  (font entry + effect entries +
      one PNG entry per sprite + one sound effect entry per speech file)
   2. src/Robotron2084/Graphics/TexturePaths.cs (static content-path table)
-  3. src/Robotron2084/Audio/SpeechLinePaths.cs (static content-path table)
+  3. src/Robotron2084.Audio/SpeechLinePaths.cs (static content-path table)
 
 Re-run whenever new sprite PNGs are added to Content/Sprites/ or new speech
 files are added to Content/Speech/. The OGG importer needs ffmpeg on the PATH
@@ -21,7 +21,7 @@ EFFECTS_DIR = ROOT / "src/Robotron2084/Content/Effects"
 MGCB = ROOT / "src/Robotron2084/Content/Content.mgcb"
 PATHS_CS = ROOT / "src/Robotron2084/Graphics/TexturePaths.cs"
 SPEECH_DIR = ROOT / "src/Robotron2084/Content/Speech"
-SPEECH_PATHS_CS = ROOT / "src/Robotron2084/Audio/SpeechLinePaths.cs"
+SPEECH_PATHS_CS = ROOT / "src/Robotron2084.Audio/SpeechLinePaths.cs"
 
 def main() -> int:
     pngs = sorted(p.stem for p in SPRITES_DIR.glob("*.png"))
@@ -115,6 +115,7 @@ public static class TexturePaths
 /// </summary>
 public static class SpeechLinePaths
 {{
+    /// <summary>The content path of every speech line, such as <c>Speech/Berzerk/alert</c>, in order.</summary>
     public static readonly string[] All =
     [
 {speech_entries},
