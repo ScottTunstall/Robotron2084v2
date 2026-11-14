@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Robotron2084.Tuning;
@@ -19,25 +20,61 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public sealed class SoundEffectSpeechVoice : ISpeechVoice, IDisposable
 {
+    /// <summary>The start of the path of every Berzerk word.</summary>
+    private const string BerzerkFolderStart = "Speech/" + SpeechFolders.Berzerk + "/";
+
+    /// <summary>The extension of a file the content pipeline built.</summary>
+    private const string BuiltFileExtension = ".xnb";
+
+    /// <summary>The Berzerk words, which this voice made itself and so must free.</summary>
+    private readonly List<SoundEffect> _ownSoundEffects = [];
+
     private readonly Dictionary<string, SoundEffect> _soundEffectsByLineName = new();
     private SoundEffectInstance? _soundEffectInstance;
 
-    /// <summary>Loads every speech line the pipeline built.</summary>
+    /// <summary>
+    ///     Loads every speech line the pipeline built. Each Berzerk word has the silence around it cut off, so the words of
+    ///     a sentence follow each other closely, as the arcade's speech chip says them.
+    /// </summary>
     /// <param name="contentManager">The content manager that loads the built files.</param>
     /// <exception cref="NoAudioHardwareException">The computer has no sound output.</exception>
+    /// <exception cref="InvalidDataException">A Berzerk word's built file cannot be read.</exception>
     public SoundEffectSpeechVoice(ContentManager contentManager)
     {
         foreach (var linePath in SpeechLinePaths.All)
         {
             var lineName = Path.GetFileName(linePath).ToUpperInvariant();
-            _soundEffectsByLineName[lineName] = contentManager.Load<SoundEffect>(linePath);
+            var isBerzerkWord = linePath.StartsWith(BerzerkFolderStart, StringComparison.Ordinal);
+            _soundEffectsByLineName[lineName] = isBerzerkWord
+                ? CreateTrimmedSoundEffect(contentManager, linePath)
+                : contentManager.Load<SoundEffect>(linePath);
         }
     }
 
-    /// <summary>Stops the voice. The content manager frees the lines.</summary>
+    /// <summary>Stops the voice and frees the Berzerk words. The content manager frees the other lines.</summary>
     public void Dispose()
     {
         _soundEffectInstance?.Dispose();
+        foreach (var soundEffect in _ownSoundEffects) soundEffect.Dispose();
+    }
+
+    /// <summary>Makes a line from its built file, with the silence around it cut off.</summary>
+    /// <param name="contentManager">The content manager, whose folder holds the built files.</param>
+    /// <param name="linePath">The line's path in that folder, without the extension.</param>
+    /// <returns>The line, which this voice frees.</returns>
+    /// <exception cref="InvalidDataException">The built file cannot be read.</exception>
+    private SoundEffect CreateTrimmedSoundEffect(ContentManager contentManager, string linePath)
+    {
+        PcmSound pcmSound;
+        using (var stream = TitleContainer.OpenStream(Path.Combine(contentManager.RootDirectory, linePath + BuiltFileExtension)))
+        {
+            pcmSound = XnbSoundEffectReader.Read(stream)
+                .GetTrimmed(SoundTuning.BerzerkWordSilenceLevel, SoundTuning.BerzerkWordSilenceMarginMilliseconds);
+        }
+
+        SoundEffect soundEffect = new(pcmSound.Samples, pcmSound.SampleRate, pcmSound.Channels);
+        _ownSoundEffects.Add(soundEffect);
+        return soundEffect;
     }
 
     /// <inheritdoc />
@@ -56,6 +93,5 @@ public sealed class SoundEffectSpeechVoice : ISpeechVoice, IDisposable
         _soundEffectInstance = soundEffect.CreateInstance();
         _soundEffectInstance.Volume = SoundTuning.SpeechVolume;
         _soundEffectInstance.Pitch = pitchOctaves;
-        _soundEffectInstance.Play();
-    }
+        _soundEffectInstance.Play();    }
 }

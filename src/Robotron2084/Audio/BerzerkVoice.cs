@@ -27,9 +27,10 @@ public static class BerzerkVoice
 
     /// <summary>
     ///     How long a <see cref="BerzerkWord.Pause" /> lasts, in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>:
-    ///     a quarter of a second. A port addition: the chip has no pause.
+    ///     a sixth of a second. A port addition: the chip has no pause. Tuned by ear: a quarter of a second was slightly too
+    ///     long between the two halves of "INTRUDER ALERT INTRUDER ALERT".
     /// </summary>
-    public const int PauseTicks = 15;
+    public const int PauseTicks = 10;
 
     /// <summary>Gets the name of a word's speech line: its file name in <c>Content/Speech/Berzerk/</c>, in capitals.</summary>
     /// <param name="berzerkWord">The word. It must not be <see cref="BerzerkWord.Pause" />, which has no line.</param>
