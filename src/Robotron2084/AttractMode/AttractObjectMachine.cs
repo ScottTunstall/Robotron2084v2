@@ -1,6 +1,5 @@
 using Robotron2084.AttractMode.Models;
 using Robotron2084.Entities;
-using Robotron2084.Level.Attract;
 
 namespace Robotron2084.AttractMode;
 
@@ -69,12 +68,20 @@ public sealed class AttractObjectMachine
     private readonly List<MovieObject> _objects = [];
     private readonly List<MovieProcess> _movieProcesses = [];
     private readonly Random _random;
-    private readonly byte[] _scriptBytes = AttractMovieData.Scripts;
+    private readonly byte[] _scriptBytes;
 
-    public AttractObjectMachine(Random random)
+    /// <summary>Makes the machine that runs the movie's object scripts.</summary>
+    /// <param name="movieData">The ROM's movie data: the object scripts and the tables they walk by.</param>
+    /// <param name="random">Where the machine's random numbers come from.</param>
+    public AttractObjectMachine(AttractMovieData movieData, Random random)
     {
+        MovieData = movieData;
+        _scriptBytes = movieData.Scripts;
         _random = random;
     }
+
+    /// <summary>The ROM's movie data this machine runs.</summary>
+    public AttractMovieData MovieData { get; }
 
     /// <summary>Every live object, in spawn order (laser bolts included).</summary>
     public IReadOnlyList<MovieObject> Objects => _objects;
@@ -115,7 +122,7 @@ public sealed class AttractObjectMachine
         var movieProcess = new MovieProcess
         {
             MovieObject = new MovieObject(null, 0, 0, 0),
-            ScriptIndex = scriptAddress - AttractMovieData.ScriptBase
+            ScriptIndex = scriptAddress - MovieData.ScriptBase
         };
         _objects.Add(movieProcess.MovieObject);
         _movieProcesses.Add(movieProcess);

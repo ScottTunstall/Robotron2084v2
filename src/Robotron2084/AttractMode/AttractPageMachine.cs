@@ -1,6 +1,5 @@
 using Robotron2084.AttractMode.Models;
 using Robotron2084.Core;
-using Robotron2084.Level.Attract;
 
 namespace Robotron2084.AttractMode;
 
@@ -95,6 +94,7 @@ public sealed class AttractPageMachine
     /// </remarks>
     private static readonly int[] GruntScripts = [0x84F5, 0x8517, 0x8540, 0x8567];
 
+    private readonly AttractMovieData _movieData;
     private readonly AttractObjectMachine _attractObjectMachine;
     private readonly Random _random;
     private readonly byte[] _scriptBytes;
@@ -106,8 +106,14 @@ public sealed class AttractPageMachine
     private int _scriptIndex;
     private int _waitArcadeFrames;
 
-    public AttractPageMachine(byte[] scriptBytes, AttractObjectMachine attractObjectMachine, Random random)
+    /// <summary>Makes the machine that runs the page script.</summary>
+    /// <param name="movieData">The ROM's movie data: the messages and the font widths the pages print with.</param>
+    /// <param name="scriptBytes">The page script.</param>
+    /// <param name="attractObjectMachine">The machine that runs the object scripts the page starts.</param>
+    /// <param name="random">Where the machine's random numbers come from.</param>
+    public AttractPageMachine(AttractMovieData movieData, byte[] scriptBytes, AttractObjectMachine attractObjectMachine, Random random)
     {
+        _movieData = movieData;
         _scriptBytes = scriptBytes;
         _attractObjectMachine = attractObjectMachine;
         _random = random;
@@ -196,13 +202,13 @@ public sealed class AttractPageMachine
         };
     }
 
-    private static string GetMessageText(int number)
+    private string GetMessageText(int number)
     {
-        var index = number - AttractMovieData.FirstMessageNumber;
-        var isKnownMessage = index >= 0 && index < AttractMovieData.Messages.Length;
+        var index = number - _movieData.FirstMessageNumber;
+        var isKnownMessage = index >= 0 && index < _movieData.Messages.Length;
         if (!isKnownMessage) return string.Empty;
 
-        return AttractMovieData.Messages[index];
+        return _movieData.Messages[index];
     }
 
     /// <summary>Takes away every character inside a block that is cleared.</summary>
@@ -259,7 +265,7 @@ public sealed class AttractPageMachine
             _textCells.Add(new MovieTextCell(_cursorX, _cursorY, character.Value, TextPaletteIndex));
         }
 
-        _cursorX += AttractMovieData.FontWidths[code - 0x30] + 1;
+        _cursorX += _movieData.FontWidths[code - 0x30] + 1;
     }
 
     /// <summary>Runs a page-script action: the flow opcodes here, the text opcodes in <see cref="RunTextAction" />.</summary>

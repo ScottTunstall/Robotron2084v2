@@ -1,6 +1,6 @@
 using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
-using Robotron2084.Level.Attract;
+using Robotron2084.AttractMode.Models;
 
 namespace Robotron2084.AttractMode.Models;
 
@@ -189,7 +189,7 @@ internal sealed record MovieProcess
         switch (opcode)
         {
             case 14: // JUMP
-                ScriptIndex = attractObjectMachine.ReadWord(this) - AttractMovieData.ScriptBase;
+                ScriptIndex = attractObjectMachine.ReadWord(this) - attractObjectMachine.MovieData.ScriptBase;
                 return true;
 
             case 15: // HIB — off the object list (not drawn, not moved).
@@ -233,7 +233,7 @@ internal sealed record MovieProcess
             case 20: // LOOPER — `count` passes over the block from the label.
                 {
                     int count = attractObjectMachine.Read(this);
-                    var labelIndex = attractObjectMachine.ReadWord(this) - AttractMovieData.ScriptBase;
+                    var labelIndex = attractObjectMachine.ReadWord(this) - attractObjectMachine.MovieData.ScriptBase;
                     if (LoopPassesLeft == 0) LoopPassesLeft = count;
 
                     if (--LoopPassesLeft != 0) ScriptIndex = labelIndex;
@@ -247,7 +247,7 @@ internal sealed record MovieProcess
                     attractObjectMachine.AddProcess(new MovieProcess
                     {
                         MovieObject = MovieObject,
-                        ScriptIndex = scriptAddress - AttractMovieData.ScriptBase
+                        ScriptIndex = scriptAddress - attractObjectMachine.MovieData.ScriptBase
                     });
                     return true;
                 }
@@ -352,7 +352,7 @@ internal sealed record MovieProcess
         switch (Action)
         {
             case MovieAction.Walk:
-                StepWalk();
+                StepWalk(attractObjectMachine);
                 break;
 
             case MovieAction.Cycle:
@@ -377,7 +377,7 @@ internal sealed record MovieProcess
     }
 
     /// <summary>ANA2 / BANA2: one walk step, ending the action after the last one.</summary>
-    private void StepWalk()
+    private void StepWalk(AttractObjectMachine attractObjectMachine)
     {
         // Only the WALK actions need the descriptor (its walk table and
         // animation frame count); MONO and RPROG drive any object. A descriptor-less
@@ -395,14 +395,14 @@ internal sealed record MovieProcess
         // whole script's later phases with it (notes §96.10).
         if (descriptor.Walk == MovieWalk.BrainStep)
         {
-            BrainStep(descriptor);
+            BrainStep(descriptor, attractObjectMachine.MovieData);
             StepsLeft--;
             WaitArcadeFrames = 0;
             if (StepsLeft > 0) WaitArcadeFrames = descriptor.StepNap;
         }
         else
         {
-            TableStep(descriptor.Walk);
+            TableStep(descriptor.Walk, attractObjectMachine.MovieData);
             StepsLeft--;
             WaitArcadeFrames = 0;
             if (StepsLeft > 0) WaitArcadeFrames = AttractObjectMachine.WalkStepArcadeFrames;
@@ -470,10 +470,10 @@ internal sealed record MovieProcess
     ///         <item>Disassembly: the unlabelled family and hulk walker at $7E00 to $7E40, with the tables at $03CF and $01CC</item>
     ///     </list>
     /// </remarks>
-    private void TableStep(MovieWalk walk)
+    private void TableStep(MovieWalk walk, AttractMovieData movieData)
     {
-        var table = AttractMovieData.WalkFamilyMember;
-        if (walk == MovieWalk.Hulk) table = AttractMovieData.WalkHulk;
+        var table = movieData.WalkFamilyMember;
+        if (walk == MovieWalk.Hulk) table = movieData.WalkHulk;
 
         SetImage(table[WalkIndex] >> 2);
         ApplyStep((sbyte)table[WalkIndex + 1], (sbyte)table[WalkIndex + 2]);
@@ -483,7 +483,7 @@ internal sealed record MovieProcess
     }
 
     /// <summary>BR* — the descriptor's own step size, cycling the 4-entry ANATAB.</summary>
-    private void BrainStep(MovieDescriptor descriptor)
+    private void BrainStep(MovieDescriptor descriptor, AttractMovieData movieData)
     {
         var walkSequence = (WalkSequence)WalkIndex;
         var dx = walkSequence switch
@@ -500,8 +500,8 @@ internal sealed record MovieProcess
         };
         ApplyStep(dx, dy);
 
-        SetImage((int)walkSequence * 3 + AttractMovieData.AnimationFrameCycleTable[WalkCycleIndex]);
-        WalkCycleIndex = (WalkCycleIndex + 1) % AttractMovieData.AnimationFrameCycleTable.Length;
+        SetImage((int)walkSequence * 3 + movieData.AnimationFrameCycleTable[WalkCycleIndex]);
+        WalkCycleIndex = (WalkCycleIndex + 1) % movieData.AnimationFrameCycleTable.Length;
     }
 
     /// <summary>Moves the object one step. The sideways distance is in arcade pixels, and a column is two of them.</summary>

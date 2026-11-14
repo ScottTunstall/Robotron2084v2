@@ -10,7 +10,6 @@ using Robotron2084.Graphics;
 using Robotron2084.Hud;
 using Robotron2084.Input;
 using Robotron2084.Level;
-using Robotron2084.Level.Attract;
 using Robotron2084.Palette;
 using Robotron2084.States.Models;
 using Robotron2084.Tuning;
@@ -58,9 +57,9 @@ public sealed class StorylineState : IGameState, IAttractState
 
         _playfieldWall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColourCycle());
         _gameSession = GameSession.CreateNewGame(_humanPlayerInputSource, 1);
-        var storylineScript = AttractStoryline.Create(AttractMovieData.Histo);
-        _attractMovie = new AttractMovie(storylineScript, gameServices.Random);
-        if (startPage is { } page) _attractMovie = AttractMovie.CreateAtPage(storylineScript, gameServices.Random, page);
+        var storylineScript = AttractStoryline.Create(AttractMovieData.Rom.Histo);
+        _attractMovie = new AttractMovie(AttractMovieData.Rom, storylineScript, gameServices.Random);
+        if (startPage is { } page) _attractMovie = AttractMovie.CreateAtPage(AttractMovieData.Rom, storylineScript, gameServices.Random, page);
     }
 
     /// <summary>Gets the page of the story the movie is on, counted from 1. The very start counts as the first page.</summary>

@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.AttractMode.Models;
 using Robotron2084.Core;
 
 namespace Robotron2084.AttractMode;
@@ -25,10 +26,14 @@ public sealed class AttractMovie
         _clockUnits =
             ArcadeClock.UnitsPerArcadeFrame; // seeded so the first tick runs a frame, as the ROM's first cycle does
 
-    public AttractMovie(byte[] script, Random random)
+    /// <summary>Makes a movie that starts at the beginning of the story.</summary>
+    /// <param name="movieData">The ROM's movie data.</param>
+    /// <param name="script">The page script.</param>
+    /// <param name="random">Where the movie's random numbers come from.</param>
+    public AttractMovie(AttractMovieData movieData, byte[] script, Random random)
     {
-        AttractObjectMachine = new AttractObjectMachine(random);
-        AttractPageMachine = new AttractPageMachine(script, AttractObjectMachine, random);
+        AttractObjectMachine = new AttractObjectMachine(movieData, random);
+        AttractPageMachine = new AttractPageMachine(movieData, script, AttractObjectMachine, random);
     }
 
     /// <summary>The most arcade frames <see cref="SkipToNextPage" /> will run, so a script that never reaches a page cannot hang the game.</summary>
@@ -50,13 +55,14 @@ public sealed class AttractMovie
     }
 
     /// <summary>Makes a movie that has run on to the start of a page of the story.</summary>
+    /// <param name="movieData">The ROM's movie data.</param>
     /// <param name="script">The page script.</param>
     /// <param name="random">Where the movie's random numbers come from.</param>
     /// <param name="page">The page to start at, counted from 1. The first page is the first the movie starts.</param>
     /// <returns>A movie at the start of that page, or at its end when the story has fewer pages.</returns>
-    public static AttractMovie CreateAtPage(byte[] script, Random random, int page)
+    public static AttractMovie CreateAtPage(AttractMovieData movieData, byte[] script, Random random, int page)
     {
-        var attractMovie = new AttractMovie(script, random);
+        var attractMovie = new AttractMovie(movieData, script, random);
         for (var pagesSkipped = 0; pagesSkipped < page; pagesSkipped++) attractMovie.SkipToNextPage();
 
         return attractMovie;
