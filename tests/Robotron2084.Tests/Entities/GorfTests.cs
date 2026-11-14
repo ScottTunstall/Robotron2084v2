@@ -336,31 +336,31 @@ public sealed class GorfTests
     {
         Assert.Equal(6, GorfTuning.IntroAppearanceLines.Count);
         Assert.All(GorfTuning.IntroAppearanceLines, line =>
-            Assert.Contains(SpeechLinePaths.All, path => Path.GetFileName(path).ToUpperInvariant() == line));
+            Assert.Contains(GorfVoice.GetLineName(line), SpeechFolders.GetLineNames(SpeechFolders.Gorf)));
     }
 
     [Fact]
     public void AGorfGivenALine_SaysItOnceWhenItFirstAppears_AndNeverAgain()
     {
         var playField = CreateFieldInPlay();
-        var lines = new List<string>();
-        playField.SetLineSayer(lines.Add);
+        var lines = new List<GorfLine>();
+        playField.SetGorfLineSayer(lines.Add);
         var gorf = new Gorf(TestTextures.SharedTextureSet, new Random(3), playField.GetPlayfieldBounds(), 10, 0, 0, null,
-            "GORFIANDOOM");
+            GorfLine.GorfianDoom);
         playField.FieldEntities.Add(gorf);
         Assert.Empty(lines); // not before it appears
 
         for (var tick = 0; tick < 200; tick++) playField.Update(OneTickGameTime);
 
-        Assert.Equal(["GORFIANDOOM"], lines);
+        Assert.Equal([GorfLine.GorfianDoom], lines);
     }
 
     [Fact]
     public void AGorfGivenNoLine_SaysNothing()
     {
         var playField = CreateFieldInPlay();
-        var lines = new List<string>();
-        playField.SetLineSayer(lines.Add);
+        var lines = new List<GorfLine>();
+        playField.SetGorfLineSayer(lines.Add);
         playField.FieldEntities.Add(CreateRandomGorf(playField, 4));
 
         for (var tick = 0; tick < 200; tick++) playField.Update(OneTickGameTime);
