@@ -1,3 +1,5 @@
+using Robotron2084.Audio;
+
 namespace Robotron2084.Tuning;
 
 /// <summary>
@@ -35,15 +37,15 @@ public static class GorfTuning
     ///     Gorf", "I am the Gorfian Empire", "Gorfian robots... attack! attack!", "You cannot escape the Gorfian robots",
     ///     "Gorfians take no prisoners!" and "You will meet a Gorfian doom".
     /// </summary>
-    /// <remarks>Each is the name of a file in <c>Content/Speech/</c> (notes §149), without the extension and in capitals.</remarks>
-    public static readonly IReadOnlyList<string> IntroAppearanceLines =
+    /// <remarks>Notes §149.</remarks>
+    public static readonly IReadOnlyList<GorfLine> IntroAppearanceLines =
     [
-        "LONGLIVEGORF",
-        "IAMTHEGORFIANEMPIRE",
-        "GORFIANROBOTSATTACK",
-        "CANNOTESCAPEGORF",
-        "GORFIANSTAKENOPRISONERS",
-        "GORFIANDOOM"
+        GorfLine.LongLiveGorf,
+        GorfLine.IAmTheGorfianEmpire,
+        GorfLine.GorfianRobotsAttack,
+        GorfLine.CannotEscapeGorf,
+        GorfLine.GorfiansTakeNoPrisoners,
+        GorfLine.GorfianDoom
     ];
 
     /// <summary>How many electrodes the first wave, which introduces Gorf, has.</summary>
