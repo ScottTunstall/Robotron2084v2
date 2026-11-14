@@ -81,6 +81,13 @@ public static class AttractTuning
     /// <remarks>Port only.</remarks>
     public const int TitlePortTextSeconds = 3;
 
+    /// <summary>
+    ///     How many seconds the presentation page's bottom row shows the copyright line before the prompt for the menu page
+    ///     takes its place, and how long the prompt stays before the copyright line is back.
+    /// </summary>
+    /// <remarks>Port only.</remarks>
+    public const int TitleFooterSeconds = 2;
+
     /// <summary>The palette index of the wall on the title screen.</summary>
     /// <remarks>
     ///     Original source: the title screen routine at ROM <c>$79C8</c>, <c>LDA #$CC / STA $8F</c>, which makes the wall
