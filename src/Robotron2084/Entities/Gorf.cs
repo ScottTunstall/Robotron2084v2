@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
@@ -57,7 +58,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private PlayField? _playField;
     private readonly int _dropIntervalSteps;
     private int _pendingDropCount;
-    private string? _lineToSay;
+    private GorfLine? _lineToSay;
     private int _stepCount;
 
     /// <summary>
@@ -85,11 +86,11 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     box, so it does not appear on a collision course with the player.
     /// </param>
     /// <param name="lineToSay">
-    ///     The name of a speech line (<c>Content/Speech/</c>) to say the first time it appears, or null to say nothing.
+    ///     The line to say the first time it appears, or null to say nothing.
     ///     It is said once.
     /// </param>
     public Gorf(TextureSet textureSet, Random random, Rectangle playfieldBounds, int maxDropsX2, int gruntDropCount = 0,
-        int dropIntervalSteps = 0, Rectangle? playerBoxToAvoid = null, string? lineToSay = null)
+        int dropIntervalSteps = 0, Rectangle? playerBoxToAvoid = null, GorfLine? lineToSay = null)
     {
         _lineToSay = lineToSay;
         _textureSet = textureSet;
@@ -218,10 +219,10 @@ public sealed class Gorf : IExplodable, IRemovable
     /// <param name="playField">The playfield, which has the line said.</param>
     private void SayTheAppearanceLine(PlayField playField)
     {
-        if (_lineToSay is not { } lineName) return;
+        if (_lineToSay is not { } gorfLine) return;
 
         _lineToSay = null;
-        playField.SayLine(lineName);
+        playField.SayGorfLine(gorfLine);
     }
 
     /// <summary>
