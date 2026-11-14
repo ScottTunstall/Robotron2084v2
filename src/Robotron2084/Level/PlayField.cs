@@ -55,7 +55,7 @@ public sealed class PlayField : ICollisionScene
     private readonly LaserWallFlares _laserWallFlares = new();
     private readonly WaveMaterialisation _waveMaterialisation;
     private readonly MidWaveSpawner _midWaveSpawner;
-    private Action<string> _lineSayer = Speech.Say;
+    private Action<GorfLine> _gorfLineSayer = static gorfLine => Speech.SayGorf(gorfLine);
     private readonly List<GorfReturn> _gorfReturns = [];
     private readonly PlayerAppear _playerAppear = new();
 
@@ -411,18 +411,18 @@ public sealed class PlayField : ICollisionScene
         _midWaveSpawner.SpawnGrunt(from, landing);
     }
 
-    /// <summary>Has a speech line said, on the speech voice that nothing on the sound board can cut off (port only, notes §153).</summary>
-    /// <param name="lineName">The name of the line (<see cref="SpeechLinePaths" />).</param>
-    public void SayLine(string lineName)
+    /// <summary>Has one of Gorf's lines said, on the speech voice that nothing on the sound board can cut off (port only, notes §153).</summary>
+    /// <param name="gorfLine">The line.</param>
+    public void SayGorfLine(GorfLine gorfLine)
     {
-        _lineSayer(lineName);
+        _gorfLineSayer(gorfLine);
     }
 
-    /// <summary>Changes what has a line said. It is what a test uses to hear the lines without a speech voice.</summary>
-    /// <param name="lineSayer">What to call with the name of each line.</param>
-    internal void SetLineSayer(Action<string> lineSayer)
+    /// <summary>Changes what has Gorf's lines said. It is what a test uses to hear the lines without a speech voice.</summary>
+    /// <param name="gorfLineSayer">What to call with each line.</param>
+    internal void SetGorfLineSayer(Action<GorfLine> gorfLineSayer)
     {
-        _lineSayer = lineSayer;
+        _gorfLineSayer = gorfLineSayer;
     }
 
     /// <summary>
