@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Audio;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -35,7 +36,7 @@ namespace Robotron2084.Entities;
 ///     (two arcade pixels each) and up-and-down distances in rows (one arcade pixel each), as in the ROM; see
 ///     docs/glossary.md.
 /// </remarks>
-public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
+public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot, IRaisesGameEvents
 {
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> takes to run. The time from one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> to the next.</summary>
     /// <remarks>
@@ -296,6 +297,9 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     public IntVector2 Position => _position;
 
+    /// <inheritdoc />
+    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
+
     /// <summary>The family member this brain is chasing, or null when it is chasing the player.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -403,6 +407,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Brain));
     }
 
     /// <summary>
@@ -556,7 +561,10 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     {
         var victimFamilyMember = _victimFamilyMember;
         _victimFamilyMember = null;
-        victimFamilyMember?.FinishReprogramming();
+        if (victimFamilyMember is null) return;
+
+        victimFamilyMember.FinishReprogramming();
+        GameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberKilled, victimFamilyMember.Position));
     }
 
     /// <summary>Gives the brain a new place in the family list to chase.</summary>
@@ -741,6 +749,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 
         playField.PlaySoundFrom(SoundTables.FamilyMemberProgFinalConversion, victimFamilyMember.GetBounds());
         victimFamilyMember.FinishReprogramming();
+        GameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberReprogrammed, victimFamilyMember.Position));
         playField.SpawnProg(victimFamilyMember.Position, victimFamilyMember.Kind);
         _victimFamilyMember = null;
     }

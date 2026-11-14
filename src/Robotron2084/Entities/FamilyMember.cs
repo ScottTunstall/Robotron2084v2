@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -21,7 +22,7 @@ namespace Robotron2084.Entities;
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$02B2</c> (<c>INITIALISE_FAMILY_MEMBERS</c>)</item>
 ///     </list>
 /// </remarks>
-public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
+public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable, IRaisesGameEvents
 {
     /// <summary>How many animation frames are in each of a family member's walk sets.</summary>
     private const int AnimationFramesPerSet = 3;
@@ -171,6 +172,9 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     public IntVector2 Position => _position;
 
+    /// <inheritdoc />
+    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
+
     /// <summary>This family member's place in the family list.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -237,6 +241,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        GameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberKilled, Position));
     }
 
     /// <summary>Rescues the family member.</summary>
@@ -245,6 +250,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        GameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberRescued, Position));
     }
 
     /// <summary>
@@ -290,6 +296,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     internal void BeginReprogramming()
     {
         IsBeingReprogrammed = true;
+        GameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberReprogrammingBegan, Position));
     }
 
     /// <summary>Finishes the reprogramming. The family member is gone.</summary>

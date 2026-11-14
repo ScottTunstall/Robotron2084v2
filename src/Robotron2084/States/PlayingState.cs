@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Hud;
 using Robotron2084.Input;
@@ -36,6 +37,7 @@ public sealed class PlayingState : IGameState
     /// </summary>
     private const int WaveCounterWrap = 255;
 
+    private readonly GameEventHub _gameEventHub = new();
     private readonly GameSettings _gameSettings;
 
     private readonly WaveParameterGenerator _waveParameterGenerator = new();
@@ -265,7 +267,8 @@ public sealed class PlayingState : IGameState
             extraLifeEveryPoints: _gameSettings.GetExtraLifeEveryPoints(),
             tankShellBugEnabled: _gameSettings.TankShellBugEnabled,
             brainsChaseMikeyBugEnabled: _gameSettings.BrainsChaseMikeyBugEnabled,
-            familySlotsLeftOver: _gameSession.FamilySlotsLeftOver);
+            familySlotsLeftOver: _gameSession.FamilySlotsLeftOver,
+            gameEvents: _gameEventHub);
     }
 
     /// <summary>Gets the wave a player is about to play: what was left after their last death, or a fresh wave.</summary>
@@ -353,6 +356,7 @@ public sealed class PlayingState : IGameState
         playerSlot.SavedWaveParameters = null;
         RecordFamilySaved(playerSlot);
 
+        _gameEventHub.Raise(new GameEvent(GameEventKind.WaveCompleted, IntVector2.Zero));
         gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession, _random));
     }
 

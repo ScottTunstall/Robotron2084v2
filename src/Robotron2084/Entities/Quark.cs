@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -21,7 +22,7 @@ namespace Robotron2084.Entities;
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$4BFB</c> (<c>ANIMATE_QUARK</c>)</item>
 ///     </list>
 /// </remarks>
-public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
+public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable, IRaisesGameEvents
 {
     /// <summary>
     ///     The range of the random number behind each either-or choice a quark makes: which way to drift, and which way to
@@ -163,6 +164,9 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     public IntVector2 Position => _position;
 
+    /// <inheritdoc />
+    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
+
     /// <summary>Draws the animation frame that is showing.</summary>
     /// <param name="spriteBatch">What the quark is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
@@ -200,6 +204,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Quark));
     }
 
     /// <summary>

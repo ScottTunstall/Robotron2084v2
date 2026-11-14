@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -27,7 +28,7 @@ namespace Robotron2084.Entities;
 ///         </item>
 ///     </list>
 /// </remarks>
-public sealed class Enforcer : IEntity, IExplodable, IRemovable
+public sealed class Enforcer : IEntity, IExplodable, IRemovable, IRaisesGameEvents
 {
     /// <summary>
     ///     How much slower the enforcer goes than the gap to the spot it is heading for. The bigger this is, the slower it
@@ -121,6 +122,9 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position => _position;
 
+    /// <inheritdoc />
+    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
+
     /// <summary>Draws the enforcer: a growing animation frame while it grows, and the full-size one after that.</summary>
     /// <param name="spriteBatch">What the enforcer is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
@@ -178,6 +182,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Enforcer));
     }
 
     /// <summary>

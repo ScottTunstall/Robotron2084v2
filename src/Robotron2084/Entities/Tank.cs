@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -22,7 +23,7 @@ namespace Robotron2084.Entities;
 ///         </item>
 ///     </list>
 /// </remarks>
-public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
+public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot, IRaisesGameEvents
 {
     /// <summary>How many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a tank waits between shots, when it is not told a number.</summary>
     private const int DefaultFireIntervalBeats = 32;
@@ -199,6 +200,9 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     public IntVector2 Position => _position;
 
+    /// <inheritdoc />
+    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
+
     /// <summary>Which tread animation frame is showing, as a place in <see cref="TextureSet.TankAnimationFrameTextures" />.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -318,6 +322,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Tank));
     }
 
     /// <summary>

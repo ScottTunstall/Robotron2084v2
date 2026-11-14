@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -23,7 +24,7 @@ namespace Robotron2084.Entities;
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$1EAB</c> (<c>ANIMATE_PROG</c>)</item>
 ///     </list>
 /// </remarks>
-public sealed class Prog : IExplodable, IRemovable
+public sealed class Prog : IExplodable, IRemovable, IRaisesGameEvents
 {
     /// <summary>
     ///     The range of the random number that decides whether a prog goes sideways or up and down. Each is picked half the
@@ -230,6 +231,9 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     public IntVector2 Position => _position;
 
+    /// <inheritdoc />
+    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
+
     /// <summary>Draws the ghosts, oldest first, and then the prog. Each is drawn as a one-colour shape on a one-colour box.</summary>
     /// <param name="spriteBatch">What the prog is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
@@ -350,7 +354,10 @@ public sealed class Prog : IExplodable, IRemovable
     /// </remarks>
     public void Kill()
     {
-        if (this.IsAlive()) LifeState = EntityLifeState.Dead;
+        if (!this.IsAlive()) return;
+
+        LifeState = EntityLifeState.Dead;
+        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Prog));
     }
 
     /// <summary>

@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;
@@ -18,11 +19,16 @@ public sealed class FieldEntities
 {
     private readonly IEntityList[] _drawOrderBehindShots;
     private readonly IEntityList[] _drawOrderInFrontOfShots;
+    private readonly IGameEvents _gameEvents;
     private readonly IEntityList[] _updateOrder;
 
     /// <summary>Makes the empty lists and sets the orders they are walked in.</summary>
-    public FieldEntities()
+    /// <param name="gameEvents">
+    ///     Where every entity that raises game events is told to announce them. Null means nowhere: they announce to nobody.
+    /// </param>
+    public FieldEntities(IGameEvents? gameEvents = null)
     {
+        _gameEvents = gameEvents ?? NullGameEvents.Instance;
         _updateOrder =
         [
             Electrodes, Grunts, BerzerkRobots, Gorfs, Hulks, Spheroids, Enforcers, Quarks, Tanks, Brains, Progs,
@@ -117,6 +123,7 @@ public sealed class FieldEntities
     public void Add(Brain brain)
     {
         Brains.Add(brain);
+        Connect(brain);
     }
 
     /// <summary>Puts a BerzerkRobot on the field.</summary>
@@ -124,6 +131,7 @@ public sealed class FieldEntities
     public void Add(BerzerkRobot berzerkRobot)
     {
         BerzerkRobots.Add(berzerkRobot);
+        Connect(berzerkRobot);
     }
 
     /// <summary>Puts a CruiseMissile on the field.</summary>
@@ -145,6 +153,7 @@ public sealed class FieldEntities
     public void Add(Enforcer enforcer)
     {
         Enforcers.Add(enforcer);
+        Connect(enforcer);
     }
 
     /// <summary>Puts a Gorf on the field.</summary>
@@ -159,6 +168,7 @@ public sealed class FieldEntities
     public void Add(Grunt grunt)
     {
         Grunts.Add(grunt);
+        Connect(grunt);
     }
 
     /// <summary>Puts a Hulk on the field.</summary>
@@ -173,6 +183,7 @@ public sealed class FieldEntities
     public void Add(Prog prog)
     {
         Progs.Add(prog);
+        Connect(prog);
     }
 
     /// <summary>Puts a Quark on the field.</summary>
@@ -180,6 +191,7 @@ public sealed class FieldEntities
     public void Add(Quark quark)
     {
         Quarks.Add(quark);
+        Connect(quark);
     }
 
     /// <summary>Puts a Spark on the field.</summary>
@@ -194,6 +206,7 @@ public sealed class FieldEntities
     public void Add(Spheroid spheroid)
     {
         Spheroids.Add(spheroid);
+        Connect(spheroid);
     }
 
     /// <summary>Puts a Tank on the field.</summary>
@@ -201,6 +214,7 @@ public sealed class FieldEntities
     public void Add(Tank tank)
     {
         Tanks.Add(tank);
+        Connect(tank);
     }
 
     /// <summary>Puts a TankShell on the field.</summary>
@@ -243,6 +257,7 @@ public sealed class FieldEntities
     public void Add(FamilyMember familyMember)
     {
         FamilyList.Add(familyMember);
+        Connect(familyMember);
     }
 
     /// <summary>Counts the family members still on the field: neither rescued nor lost.</summary>
@@ -456,5 +471,12 @@ public sealed class FieldEntities
     private static void DrawAll(IEntityList[] lists, SpriteBatch spriteBatch, PlayField playField)
     {
         foreach (var list in lists) list.DrawAll(spriteBatch, playField);
+    }
+
+    /// <summary>Tells an entity where to announce what happens to it.</summary>
+    /// <param name="entity">The entity that has just been put on the field.</param>
+    private void Connect(IRaisesGameEvents entity)
+    {
+        entity.GameEvents = _gameEvents;
     }
 }

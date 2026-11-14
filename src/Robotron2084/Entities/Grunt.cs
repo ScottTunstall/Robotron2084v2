@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -20,7 +21,7 @@ namespace Robotron2084.Entities;
 ///         </item>
 ///     </list>
 /// </remarks>
-public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
+public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot, IRaisesGameEvents
 {
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
     internal const int BeatIntervalArcadeFrames = 4;
@@ -104,6 +105,9 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position => _position;
 
+    /// <inheritdoc />
+    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
+
     /// <summary>True when the grunt took a step during the last update.</summary>
     public bool SteppedThisUpdate { get; private set; }
 
@@ -175,6 +179,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Grunt));
     }
 
     /// <summary>

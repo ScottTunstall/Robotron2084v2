@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
 using Robotron2084.Level;
@@ -26,7 +27,7 @@ namespace Robotron2084.Entities;
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$2FD0</c> (<c>MOVE_PLAYER</c>)</item>
 ///     </list>
 /// </remarks>
-public sealed class Player : IEntity, IAnimationFrameSource
+public sealed class Player : IEntity, IAnimationFrameSource, IRaisesGameEvents
 {
     /// <summary>
     ///     How many <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">arcade frames</see> of walking each
@@ -149,10 +150,14 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// </remarks>
     public IntVector2 Position => _position;
 
+    /// <inheritdoc />
+    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
+
     /// <summary>Gives the player one more life. This is done when the score passes the number of points that earns one.</summary>
     public void AddLife()
     {
         Lives += 1;
+        GameEvents.Raise(new GameEvent(GameEventKind.ExtraLifeAwarded, Position));
     }
 
     /// <summary>Draws the walk animation frame. A dying player is drawn as the same shape, filled with one colour.</summary>
@@ -516,6 +521,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
         LifeState = EntityLifeState.Dying;
         ResetDeathAnimation();
         Lives -= 1;
+        GameEvents.Raise(new GameEvent(GameEventKind.PlayerKilled, Position));
     }
 
     /// <summary>Fires a laser when the fire control is used. A new press fires at once.</summary>

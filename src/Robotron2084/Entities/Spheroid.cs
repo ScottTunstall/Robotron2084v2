@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -23,7 +24,7 @@ namespace Robotron2084.Entities;
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$11AF</c> (<c>ANIMATE_SPHEROID</c>)</item>
 ///     </list>
 /// </remarks>
-public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
+public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable, IRaisesGameEvents
 {
     /// <summary>
     ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a spheroid keeps changing its speed by the
@@ -250,6 +251,9 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     public IntVector2 Position => _position;
 
+    /// <inheritdoc />
+    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
+
     /// <summary>Which animation frame is showing, counting from 0.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -311,6 +315,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Spheroid));
     }
 
     /// <summary>

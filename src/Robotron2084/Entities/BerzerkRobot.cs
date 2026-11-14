@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -21,7 +22,7 @@ namespace Robotron2084.Entities;
 ///     standing animation. After that it shows the walk for the way it is facing (<see cref="GetWalkSequenceTowards" />).
 ///     It cannot shoot yet. Shooting is planned.
 /// </remarks>
-public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
+public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, IRaisesGameEvents
 {
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts. It is the same as a grunt's.</summary>
     internal const int BeatIntervalArcadeFrames = 4;
@@ -95,6 +96,9 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>Where the robot's top-left corner is.</summary>
     public IntVector2 Position => _position;
 
+    /// <inheritdoc />
+    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
+
     /// <summary>True when the robot took a step during the last update.</summary>
     public bool SteppedThisUpdate { get; private set; }
 
@@ -156,6 +160,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.BerzerkRobot));
     }
 
     /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. When its wait is over the robot takes a step towards the player and picks a new wait.</summary>

@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
 using Robotron2084.Level.Collisions;
@@ -63,11 +64,13 @@ public sealed class PlayField : ICollisionScene
     private readonly PlayerAppear _playerAppear = new();
 
     /// <summary>True when a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
+    private readonly IGameEvents _gameEvents;
     private readonly bool _tankShellBugEnabled;
 
     private readonly WaveStartSequence _waveStartSequence;
 
     /// <summary>Ticks left of the freeze that follows the player's death.</summary>
+    private bool _hasRaisedWaveStarted;
     private int _hitStopTicksRemaining;
 
     /// <summary>
@@ -101,6 +104,7 @@ public sealed class PlayField : ICollisionScene
     ///     The places in the family list that still held a family member when the last wave or
     ///     life ended. The hulks pick what to stalk from these. Null means none were left.
     /// </param>
+    /// <param name="gameEvents">Where the player and the field's entities announce what happens to them. Null means nowhere.</param>
     public PlayField(
         TextureSet textureSet,
         WaveParameters waveParameters,
@@ -116,8 +120,11 @@ public sealed class PlayField : ICollisionScene
         int extraLifeEveryPoints = GameSettings.FactoryExtraLifeEveryPoints,
         bool tankShellBugEnabled = GameSettings.FactoryTankShellBugEnabled,
         bool brainsChaseMikeyBugEnabled = GameSettings.FactoryBrainsChaseMikeyBugEnabled,
-        IReadOnlyList<int>? familySlotsLeftOver = null)
+        IReadOnlyList<int>? familySlotsLeftOver = null,
+        IGameEvents? gameEvents = null)
     {
+        _gameEvents = gameEvents ?? NullGameEvents.Instance;
+        FieldEntities = new FieldEntities(_gameEvents);
         _tankShellBugEnabled = tankShellBugEnabled;
         TextureSet = textureSet;
         WaveParameters = waveParameters;
@@ -132,7 +139,7 @@ public sealed class PlayField : ICollisionScene
         PlayfieldWall = new PlayfieldWall(innerBounds, wallColourCycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
-        Player = new Player(TextureSet, playerStart, startingLives, random) { InvincibleForTesting = playerInvincibleForTesting };
+        Player = new Player(TextureSet, playerStart, startingLives, random) { InvincibleForTesting = playerInvincibleForTesting, GameEvents = _gameEvents };
         PlayerLaserSlots = new LaserSlots(TextureSet);
 
         // Each kind's spawner is in its registry row, so a new kind needs no edit here (notes §119).
@@ -203,7 +210,7 @@ public sealed class PlayField : ICollisionScene
     public PlayfieldWall PlayfieldWall { get; }
 
     /// <summary>Everything on the field apart from the player, kind by kind.</summary>
-    internal FieldEntities FieldEntities { get; } = new();
+    internal FieldEntities FieldEntities { get; }
 
     /// <summary>The live palette, or null in a test. The player's death fade writes to it (notes §66).</summary>
     internal GamePalette? GamePalette { get; }
@@ -528,6 +535,7 @@ public sealed class PlayField : ICollisionScene
             return;
         }
 
+        RaiseWaveStartedOnce();
         _waveStartSequence.Update();
 
         // The arcade times the grunt speed checks from when the game goes live (ROM: RRG23.ASM PLS2, CLR STATUS).
@@ -951,6 +959,15 @@ public sealed class PlayField : ICollisionScene
             // R5 $30EF (KILL_PLAYER): the death sound ($26D9, p238).
             PlaySoundFrom(SoundTables.PlayerDeath, Player.GetBounds());
         }
+    }
+
+    /// <summary>Announces that the wave has started, on the field's first tick and never again.</summary>
+    private void RaiseWaveStartedOnce()
+    {
+        if (_hasRaisedWaveStarted) return;
+
+        _hasRaisedWaveStarted = true;
+        _gameEvents.Raise(new GameEvent(GameEventKind.WaveStarted, IntVector2.Zero));
     }
 
     /// <summary>
