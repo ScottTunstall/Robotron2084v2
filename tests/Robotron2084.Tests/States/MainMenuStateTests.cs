@@ -10,8 +10,8 @@ public sealed class MainMenuStateTests
 {
     [Theory]
     [InlineData(MainMenuLine.StartGame, "PLAYER MODE")]
-    [InlineData(MainMenuLine.GameStyle, "F4 - GAME STYLE")]
-    [InlineData(MainMenuLine.Settings, "F5 - SETTINGS")]
+    [InlineData(MainMenuLine.GameStyle, "GAME STYLE")]
+    [InlineData(MainMenuLine.Settings, "SETTINGS")]
     [InlineData(MainMenuLine.DeveloperTools, "F10 - DEVELOPER TOOLS")]
     public void EachRowSaysItsShortcutKeysAndWhatItDoes(MainMenuLine line, string text)
     {
@@ -19,9 +19,9 @@ public sealed class MainMenuStateTests
     }
 
     [Theory]
-    [InlineData(GameMode.OnePlayer, "ONE PLAYER")]
-    [InlineData(GameMode.TwoPlayerAlternate, "TWO PLAYER (ALTERNATE)")]
-    [InlineData(GameMode.TwoPlayerSimultaneous, "TWO PLAYER (SIMULTANEOUS)")]
+    [InlineData(GameMode.OnePlayer, "START ONE PLAYER GAME (F1)")]
+    [InlineData(GameMode.TwoPlayerAlternate, "START TWO PLAYER ALTERNATE (F2)")]
+    [InlineData(GameMode.TwoPlayerSimultaneous, "START TWO PLAYER SIMULTANEOUS (F3)")]
     public void TheGameRowShowsTheGameChosen(GameMode gameMode, string text)
     {
         Assert.Equal(text, MainMenuState.GetValue(MainMenuLine.StartGame, gameMode, GameStyle.Classic));

@@ -4,8 +4,8 @@ using Xunit;
 namespace Robotron2084.Tests.States;
 
 /// <summary>
-///     The attract cycle and its keys. <c>RobotronGame.Update</c> reads Enter (which opens the menu page), the
-///     coin key and F6
+///     The attract cycle and its keys. <c>RobotronGame.Update</c> reads F1, F2 and F3 (which start a game), Enter (which
+///     opens the menu page) and the coin key
 ///     on EVERY screen of the attract cycle — the author's question of
 ///     2026-09-20 — and it recognises those screens by the <see cref="IAttractState" /> marker,
 ///     so a screen that joins the cycle without the marker silently loses the keys.
