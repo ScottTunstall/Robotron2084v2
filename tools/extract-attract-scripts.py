@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Embed the arcade's ATTRACT MOVIE data (the story "HISTO" script and its
-object scripts) into `src/Robotron2084/Level/Attract/AttractMovieData.cs`.
+object scripts) into `src/Robotron2084/AttractMode/Models/AttractMovieData.cs`.
 
 Why generated: docs/arcade-fidelity-notes.md §95.9 — the storyline is a byte
 STREAM in the R5 ROM, and the port must run the ROM's own bytes rather than a
@@ -13,9 +13,9 @@ the scripts cross-reference each other with):
                     text crawl and every scene that follows it).
   * `Scripts`     — the object-script byte stream, $83B7..$878C, indexed by
                     `address - ScriptBase`.
-  * `WalkHuman`   — HUMANA @ $03CF: the family's 4-direction walk table.
+  * `WalkFamilyMember` — HUMANA @ $03CF: the family's 4-direction walk table.
   * `WalkHulk`    — HLKANA @ $01CC: the hulk's.
-  * `AnimTable`   — ANATAB @ $7DEF: the walkers' 4-frame picture cycle.
+  * `AnimationFrameCycleTable` — ANATAB @ $7DEF: the walkers' 4-frame picture cycle.
   * `FontWidths`  — the LARGE font's width-in-pixels byte per ROM character code
                     ($30..$5E), which owns the arcade's text pen advance
                     (BLIT_LARGE_CHARACTER: advance = width + 1 px, notes §96.2).
@@ -30,7 +30,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
 ROM = ROOT / "ref/rom/robotron64k.bin"
-OUT = ROOT / "src/Robotron2084/Level/Attract/AttractMovieData.cs"
+OUT = ROOT / "src/Robotron2084/AttractMode/Models/AttractMovieData.cs"
 SPRITES = ROOT / "src/Robotron2084/Content/Sprites"
 
 ROM_SIZE = 0x10000
@@ -76,7 +76,8 @@ def message(rom: bytes, number: int) -> str:
 
 
 
-def byte_array(name: str, rom: bytes, start: int, length: int, comment: str) -> str:
+def byte_array(name: str, rom: bytes, start: int, length: int, comment: str) -> tuple[str, str, str]:
+    """One table: (record member name, its description, its C# array body)."""
     rows = []
     for i in range(0, length, 12):
         # Exactly `length` bytes: a short table must not run on into the ROM bytes
@@ -84,11 +85,7 @@ def byte_array(name: str, rom: bytes, start: int, length: int, comment: str) -> 
         # through CODE as picture numbers).
         chunk = rom[start + i:start + min(i + 12, length)]
         rows.append("        " + " ".join(f"0x{b:02X}," for b in chunk))
-    body = "\n".join(rows)
-    return (
-        f"    /// <summary>{comment}</summary>\n"
-        f"    public static readonly byte[] {name} =\n    [\n{body}\n    ];\n"
-    )
+    return name, comment, "\n".join(rows)
 
 
 def post_records(rom: bytes) -> dict[int, tuple[int, int, int]]:
@@ -134,70 +131,70 @@ def main() -> int:
         ptr = (rom[FONT_TABLE + (code - 0x30) * 2] << 8) | rom[FONT_TABLE + (code - 0x30) * 2 + 1]
         widths.append(rom[ptr] if ptr else 0)
 
+    tables = [
+        byte_array(
+            "Histo", rom, HISTO_START, HISTO_END - HISTO_START,
+            "The page script HISTO ($7FA3): the whole storyline, opcode by opcode, "
+            "starting with the intro screen's text crawl."),
+        byte_array(
+            "Scripts", rom, SCRIPT_START, SCRIPT_END - SCRIPT_START,
+            "The object scripts ($83B7..$878C): every character's choreography, "
+            "addressed by <see cref=\"ScriptBase\"/>."),
+        byte_array(
+            "WalkFamilyMember", rom, WALK_HUMAN, WALK_LENGTH,
+            "HUMANA ($03CF): the family's walk table — 4 directions of four "
+            "(image x4, dx pixels, dy pixels) steps plus a $FF guard."),
+        byte_array(
+            "WalkHulk", rom, WALK_HULK, WALK_LENGTH,
+            "HLKANA ($01CC): the hulk's walk table, same layout as the family's."),
+        byte_array(
+            "AnimationFrameCycleTable", rom, ANIM_TABLE, 4,
+            "ANATAB ($7DEF): the walkers' 4-animation-frame cycle (0,1,0,2)."),
+        (
+            "FontWidths",
+            "The LARGE font's width-in-pixels for character codes $30..$5E, indexed by (code - $30) — "
+            "the ROM's font table ($EC34) entries point at a width byte. BLIT_LARGE_CHARACTER advances "
+            "the text pen by (width + 1) pixels (notes §96.2), so the movie's text needs these to lay "
+            "out like the arcade's.",
+            "        " + " ".join(f"0x{w:02X}," for w in widths),
+        ),
+    ]
+    messages = "".join(
+        f"        \"{message(rom, n)}\",\n" for n in range(MESSAGE_FIRST, MESSAGE_FIRST + MESSAGE_COUNT)
+    ).rstrip("\n")
+    messages_doc = (
+        "The message strings the movie's MESS opcode prints beside a character, decoded from the ROM's "
+        "pointer table at $6377 — index 0 is message 115 (MOMMY) and index 11 is 126 (NULMES, the empty "
+        "string that clears the row). The numbering is RRFRED.ASM's (MMOM 115, MDAD 116, MKID 117, "
+        "MGRUNT 118, MHULK 119, MSPCU 120, MENTK 121, MBRAIN 122, COINMF 123, MPROG 124, EXTMES 125, NULMES 126)."
+    )
+
     parts = [
         "// <auto-generated />\n",
-        "// GENERATED by tools/extract-attract-scripts.py from ref/rom/robotron64k.bin —\n",
+        "// GENERATED by tools/extract-attract-scripts.py from ref/rom/robotron64k.bin --\n",
         "// do not edit by hand. Regenerate after a ROM change.\n",
         "//\n",
         "// The arcade's attract MOVIE (notes §95/§96): the ROM's own HISTO page script\n",
         "// and object scripts, embedded verbatim so the port replays the arcade's\n",
         "// storyline instead of a transcription. Addresses are the R5 ones.\n",
         "\n",
-        "namespace Robotron2084.Level.Attract;\n\n",
+        "namespace Robotron2084.AttractMode.Models;\n\n",
         "/// <summary>The ROM's attract-movie byte streams and tables (notes §95).</summary>\n",
-        "public static class AttractMovieData\n{\n",
-        f"    /// <summary>The R5 address of <see cref=\"Scripts\"/>[0] — object scripts address into it.</summary>\n",
-        f"    public const int ScriptBase = 0x{SCRIPT_START:04X};\n\n",
-        byte_array(
-            "Histo", rom, HISTO_START, HISTO_END - HISTO_START,
-            "The page script HISTO ($7FA3): the whole storyline, opcode by opcode, "
-            "starting with the intro screen's text crawl."),
-        "\n",
-        byte_array(
-            "Scripts", rom, SCRIPT_START, SCRIPT_END - SCRIPT_START,
-            "The object scripts ($83B7..$878C): every character's choreography, "
-            "addressed by <see cref=\"ScriptBase\"/>."),
-        "\n",
-        byte_array(
-            "WalkHuman", rom, WALK_HUMAN, WALK_LENGTH,
-            "HUMANA ($03CF): the family's walk table — 4 directions of four "
-            "(image x4, dx pixels, dy pixels) steps plus a $FF guard."),
-        "\n",
-        byte_array(
-            "WalkHulk", rom, WALK_HULK, WALK_LENGTH,
-            "HLKANA ($01CC): the hulk's walk table, same layout as the family's."),
-        "\n",
-        byte_array(
-            "AnimTable", rom, ANIM_TABLE, 4,
-            "ANATAB ($7DEF): the walkers' 4-frame picture cycle (0,1,0,2)."),
-        "\n",
-        "    /// <summary>\n"
-        "    /// The LARGE font's width-in-pixels for character codes $30..$5E, indexed\n"
-        "    /// by (code - $30) — the ROM's font table ($EC34) entries point at a width\n"
-        "    /// byte. BLIT_LARGE_CHARACTER advances the text pen by (width + 1) pixels\n"
-        "    /// (notes §96.2), so the movie's text needs these to lay out like the\n"
-        "    /// arcade's.\n"
-        "    /// </summary>\n"
-        "    public static readonly byte[] FontWidths =\n    [\n",
-        "        " + " ".join(f"0x{w:02X}," for w in widths),
-        "\n    ];\n",
-        "\n",
-        "    /// <summary>\n"
-        "    /// The message strings the movie's MESS opcode prints beside a character,\n"
-        "    /// decoded from the ROM's pointer table at $6377 — index 0 is message 115\n"
-        "    /// (MOMMY) and index 11 is 126 (NULMES, the empty string that clears the\n"
-        "    /// row). The numbering is RRFRED.ASM's (MMOM 115, MDAD 116, MKID 117,\n"
-        "    /// MGRUNT 118, MHULK 119, MSPCU 120, MENTK 121, MBRAIN 122, COINMF 123,\n"
-        "    /// MPROG 124, EXTMES 125, NULMES 126).\n"
-        "    /// </summary>\n"
-        "    public static readonly string[] Messages =\n    [\n",
-        "".join(f"        \"{message(rom, n)}\",\n" for n in range(MESSAGE_FIRST, MESSAGE_FIRST + MESSAGE_COUNT)),
-        "    ];\n",
-        "\n",
-        "    /// <summary>The ROM message number of <see cref=\"Messages\"/>[0].</summary>\n",
-        f"    public const int FirstMessageNumber = {MESSAGE_FIRST};\n",
-        "}\n",
+        "/// <param name=\"ScriptBase\">The R5 address of <see cref=\"Scripts\" />[0]: object scripts address into it.</param>\n",
+        "/// <param name=\"FirstMessageNumber\">The ROM message number of <see cref=\"Messages\" />[0].</param>\n",
     ]
+    for name, comment, _ in tables:
+        parts.append(f"/// <param name=\"{name}\">{comment}</param>\n")
+    parts.append(f"/// <param name=\"Messages\">{messages_doc}</param>\n")
+    parts.append("public sealed record AttractMovieData(\n    int ScriptBase,\n    int FirstMessageNumber,\n")
+    parts.append(",\n".join(f"    byte[] {name}" for name, _, _ in tables) + ",\n    string[] Messages)\n{\n")
+    for name, _, body in tables:
+        parts.append(f"    private static readonly byte[] Rom{name} =\n    [\n{body}\n    ];\n\n")
+    parts.append(f"    private static readonly string[] RomMessages =\n    [\n{messages}\n    ];\n\n")
+    # Static initialisers run top to bottom, so the instance comes after the tables it is made from.
+    parts.append("    /// <summary>The arcade ROM's own movie data: the one instance the game plays from.</summary>\n")
+    parts.append(f"    public static AttractMovieData Rom {{ get; }} = new(\n        0x{SCRIPT_START:04X},\n        {MESSAGE_FIRST},\n")
+    parts.append(",\n".join(f"        Rom{name}" for name, _, _ in tables) + ",\n        RomMessages);\n}\n")
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("".join(parts), encoding="utf-8")
