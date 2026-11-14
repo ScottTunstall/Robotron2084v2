@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
 using Robotron2084.Level;
@@ -26,6 +27,7 @@ internal sealed class PlayFieldBuilder
 
     private Rectangle _bounds = DefaultBounds;
     private bool _brainsChaseMikeyBug = true;
+    private IGameEvents? _gameEvents;
     private IReadOnlyList<int> _familySlotsLeftOver = [];
     private IPlayerInputSource _playerInputSource = new FakeInputSource();
     private int _lives = DefaultLives;
@@ -143,6 +145,14 @@ internal sealed class PlayFieldBuilder
         return this;
     }
 
+    /// <summary>Announces game events to this place.</summary>
+    /// <param name="gameEvents">Where the field and its entities announce what happens.</param>
+    public PlayFieldBuilder WithGameEvents(IGameEvents gameEvents)
+    {
+        _gameEvents = gameEvents;
+        return this;
+    }
+
     /// <summary>Builds the field.</summary>
     public PlayField Build()
     {
@@ -160,6 +170,7 @@ internal sealed class PlayFieldBuilder
             _pixelCollision is null ? null : new PixelContactTest(_pixelCollision),
             tankShellBugEnabled: _tankShellBugEnabled,
             brainsChaseMikeyBugEnabled: _brainsChaseMikeyBug,
-            familySlotsLeftOver: _familySlotsLeftOver);
+            familySlotsLeftOver: _familySlotsLeftOver,
+            gameEvents: _gameEvents);
     }
 }
