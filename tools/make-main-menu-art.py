@@ -47,6 +47,9 @@ EYE_BOX = (550, 50, 660, 90)
 # How much of a picture pixel must be eye before it is painted as eye (0 to 1).
 EYE_COVER = 0.5
 
+# How many eyes the front robot has: the patches of eye pixels kept.
+EYE_COUNT = 2
+
 
 def rgb(value):
     """Arcade colour byte (BBGGGRRR) to RGB, exactly as the port's RobotronColour does."""
@@ -87,6 +90,38 @@ def eye_mask(painting):
     return mask.crop(CROP).resize((WIDTH, HEIGHT), Image.BOX)
 
 
+def patches(pixels):
+    """Splits a set of (x, y) pixels into patches that touch, side by side or corner to corner."""
+    left = set(pixels)
+    found = []
+    while left:
+        stack = [left.pop()]
+        patch = set(stack)
+        while stack:
+            x, y = stack.pop()
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    neighbour = (x + dx, y + dy)
+                    if neighbour in left:
+                        left.remove(neighbour)
+                        patch.add(neighbour)
+                        stack.append(neighbour)
+        found.append(patch)
+    return found
+
+
+def eye_pixels(painting):
+    """The picture pixels painted as eye: the two biggest patches, one for each eye.
+
+    The shine on the robot's forehead is pale too, so a few of its pixels pass the eye test. They
+    are small patches on their own, so keeping only the two biggest leaves just the eyes.
+    """
+    eyes = eye_mask(painting)
+    pale = [(x, y) for y in range(HEIGHT) for x in range(WIDTH) if eyes.getpixel((x, y)) >= EYE_COVER * 255]
+    biggest = sorted(patches(pale), key=len, reverse=True)[:EYE_COUNT]
+    return set().union(*biggest)
+
+
 def main():
     painting = Image.open(SRC).convert("RGB")
     print(f"source {SRC} {painting.size}")
@@ -96,18 +131,14 @@ def main():
     small = ImageEnhance.Contrast(small).enhance(CONTRAST_BOOST)
     picture = small.quantize(palette=arcade_palette_image(), dither=Image.Dither.NONE).convert("RGBA")
 
-    eyes = eye_mask(painting)
+    eyes = eye_pixels(painting)
     eye_colour = rgb(EYE_MARKER) + (255,)
-    eye_pixels = 0
-    for y in range(HEIGHT):
-        for x in range(WIDTH):
-            if eyes.getpixel((x, y)) >= EYE_COVER * 255:
-                picture.putpixel((x, y), eye_colour)
-                eye_pixels += 1
+    for pixel in eyes:
+        picture.putpixel(pixel, eye_colour)
 
     picture.save(OUT)
     colours = len(set(picture.get_flattened_data()))
-    print(f"  {OUT} {WIDTH}x{HEIGHT} arcade px, {colours} colours, {eye_pixels} eye pixels")
+    print(f"  {OUT} {WIDTH}x{HEIGHT} arcade px, {colours} colours, {len(eyes)} eye pixels")
 
 
 if __name__ == "__main__":
