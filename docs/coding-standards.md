@@ -169,10 +169,23 @@ place, so they can change without touching the objects.
 (the texture set, the random source, the place it announces events to) is a required constructor parameter. Do not hand it over
 afterwards through a settable property, and do not give it a default that quietly does nothing. A property that has to be
 set before the class works is a hidden step that a caller can forget.
+Think poka-yoke (mistake-proofing): build the class so that it cannot be made wrong. If it compiles, the object is
+complete. When a constructor takes more than four parameters, gather what belongs together into a **parameter object**
+(a `readonly record struct` or `sealed record` named for what it holds, in its own file, STR-3). The parameter object is
+still passed to the constructor and its members are still required. It is not a bag of optional settings.
+Group by purpose, and check what is given: a parameter object's constructor throws on a value that makes no sense
+(`ArgumentNullException`, `ArgumentOutOfRangeException`), so a bad object cannot exist. Examples: `EntityDependencies` (what every entity
+shares), `GorfPlayfield` and `GorfDrops` (where Gorf is, and what it drops), `TankShellAim`, `QuarkWaveSettings`, `BrainWaveSettings`.
+Records, record structs, enums and other plain data holders live in a `Models` folder inside the folder of the code that owns them
+(`Entities/Models`, `Level/Models`, `Level/Collisions/Models`, `Level/Spawning/Models`, `States/Models`, `Audio/Synthesis/Models` and
+so on, in every folder that has such types), with the namespace to match (`Robotron2084.Entities.Models`), so that a developer can see at a glance that they are
+simple types with no behaviour of their own beyond checking what they are given. A new record or enum goes straight into the `Models`
+folder of its area. Classes with behaviour (even when their name ends in `Model`), static tables and interfaces stay where they are.
 
 **STR-16. Every game entity takes an `IGameEvents`, and announces what happens to it.** A game entity is a thing with
 behaviour in the game: the player, the family, the robots, the electrodes, the shots. The entity takes an `IGameEvents`
-as a required constructor parameter (STR-15), right after the texture set, and raises a `GameEvent` from its own state changes
+as a required constructor parameter (STR-15), inside the `EntityDependencies` that every entity is built with (texture set, `IGameEvents`,
+random source), or on its own when the entity has no random numbers (`Electrode`, `PlayerLaser`), and raises a `GameEvent` from its own state changes
 (`Kill`, `Rescue`, a knock-back), only when the change really happens. It never decides what the game does about the event
 (sound, speech, score): listeners do that. A new kind of entity adds a `GameEventKind` for what is worth announcing
 about it, or uses `RobotKilled` with its `RobotKind`. The entity's xmldoc says which kinds it announces, and nothing about who listens.
