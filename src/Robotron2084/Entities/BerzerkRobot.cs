@@ -21,8 +21,11 @@ namespace Robotron2084.Entities;
 ///     plays its
 ///     standing animation. After that it shows the walk for the way it is facing (<see cref="GetWalkSequenceTowards" />).
 ///     It cannot shoot yet. Shooting is planned.
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.BerzerkRobot" />) to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
-public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, IRaisesGameEvents
+public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts. It is the same as a grunt's.</summary>
     internal const int BeatIntervalArcadeFrames = 4;
@@ -56,6 +59,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, IRa
     private static readonly int[] UpAndDownWalkOrder = [0, 1, 2, 1];
 
     private readonly Random _random;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private int _animationStep;
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
@@ -68,6 +72,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, IRa
 
     /// <summary>Makes a robot, and picks at random how long it waits before its first step.</summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the berzerkrobot announces what happens to it.</param>
     /// <param name="position">Where the robot's top-left corner is.</param>
     /// <param name="random">Where its random numbers come from.</param>
     /// <param name="moveIntervalMaxBeats">
@@ -76,11 +81,13 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, IRa
     /// </param>
     public BerzerkRobot(
         TextureSet textureSet,
+        IGameEvents gameEvents,
         IntVector2 position,
         Random random,
         int moveIntervalMaxBeats = DefaultMoveIntervalMaxBeats)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         MoveIntervalMaxBeats = moveIntervalMaxBeats;
         _random = random;
@@ -95,9 +102,6 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, IRa
 
     /// <summary>Where the robot's top-left corner is.</summary>
     public IntVector2 Position => _position;
-
-    /// <inheritdoc />
-    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
 
     /// <summary>True when the robot took a step during the last update.</summary>
     public bool SteppedThisUpdate { get; private set; }
@@ -160,7 +164,7 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, IRa
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.BerzerkRobot));
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.BerzerkRobot));
     }
 
     /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. When its wait is over the robot takes a step towards the player and picks a new wait.</summary>

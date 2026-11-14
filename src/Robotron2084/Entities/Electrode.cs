@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -18,6 +19,9 @@ namespace Robotron2084.Entities;
 ///         <item>Original source: <c>RRP8.ASM</c>, routine <c>PSTKIL</c> (hands off to <c>PKPROC</c>)</item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$3AE0</c> (<c>ELECTRODE_DEATH</c>)</item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.Electrode" />) to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
 public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 {
@@ -31,17 +35,20 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
 
     private readonly IntVector2 _position;
     private readonly ArcadeFrameTimer _shrivelArcadeFrameTimer = new();
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private readonly int _wave;
     private int _shrivelStep;
 
     /// <summary>Makes an electrode for the given wave.</summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the electrode announces what happens to it.</param>
     /// <param name="position">Where the electrode's top-left corner is.</param>
     /// <param name="wave">The wave number. It decides which shape of electrode is drawn, and in which palette index.</param>
-    public Electrode(TextureSet textureSet, IntVector2 position, int wave = 1)
+    public Electrode(TextureSet textureSet, IGameEvents gameEvents, IntVector2 position, int wave = 1)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         _wave = wave;
         _collisionSize = GetCollisionSize(wave);
@@ -87,6 +94,7 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
         LifeState = EntityLifeState.Dying;
         _shrivelStep = 0;
         _shrivelArcadeFrameTimer.Restart(); // The first shrivel animation frame is shown for its full time (notes §52).
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Electrode));
     }
 
     /// <summary>

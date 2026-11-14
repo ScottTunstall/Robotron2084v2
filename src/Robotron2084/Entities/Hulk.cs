@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -25,6 +26,9 @@ namespace Robotron2084.Entities;
 ///             <c>HULK_CHANGE_DIRECTION</c>
 ///         </item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.HulkKnockedBack" /> to the <see cref="IGameEvents" /> it is given. A hulk cannot be killed, so it never announces a kill.
+///     </para>
 /// </remarks>
 public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 {
@@ -228,6 +232,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private readonly Func<IntVector2> _getTargetPosition;
 
     private readonly Random _random;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     /// <summary>Which animation frame is showing, as a place in the texture set's hulk animation frames.</summary>
@@ -250,6 +255,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
 
     /// <summary>Makes a hulk. It picks its first direction when the game goes live.</summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the hulk announces what happens to it.</param>
     /// <param name="position">Where the hulk's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick how many steps it takes before it turns, and move
@@ -275,12 +281,14 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </remarks>
     public Hulk(
         TextureSet textureSet,
+        IGameEvents gameEvents,
         IntVector2 position,
         Random random,
         int beatIntervalArcadeFrames,
         Func<IntVector2> getTargetPosition)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         _random = random;
         _beatIntervalArcadeFrames = beatIntervalArcadeFrames;
@@ -340,6 +348,8 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
             var y = Math.Clamp(_position.Y, bounds.Top, bounds.Bottom - CollisionSize.Height);
             _position = new IntVector2(x, y);
         }
+
+        _gameEvents.Raise(new GameEvent(GameEventKind.HulkKnockedBack, Position));
     }
 
     /// <summary>

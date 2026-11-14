@@ -64,7 +64,6 @@ public sealed class PlayField : ICollisionScene
     private readonly PlayerAppear _playerAppear = new();
 
     /// <summary>True when a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
-    private readonly IGameEvents _gameEvents;
     private readonly bool _tankShellBugEnabled;
 
     private readonly WaveStartSequence _waveStartSequence;
@@ -123,8 +122,7 @@ public sealed class PlayField : ICollisionScene
         IReadOnlyList<int>? familySlotsLeftOver = null,
         IGameEvents? gameEvents = null)
     {
-        _gameEvents = gameEvents ?? NullGameEvents.Instance;
-        FieldEntities = new FieldEntities(_gameEvents);
+        GameEvents = gameEvents ?? NullGameEvents.Instance;
         _tankShellBugEnabled = tankShellBugEnabled;
         TextureSet = textureSet;
         WaveParameters = waveParameters;
@@ -139,8 +137,8 @@ public sealed class PlayField : ICollisionScene
         PlayfieldWall = new PlayfieldWall(innerBounds, wallColourCycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
-        Player = new Player(TextureSet, playerStart, startingLives, random) { InvincibleForTesting = playerInvincibleForTesting, GameEvents = _gameEvents };
-        PlayerLaserSlots = new LaserSlots(TextureSet);
+        Player = new Player(TextureSet, GameEvents, playerStart, startingLives, random) { InvincibleForTesting = playerInvincibleForTesting };
+        PlayerLaserSlots = new LaserSlots(TextureSet, GameEvents);
 
         // Each kind's spawner is in its registry row, so a new kind needs no edit here (notes §119).
         var waveSpawnContext = new WaveSpawnContext(this, FieldEntities, new SpawnPlacement(random, innerBounds), random,
@@ -210,7 +208,10 @@ public sealed class PlayField : ICollisionScene
     public PlayfieldWall PlayfieldWall { get; }
 
     /// <summary>Everything on the field apart from the player, kind by kind.</summary>
-    internal FieldEntities FieldEntities { get; }
+    internal FieldEntities FieldEntities { get; } = new();
+
+    /// <summary>Where the player and the field's entities announce what happens to them.</summary>
+    internal IGameEvents GameEvents { get; }
 
     /// <summary>The live palette, or null in a test. The player's death fade writes to it (notes §66).</summary>
     internal GamePalette? GamePalette { get; }
@@ -967,7 +968,7 @@ public sealed class PlayField : ICollisionScene
         if (_hasRaisedWaveStarted) return;
 
         _hasRaisedWaveStarted = true;
-        _gameEvents.Raise(new GameEvent(GameEventKind.WaveStarted, IntVector2.Zero));
+        GameEvents.Raise(new GameEvent(GameEventKind.WaveStarted, IntVector2.Zero));
     }
 
     /// <summary>

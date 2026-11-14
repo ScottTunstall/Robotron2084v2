@@ -20,8 +20,11 @@ namespace Robotron2084.Entities;
 ///             the update loop that the grunt, hulk, brain, prog and tank share)
 ///         </item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.Grunt" />) to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
-public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot, IRaisesGameEvents
+public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
     internal const int BeatIntervalArcadeFrames = 4;
@@ -58,6 +61,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height));
 
     private readonly Random _random;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
@@ -74,6 +78,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
 
     /// <summary>Makes a grunt, and picks at random how long it waits before its first step.</summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the grunt announces what happens to it.</param>
     /// <param name="position">Where the grunt's top-left corner is.</param>
     /// <param name="random">Where its random numbers come from.</param>
     /// <param name="moveIntervalMaxBeats">
@@ -83,11 +88,13 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
     /// <remarks>ROM: <c>ROBSPD</c>.</remarks>
     public Grunt(
         TextureSet textureSet,
+        IGameEvents gameEvents,
         IntVector2 position,
         Random random,
         int moveIntervalMaxBeats = DefaultMoveIntervalMaxBeats)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         MoveIntervalMaxBeats = moveIntervalMaxBeats;
         _random = random;
@@ -104,9 +111,6 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
     /// <summary>Where the grunt's top-left corner is.</summary>
     /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position => _position;
-
-    /// <inheritdoc />
-    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
 
     /// <summary>True when the grunt took a step during the last update.</summary>
     public bool SteppedThisUpdate { get; private set; }
@@ -179,7 +183,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Grunt));
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Grunt));
     }
 
     /// <summary>

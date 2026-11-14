@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 
@@ -25,13 +26,16 @@ public sealed class LaserSlots
     public const int Capacity = 3;
 
     private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     /// <summary>Makes the empty slots, and keeps the sprites that new lasers are drawn with.</summary>
     /// <param name="textureSet">The shared texture set.</param>
-    public LaserSlots(TextureSet textureSet)
+    /// <param name="gameEvents">Where each laser it fires announces what happens to it.</param>
+    public LaserSlots(TextureSet textureSet, IGameEvents gameEvents)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
     }
 
     /// <summary>The lasers in flight, one for each place, in order. A place with no laser holds null.</summary>
@@ -53,7 +57,7 @@ public sealed class LaserSlots
         for (var i = 0; i < Capacity; i++)
             if (_slots[i] is not { } existing || !existing.IsAlive())
             {
-                _slots[i] = new PlayerLaser(_textureSet, position, direction);
+                _slots[i] = new PlayerLaser(_textureSet, _gameEvents, position, direction);
                 return;
             }
 

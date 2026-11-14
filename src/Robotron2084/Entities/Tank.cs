@@ -22,8 +22,11 @@ namespace Robotron2084.Entities;
 ///             between shots at <c>$4D55</c>)
 ///         </item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.Tank" />) to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
-public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot, IRaisesGameEvents
+public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>How many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a tank waits between shots, when it is not told a number.</summary>
     private const int DefaultFireIntervalBeats = 32;
@@ -115,6 +118,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot, IRaisesGame
     private readonly int _fireIntervalBeats;
     private readonly ArcadeFrameTimer _growArcadeFrameTimer = new();
     private readonly Random _random;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
@@ -150,6 +154,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot, IRaisesGame
     ///     or fire.
     /// </summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the tank announces what happens to it.</param>
     /// <param name="position">Where the tank's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick where it goes, how long before it picks again, and
@@ -169,6 +174,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot, IRaisesGame
     /// </remarks>
     public Tank(
         TextureSet textureSet,
+        IGameEvents gameEvents,
         IntVector2 position,
         Random random,
         int fireIntervalBeats = DefaultFireIntervalBeats,
@@ -178,6 +184,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot, IRaisesGame
         if (startFullyGrown) _growStep = TankTuning.GrowSteps;
 
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
@@ -199,9 +206,6 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot, IRaisesGame
     ///     </list>
     /// </remarks>
     public IntVector2 Position => _position;
-
-    /// <inheritdoc />
-    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
 
     /// <summary>Which tread animation frame is showing, as a place in <see cref="TextureSet.TankAnimationFrameTextures" />.</summary>
     /// <remarks>
@@ -322,7 +326,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot, IRaisesGame
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Tank));
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Tank));
     }
 
     /// <summary>

@@ -27,8 +27,11 @@ namespace Robotron2084.Entities;
 ///             <c>DROP_ENFORCER</c>/<c>CREATE_ENFORCER</c>
 ///         </item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.Enforcer" />) to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
-public sealed class Enforcer : IEntity, IExplodable, IRemovable, IRaisesGameEvents
+public sealed class Enforcer : IEntity, IExplodable, IRemovable
 {
     /// <summary>
     ///     How much slower the enforcer goes than the gap to the spot it is heading for. The bigger this is, the slower it
@@ -72,6 +75,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable, IRaisesGameEven
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private int _fireBeatsRemaining;
 
@@ -90,6 +94,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable, IRaisesGameEven
 
     /// <summary>Makes an enforcer. It cannot move until it has grown.</summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the enforcer announces what happens to it.</param>
     /// <param name="position">Where the enforcer's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick where it heads for and how long it waits between
@@ -102,11 +107,13 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable, IRaisesGameEven
     /// <remarks>ROM: <c>ENSTIM</c>.</remarks>
     public Enforcer(
         TextureSet textureSet,
+        IGameEvents gameEvents,
         IntVector2 position,
         Random random,
         int fireIntervalBeats = DefaultFireIntervalBeats)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
@@ -121,9 +128,6 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable, IRaisesGameEven
     /// <summary>Where the enforcer's top-left corner is.</summary>
     /// <remarks>The ROM's OBJX/OBJY.</remarks>
     public IntVector2 Position => _position;
-
-    /// <inheritdoc />
-    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
 
     /// <summary>Draws the enforcer: a growing animation frame while it grows, and the full-size one after that.</summary>
     /// <param name="spriteBatch">What the enforcer is drawn with.</param>
@@ -182,7 +186,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable, IRaisesGameEven
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Enforcer));
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Enforcer));
     }
 
     /// <summary>

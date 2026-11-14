@@ -23,8 +23,11 @@ namespace Robotron2084.Entities;
 ///         </item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$11AF</c> (<c>ANIMATE_SPHEROID</c>)</item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.Spheroid" />) to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
-public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable, IRaisesGameEvents
+public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>
     ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a spheroid keeps changing its speed by the
@@ -151,6 +154,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable, IRais
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the spheroid picks new amounts to change its speed by.</summary>
@@ -192,6 +196,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable, IRais
     ///     enforcers it will drop.
     /// </summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the spheroid announces what happens to it.</param>
     /// <param name="position">Where the spheroid's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick how many enforcers it drops, how its speed changes
@@ -215,12 +220,14 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable, IRais
     /// </remarks>
     public Spheroid(
         TextureSet textureSet,
+        IGameEvents gameEvents,
         IntVector2 position,
         Random random,
         int maxDropsX2 = DefaultMaxDropsX2,
         int dropDelayRotations = DefaultDropDelayRotations)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         _random = random;
         _dropDelayRotations = dropDelayRotations;
@@ -250,9 +257,6 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable, IRais
     ///     </list>
     /// </remarks>
     public IntVector2 Position => _position;
-
-    /// <inheritdoc />
-    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
 
     /// <summary>Which animation frame is showing, counting from 0.</summary>
     /// <remarks>
@@ -315,7 +319,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable, IRais
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Spheroid));
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Spheroid));
     }
 
     /// <summary>

@@ -35,8 +35,12 @@ namespace Robotron2084.Entities;
 ///     Sideways distances here are in columns
 ///     (two arcade pixels each) and up-and-down distances in rows (one arcade pixel each), as in the ROM; see
 ///     docs/glossary.md.
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.Brain" />), <see cref="GameEventKind.FamilyMemberReprogrammed" /> when it finishes reprogramming a family member, and <see cref="GameEventKind.FamilyMemberKilled" /> when it lets go of one it was
+    ///     reprogramming, to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
-public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot, IRaisesGameEvents
+public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 {
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> takes to run. The time from one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> to the next.</summary>
     /// <remarks>
@@ -208,6 +212,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
     private readonly int _fireIntervalBeats;
 
     private readonly Random _random;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
@@ -243,6 +248,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
 
     /// <summary>Makes a brain. It takes its first step on its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the brain announces what happens to it.</param>
     /// <param name="position">Where the brain's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick the waits between missiles and the shaking during
@@ -270,6 +276,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
     /// </remarks>
     public Brain(
         TextureSet textureSet,
+        IGameEvents gameEvents,
         IntVector2 position,
         Random random,
         int beatWaitArcadeFrames,
@@ -277,6 +284,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
         int targetFamilySlot)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         _random = random;
         _fireIntervalBeats = fireIntervalBeats;
@@ -296,9 +304,6 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
     ///     </list>
     /// </remarks>
     public IntVector2 Position => _position;
-
-    /// <inheritdoc />
-    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
 
     /// <summary>The family member this brain is chasing, or null when it is chasing the player.</summary>
     /// <remarks>
@@ -407,7 +412,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Brain));
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Brain));
     }
 
     /// <summary>
@@ -564,7 +569,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
         if (victimFamilyMember is null) return;
 
         victimFamilyMember.FinishReprogramming();
-        GameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberKilled, victimFamilyMember.Position));
+        _gameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberKilled, victimFamilyMember.Position));
     }
 
     /// <summary>Gives the brain a new place in the family list to chase.</summary>
@@ -749,7 +754,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot, IRaisesGam
 
         playField.PlaySoundFrom(SoundTables.FamilyMemberProgFinalConversion, victimFamilyMember.GetBounds());
         victimFamilyMember.FinishReprogramming();
-        GameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberReprogrammed, victimFamilyMember.Position));
+        _gameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberReprogrammed, victimFamilyMember.Position));
         playField.SpawnProg(victimFamilyMember.Position, victimFamilyMember.Kind);
         _victimFamilyMember = null;
     }

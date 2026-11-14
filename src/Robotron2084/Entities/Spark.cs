@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -19,6 +20,9 @@ namespace Robotron2084.Entities;
 ///         </item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$1404</c> (<c>CREATE_SPARK</c>)</item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.Spark" />) to the <see cref="IGameEvents" /> it is given, when it is killed. It announces nothing when its time runs out.
+///     </para>
 /// </remarks>
 public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
@@ -38,6 +42,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     // Which flicker animation frame is showing.
@@ -53,6 +58,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>Makes a spark and aims it near the player. It is aimed only this once.</summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the spark announces what happens to it.</param>
     /// <param name="position">Where it starts, which is where the enforcer that fired it is.</param>
     /// <param name="playerPosition">Where the player is, which the spark is aimed at.</param>
     /// <param name="random">
@@ -65,12 +71,14 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// </param>
     public Spark(
         TextureSet textureSet,
+        IGameEvents gameEvents,
         IntVector2 position,
         IntVector2 playerPosition,
         Random random,
         Rectangle? playfieldBounds = null)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         _random = random;
 
@@ -141,6 +149,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Spark));
     }
 
     /// <summary>

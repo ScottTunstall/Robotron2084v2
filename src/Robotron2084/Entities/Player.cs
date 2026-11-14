@@ -26,8 +26,11 @@ namespace Robotron2084.Entities;
 ///         </item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$2FD0</c> (<c>MOVE_PLAYER</c>)</item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.PlayerKilled" /> and <see cref="GameEventKind.ExtraLifeAwarded" /> to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
-public sealed class Player : IEntity, IAnimationFrameSource, IRaisesGameEvents
+public sealed class Player : IEntity, IAnimationFrameSource
 {
     /// <summary>
     ///     How many <see cref="Robotron2084.Core.ArcadeClock.ArcadeFramesPerSecond">arcade frames</see> of walking each
@@ -65,6 +68,7 @@ public sealed class Player : IEntity, IAnimationFrameSource, IRaisesGameEvents
 
     private readonly ArcadeFrameTimer _deathArcadeFrameTimer = new();
     private readonly Random _random;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     private int _autoFireTicksRemaining;
@@ -102,12 +106,14 @@ public sealed class Player : IEntity, IAnimationFrameSource, IRaisesGameEvents
 
     /// <summary>Makes the player at <paramref name="startPosition" />, with <paramref name="lives" /> lives.</summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the player announces what happens to it.</param>
     /// <param name="startPosition">Where the player's top-left corner is.</param>
     /// <param name="lives">How many lives the player starts with. Each death takes one off.</param>
     /// <param name="random">Where its random numbers come from. They pick the colours of the death animation.</param>
-    public Player(TextureSet textureSet, IntVector2 startPosition, int lives, Random random)
+    public Player(TextureSet textureSet, IGameEvents gameEvents, IntVector2 startPosition, int lives, Random random)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = startPosition;
         _random = random;
         Lives = lives;
@@ -150,14 +156,11 @@ public sealed class Player : IEntity, IAnimationFrameSource, IRaisesGameEvents
     /// </remarks>
     public IntVector2 Position => _position;
 
-    /// <inheritdoc />
-    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
-
     /// <summary>Gives the player one more life. This is done when the score passes the number of points that earns one.</summary>
     public void AddLife()
     {
         Lives += 1;
-        GameEvents.Raise(new GameEvent(GameEventKind.ExtraLifeAwarded, Position));
+        _gameEvents.Raise(new GameEvent(GameEventKind.ExtraLifeAwarded, Position));
     }
 
     /// <summary>Draws the walk animation frame. A dying player is drawn as the same shape, filled with one colour.</summary>
@@ -521,7 +524,7 @@ public sealed class Player : IEntity, IAnimationFrameSource, IRaisesGameEvents
         LifeState = EntityLifeState.Dying;
         ResetDeathAnimation();
         Lives -= 1;
-        GameEvents.Raise(new GameEvent(GameEventKind.PlayerKilled, Position));
+        _gameEvents.Raise(new GameEvent(GameEventKind.PlayerKilled, Position));
     }
 
     /// <summary>Fires a laser when the fire control is used. A new press fires at once.</summary>

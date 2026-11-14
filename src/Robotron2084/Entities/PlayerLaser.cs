@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -18,20 +19,26 @@ namespace Robotron2084.Entities;
 ///         </item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$3237</c> (<c>LASER_DESCRIPTOR TABLE</c>)</item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.PlayerLaserDestroyed" /> to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
 public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
 {
     private static readonly int Size = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.MissileSizeArcadePixels);
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private IntVector2 _position;
 
     /// <summary>Makes a laser that flies in the given direction.</summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the laser announces what happens to it.</param>
     /// <param name="position">Where it starts. The player works this out from the way it is fired.</param>
     /// <param name="direction">The way it flies. This never changes.</param>
-    public PlayerLaser(TextureSet textureSet, IntVector2 position, Direction8 direction)
+    public PlayerLaser(TextureSet textureSet, IGameEvents gameEvents, IntVector2 position, Direction8 direction)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         Direction = direction;
     }
@@ -88,6 +95,7 @@ public sealed class PlayerLaser : IEntity, IAnimationFrameSource, IRemovable
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        _gameEvents.Raise(new GameEvent(GameEventKind.PlayerLaserDestroyed, Position));
     }
 
     /// <summary>Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. The laser flies one step the way it is going, and dies if it reaches the wall.</summary>

@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Audio;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -29,6 +30,9 @@ namespace Robotron2084.Entities;
 ///     many
 ///     grunts, so Gorf drops fewer, or none, when the wave is full.
 ///     A Gorf that gets across scores nothing. A Gorf that is shot scores the same as a grunt.
+///     <para>
+///         Announces <see cref="GameEventKind.GorfKilled" /> to the <see cref="IGameEvents" /> it is given, when it is killed. It announces nothing when it reaches the end of its path.
+///     </para>
 /// </remarks>
 public sealed class Gorf : IExplodable, IRemovable
 {
@@ -52,6 +56,7 @@ public sealed class Gorf : IExplodable, IRemovable
     private readonly int _maxDropsX2;
     private readonly Rectangle _playfieldBounds;
     private readonly Random _random;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private readonly int _totalSteps;
     private IntVector2 _position;
@@ -66,6 +71,7 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     will drop grunts.
     /// </summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the Gorf announces what happens to it.</param>
     /// <param name="random">Where its random numbers come from. They pick the side, the height and how many grunts it drops.</param>
     /// <param name="playfieldBounds">The inside of the wall, in port pixels. Gorf starts and ends outside it.</param>
     /// <param name="maxDropsX2">
@@ -89,11 +95,12 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     The line to say the first time it appears, or null to say nothing.
     ///     It is said once.
     /// </param>
-    public Gorf(TextureSet textureSet, Random random, Rectangle playfieldBounds, int maxDropsX2, int gruntDropCount = 0,
+    public Gorf(TextureSet textureSet, IGameEvents gameEvents, Random random, Rectangle playfieldBounds, int maxDropsX2, int gruntDropCount = 0,
         int dropIntervalSteps = 0, Rectangle? playerBoxToAvoid = null, GorfLine? lineToSay = null)
     {
         _lineToSay = lineToSay;
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _playfieldBounds = playfieldBounds;
         _random = random;
         _maxDropsX2 = maxDropsX2;
@@ -186,6 +193,15 @@ public sealed class Gorf : IExplodable, IRemovable
     {
         if (!this.IsAlive()) return;
 
+        _gameEvents.Raise(new GameEvent(GameEventKind.GorfKilled, Position));
+        Remove();
+    }
+
+    /// <summary>
+    ///     Takes Gorf off the field, killed or not, and arranges for a new Gorf to bring any grunts it still owes.
+    /// </summary>
+    private void Remove()
+    {
         LifeState = EntityLifeState.Dead;
         if (_playField is null || (_dropCounts.Count == 0 && _pendingDropCount == 0)) return;
 
@@ -266,7 +282,7 @@ public sealed class Gorf : IExplodable, IRemovable
             DropGrunts(playField, count);
         }
 
-        if (_stepCount >= _totalSteps) Kill();
+        if (_stepCount >= _totalSteps) Remove();
     }
 
     /// <summary>Plans the usual drops: <see cref="GorfTuning.DropStops" /> stops, evenly spaced, each dropping a number by chance.</summary>

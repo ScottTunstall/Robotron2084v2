@@ -21,8 +21,11 @@ namespace Robotron2084.Entities;
 ///         <item>Original source: <c>RRH11.ASM</c>, routine <c>HUMAN</c> (with the <c>HUMATB</c> walk table)</item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$02B2</c> (<c>INITIALISE_FAMILY_MEMBERS</c>)</item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.FamilyMemberRescued" />, <see cref="GameEventKind.FamilyMemberKilled" /> and <see cref="GameEventKind.FamilyMemberReprogrammingBegan" /> to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
-public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable, IRaisesGameEvents
+public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>How many animation frames are in each of a family member's walk sets.</summary>
     private const int AnimationFramesPerSet = 3;
@@ -98,6 +101,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable, I
 
     private readonly Random _random;
 
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     /// <summary>Which walk animation frame is showing, counted through this family member's own animation frames.</summary>
@@ -125,15 +129,17 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable, I
     ///     step.
     /// </summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the family member announces what happens to it.</param>
     /// <param name="position">Where the family member's top-left corner is.</param>
     /// <param name="kind">Which family member it is. This decides its animation frames and its size.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick its direction, how many steps it takes before it
     ///     turns, and its wait before the first step.
     /// </param>
-    public FamilyMember(TextureSet textureSet, IntVector2 position, FamilyMemberKind kind, Random random)
+    public FamilyMember(TextureSet textureSet, IGameEvents gameEvents, IntVector2 position, FamilyMemberKind kind, Random random)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         Kind = kind;
         _random = random;
@@ -171,9 +177,6 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable, I
     ///     </list>
     /// </remarks>
     public IntVector2 Position => _position;
-
-    /// <inheritdoc />
-    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
 
     /// <summary>This family member's place in the family list.</summary>
     /// <remarks>
@@ -241,7 +244,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable, I
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        GameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberKilled, Position));
+        _gameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberKilled, Position));
     }
 
     /// <summary>Rescues the family member.</summary>
@@ -250,7 +253,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable, I
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        GameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberRescued, Position));
+        _gameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberRescued, Position));
     }
 
     /// <summary>
@@ -296,7 +299,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable, I
     internal void BeginReprogramming()
     {
         IsBeingReprogrammed = true;
-        GameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberReprogrammingBegan, Position));
+        _gameEvents.Raise(new GameEvent(GameEventKind.FamilyMemberReprogrammingBegan, Position));
     }
 
     /// <summary>Finishes the reprogramming. The family member is gone.</summary>

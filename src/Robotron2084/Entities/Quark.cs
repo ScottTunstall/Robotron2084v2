@@ -21,8 +21,11 @@ namespace Robotron2084.Entities;
 ///         <item>Original source: <c>RRTK4.ASM</c>, routine <c>SQUARE</c> (with <c>SQVEL</c>/<c>SQ3</c>)</item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$4BFB</c> (<c>ANIMATE_QUARK</c>)</item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.Quark" />) to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
-public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable, IRaisesGameEvents
+public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
 {
     /// <summary>
     ///     The range of the random number behind each either-or choice a quark makes: which way to drift, and which way to
@@ -61,6 +64,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable, IRaisesG
 
     private readonly Random _random;
     private readonly int _maxSpeed;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     /// <summary>Which animation frame of the quark's spin is showing.</summary>
@@ -112,6 +116,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable, IRaisesG
     ///     waits before the first.
     /// </summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the quark announces what happens to it.</param>
     /// <param name="position">Where the quark's top-left corner is.</param>
     /// <param name="random">
     ///     Where its random numbers come from. They pick how many tanks it drops, how it drifts and which way
@@ -134,6 +139,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable, IRaisesG
     /// </remarks>
     public Quark(
         TextureSet textureSet,
+        IGameEvents gameEvents,
         IntVector2 position,
         Random random,
         int maxDropsX2 = DefaultMaxDropsX2,
@@ -141,6 +147,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable, IRaisesG
         int maxSpeed = DefaultMaxSpeed)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         _random = random;
         _dropIntervalMaxBeats = dropIntervalMaxBeats;
@@ -163,9 +170,6 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable, IRaisesG
     ///     </list>
     /// </remarks>
     public IntVector2 Position => _position;
-
-    /// <inheritdoc />
-    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
 
     /// <summary>Draws the animation frame that is showing.</summary>
     /// <param name="spriteBatch">What the quark is drawn with.</param>
@@ -204,7 +208,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable, IRaisesG
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Quark));
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Quark));
     }
 
     /// <summary>

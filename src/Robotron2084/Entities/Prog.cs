@@ -23,8 +23,11 @@ namespace Robotron2084.Entities;
 ///         </item>
 ///         <item>Disassembly: <c>asm/robomame.asm</c> at <c>$1EAB</c> (<c>ANIMATE_PROG</c>)</item>
 ///     </list>
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.Prog" />) to the <see cref="IGameEvents" /> it is given.
+///     </para>
 /// </remarks>
-public sealed class Prog : IExplodable, IRemovable, IRaisesGameEvents
+public sealed class Prog : IExplodable, IRemovable
 {
     /// <summary>
     ///     The range of the random number that decides whether a prog goes sideways or up and down. Each is picked half the
@@ -177,6 +180,7 @@ public sealed class Prog : IExplodable, IRemovable, IRaisesGameEvents
 
     private readonly Random _random;
 
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     // The way the prog is walking: up, down, left or right. A new prog walks down until it picks a direction.
@@ -201,12 +205,14 @@ public sealed class Prog : IExplodable, IRemovable, IRaisesGameEvents
 
     /// <summary>Makes a prog where the family member was. It has that family member's animation frames and size.</summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the prog announces what happens to it.</param>
     /// <param name="position">Where the prog's top-left corner is.</param>
     /// <param name="kind">Which family member it used to be. This decides its animation frames and its size.</param>
     /// <param name="random">Where its random numbers come from. They pick how far off the player the spot it heads for is, and when it turns.</param>
-    public Prog(TextureSet textureSet, IntVector2 position, FamilyMemberKind kind, Random random)
+    public Prog(TextureSet textureSet, IGameEvents gameEvents, IntVector2 position, FamilyMemberKind kind, Random random)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _position = position;
         Kind = kind;
         _random = random;
@@ -230,9 +236,6 @@ public sealed class Prog : IExplodable, IRemovable, IRaisesGameEvents
     ///     </list>
     /// </remarks>
     public IntVector2 Position => _position;
-
-    /// <inheritdoc />
-    public IGameEvents GameEvents { get; set; } = NullGameEvents.Instance;
 
     /// <summary>Draws the ghosts, oldest first, and then the prog. Each is drawn as a one-colour shape on a one-colour box.</summary>
     /// <param name="spriteBatch">What the prog is drawn with.</param>
@@ -357,7 +360,7 @@ public sealed class Prog : IExplodable, IRemovable, IRaisesGameEvents
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
-        GameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Prog));
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.Prog));
     }
 
     /// <summary>

@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
+using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -27,6 +28,9 @@ namespace Robotron2084.Entities;
 ///     aimed at the player, give or take a miss. The other half are aimed at a wall so that they bounce back
 ///     across the field. A shell's speed grows with the gap to its target and with the wave's shell setting.
 ///     Sideways distances are in columns and up-and-down distances in rows, as in the ROM.
+///     <para>
+///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.TankShell" />) to the <see cref="IGameEvents" /> it is given, when it is killed. It announces nothing when it fizzles out.
+///     </para>
 /// </remarks>
 public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
 {
@@ -47,6 +51,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = new();
     private readonly Rectangle _playfieldBounds;
+    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the shell fizzles out.</summary>
@@ -68,6 +73,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///     wall.
     /// </summary>
     /// <param name="textureSet">The shared texture set.</param>
+    /// <param name="gameEvents">Where the tank shell announces what happens to it.</param>
     /// <param name="position">The top-left corner of the tank that fired it, in port pixels.</param>
     /// <param name="playerPosition">The top-left corner of the player, in port pixels.</param>
     /// <param name="shellSpeed">The wave's shell setting. A bigger number is a faster shell.</param>
@@ -76,10 +82,11 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///     Where its random numbers come from. They pick what the shell is aimed at, how far the aim is off,
     ///     and how long the shell lasts.
     /// </param>
-    public TankShell(TextureSet textureSet, IntVector2 position, IntVector2 playerPosition, int shellSpeed,
+    public TankShell(TextureSet textureSet, IGameEvents gameEvents, IntVector2 position, IntVector2 playerPosition, int shellSpeed,
         Rectangle playfieldBounds, Random random)
     {
         _textureSet = textureSet;
+        _gameEvents = gameEvents;
         _playfieldBounds = playfieldBounds;
         _position = position +
                     new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
@@ -137,6 +144,7 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
         if (!this.IsAlive()) return;
 
         LifeState = EntityLifeState.Dead;
+        _gameEvents.Raise(new GameEvent(GameEventKind.RobotKilled, Position, RobotKind.TankShell));
     }
 
     /// <summary>
