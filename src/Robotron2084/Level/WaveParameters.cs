@@ -21,6 +21,9 @@ namespace Robotron2084.Level;
 ///     starts. The wave table never has any, because quarks drop them, but a death keeps the ones that
 ///     were alive (notes §134). <c>BerzerkRobotCount</c> is the author's own
 ///     robot, which no wave has yet.
+///     <c>EnableBerzerkSpeak</c> and <c>EnableGorfSpeak</c> belong to the
+///     <see cref="GameStyle.Extended" /> game: they say whether the Berzerk robot's speech, and Gorf's, is
+///     switched on for the wave. A <see cref="GameStyle.Classic" /> wave always has both false.
 ///     Times are counted in fiftieths of a second, and the port turns them into its
 ///     own ticks where they are used.</item>
 ///     </list>
@@ -52,7 +55,9 @@ public sealed record WaveParameters(
     int QuarkMaxSpeed = 50,
     int EnemySpeedBonus = 0,
     int TankCount = 0,
-    int BerzerkRobotCount = 0)
+    int BerzerkRobotCount = 0,
+    bool EnableBerzerkSpeak = false,
+    bool EnableGorfSpeak = false)
 {
     /// <summary>Makes the parameters for a wave from the arcade's wave table.</summary>
     /// <param name="waveNumber">The wave number.</param>

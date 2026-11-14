@@ -45,9 +45,42 @@ public sealed class WaveParameterGenerator
         _customWaveTable = LoadTable(customWaveTablePath);
     }
 
-    /// <summary>Works out what a wave contains.</summary>
+    /// <summary>Works out what a wave contains, in a game style.</summary>
     /// <param name="waveNumber">The wave number, starting at 1.</param>
-    public WaveParameters Generate(int waveNumber)
+    /// <param name="gameStyle">
+    ///     The game style. A <see cref="GameStyle.Classic" /> wave is the arcade's wave, with every
+    ///     <see cref="GameStyle.Extended" /> setting off. An <see cref="GameStyle.Extended" /> wave is the same wave with the
+    ///     author's own settings worked out on top (see <see cref="CreateExtended" />).
+    /// </param>
+    /// <returns>The wave's parameters.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="gameStyle" /> is not a game style.</exception>
+    public WaveParameters Generate(int waveNumber, GameStyle gameStyle)
+    {
+        var classicWaveParameters = GenerateClassic(waveNumber);
+        return gameStyle switch
+        {
+            GameStyle.Classic => classicWaveParameters,
+            GameStyle.Extended => CreateExtended(classicWaveParameters),
+            _ => throw new ArgumentOutOfRangeException(nameof(gameStyle), gameStyle, "Not a game style.")
+        };
+    }
+
+    /// <summary>Makes the <see cref="GameStyle.Extended" /> wave from the arcade's wave.</summary>
+    /// <param name="classicWaveParameters">The arcade's wave, which is left as it is.</param>
+    /// <returns>
+    ///     The same wave, with the Berzerk robot's speech on when the wave has grunts and neither brains nor quarks (a
+    ///     brain wave or a tank wave), and Gorf's speech off.
+    /// </returns>
+    private static WaveParameters CreateExtended(WaveParameters classicWaveParameters)
+    {
+        var isBerzerkSpeakWave = classicWaveParameters is { GruntCount: > 0, BrainCount: 0, QuarkCount: 0 };
+        return classicWaveParameters with { EnableBerzerkSpeak = isBerzerkSpeakWave, EnableGorfSpeak = false };
+    }
+
+    /// <summary>Works out what a wave contains in the arcade's game.</summary>
+    /// <param name="waveNumber">The wave number, starting at 1.</param>
+    /// <returns>The arcade's wave, or the replacement table's row for it.</returns>
+    private WaveParameters GenerateClassic(int waveNumber)
     {
         if (_customWaveTable is { Length: > 0 } table)
         {
