@@ -84,6 +84,8 @@ public sealed class PlayingState : IGameState
     ///     2 no longer has to share player 1's controls. The mode is what F1/F2/F3 select on
     ///     the menu page; TWO PLAYER SIMULTANEOUS is
     ///     carried as far as this call and the second input (the simultaneous field itself is not built yet).
+    ///     A <see cref="GameStyle.Classic" /> game starts with the arcade's start sound. An
+    ///     <see cref="GameStyle.Extended" /> game starts without it, so nothing plays over the Berzerk robot's speech.
     /// </summary>
     /// <param name="controlSettings">The keys and buttons the players have chosen.</param>
     /// <param name="gameSettings">
@@ -100,7 +102,7 @@ public sealed class PlayingState : IGameState
     {
         var playerOneBoundPlayerInputSource = new BoundPlayerInputSource(controlSettings, 0);
         var playerTwoBoundPlayerInputSource = new BoundPlayerInputSource(controlSettings, 1);
-        Sound.Play(StartSoundFor(mode));
+        if (gameSettings.GameStyle == GameStyle.Classic) Sound.Play(StartSoundFor(mode));
         return new PlayingState(textureSet, highScoreStore,
             GameSession.CreateNewGame(mode, playerOneBoundPlayerInputSource, playerTwoBoundPlayerInputSource, controlSettings, gameSettings), random, true);
     }
