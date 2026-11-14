@@ -45,10 +45,4 @@ public static class Presentation
 
         return Math.Min((float)clientWidth / ScreenSize.Width, (float)clientHeight / ScreenSize.Height);
     }
-
-    /// <summary>The scale mode the next F8 press selects.</summary>
-    public static ScaleMode NextScaleMode(ScaleMode mode)
-    {
-        return mode == ScaleMode.Integer ? ScaleMode.Fill : ScaleMode.Integer;
-    }
 }
