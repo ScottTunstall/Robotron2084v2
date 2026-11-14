@@ -1,9 +1,10 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using Robotron2084.Input.Models;
 using Robotron2084.Input;
 using Xunit;
 
-namespace Robotron2084.Tests.Input;
+namespace Robotron2084.Tests.Input.Models;
 
 /// <summary>
 ///     The definitions page's vocabulary (notes §101): every binding must survive a trip

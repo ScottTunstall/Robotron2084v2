@@ -1,7 +1,10 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
 using Robotron2084.Events;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -256,13 +259,13 @@ public sealed class PlayFieldCollisionTests
         // it (`AttractState`), so contact kills there and only there (notes §97.5).
         var aided = CreateEmptyField();
         aided.SkipWaveStart();
-        aided.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, aided.Player.Position, new Random(1)));
+        aided.FieldEntities.Grunts.Add(new Grunt(TestEntityDependencies.Create(new Random(1)), aided.Player.Position, 15));
         aided.Update(new GameTime());
         Assert.Equal(EntityLifeState.Alive, aided.Player.LifeState);
 
         var demoPlayField = CreateEmptyField(false);
         demoPlayField.SkipWaveStart();
-        demoPlayField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, demoPlayField.Player.Position, new Random(1)));
+        demoPlayField.FieldEntities.Grunts.Add(new Grunt(TestEntityDependencies.Create(new Random(1)), demoPlayField.Player.Position, 15));
         demoPlayField.Update(new GameTime());
         Assert.Equal(EntityLifeState.Dying, demoPlayField.Player.LifeState);
     }
@@ -273,7 +276,7 @@ public sealed class PlayFieldCollisionTests
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 200, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        var grunt = new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(1));
+        var grunt = new Grunt(TestEntityDependencies.Create(new Random(1)), spot, 15);
         playField.FieldEntities.Grunts.Add(grunt);
 
         var laser = playField.PlayerLaserSlots.FireAndGet(spot, Direction8.Down);
@@ -295,7 +298,7 @@ public sealed class PlayFieldCollisionTests
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 200, playField.PlayfieldWall.PlayfieldBounds.Y + 200);
-        var hulk = new Hulk(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(7), 8, static () => IntVector2.Zero);
+        var hulk = new Hulk(TestEntityDependencies.Create(new Random(7)), spot, 8, static () => IntVector2.Zero);
         playField.FieldEntities.Hulks.Add(hulk);
         var positionBefore = hulk.Position;
 

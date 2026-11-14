@@ -1,8 +1,11 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
-using Robotron2084.Events;
+using Robotron2084.Input.Models;
 using Robotron2084.Input;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Xunit;
 
@@ -178,7 +181,7 @@ public sealed class WaveStartSequenceTests
     public void ARobotOnThePlayer_DoesNotKill_UntilTheGameIsLive()
     {
         var playField = CreateField(new WaveParameters(1), playerInvincible: false);
-        playField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, playField.Player.Position, new Random(1)));
+        playField.FieldEntities.Grunts.Add(new Grunt(TestEntityDependencies.Create(new Random(1)), playField.Player.Position, 15));
 
         Tick(playField, WaveStartTicks.UntilLive(playField) - 1);
         Assert.Equal(EntityLifeState.Alive, playField.Player.LifeState);

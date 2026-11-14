@@ -1,7 +1,8 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
 using Robotron2084.Entities;
-using Robotron2084.Events;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -49,7 +50,7 @@ public sealed class HulkKnockbackTests
 
         foreach (var direction in Enum.GetValues<Direction8>())
         {
-            var hulk = new Hulk(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(1000 + (int)direction), 2, () => spot);
+            var hulk = new Hulk(TestEntityDependencies.Create(new Random(1000 + (int)direction)), spot, 2, () => spot);
             playField.FieldEntities.Hulks.Add(hulk);
             playField.SkipWaveStart();
             playField.Update(new GameTime()); // caches the playfield bounds
@@ -111,8 +112,7 @@ public sealed class HulkKnockbackTests
 
         // Top-left corner, pushed outward (up-left): the hulk may sit on the
         // wall (spec: "pushed back into the WALL") but never leave the field.
-        var hulk = new Hulk(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(b.X, b.Y), new Random(7), 2,
-            () => new IntVector2(b.X, b.Y));
+        var hulk = new Hulk(TestEntityDependencies.Create(new Random(7)), new IntVector2(b.X, b.Y), 2, () => new IntVector2(b.X, b.Y));
         playField.FieldEntities.Hulks.Add(hulk);
         playField.SkipWaveStart();
         playField.Update(new GameTime());

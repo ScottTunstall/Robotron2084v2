@@ -1,7 +1,9 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
-using Robotron2084.Events;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -41,9 +43,7 @@ public sealed class QuarkDropTimerTests
         var playField = CreateField(2);
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestTextures.SharedTextureSet, NullGameEvents.Instance,
-            new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(4),
-            10, 1);
+        var quark = new Quark(TestEntityDependencies.Create(new Random(4)), new IntVector2(bounds.X + 100, bounds.Y + 60), new QuarkWaveSettings(10, 1));
         playField.FieldEntities.Quarks.Add(quark);
 
         var tick = 0;
@@ -67,9 +67,7 @@ public sealed class QuarkDropTimerTests
         var playField = CreateField(1);
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestTextures.SharedTextureSet, NullGameEvents.Instance,
-            new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(11),
-            10, 16);
+        var quark = new Quark(TestEntityDependencies.Create(new Random(11)), new IntVector2(bounds.X + 100, bounds.Y + 60), new QuarkWaveSettings(10, 16));
         playField.FieldEntities.Quarks.Add(quark);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(QuarkTuning.BeatIntervalArcadeFrames) + 2; tick++)

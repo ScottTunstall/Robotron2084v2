@@ -1,8 +1,12 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
 using Robotron2084.Events;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -25,13 +29,13 @@ public sealed class GorfTests
     /// <summary>A Gorf whose random numbers are chosen: the side, the ground's height and the drops.</summary>
     private static Gorf CreateGorf(PlayField playField, params int[] randomNumbers)
     {
-        return new Gorf(TestTextures.SharedTextureSet, NullGameEvents.Instance, new ScriptedRandom(randomNumbers), playField.GetPlayfieldBounds(), 10);
+        return new Gorf(TestEntityDependencies.Create(new ScriptedRandom(randomNumbers)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(10));
     }
 
     /// <summary>A Gorf that picks at random as a real game would, for the tests that run it right across.</summary>
     private static Gorf CreateRandomGorf(PlayField playField, int seed)
     {
-        return new Gorf(TestTextures.SharedTextureSet, NullGameEvents.Instance, new Random(seed), playField.GetPlayfieldBounds(), 10);
+        return new Gorf(TestEntityDependencies.Create(new Random(seed)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(10));
     }
 
     /// <summary>Runs the field until the Gorf is gone, and counts the ticks it took (or gives up).</summary>
@@ -160,8 +164,7 @@ public sealed class GorfTests
                  playField.FieldEntities.Grunts
                      .ToList()) grunt.Kill(); // the wave's own grunts: only the ones Gorf drops are counted
 
-        var gorf = new Gorf(TestTextures.SharedTextureSet, NullGameEvents.Instance, new ScriptedRandom(randomNumbers), playField.GetPlayfieldBounds(), maxDropsX2,
-            gruntDropCount);
+        var gorf = new Gorf(TestEntityDependencies.Create(new ScriptedRandom(randomNumbers)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(maxDropsX2, gruntDropCount));
         playField.FieldEntities.Add(gorf);
         RunUntilGone(playField, gorf);
         return (playField, gorf);
@@ -212,7 +215,7 @@ public sealed class GorfTests
 
         for (var seed = 0; seed < 300; seed++)
         {
-            var gorf = new Gorf(TestTextures.SharedTextureSet, NullGameEvents.Instance, new Random(seed), bounds, 10, 0, 0, playerBox);
+            var gorf = new Gorf(TestEntityDependencies.Create(new Random(seed)), new GorfPlayfield(bounds, playerBox), new GorfDrops(10, 0, 0));
 
             var top = gorf.Position.Y - hop;
             var bottom = gorf.Position.Y + bodyHeight;
@@ -230,7 +233,7 @@ public sealed class GorfTests
         var hop = ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows);
 
         var meetsThePlayer = Enumerable.Range(0, 300)
-            .Select(seed => new Gorf(TestTextures.SharedTextureSet, NullGameEvents.Instance, new Random(seed), bounds, 10))
+            .Select(seed => new Gorf(TestEntityDependencies.Create(new Random(seed)), new GorfPlayfield(bounds), new GorfDrops(10)))
             .Any(gorf => gorf.Position.Y + bodyHeight >= playerBox.Y && gorf.Position.Y - hop <= playerBox.Bottom);
 
         Assert.True(meetsThePlayer);
@@ -249,7 +252,7 @@ public sealed class GorfTests
     public void ADroppedGruntFallsFromGorfToTheGround_WithNoAppearEffect()
     {
         var playField = CreateFieldInPlay();
-        var gorf = new Gorf(TestTextures.SharedTextureSet, NullGameEvents.Instance, new ScriptedRandom(0, 0, 0, 0, 0), playField.GetPlayfieldBounds(), 10);
+        var gorf = new Gorf(TestEntityDependencies.Create(new ScriptedRandom(0, 0, 0, 0, 0)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(10));
         playField.FieldEntities.Add(gorf);
 
         for (var tick = 0; tick < 3000 && playField.FieldEntities.Grunts.Count == 0; tick++) playField.Update(OneTickGameTime);
@@ -271,7 +274,7 @@ public sealed class GorfTests
     public void AFallingGruntDoesNotWalkUntilItHasLanded()
     {
         var playField = CreateFieldInPlay();
-        var grunt = new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(300, 100), new Random(1), 1);
+        var grunt = new Grunt(TestEntityDependencies.Create(new Random(1)), new IntVector2(300, 100), 1);
         grunt.BeginFall(100 + 40);
 
         for (var tick = 0; tick < 4; tick++) grunt.Update(OneTickGameTime, playField);
@@ -302,7 +305,7 @@ public sealed class GorfTests
     public void AGruntIsNeverDroppedOntoAnElectrode_ItsDropWaitsUntilGorfHasMovedOn()
     {
         var playField = CreateFieldInPlay(new WaveParameters(1, 0));
-        var gorf = new Gorf(TestTextures.SharedTextureSet, NullGameEvents.Instance, new Random(3), playField.GetPlayfieldBounds(), 4, 15);
+        var gorf = new Gorf(TestEntityDependencies.Create(new Random(3)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(4, 15));
         playField.FieldEntities.Add(gorf);
         var bodyHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height);
         var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
@@ -346,8 +349,7 @@ public sealed class GorfTests
         var playField = CreateFieldInPlay();
         var lines = new List<GorfLine>();
         playField.SetGorfLineSayer(lines.Add);
-        var gorf = new Gorf(TestTextures.SharedTextureSet, NullGameEvents.Instance, new Random(3), playField.GetPlayfieldBounds(), 10, 0, 0, null,
-            GorfLine.GorfianDoom);
+        var gorf = new Gorf(TestEntityDependencies.Create(new Random(3)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(10, 0, 0), GorfLine.GorfianDoom);
         playField.FieldEntities.Add(gorf);
         Assert.Empty(lines); // not before it appears
 

@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Entities;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Xunit;
 

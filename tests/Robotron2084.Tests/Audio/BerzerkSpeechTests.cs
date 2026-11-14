@@ -1,6 +1,6 @@
 using Robotron2084.Audio;
 using Xunit;
-using static Robotron2084.Audio.BerzerkWord;
+using static Robotron2084.Audio.Models.BerzerkWord;
 
 namespace Robotron2084.Tests.Audio;
 

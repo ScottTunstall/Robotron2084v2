@@ -1,3 +1,4 @@
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 
 namespace Robotron2084.Tests.Events;

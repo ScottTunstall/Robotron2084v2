@@ -1,8 +1,10 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
-using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -208,8 +210,7 @@ public sealed class SparkTests
 
         for (var seed = 0; seed < 200; seed++)
         {
-            var spark = new Spark(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(300, 200), new IntVector2(100, 100),
-                new Random(seed));
+            var spark = new Spark(TestEntityDependencies.Create(new Random(seed)), new IntVector2(300, 200), new IntVector2(100, 100));
             Assert.InRange(spark.AccelerationSubpixels.Y, -upAndDownLimit, upAndDownLimit);
             sidewaysUsedMoreThanTheUpAndDownRange |= Math.Abs(spark.AccelerationSubpixels.X) > upAndDownLimit;
         }

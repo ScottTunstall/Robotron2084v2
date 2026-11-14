@@ -1,3 +1,4 @@
+using Robotron2084.Persistence.Models;
 using Robotron2084.Persistence;
 using Xunit;
 

@@ -1,8 +1,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
 using Robotron2084.Events;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -501,7 +504,7 @@ public sealed class StripEffectTests
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
         var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot);
         playField.FieldEntities.Electrodes.Add(electrode);
-        playField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(1))); // standing on the electrode
+        playField.FieldEntities.Grunts.Add(new Grunt(TestEntityDependencies.Create(new Random(1)), spot, 15)); // standing on the electrode
 
         playField.Update(new GameTime());
 

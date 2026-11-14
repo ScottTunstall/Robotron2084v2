@@ -1,7 +1,9 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
-using Robotron2084.Events;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Xunit;
 
@@ -104,8 +106,7 @@ public sealed class PlayFieldFamilyMemberTests
         for (var tick = 0; tick < 130; tick++) playField.Update(OneTick()); // the robots are held until the game goes live
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(inner.Center.X, inner.Center.Y), FamilyMemberKind.Mommy,
-            new Random(7));
+        var familyMember = new FamilyMember(TestEntityDependencies.Create(new Random(7)), new IntVector2(inner.Center.X, inner.Center.Y), FamilyMemberKind.Mommy);
 
         List<int> starts = new();
         var seen = 0;

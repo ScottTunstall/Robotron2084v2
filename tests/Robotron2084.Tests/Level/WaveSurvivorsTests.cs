@@ -1,6 +1,8 @@
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
-using Robotron2084.Events;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Xunit;
 
@@ -16,7 +18,7 @@ public sealed class WaveSurvivorsTests
 
     private static Enforcer CreateEnforcer()
     {
-        return new Enforcer(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), new Random(1));
+        return new Enforcer(TestEntityDependencies.Create(new Random(1)), new IntVector2(100, 100), 24);
     }
 
     [Fact]

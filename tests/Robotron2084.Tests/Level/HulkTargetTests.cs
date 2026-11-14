@@ -1,7 +1,9 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
-using Robotron2084.Events;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Xunit;
 
@@ -124,8 +126,7 @@ public sealed class HulkTargetTests
         playField.SkipWaveStart();
         var bounds = playField.GetPlayfieldBounds();
         var phantom = Hulk.GetPhantomTargetPosition(bounds);
-        var hulk = new Hulk(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(bounds.X + 40, bounds.Bottom - 80), new Random(5), 2,
-            () => phantom);
+        var hulk = new Hulk(TestEntityDependencies.Create(new Random(5)), new IntVector2(bounds.X + 40, bounds.Bottom - 80), 2, () => phantom);
         playField.FieldEntities.Hulks.Add(hulk);
         playField.Player.MoveTo(new IntVector2(bounds.X + 4, bounds.Bottom - 40));
 
@@ -171,7 +172,7 @@ public sealed class HulkTargetTests
         var hulks = new List<Hulk>();
         for (var seed = 0; seed < ManyHulks; seed++)
         {
-            var hulk = new Hulk(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(seed), 8, () => target);
+            var hulk = new Hulk(TestEntityDependencies.Create(new Random(seed)), spot, 8, () => target);
             hulks.Add(hulk);
             playField.FieldEntities.Hulks.Add(hulk);
         }

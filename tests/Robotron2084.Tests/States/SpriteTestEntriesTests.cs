@@ -1,6 +1,8 @@
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Graphics;
+using Robotron2084.States.SpriteTest.Models;
 using Robotron2084.States.SpriteTest;
 using Robotron2084.Tuning;
 using Xunit;

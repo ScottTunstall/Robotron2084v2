@@ -1,7 +1,10 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
 using Robotron2084.Events;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -17,13 +20,13 @@ public sealed class EntityOwnRulesTests
     [Fact]
     public void AFamilyMemberIsGraspable_OnlyWhileAliveAndNotInABrainsHold()
     {
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), FamilyMemberKind.Mommy, new Random(1));
+        var familyMember = new FamilyMember(TestEntityDependencies.Create(new Random(1)), new IntVector2(100, 100), FamilyMemberKind.Mommy);
         Assert.True(familyMember.IsGraspable());
 
         familyMember.BeginReprogramming();
         Assert.False(familyMember.IsGraspable());
 
-        var killedFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), FamilyMemberKind.Daddy, new Random(2));
+        var killedFamilyMember = new FamilyMember(TestEntityDependencies.Create(new Random(2)), new IntVector2(100, 100), FamilyMemberKind.Daddy);
         killedFamilyMember.Kill();
         Assert.False(killedFamilyMember.IsGraspable());
     }
@@ -123,7 +126,7 @@ public sealed class EntityOwnRulesTests
         Assert.True(electrode.IsDying());
         Assert.False(electrode.IsDead());
 
-        var grunt = new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 50), new Random(1));
+        var grunt = new Grunt(TestEntityDependencies.Create(new Random(1)), new IntVector2(50, 50), 15);
         grunt.Kill();
         Assert.True(grunt.IsDead());
         Assert.False(grunt.IsAlive());

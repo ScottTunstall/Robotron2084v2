@@ -1,8 +1,9 @@
 using Microsoft.Xna.Framework.Audio;
+using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
 using Xunit;
 
-namespace Robotron2084.Tests.Audio;
+namespace Robotron2084.Tests.Audio.Models;
 
 /// <summary>Cutting the silence off the start and end of a sound.</summary>
 public sealed class PcmSoundTests

@@ -1,3 +1,4 @@
+using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
 using Xunit;
 

@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using Robotron2084.Input.Models;
 using Robotron2084.Input;
 using Xunit;
 

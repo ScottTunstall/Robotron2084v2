@@ -1,7 +1,11 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tests.Events;
 using Xunit;
@@ -15,7 +19,7 @@ public sealed class EntityGameEventTests
 
     private static FamilyMember CreateFamilyMember(RecordingGameEvents recording)
     {
-        return new FamilyMember(TestTextures.SharedTextureSet, recording, Spot, FamilyMemberKind.Mommy, new Random(1));
+        return new FamilyMember(TestEntityDependencies.Create(new Random(1), recording), Spot, FamilyMemberKind.Mommy);
     }
 
     [Fact]
@@ -69,7 +73,7 @@ public sealed class EntityGameEventTests
     public void AKilledPlayerAnnouncesTheDeath()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestTextures.SharedTextureSet, recording, Spot, 3, new Random(1)) { InvincibleForTesting = false };
+        var player = new Player(TestEntityDependencies.Create(new Random(1), recording), Spot, 3) { InvincibleForTesting = false };
 
         player.Kill();
         player.Kill();
@@ -81,7 +85,7 @@ public sealed class EntityGameEventTests
     public void AnInvinciblePlayerAnnouncesNothing()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestTextures.SharedTextureSet, recording, Spot, 3, new Random(1)) { InvincibleForTesting = true };
+        var player = new Player(TestEntityDependencies.Create(new Random(1), recording), Spot, 3) { InvincibleForTesting = true };
 
         player.Kill();
 
@@ -92,7 +96,7 @@ public sealed class EntityGameEventTests
     public void AnExtraLifeIsAnnounced()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestTextures.SharedTextureSet, recording, Spot, 3, new Random(1));
+        var player = new Player(TestEntityDependencies.Create(new Random(1), recording), Spot, 3);
 
         player.AddLife();
 
@@ -103,7 +107,7 @@ public sealed class EntityGameEventTests
     public void AKilledGruntAnnouncesWhichRobotDiedOnce()
     {
         var recording = new RecordingGameEvents();
-        var grunt = new Grunt(TestTextures.SharedTextureSet, recording, Spot, new Random(1), 10);
+        var grunt = new Grunt(TestEntityDependencies.Create(new Random(1), recording), Spot, 10);
 
         grunt.Kill();
         grunt.Kill();
@@ -115,7 +119,7 @@ public sealed class EntityGameEventTests
     public void AKilledProgAnnouncesItWasAProg()
     {
         var recording = new RecordingGameEvents();
-        var prog = new Prog(TestTextures.SharedTextureSet, recording, Spot, FamilyMemberKind.Daddy, new Random(1));
+        var prog = new Prog(TestEntityDependencies.Create(new Random(1), recording), Spot, FamilyMemberKind.Daddy);
 
         prog.Kill();
         prog.Kill();
@@ -139,7 +143,7 @@ public sealed class EntityGameEventTests
     public void AHulkThatIsKnockedBackAnnouncesIt()
     {
         var recording = new RecordingGameEvents();
-        var hulk = new Hulk(TestTextures.SharedTextureSet, recording, Spot, new Random(1), 2, () => Spot);
+        var hulk = new Hulk(TestEntityDependencies.Create(new Random(1), recording), Spot, 2, () => Spot);
 
         hulk.ApplyKnockback(Direction8.Right);
 
@@ -151,7 +155,7 @@ public sealed class EntityGameEventTests
     {
         var recording = new RecordingGameEvents();
         var bounds = new Rectangle(20, 30, 600, 400);
-        var gorf = new Gorf(TestTextures.SharedTextureSet, recording, new Random(3), bounds, 10);
+        var gorf = new Gorf(TestEntityDependencies.Create(new Random(3), recording), new GorfPlayfield(bounds), new GorfDrops(10));
 
         gorf.Kill();
         gorf.Kill();
@@ -163,7 +167,7 @@ public sealed class EntityGameEventTests
     public void AKilledSparkAnnouncesItWasASpark()
     {
         var recording = new RecordingGameEvents();
-        var spark = new Spark(TestTextures.SharedTextureSet, recording, Spot, new IntVector2(300, 200), new Random(1));
+        var spark = new Spark(TestEntityDependencies.Create(new Random(1), recording), Spot, new IntVector2(300, 200));
 
         spark.Kill();
 
@@ -175,7 +179,7 @@ public sealed class EntityGameEventTests
     {
         var recording = new RecordingGameEvents();
         var bounds = new Rectangle(20, 30, 600, 400);
-        var tankShell = new TankShell(TestTextures.SharedTextureSet, recording, Spot, new IntVector2(300, 200), 3, bounds, new Random(1));
+        var tankShell = new TankShell(TestEntityDependencies.Create(new Random(1), recording), Spot, new TankShellAim(new IntVector2(300, 200), 3, bounds));
 
         tankShell.Kill();
 
@@ -186,7 +190,7 @@ public sealed class EntityGameEventTests
     public void AKilledCruiseMissileAnnouncesItWasACruiseMissile()
     {
         var recording = new RecordingGameEvents();
-        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, recording, Spot, new IntVector2(300, 200), new Random(1));
+        var cruiseMissile = new CruiseMissile(TestEntityDependencies.Create(new Random(1), recording), Spot, new IntVector2(300, 200));
 
         cruiseMissile.Kill();
 

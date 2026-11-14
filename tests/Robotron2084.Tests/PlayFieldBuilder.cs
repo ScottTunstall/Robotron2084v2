@@ -3,6 +3,7 @@ using Robotron2084.Core;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Level.Collisions;
 using Robotron2084.Palette;
