@@ -4,6 +4,7 @@ using Xunit;
 namespace Robotron2084.Tests.Audio;
 
 /// <summary>The speech channel (port only): a line is never cut off, and lines are spoken in the order asked for.</summary>
+[Collection("SoundFacade")]
 public sealed class SpeechChannelTests
 {
     [Fact]
@@ -78,6 +79,7 @@ public sealed class SpeechChannelTests
     public void TheSpeechService_DoesNothingUntilItIsSetUp_ThenQueuesLikeTheChannel()
     {
         var voice = new FakeSpeechVoice();
+        Speech.ResetForTesting();
 
         Speech.Say("IGNORED");
         Speech.Tick();
@@ -88,5 +90,54 @@ public sealed class SpeechChannelTests
         Assert.True(Speech.IsBusy());
         Speech.Tick();
         Assert.Equal(["HELLO"], voice.SpokenLineNames);
+    }
+
+    [Fact]
+    public void ASilence_HoldsTheNextLineBackForItsTicks_AfterTheLineBeforeIt()
+    {
+        var voice = new FakeSpeechVoice { TicksPerLine = 2 };
+        var channel = new SpeechChannel(voice);
+        channel.Say("ONE");
+        channel.Wait(5);
+        channel.Say("TWO");
+
+        var ticksUntilTwo = 0;
+        while (voice.SpokenLineNames.Count < 2 && ticksUntilTwo < 100)
+        {
+            channel.Tick();
+            voice.Tick();
+            ticksUntilTwo++;
+        }
+
+        // ONE is spoken on the first tick and lasts 2; the silence starts when it ends and lasts 5.
+        Assert.Equal(["ONE", "TWO"], voice.SpokenLineNames);
+        Assert.Equal(1 + 2 + 5, ticksUntilTwo);
+    }
+
+    [Fact]
+    public void TheChannelIsBusyWhileASilenceIsWaitedOut()
+    {
+        var voice = new FakeSpeechVoice();
+        var channel = new SpeechChannel(voice);
+        channel.Wait(3);
+        channel.Tick(); // the silence's first tick
+        channel.Tick();
+        channel.Tick(); // its third and last
+        Assert.True(channel.IsBusy());
+
+        channel.Tick();
+
+        Assert.False(channel.IsBusy());
+    }
+
+    [Fact]
+    public void ALineIsGivenToTheVoiceWithItsPitch()
+    {
+        var voice = new FakeSpeechVoice();
+        var channel = new SpeechChannel(voice);
+        channel.Say("HIGH", 0.5f);
+        channel.Tick();
+
+        Assert.Equal([0.5f], voice.SpokenPitchOctaves);
     }
 }

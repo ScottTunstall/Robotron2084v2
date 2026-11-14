@@ -11,6 +11,9 @@ internal sealed class FakeSpeechVoice : ISpeechVoice
     /// <summary>The lines it was asked to speak, in order.</summary>
     public List<string> SpokenLineNames { get; } = [];
 
+    /// <summary>How far each spoken line was raised or lowered, in octaves, in the order spoken.</summary>
+    public List<float> SpokenPitchOctaves { get; } = [];
+
     /// <summary>How many ticks each line takes to speak.</summary>
     public int TicksPerLine { get; init; } = 3;
 
@@ -21,10 +24,11 @@ internal sealed class FakeSpeechVoice : ISpeechVoice
     }
 
     /// <inheritdoc />
-    public void Speak(string lineName)
+    public void Speak(string lineName, float pitchOctaves)
     {
         Assert.Equal(0, _ticksLeft); // the channel must never start a line over a line being spoken
         SpokenLineNames.Add(lineName);
+        SpokenPitchOctaves.Add(pitchOctaves);
         _ticksLeft = TicksPerLine;
     }
 
