@@ -9,7 +9,7 @@ namespace Robotron2084.Audio;
 ///     <list type="bullet">
 ///         <item>Port only: the arcade has no speech sound chip, so this is not in the arcade game.</item>
 ///         <item>
-///             A line is a sound file in <c>Content/Speech/</c>. The pipeline builds it, and
+///             A line is a sound file in a folder of <c>Content/Speech/</c> (GORF or Berzerk). The pipeline builds it, and
 ///             <see cref="SpeechLinePaths" /> lists them. A line's name is the file's name without the extension, in
 ///             capitals.
 ///         </item>
