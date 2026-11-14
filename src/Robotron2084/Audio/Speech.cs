@@ -21,6 +21,13 @@ public static class Speech
 {
     private static SpeechChannel? _speechChannel;
 
+    /// <summary>
+    ///     Set by the app shell every tick, with <see cref="Sound.AttractMuted" />: true while the attract sequence is on
+    ///     screen and the ATTRACT MODE SOUND setting is off. While it is set, asking for a line does nothing, and no line
+    ///     already waiting is started. A real game keeps its speech.
+    /// </summary>
+    public static bool AttractMuted { get; set; }
+
     /// <summary>Sets up the speech service with the voice that will speak the lines.</summary>
     /// <param name="speechVoice">The voice.</param>
     public static void Initialise(ISpeechVoice speechVoice)
@@ -38,12 +45,16 @@ public static class Speech
     /// <param name="lineName">The name of the line: the WAV file's name without the extension.</param>
     public static void Say(string lineName)
     {
+        if (AttractMuted) return;
+
         _speechChannel?.Say(lineName);
     }
 
     /// <summary>Moves the speech on by one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</summary>
     public static void Tick()
     {
+        if (AttractMuted) return;
+
         _speechChannel?.Tick();
     }
 }
