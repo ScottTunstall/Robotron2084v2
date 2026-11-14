@@ -14,4 +14,9 @@
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.5.1" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Robotron2084.Audio\Robotron2084.Audio.csproj" />
+    <ProjectReference Include="..\Robotron2084.Core\Robotron2084.Core.csproj" />
+  </ItemGroup>
+
 </Project>

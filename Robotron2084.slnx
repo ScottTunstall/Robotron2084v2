@@ -6,6 +6,8 @@
     <File Path="docs/arcade-fidelity-notes.md" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="src/Robotron2084.Audio/Robotron2084.Audio.csproj" />
+    <Project Path="src/Robotron2084.Core/Robotron2084.Core.csproj" />
     <Project Path="src/Robotron2084/Robotron2084.csproj" />
   </Folder>
   <Folder Name="/tests/">
