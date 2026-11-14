@@ -11,7 +11,7 @@ using Robotron2084.Palette;
 namespace Robotron2084.States;
 
 /// <summary>
-///     The SPEECH TEST page (opened from the DEVELOPER TOOLS page, closed with F10 back to it): every speech line, one at
+///     A SPEECH TEST page (the GORF SPEECH TEST or the BERZERK SPEECH TEST, opened from the DEVELOPER TOOLS page, closed with F10 back to it): every speech line of one robot, one at
 ///     a time, so each can be heard.
 /// </summary>
 /// <remarks>
@@ -38,7 +38,7 @@ public sealed class SpeechTestState : IGameState
 
     private const string AutoLine = "A - AUTO UP";
 
-    private const string Description = "SPEECH SAMPLE";
+    private const string DescriptionWords = "SPEECH SAMPLE";
 
     private const int DescriptionRow = 170;
 
@@ -64,10 +64,10 @@ public sealed class SpeechTestState : IGameState
     /// <summary>The palette index the page draws in: the game's white, as the SOUND TEST page does.</summary>
     private const int TextPaletteIndex = 9;
 
-    /// <summary>The names of the lines, in the order of <see cref="SpeechLinePaths" />.</summary>
-    private static readonly IReadOnlyList<string> LineNames =
-        SpeechLinePaths.All.Select(path => Path.GetFileName(path).ToUpperInvariant()).ToList();
+    /// <summary>The names of this page's lines, in the order of <see cref="SpeechLinePaths" />.</summary>
+    private readonly IReadOnlyList<string> _lineNames;
 
+    private readonly string _description;
     private readonly GameServices _gameServices;
     private readonly TextureSet _textureSet;
     private int _index;
@@ -77,9 +77,20 @@ public sealed class SpeechTestState : IGameState
 
     /// <summary>Opens the page and speaks the first line.</summary>
     /// <param name="gameServices">The shared services.</param>
-    public SpeechTestState(GameServices gameServices)
+    /// <summary>The content folder of the Gorf speech lines.</summary>
+    public const string GorfFolder = "GORF";
+
+    /// <summary>The content folder of the Berzerk robot's speech lines.</summary>
+    public const string BerzerkFolder = "Berzerk";
+
+    /// <summary>Opens the page on the first line of a robot's speech, and speaks it.</summary>
+    /// <param name="gameServices">The attract sequence's shared services.</param>
+    /// <param name="folder">The robot's content folder under <c>Content/Speech/</c>: <see cref="GorfFolder" /> or <see cref="BerzerkFolder" />.</param>
+    public SpeechTestState(GameServices gameServices, string folder)
     {
         _gameServices = gameServices;
+        _description = $"{folder.ToUpperInvariant()} {DescriptionWords}";
+        _lineNames = GetLineNames(folder);
         _textureSet = gameServices.TextureSet;
         _previousSnapshot = InputSnapshot.Read();
         if (_textureSet.BlitterDraw.GamePalette is { } palette)
@@ -88,12 +99,22 @@ public sealed class SpeechTestState : IGameState
         SpeakCurrentLine();
     }
 
+    /// <summary>Gets the names of a robot's speech lines, in the order of <see cref="SpeechLinePaths" />.</summary>
+    /// <param name="folder">The robot's content folder under <c>Content/Speech/</c>.</param>
+    /// <returns>The names, in capitals.</returns>
+    internal static IReadOnlyList<string> GetLineNames(string folder)
+    {
+        var folderStart = $"Speech/{folder}/";
+        return SpeechLinePaths.All.Where(path => path.StartsWith(folderStart, StringComparison.Ordinal))
+            .Select(path => Path.GetFileName(path).ToUpperInvariant()).ToList();
+    }
+
     /// <summary>Gets the name of the line the page is on, or an empty string when there are no lines.</summary>
     internal string GetCurrentLineName()
     {
-        if (LineNames.Count == 0) return string.Empty;
+        if (_lineNames.Count == 0) return string.Empty;
 
-        return LineNames[_index];
+        return _lineNames[_index];
     }
 
     /// <inheritdoc />
@@ -102,11 +123,11 @@ public sealed class SpeechTestState : IGameState
         var number = (_index + 1).ToString(CultureInfo.InvariantCulture);
         DrawLarge(spriteBatch, HeadingWord + number, NumberRow);
         DrawLarge(spriteBatch, SoundTestState.ToDisplay(GetCurrentLineName()), NameRow);
-        DrawSmall(spriteBatch, Description, DescriptionRow);
+        DrawSmall(spriteBatch, _description, DescriptionRow);
         var autoUpWord = "OFF";
         if (_isAutoUp) autoUpWord = "ON";
 
-        DrawSmall(spriteBatch, $"{_index + 1} OF {LineNames.Count}   AUTO UP {autoUpWord}", PositionRow);
+        DrawSmall(spriteBatch, $"{_index + 1} OF {_lineNames.Count}   AUTO UP {autoUpWord}", PositionRow);
         DrawSmall(spriteBatch, AdvanceLine, InstructionsRow);
         DrawSmall(spriteBatch, AutoLine, SecondInstructionRow);
         DrawSmall(spriteBatch, ExitLine, ExitRow);
@@ -158,7 +179,7 @@ public sealed class SpeechTestState : IGameState
     /// <param name="index">The place in the list of lines.</param>
     private void MoveTo(int index)
     {
-        var count = LineNames.Count;
+        var count = _lineNames.Count;
         if (count == 0) return;
 
         _index = (index % count + count) % count;

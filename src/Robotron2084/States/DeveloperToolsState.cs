@@ -21,7 +21,7 @@ namespace Robotron2084.States;
 ///     shows them: the title page on its arcade pane (the ROBOTRON 2084 presentation page as the cabinet
 ///     prints it), the title page on the pane that carries the port's credit, the STORY movie, the
 ///     machine playing itself, the HIGH SCORE table, the DEFINE INPUTS page, the GAME ADJUSTMENT
-///     page with the gameplay settings (notes §131), the SPRITE TEST page, the SOUND TEST page and the SPEECH TEST page (notes §149), which has no number key.
+///     page with the gameplay settings (notes §131), the SPRITE TEST page, the SOUND TEST page and the GORF SPEECH TEST and BERZERK SPEECH TEST pages (notes §149), which have no number keys.
 ///     Keys: Up/Down (or the stick) moves the cursor, Enter (or A) chooses, and 1 to 9, then 0, choose a line
 ///     directly. F10 closes the page — back to the title, the one attract screen this page's options
 ///     do not already reach — which is why the shell's F10 switch leaves this page to the page itself.
@@ -46,7 +46,7 @@ public sealed class DeveloperToolsState : IGameState
 
     private const int LabelColumn = 75;
 
-    private const int LineStep = 20;
+    private const int LineStep = 18;
 
     // The page's own colours (notes §108) are the GAME ADJUSTMENT page's: WHITE (palette index 9) for the
     // heading, the instructions and the exit line, GREEN (palette index 6) for the options themselves. No palette index
@@ -69,7 +69,7 @@ public sealed class DeveloperToolsState : IGameState
     /// <summary>
     ///     The page's options in list order: the MAIN MENU page, then the attract cycle's own screens in the order the cycle
     ///     shows them (notes §94/§95), then the two service pages — the port's control definitions
-    ///     and the arcade's GAME ADJUSTMENT settings (notes §131) — then the SPRITE TEST page, the SOUND TEST page and the SPEECH TEST
+    ///     and the arcade's GAME ADJUSTMENT settings (notes §131) — then the SPRITE TEST page, the SOUND TEST page and the GORF and BERZERK SPEECH TEST
     ///     page (notes §149).
     /// </summary>
     private static readonly string[] Options =
@@ -84,7 +84,8 @@ public sealed class DeveloperToolsState : IGameState
         "GAME ADJUSTMENT",
         "SPRITE TEST",
         "SOUND TEST",
-        "SPEECH TEST"
+        "GORF SPEECH TEST",
+        "BERZERK SPEECH TEST"
     ];
 
     /// <summary>
@@ -208,8 +209,10 @@ public sealed class DeveloperToolsState : IGameState
             // Port only: every sprite, animating as it does in the game.
             () => new SpriteTestState(_gameServices),
             () => new SoundTestState(_gameServices),
-            // Port only: the speech lines, one at a time (notes §149).
-            () => new SpeechTestState(_gameServices)
+            // Port only: the Gorf speech lines, one at a time (notes §149).
+            () => new SpeechTestState(_gameServices, SpeechTestState.GorfFolder),
+            // Port only: the Berzerk robot's speech lines, one at a time.
+            () => new SpeechTestState(_gameServices, SpeechTestState.BerzerkFolder)
         ];
         return screenMakers[line]();
     }
