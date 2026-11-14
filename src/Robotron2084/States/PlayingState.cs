@@ -173,6 +173,7 @@ public sealed class PlayingState : IGameState
             return;
         }
 
+        WaveStartSpeech.Say(_gameSession, _playField.WaveParameters);
         _playField.Update(gameTime);
 
         // The HUD is drawn from the session's slots, and the ROM reads the score,
