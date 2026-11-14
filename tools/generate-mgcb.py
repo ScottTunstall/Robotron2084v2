@@ -2,7 +2,7 @@
 """Generates the MonoGame content pipeline entries for the extracted sprites.
 
 Reads src/Robotron2084/Content/Sprites/*.png, Content/Effects/*.fx and
-Content/Speech/*.ogg and emits:
+Content/Speech/**/*.ogg (the GORF and Berzerk folders) and emits:
   1. src/Robotron2084/Content/Content.mgcb  (font entry + effect entries +
      one PNG entry per sprite + one sound effect entry per speech file)
   2. src/Robotron2084/Graphics/TexturePaths.cs (static content-path table)
@@ -74,7 +74,7 @@ def main() -> int:
             f"/build:Sprites/{name}.png",
             "",
         ]
-    speech = sorted(p.stem for p in SPEECH_DIR.glob("*.ogg"))
+    speech = sorted(p.relative_to(SPEECH_DIR).with_suffix("").as_posix() for p in SPEECH_DIR.rglob("*.ogg"))
     for name in speech:
         lines += [
             f"#begin Speech/{name}.ogg",
