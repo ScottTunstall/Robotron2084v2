@@ -856,6 +856,14 @@ but never instead. LEFT goes one way and RIGHT the other; for a two-way switch, 
 uses LEFT and RIGHT for something else (the developer's page-stepping keys on the attract screens) must say so where it
 is handled.
 
+**AUD-1. When ATTRACT MODE SOUND is off, the attract pages are silent: no sound effects and no speech.** The setting is on the
+GAME ADJUSTMENT page. While an attract page is showing (the title, the story, the demo and its wave-clear screen, and the
+high scores) and the setting is off, every request for a sound effect, a speech line or the wave-end music is ignored. The
+app shell sets `Sound.AttractMuted` and `Speech.AttractMuted` every tick, and each service checks its flag before it does
+anything. A new way of making a noise (a new service, a new kind of sound) must check the same flag, or it breaks this
+rule. A real game, and the pages that are not attract pages (the menu, the settings, the developer tools and its tests),
+keep their sound.
+
 ## 10. Process
 
 **PROC-1. Not a licence to churn (§114).** Do not reformat or sweep-rename code without a reason. Any file you
