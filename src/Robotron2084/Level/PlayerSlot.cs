@@ -58,6 +58,31 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource
     public int Lives { get; set; } = Lives;
 
     /// <summary>
+    ///     True when the player saved every family member in their last wave. It is true before their first wave, and is
+    ///     set again each time they clear a wave. It is what the robots' speech reacts to.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Port only: the arcade does not keep it.</item>
+    ///         <item>
+    ///             A family member left on the field when the wave ends, as well as one lost to a hulk or a brain, means the
+    ///             family was not all saved.
+    ///         </item>
+    ///         <item>
+    ///             The author expects what counts as a good wave to change. For now it is saving the whole family. A wave
+    ///             always ends with every robot that can die dead, so "killed all the robots" is not part of it.
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    public bool SavedWholeFamilyLastWave { get; set; } = true;
+
+    /// <summary>
+    ///     How many family members the player has lost in the wave they are on, over the lives they have lost in it so far.
+    ///     It goes back to 0 when they clear the wave.
+    /// </summary>
+    public int FamilyMembersLostThisWave { get; set; }
+
+    /// <summary>
     ///     What was left on the player's field when they last died, to start their next life with. It is null when their
     ///     wave has not started or has just been cleared.
     /// </summary>

@@ -245,6 +245,12 @@ public sealed class FieldEntities
         FamilyList.Add(familyMember);
     }
 
+    /// <summary>Counts the family members still on the field: neither rescued nor lost.</summary>
+    public int CountFamilyMembersLeft()
+    {
+        return FamilyList.Members.Count(familyMember => familyMember.IsAlive());
+    }
+
     /// <summary>Says whether any family member is standing on the field and free.</summary>
     public bool AnyFamilyMemberAvailable()
     {

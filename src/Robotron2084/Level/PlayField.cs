@@ -55,6 +55,9 @@ public sealed class PlayField : ICollisionScene
     private readonly LaserWallFlares _laserWallFlares = new();
     private readonly WaveMaterialisation _waveMaterialisation;
     private readonly MidWaveSpawner _midWaveSpawner;
+    /// <summary>How many family members were on the field when it was set up.</summary>
+    private readonly int _familyMembersAtStart;
+
     private Action<GorfLine> _gorfLineSayer = static gorfLine => Speech.SayGorf(gorfLine);
     private readonly List<GorfReturn> _gorfReturns = [];
     private readonly PlayerAppear _playerAppear = new();
@@ -139,6 +142,7 @@ public sealed class PlayField : ICollisionScene
 
         // The family is put on last, after every robot (ROM HUMSTV).
         new FamilyWaveSpawner().Spawn(waveSpawnContext);
+        _familyMembersAtStart = FieldEntities.CountFamilyMembersLeft();
 
         // The robots on the arcade's robot list are brought on in the order its appear loop meets them (ROM: RRG23.ASM APPEAR).
         IEntity[] robotsInAppearOrder = [.. GetRobotsInAppearOrder()];
@@ -175,6 +179,22 @@ public sealed class PlayField : ICollisionScene
     ///     </list>
     /// </remarks>
     public int RescuesThisLife { get; private set; }
+
+    /// <summary>
+    ///     Counts the family members lost on this field so far: killed by a hulk, turned into a prog, or gone any other way
+    ///     but rescued.
+    /// </summary>
+    /// <returns>The family members the field started with, less those rescued and those still on the field.</returns>
+    public int GetFamilyMembersLost()
+    {
+        return _familyMembersAtStart - RescuesThisLife - FieldEntities.CountFamilyMembersLeft();
+    }
+
+    /// <summary>Says whether any family member is still on the field, neither rescued nor lost.</summary>
+    public bool HasFamilyMemberLeft()
+    {
+        return FieldEntities.CountFamilyMembersLeft() > 0;
+    }
 
     /// <summary>The player's score.</summary>
     public ScoreBoard ScoreBoard { get; }

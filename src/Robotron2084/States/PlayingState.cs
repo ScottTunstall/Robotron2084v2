@@ -293,6 +293,7 @@ public sealed class PlayingState : IGameState
         SyncSlotFromField();
         NoteFamilySlotsLeftOver();
         deadPlayerSlot.SavedWaveParameters = WaveSurvivors.GetFrom(_playField);
+        deadPlayerSlot.FamilyMembersLostThisWave += _playField.GetFamilyMembersLost();
 
         if (_gameSession.IsTwoPlayer())
             // ROM PLE1B: the turn passes to the other player while they have lives.
@@ -322,6 +323,18 @@ public sealed class PlayingState : IGameState
     }
 
     /// <summary>
+    ///     Records whether the player saved every family member in the wave just cleared: none lost on any of their lives in
+    ///     it, and none left on the field. Then starts the next wave's count of lost family members from 0.
+    /// </summary>
+    /// <param name="playerSlot">The player who cleared the wave.</param>
+    private void RecordFamilySaved(PlayerSlot playerSlot)
+    {
+        var familyMembersLost = playerSlot.FamilyMembersLostThisWave + _playField.GetFamilyMembersLost();
+        playerSlot.SavedWholeFamilyLastWave = familyMembersLost == 0 && !_playField.HasFamilyMemberLeft();
+        playerSlot.FamilyMembersLostThisWave = 0;
+    }
+
+    /// <summary>
     ///     ROM GEXEC0: the wave is cleared for whoever is playing — only THEIR wave
     ///     counter advances (<c>INC PWAV,X</c>, skipping 0) and only their state
     ///     carries over.
@@ -335,6 +348,7 @@ public sealed class PlayingState : IGameState
         // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
         playerSlot.Wave = playerSlot.Wave % WaveCounterWrap + 1;
         playerSlot.SavedWaveParameters = null;
+        RecordFamilySaved(playerSlot);
 
         gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession, _random));
     }
