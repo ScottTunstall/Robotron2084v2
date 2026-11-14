@@ -46,6 +46,12 @@ public sealed class GameSession
     public int CurrentIndex { get; private set; }
 
     /// <summary>
+    ///     True once the game has said "INTRUDER ALERT INTRUDER ALERT", which it says once at most. A new game starts with it
+    ///     false. Port only, for the <see cref="Level.GameStyle.Extended" /> game.
+    /// </summary>
+    public bool HasSaidIntruderAlert { get; set; }
+
+    /// <summary>
     ///     The places in the family list that still held a family member when the last wave or life ended, lowest place
     ///     first. The next field's hulks pick what to stalk from these. A new game starts with none.
     /// </summary>
