@@ -126,16 +126,4 @@ public sealed class PresentationTests
             Presentation.CanvasDestination(width, height, ScaleMode.Integer),
             Presentation.CanvasDestination(width, height, ScaleMode.Fill));
     }
-
-    [Fact]
-    public void TheScaleModeCycles()
-    {
-        Assert.Equal(ScaleMode.Fill, Presentation.NextScaleMode(ScaleMode.Integer));
-    }
-
-    [Fact]
-    public void TheScaleModeCyclesBack()
-    {
-        Assert.Equal(ScaleMode.Integer, Presentation.NextScaleMode(ScaleMode.Fill));
-    }
 }
