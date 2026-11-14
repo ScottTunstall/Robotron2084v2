@@ -17,6 +17,20 @@ public static class SoundTuning
     public const float SpeechVolume = 0.8f;
 
     /// <summary>
+    ///     The loudest a Berzerk word's sample can be and still count as the silence around the word, from 0 to 32767.
+    /// </summary>
+    /// <remarks>
+    ///     Port only. Every word sample has about 60 milliseconds of silence before the word and 70 to 105 after it, so two
+    ///     words played one after the other had a gap of about 150 milliseconds. That silence is exact zeros, so a low level
+    ///     cuts it without touching the word.
+    /// </remarks>
+    public const int BerzerkWordSilenceLevel = 64;
+
+    /// <summary>How much of the silence is kept at each end of a Berzerk word, in milliseconds.</summary>
+    /// <remarks>Port only. A few milliseconds, so each word still starts and stops on silence.</remarks>
+    public const int BerzerkWordSilenceMarginMilliseconds = 5;
+
+    /// <summary>
     ///     How far towards one speaker a sound from the playfield's edge is placed: 0 keeps every sound in the
     ///     middle, 1 puts a sound from the very edge wholly in one speaker.
     /// </summary>
