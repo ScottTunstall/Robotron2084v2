@@ -278,7 +278,7 @@ public sealed class PlayingState : IGameState
         if (playerSlot.SavedWaveParameters is { } saved) return ApplyBozoMode(saved, playerSlot);
 
         // Bozo mercy first, then the difficulty adjustment — the ROM's own order ($2B26 before $2B7C).
-        var waveParameters = ApplyBozoMode(_waveParameterGenerator.Generate(playerSlot.Wave), playerSlot);
+        var waveParameters = ApplyBozoMode(_waveParameterGenerator.Generate(playerSlot.Wave, _gameSettings.GameStyle), playerSlot);
         return DifficultyTuning.Apply(waveParameters, _gameSettings.Difficulty, playerSlot.Lives);
     }
 
