@@ -1,7 +1,6 @@
 using System.Text;
 using Microsoft.Xna.Framework.Audio;
 using Robotron2084.Audio;
-using Robotron2084.Tuning;
 using Xunit;
 
 namespace Robotron2084.Tests.Audio;
