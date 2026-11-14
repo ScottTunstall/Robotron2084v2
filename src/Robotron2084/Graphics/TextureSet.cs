@@ -327,8 +327,9 @@ public sealed class TextureSet
     public Texture2D Title2084Texture { get; }
 
     /// <summary>
-    ///     The robot at the top of the menu page: a pixel-art picture of the cabinet art's robot, in its own colours,
-    ///     with the sky cut away. Port only.
+    ///     The menu page's picture: red robots on a green grid, 320 by 200 arcade pixels, in the arcade's own colours. The
+    ///     front robot's eyes are in the grunt's eye colour, so they flash the same way. Made from the author's painting
+    ///     by <c>tools/make-main-menu-art.py</c>. Port only.
     /// </summary>
     public Texture2D MainMenuRobotTexture { get; }
 
