@@ -17,11 +17,11 @@ namespace Robotron2084.States;
 ///     list. WHITE for the heading, the instructions and the exit line, GREEN for the options, and the
 ///     highlighted option strobing in the page's own cycling palette index (notes §115) exactly as the selected
 ///     line does on those two pages.
-///     The options jump straight to the screens the attract cycle passes through in the order the cycle
+///     The options jump straight to the MAIN MENU page, then to the screens the attract cycle passes through in the order the cycle
 ///     shows them: the title page on its arcade pane (the ROBOTRON 2084 presentation page as the cabinet
 ///     prints it), the title page on the pane that carries the port's credit, the STORY movie, the
 ///     machine playing itself, the HIGH SCORE table, the DEFINE INPUTS page, the GAME ADJUSTMENT
-///     page with the gameplay settings (notes §131), the SPRITE TEST page, the SOUND TEST page and the SPEECH TEST page (notes §149).
+///     page with the gameplay settings (notes §131), the SPRITE TEST page, the SOUND TEST page and the SPEECH TEST page (notes §149), which has no number key.
 ///     Keys: Up/Down (or the stick) moves the cursor, Enter (or A) chooses, and 1 to 9, then 0, choose a line
 ///     directly. F10 closes the page — back to the title, the one attract screen this page's options
 ///     do not already reach — which is why the shell's F10 switch leaves this page to the page itself.
@@ -46,7 +46,7 @@ public sealed class DeveloperToolsState : IGameState
 
     private const int LabelColumn = 75;
 
-    private const int LineStep = 22;
+    private const int LineStep = 20;
 
     // The page's own colours (notes §108) are the GAME ADJUSTMENT page's: WHITE (palette index 9) for the
     // heading, the instructions and the exit line, GREEN (palette index 6) for the options themselves. No palette index
@@ -60,20 +60,21 @@ public sealed class DeveloperToolsState : IGameState
     private const string Title = "DEVELOPER TOOLS";
     private const int TitleRow = 12;
 
-    /// <summary>The number keys that choose a line directly, in list order: 1 to 9, then 0 for the tenth.</summary>
+    /// <summary>The number keys that choose a line directly, in list order: 1 to 9, then 0 for the tenth. A line after the tenth has none.</summary>
     private static readonly Keys[] DirectKeys =
     [
         Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9, Keys.D0
     ];
 
     /// <summary>
-    ///     The page's options in list order: the attract cycle's own screens in the order the cycle
+    ///     The page's options in list order: the MAIN MENU page, then the attract cycle's own screens in the order the cycle
     ///     shows them (notes §94/§95), then the two service pages — the port's control definitions
     ///     and the arcade's GAME ADJUSTMENT settings (notes §131) — then the SPRITE TEST page, the SOUND TEST page and the SPEECH TEST
     ///     page (notes §149).
     /// </summary>
     private static readonly string[] Options =
     [
+        "MAIN MENU",
         "TITLE PAGE 1",
         "TITLE PAGE 2",
         "STORY",
@@ -192,6 +193,8 @@ public sealed class DeveloperToolsState : IGameState
     {
         Func<IGameState>[] screenMakers =
         [
+            // Port only: the page where a game is started, the game style chosen and the settings opened.
+            () => new MainMenuState(_gameServices, _gameSettingsStore),
             // The title page as the cabinet prints it: its own pane, held open (notes §107).
             () => new TitleScreenState(_gameServices, TitleTextPane.Arcade),
             // The title page on the pane that carries the port's credit.
