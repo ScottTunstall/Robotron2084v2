@@ -1,3 +1,4 @@
+using Robotron2084.Hud.Models;
 using Robotron2084.Persistence;
 
 namespace Robotron2084.Hud;

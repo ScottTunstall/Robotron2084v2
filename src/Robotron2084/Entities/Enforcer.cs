@@ -1,8 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -38,9 +42,6 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     ///     goes.
     /// </summary>
     private const int ApproachDivisor = 2;
-
-    /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> an enforcer waits between shots, when it is not told a number.</summary>
-    private const int DefaultFireIntervalBeats = 24;
 
     /// <summary>
     ///     The enforcer heads for a random spot in an area below and to the right of the player. This is how many columns
@@ -93,33 +94,28 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private IntVector2 _velocitySubpixels;
 
     /// <summary>Makes an enforcer. It cannot move until it has grown.</summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the enforcer announces what happens to it.</param>
-    /// <param name="position">Where the enforcer's top-left corner is.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. They pick where it heads for and how long it waits between
-    ///     shots.
+    /// <param name="dependencies">
+    ///     What the enforcer shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick where it heads for and how long it waits between shots.
     /// </param>
+    /// <param name="position">Where the enforcer's top-left corner is.</param>
     /// <param name="fireIntervalBeats">
     ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> this wave's enforcer waits between shots. Each wait is a random number
     ///     of <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> from 1 up to this.
     /// </param>
     /// <remarks>ROM: <c>ENSTIM</c>.</remarks>
     public Enforcer(
-        TextureSet textureSet,
-        IGameEvents gameEvents,
+        EntityDependencies dependencies,
         IntVector2 position,
-        Random random,
-        int fireIntervalBeats = DefaultFireIntervalBeats)
+        int fireIntervalBeats)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = position;
-        _random = random;
+        _random = dependencies.Random;
         _fireIntervalBeats = fireIntervalBeats;
         // The enforcer picks where to go on its first beat. Its first shot comes after a random number of beats.
         _newDestinationBeatsRemaining = 0;
-        _fireBeatsRemaining = ArcadeRandom.PickUpTo(random, _fireIntervalBeats);
+        _fireBeatsRemaining = ArcadeRandom.PickUpTo(dependencies.Random, _fireIntervalBeats);
     }
 
     /// <summary>Alive until it is killed. It is never Dying, because it has no death animation.</summary>

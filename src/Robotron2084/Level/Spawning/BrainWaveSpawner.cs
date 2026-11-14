@@ -1,5 +1,7 @@
 using Robotron2084.Audio;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
+using Robotron2084.Level.Spawning.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level.Spawning;
@@ -30,12 +32,9 @@ public sealed class BrainWaveSpawner : IWaveSpawner
         {
             var position = placement.FindSpawnPointAwayFrom(waveSpawnContext.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
             var brain = new Brain(
-                playField.TextureSet,
-                playField.GameEvents,
+                playField.EntityDependencies,
                 position,
-                waveSpawnContext.Random,
-                playField.WaveParameters.BrainBeatWaitArcadeFrames,
-                playField.WaveParameters.BrainFireDelay,
+                new BrainWaveSettings(playField.WaveParameters.BrainBeatWaitArcadeFrames, playField.WaveParameters.BrainFireDelay),
                 fieldEntities.GetNearestFamilySlot(position));
             fieldEntities.Add(brain);
         }

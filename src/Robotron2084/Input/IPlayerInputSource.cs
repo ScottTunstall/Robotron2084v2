@@ -1,3 +1,5 @@
+using Robotron2084.Input.Models;
+
 namespace Robotron2084.Input;
 
 /// <summary>Somewhere a player's controls can be read from.</summary>

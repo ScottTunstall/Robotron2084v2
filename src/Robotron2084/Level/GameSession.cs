@@ -1,4 +1,5 @@
 using Robotron2084.Input;
+using Robotron2084.Level.Models;
 using Robotron2084.Persistence;
 using Robotron2084.Tuning;
 
@@ -47,7 +48,7 @@ public sealed class GameSession
 
     /// <summary>
     ///     True once the game has said "INTRUDER ALERT INTRUDER ALERT", which it says once at most. A new game starts with it
-    ///     false. Port only, for the <see cref="Level.GameStyle.Extended" /> game.
+    ///     false. Port only, for the <see cref="Level.Models.GameStyle.Extended" /> game.
     /// </summary>
     public bool HasSaidIntruderAlert { get; set; }
 

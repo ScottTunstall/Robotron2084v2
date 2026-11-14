@@ -1,4 +1,5 @@
 using System.Text;
+using Robotron2084.Input.Models;
 using Robotron2084.Input;
 
 namespace Robotron2084.Persistence;

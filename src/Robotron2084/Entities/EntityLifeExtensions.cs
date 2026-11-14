@@ -1,3 +1,5 @@
+using Robotron2084.Entities.Models;
+
 namespace Robotron2084.Entities;
 
 /// <summary>

@@ -1,8 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -32,17 +36,6 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     flee. Each choice comes up half the time.
     /// </summary>
     private const int CoinFlipSides = 2;
-
-    /// <summary>The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a quark waits between tank drops, when it is not told a number.</summary>
-    private const int DefaultDropIntervalMaxBeats = 12;
-
-    /// <summary>
-    ///     The limit on how many tanks a quark drops, when it is not told a number. The most it can drop is half of this.
-    /// </summary>
-    private const int DefaultMaxDropsX2 = 10;
-
-    /// <summary>The quark's top drifting speed, when it is not told a number.</summary>
-    private const int DefaultMaxSpeed = 50;
 
     /// <summary>How many times shorter a quark's wait between tank drops is once it has dropped its first tank.</summary>
     private const int RepeatDropIntervalDivisor = 2;
@@ -115,19 +108,11 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes a quark at <paramref name="position" />. It picks at random how many tanks it will drop, and how long it
     ///     waits before the first.
     /// </summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the quark announces what happens to it.</param>
+    /// <param name="dependencies">
+    ///     What the quark shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick how many tanks it drops, how it drifts and which way it flees.
+    /// </param>
     /// <param name="position">Where the quark's top-left corner is.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. They pick how many tanks it drops, how it drifts and which way
-    ///     it flees.
-    /// </param>
-    /// <param name="maxDropsX2">
-    ///     This wave's limit for picking how many tanks the quark drops. The most it can drop is half of
-    ///     this.
-    /// </param>
-    /// <param name="dropIntervalMaxBeats">The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> this wave's quark waits between tank drops.</param>
-    /// <param name="maxSpeed">The quark's top drifting speed on this wave (ROM: <c>SQSPD</c>).</param>
+    /// <param name="settings">What this wave sets for its quarks: how many tanks they drop, how long they wait between drops, and how fast they drift.</param>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>
@@ -138,25 +123,21 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     </list>
     /// </remarks>
     public Quark(
-        TextureSet textureSet,
-        IGameEvents gameEvents,
+        EntityDependencies dependencies,
         IntVector2 position,
-        Random random,
-        int maxDropsX2 = DefaultMaxDropsX2,
-        int dropIntervalMaxBeats = DefaultDropIntervalMaxBeats,
-        int maxSpeed = DefaultMaxSpeed)
+        QuarkWaveSettings settings)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = position;
-        _random = random;
-        _dropIntervalMaxBeats = dropIntervalMaxBeats;
-        _maxSpeed = maxSpeed;
+        _random = dependencies.Random;
+        _dropIntervalMaxBeats = settings.DropIntervalMaxBeats;
+        _maxSpeed = settings.MaxSpeed;
         // How many tanks the quark may drop: a random number up to this wave's limit, halved and rounded up (ROM: PD3).
-        var randomDrops = ArcadeRandom.PickUpTo(random, maxDropsX2);
+        var randomDrops = ArcadeRandom.PickUpTo(dependencies.Random, settings.MaxDropsX2);
         _tanksRemaining = (randomDrops + 1) / 2;
         // The wait before the first tank drop. It counts down once each time the animation starts again, not once a beat (ROM: PD2).
-        _dropBeatsRemaining = ArcadeRandom.PickUpTo(random, dropIntervalMaxBeats);
+        _dropBeatsRemaining = ArcadeRandom.PickUpTo(dependencies.Random, settings.DropIntervalMaxBeats);
     }
 
     /// <summary>Alive until it is shot or flees off the field. It is never Dying (see <see cref="Kill" />).</summary>

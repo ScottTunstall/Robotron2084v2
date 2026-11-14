@@ -1,0 +1,7 @@
+using Robotron2084.Entities;
+
+namespace Robotron2084.Level.Collisions.Models;
+
+/// <summary>The player touched something that kills on contact.</summary>
+/// <param name="DeadEntity">What the player touched.</param>
+internal sealed record PlayerTouchedDeadThingResult(IEntity DeadEntity) : CollisionResult;

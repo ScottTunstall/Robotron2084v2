@@ -1,3 +1,5 @@
+using Robotron2084.Input.Models;
+
 namespace Robotron2084.Input;
 
 /// <summary>Names and ordering for <see cref="InputAction" /> (the page draws these).</summary>

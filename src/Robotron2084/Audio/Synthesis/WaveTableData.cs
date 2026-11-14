@@ -1,3 +1,5 @@
+using Robotron2084.Audio.Synthesis.Models;
+
 namespace Robotron2084.Audio.Synthesis;
 
 /// <summary>

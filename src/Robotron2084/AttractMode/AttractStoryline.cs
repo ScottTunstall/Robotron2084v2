@@ -1,3 +1,5 @@
+using Robotron2084.AttractMode.Models;
+
 namespace Robotron2084.AttractMode;
 
 /// <summary>

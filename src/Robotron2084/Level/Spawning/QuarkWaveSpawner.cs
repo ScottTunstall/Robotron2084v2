@@ -1,4 +1,6 @@
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
+using Robotron2084.Level.Spawning.Models;
 
 namespace Robotron2084.Level.Spawning;
 
@@ -17,8 +19,8 @@ public sealed class QuarkWaveSpawner : IWaveSpawner
         for (var i = 0; i < playField.WaveParameters.QuarkCount; i++)
         {
             var position = Quark.GetStartPosition(playField.GetPlayfieldBounds(), waveSpawnContext.Random);
-            var quark = new Quark(playField.TextureSet, playField.GameEvents, position, waveSpawnContext.Random, playField.WaveParameters.MaxDropsX2,
-                playField.WaveParameters.QuarkDropDelay, playField.WaveParameters.QuarkMaxSpeed);
+            var quark = new Quark(playField.EntityDependencies, position,
+                new QuarkWaveSettings(playField.WaveParameters.MaxDropsX2, playField.WaveParameters.QuarkDropDelay, playField.WaveParameters.QuarkMaxSpeed));
             fieldEntities.Add(quark);
         }
     }

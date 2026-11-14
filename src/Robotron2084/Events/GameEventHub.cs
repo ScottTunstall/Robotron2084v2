@@ -1,3 +1,5 @@
+using Robotron2084.Events.Models;
+
 namespace Robotron2084.Events;
 
 /// <summary>Passes each event it is given on to every listener, in the order they subscribed.</summary>

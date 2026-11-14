@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
 using Robotron2084.Events;
 using Robotron2084.Graphics;

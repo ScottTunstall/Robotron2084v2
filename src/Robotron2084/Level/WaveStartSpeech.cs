@@ -1,5 +1,6 @@
 using Robotron2084.Audio;
-using static Robotron2084.Audio.BerzerkWord;
+using Robotron2084.Level.Models;
+using static Robotron2084.Audio.Models.BerzerkWord;
 
 namespace Robotron2084.Level;
 

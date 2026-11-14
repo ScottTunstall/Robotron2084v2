@@ -1,3 +1,5 @@
+using Robotron2084.Hud.Models;
+
 namespace Robotron2084.Hud;
 
 /// <summary>

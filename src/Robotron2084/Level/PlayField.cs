@@ -1,12 +1,18 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
 using Robotron2084.Level.Collisions;
+using Robotron2084.Level.Models;
+using Robotron2084.Level.Spawning.Models;
 using Robotron2084.Level.Spawning;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
@@ -123,6 +129,7 @@ public sealed class PlayField : ICollisionScene
         IGameEvents? gameEvents = null)
     {
         GameEvents = gameEvents ?? NullGameEvents.Instance;
+        EntityDependencies = new EntityDependencies(textureSet, GameEvents, random);
         _tankShellBugEnabled = tankShellBugEnabled;
         TextureSet = textureSet;
         WaveParameters = waveParameters;
@@ -137,7 +144,7 @@ public sealed class PlayField : ICollisionScene
         PlayfieldWall = new PlayfieldWall(innerBounds, wallColourCycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
-        Player = new Player(TextureSet, GameEvents, playerStart, startingLives, random) { InvincibleForTesting = playerInvincibleForTesting };
+        Player = new Player(EntityDependencies, playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
         PlayerLaserSlots = new LaserSlots(TextureSet, GameEvents);
 
         // Each kind's spawner is in its registry row, so a new kind needs no edit here (notes §119).
@@ -212,6 +219,9 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>Where the player and the field's entities announce what happens to them.</summary>
     internal IGameEvents GameEvents { get; }
+
+    /// <summary>What every entity this field builds shares with the rest of the game: sprites, where it announces events, and random numbers.</summary>
+    internal EntityDependencies EntityDependencies { get; }
 
     /// <summary>The live palette, or null in a test. The player's death fade writes to it (notes §66).</summary>
     internal GamePalette? GamePalette { get; }

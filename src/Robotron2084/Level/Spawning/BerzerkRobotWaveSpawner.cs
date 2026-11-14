@@ -1,4 +1,6 @@
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
+using Robotron2084.Level.Spawning.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level.Spawning;
@@ -21,7 +23,7 @@ public sealed class BerzerkRobotWaveSpawner : IWaveSpawner
         {
             var position = waveSpawnContext.SpawnPlacement.FindSpawnPointAwayFrom(
                 waveSpawnContext.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, playField.IsClearOfElectrodes);
-            var berzerkRobot = new BerzerkRobot(playField.TextureSet, playField.GameEvents, position, waveSpawnContext.Random, playField.WaveParameters.GruntMoveDelay);
+            var berzerkRobot = new BerzerkRobot(playField.EntityDependencies, position, playField.WaveParameters.GruntMoveDelay);
             waveSpawnContext.FieldEntities.Add(berzerkRobot);
         }
     }

@@ -1,6 +1,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
@@ -128,24 +131,24 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes one family member. It picks at random which way it walks first, and how long it waits before its first
     ///     step.
     /// </summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the family member announces what happens to it.</param>
+    /// <param name="dependencies">
+    ///     What the family member shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick its direction, how many steps it takes before it turns, and its wait before the first step.
+    /// </param>
     /// <param name="position">Where the family member's top-left corner is.</param>
     /// <param name="kind">Which family member it is. This decides its animation frames and its size.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. They pick its direction, how many steps it takes before it
-    ///     turns, and its wait before the first step.
-    /// </param>
-    public FamilyMember(TextureSet textureSet, IGameEvents gameEvents, IntVector2 position, FamilyMemberKind kind, Random random)
+    public FamilyMember(
+        EntityDependencies dependencies,
+        IntVector2 position,
+        FamilyMemberKind kind)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = position;
         Kind = kind;
-        _random = random;
-        _directionBlock = random.Next(PossibleDirections);
-        _newDirectionStepsRemaining = 1 + random.Next(NewDirectionMaxSteps);
-        _firstStepTicksRemaining = 1 + random.Next(FirstStepMaxTicks);
+        _random = dependencies.Random;
+        _directionBlock = dependencies.Random.Next(PossibleDirections);
+        _newDirectionStepsRemaining = 1 + dependencies.Random.Next(NewDirectionMaxSteps);
+        _firstStepTicksRemaining = 1 + dependencies.Random.Next(FirstStepMaxTicks);
     }
 
     /// <summary>

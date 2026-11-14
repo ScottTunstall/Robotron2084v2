@@ -1,6 +1,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
@@ -254,13 +257,10 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private int _walkCycleIndex;
 
     /// <summary>Makes a hulk. It picks its first direction when the game goes live.</summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the hulk announces what happens to it.</param>
-    /// <param name="position">Where the hulk's top-left corner is.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. They pick how many steps it takes before it turns, and move
-    ///     its direction a little.
+    /// <param name="dependencies">
+    ///     What the hulk shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick how many steps it takes before it turns, and move its direction a little.
     /// </param>
+    /// <param name="position">Where the hulk's top-left corner is.</param>
     /// <param name="beatIntervalArcadeFrames">
     ///     How long the hulk waits between steps (ROM: <c>HLKSPD</c>). A bigger number makes a
     ///     slower hulk.
@@ -280,17 +280,15 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Hulk(
-        TextureSet textureSet,
-        IGameEvents gameEvents,
+        EntityDependencies dependencies,
         IntVector2 position,
-        Random random,
         int beatIntervalArcadeFrames,
         Func<IntVector2> getTargetPosition)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = position;
-        _random = random;
+        _random = dependencies.Random;
         _beatIntervalArcadeFrames = beatIntervalArcadeFrames;
         _getTargetPosition = getTargetPosition;
         _newDirectionStepsRemaining = GetRandomNewDirectionSteps();

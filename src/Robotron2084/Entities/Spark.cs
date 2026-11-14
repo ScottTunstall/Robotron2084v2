@@ -1,8 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -57,30 +61,25 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _velocitySubpixels; // How far the spark goes on each move, sideways and up or down, in 256ths of a pixel (ROM: OXV/OYV).
 
     /// <summary>Makes a spark and aims it near the player. It is aimed only this once.</summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the spark announces what happens to it.</param>
+    /// <param name="dependencies">
+    ///     What the spark shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: it stands in for the arcade's own random numbers (<c>SEED</c>, <c>LSEED</c> and <c>HSEED</c>).
+    /// </param>
     /// <param name="position">Where it starts, which is where the enforcer that fired it is.</param>
     /// <param name="playerPosition">Where the player is, which the spark is aimed at.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. It stands in for the arcade's own random numbers (<c>SEED</c>,
-    ///     <c>LSEED</c> and <c>HSEED</c>).
-    /// </param>
     /// <param name="playfieldBounds">
     ///     The inside of the wall. When the player is near the left wall, the spark's aim is not
     ///     moved sideways. If this is null, that rule is not used.
     /// </param>
     public Spark(
-        TextureSet textureSet,
-        IGameEvents gameEvents,
+        EntityDependencies dependencies,
         IntVector2 position,
         IntVector2 playerPosition,
-        Random random,
         Rectangle? playfieldBounds = null)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = position;
-        _random = random;
+        _random = dependencies.Random;
 
         // The spark is not aimed exactly at the Player. Its aim is moved a random amount sideways and a random amount up or down. There is no sideways change when the Player is near the left wall.
         var jitterX = _random.Next(-SparkTuning.SparkJitterRange, SparkTuning.SparkJitterRange);

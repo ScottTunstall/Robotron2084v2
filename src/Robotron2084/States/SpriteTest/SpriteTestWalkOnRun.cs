@@ -1,4 +1,5 @@
 using Robotron2084.Core;
+using Robotron2084.States.SpriteTest.Models;
 
 namespace Robotron2084.States.SpriteTest;
 

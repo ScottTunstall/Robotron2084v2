@@ -1,9 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -70,57 +75,44 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     Makes a Gorf just off the screen, on a random side and at a random height, and works out where on its way it
     ///     will drop grunts.
     /// </summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the Gorf announces what happens to it.</param>
-    /// <param name="random">Where its random numbers come from. They pick the side, the height and how many grunts it drops.</param>
-    /// <param name="playfieldBounds">The inside of the wall, in port pixels. Gorf starts and ends outside it.</param>
-    /// <param name="maxDropsX2">
-    ///     This wave's limit on how many grunts it drops at once. The number is picked the way a spheroid
-    ///     picks its enforcers.
+    /// <param name="dependencies">
+    ///     What Gorf shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick the side, the height and how many grunts it drops.
     /// </param>
-    /// <param name="gruntDropCount">
-    ///     How many grunts it drops in all, one at a time, evenly spaced along its way across, so they come gradually. It
-    ///     hands any it has not dropped yet to a Gorf that comes back if it is killed first. 0 leaves its three stops to
-    ///     chance (<paramref name="maxDropsX2" />).
-    /// </param>
-    /// <param name="dropIntervalSteps">
-    ///     How many steps pass between one drop and the next, or 0 to spread the drops evenly over its way across. A Gorf
-    ///     that comes back is given a shorter one than the Gorf it follows.
-    /// </param>
-    /// <param name="playerBoxToAvoid">
-    ///     Where the player is, or null. Gorf is put at a height where its whole body, hops included, stays clear of this
-    ///     box, so it does not appear on a collision course with the player.
-    /// </param>
+    /// <param name="playfield">The playfield this Gorf is built for: where the walls are, and the player's box to keep clear of.</param>
+    /// <param name="drops">How many grunts this Gorf drops, and how its drops are spaced along its way across.</param>
     /// <param name="lineToSay">
     ///     The line to say the first time it appears, or null to say nothing.
     ///     It is said once.
     /// </param>
-    public Gorf(TextureSet textureSet, IGameEvents gameEvents, Random random, Rectangle playfieldBounds, int maxDropsX2, int gruntDropCount = 0,
-        int dropIntervalSteps = 0, Rectangle? playerBoxToAvoid = null, GorfLine? lineToSay = null)
+    public Gorf(
+        EntityDependencies dependencies,
+        GorfPlayfield playfield,
+        GorfDrops drops,
+        GorfLine? lineToSay = null)
     {
         _lineToSay = lineToSay;
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
-        _playfieldBounds = playfieldBounds;
-        _random = random;
-        _maxDropsX2 = maxDropsX2;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
+        _playfieldBounds = playfield.Bounds;
+        _random = dependencies.Random;
+        _maxDropsX2 = drops.MaxDropsX2;
         _directionSignX = DirectionSigns.Left;
-        var isEnteringFromLeft = random.Next(2) == 0;
+        var isEnteringFromLeft = dependencies.Random.Next(2) == 0;
         if (isEnteringFromLeft) _directionSignX = DirectionSigns.Right;
 
-        var highest = playfieldBounds.Y + HopPixels;
-        var lowest = Math.Max(highest, playfieldBounds.Bottom - CollisionSize.Height);
-        _groundY = ChooseGroundY(highest, lowest, playerBoxToAvoid);
-        var startX = playfieldBounds.Right;
-        if (isEnteringFromLeft) startX = playfieldBounds.X - CollisionSize.Width;
+        var highest = playfield.Bounds.Y + HopPixels;
+        var lowest = Math.Max(highest, playfield.Bounds.Bottom - CollisionSize.Height);
+        _groundY = ChooseGroundY(highest, lowest, playfield.PlayerBoxToAvoid);
+        var startX = playfield.Bounds.Right;
+        if (isEnteringFromLeft) startX = playfield.Bounds.X - CollisionSize.Width;
 
         _position = new IntVector2(startX, _groundY);
-        _totalSteps = (playfieldBounds.Width + CollisionSize.Width) / StepPixels;
+        _totalSteps = (playfield.Bounds.Width + CollisionSize.Width) / StepPixels;
 
-        _dropIntervalSteps = dropIntervalSteps;
-        if (_dropIntervalSteps <= 0 && gruntDropCount > 0) _dropIntervalSteps = _totalSteps / (gruntDropCount + 1);
+        _dropIntervalSteps = drops.DropIntervalSteps;
+        if (_dropIntervalSteps <= 0 && drops.GruntDropCount > 0) _dropIntervalSteps = _totalSteps / (drops.GruntDropCount + 1);
 
-        if (gruntDropCount > 0) PlanGradualDrops(gruntDropCount);
+        if (drops.GruntDropCount > 0) PlanGradualDrops(drops.GruntDropCount);
         else PlanDropStops();
     }
 

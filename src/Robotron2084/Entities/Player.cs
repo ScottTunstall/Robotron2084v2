@@ -1,8 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Input.Models;
 using Robotron2084.Input;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -105,17 +109,20 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private bool _wasFiring;
 
     /// <summary>Makes the player at <paramref name="startPosition" />, with <paramref name="lives" /> lives.</summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the player announces what happens to it.</param>
+    /// <param name="dependencies">
+    ///     What the player shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick the colours of the death animation.
+    /// </param>
     /// <param name="startPosition">Where the player's top-left corner is.</param>
     /// <param name="lives">How many lives the player starts with. Each death takes one off.</param>
-    /// <param name="random">Where its random numbers come from. They pick the colours of the death animation.</param>
-    public Player(TextureSet textureSet, IGameEvents gameEvents, IntVector2 startPosition, int lives, Random random)
+    public Player(
+        EntityDependencies dependencies,
+        IntVector2 startPosition,
+        int lives)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = startPosition;
-        _random = random;
+        _random = dependencies.Random;
         Lives = lives;
     }
 

@@ -1,4 +1,6 @@
 using Robotron2084.Core;
+using Robotron2084.Hud.Models;
+using Robotron2084.Input.Models;
 using Robotron2084.Input;
 using Robotron2084.Persistence;
 

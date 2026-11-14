@@ -1,3 +1,5 @@
+using Robotron2084.Audio.Models;
+
 namespace Robotron2084.Audio;
 
 /// <summary>The Berzerk robot's voice setting: the pitch the game asks its speech board for, from 0 to 7.</summary>

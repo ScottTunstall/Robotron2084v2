@@ -1,3 +1,5 @@
+using Robotron2084.Events.Models;
+
 namespace Robotron2084.Events;
 
 /// <summary>A place to announce events to that tells nobody. It is what an entity announces to until it is given a real one.</summary>

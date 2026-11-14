@@ -156,8 +156,8 @@ public sealed class GameSettingsStore
                 gameSettings.BrainsChaseMikeyBugEnabled = value == 1;
                 break;
 
-            case "gamestyle" when Enum.IsDefined((Level.GameStyle)value):
-                gameSettings.GameStyle = (Level.GameStyle)value;
+            case "gamestyle" when Enum.IsDefined((Level.Models.GameStyle)value):
+                gameSettings.GameStyle = (Level.Models.GameStyle)value;
                 break;
 
             case "bozomode" when value is 0 or 1:

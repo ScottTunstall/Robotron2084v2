@@ -1,8 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -98,15 +102,6 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int DampingPer256 = 4;
 
-    /// <summary>The most times a spheroid spins before it drops an enforcer, when it is not told a number.</summary>
-    private const int DefaultDropDelayRotations = 24;
-
-    /// <summary>
-    ///     The limit on how many enforcers a spheroid drops, when it is not told a number. The most it can drop is half of
-    ///     this.
-    /// </summary>
-    private const int DefaultMaxDropsX2 = 10;
-
     /// <summary>The last animation frame the spheroid shows while it is dropping enforcers, counting from 0.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -195,13 +190,10 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes a spheroid at <paramref name="position" />, part of the way through a spin. It picks at random how many
     ///     enforcers it will drop.
     /// </summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the spheroid announces what happens to it.</param>
-    /// <param name="position">Where the spheroid's top-left corner is.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. They pick how many enforcers it drops, how its speed changes
-    ///     and which way it escapes.
+    /// <param name="dependencies">
+    ///     What the spheroid shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick how many enforcers it drops, how its speed changes and which way it escapes.
     /// </param>
+    /// <param name="position">Where the spheroid's top-left corner is.</param>
     /// <param name="maxDropsX2">
     ///     This wave's limit for picking how many enforcers the spheroid drops. The most it can drop is
     ///     half of this.
@@ -219,28 +211,26 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, so there is no single number that could make it faster.
     /// </remarks>
     public Spheroid(
-        TextureSet textureSet,
-        IGameEvents gameEvents,
+        EntityDependencies dependencies,
         IntVector2 position,
-        Random random,
-        int maxDropsX2 = DefaultMaxDropsX2,
-        int dropDelayRotations = DefaultDropDelayRotations)
+        int maxDropsX2,
+        int dropDelayRotations)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = position;
-        _random = random;
+        _random = dependencies.Random;
         _dropDelayRotations = dropDelayRotations;
         // How many enforcers the spheroid may drop: a random number from 1 up to this wave's limit, halved and rounded up.
-        var randomDrops = ArcadeRandom.PickUpTo(random, maxDropsX2);
+        var randomDrops = ArcadeRandom.PickUpTo(dependencies.Random, maxDropsX2);
         _enforcersRemaining = (randomDrops + 1) / 2;
         // Pick at random whether the spheroid will escape to the left or to the right.
         _escapeDirectionSignX = DirectionSigns.Right;
-        var isEscapingLeft = random.Next(2) == 0;
+        var isEscapingLeft = dependencies.Random.Next(2) == 0;
         if (isEscapingLeft) _escapeDirectionSignX = DirectionSigns.Left;
 
         // How many times the spheroid spins before it first drops an enforcer.
-        _dropRotationsRemaining = ArcadeRandom.PickUpTo(random, dropDelayRotations);
+        _dropRotationsRemaining = ArcadeRandom.PickUpTo(dependencies.Random, dropDelayRotations);
         // The spheroid starts on the last animation frame of a spin, so its first beat finishes a spin.
         _animationFrameIndex = SpinLastAnimationFrame;
         SetRandomAccelerations();

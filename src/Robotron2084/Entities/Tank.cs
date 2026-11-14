@@ -1,8 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -28,9 +32,6 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
 {
-    /// <summary>How many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a tank waits between shots, when it is not told a number.</summary>
-    private const int DefaultFireIntervalBeats = 32;
-
     /// <summary>The range of the random number behind where a tank goes: from 0 up to one less than this.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -153,13 +154,10 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     Makes a tank at <paramref name="position" />. Unless it starts fully grown, it has to grow before it can move
     ///     or fire.
     /// </summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the tank announces what happens to it.</param>
-    /// <param name="position">Where the tank's top-left corner is.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. They pick where it goes, how long before it picks again, and
-    ///     the wait before its first shot.
+    /// <param name="dependencies">
+    ///     What the tank shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick where it goes, how long before it picks again, and the wait before its first shot.
     /// </param>
+    /// <param name="position">Where the tank's top-left corner is.</param>
     /// <param name="fireIntervalBeats">How many <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> this wave's tank waits between shots.</param>
     /// <param name="startFullyGrown">True for a tank that is on the field at the start of a life. It does not grow first.</param>
     /// <remarks>
@@ -173,26 +171,24 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Tank(
-        TextureSet textureSet,
-        IGameEvents gameEvents,
+        EntityDependencies dependencies,
         IntVector2 position,
-        Random random,
-        int fireIntervalBeats = DefaultFireIntervalBeats,
-        bool startFullyGrown = false)
+        int fireIntervalBeats,
+        bool startFullyGrown)
     {
         _growStep = 0;
         if (startFullyGrown) _growStep = TankTuning.GrowSteps;
 
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = position;
-        _random = random;
+        _random = dependencies.Random;
         _fireIntervalBeats = fireIntervalBeats;
         _destination = position;
         // The tank picks where to go at the end of its first beat (ROM: TANKL).
         _newDestinationBeatsRemaining = 0;
         // The first shot waits this wave's gap between shots, plus a random number of extra beats.
-        _fireBeatsRemaining = fireIntervalBeats + random.Next(0, FirstShotExtraBeatsMaxExclusive);
+        _fireBeatsRemaining = fireIntervalBeats + dependencies.Random.Next(0, FirstShotExtraBeatsMaxExclusive);
     }
 
     /// <summary>Alive until it is killed. It is never Dying, because it has no death animation (see <see cref="Kill" />).</summary>

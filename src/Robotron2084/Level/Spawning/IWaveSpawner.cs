@@ -1,3 +1,5 @@
+using Robotron2084.Level.Spawning.Models;
+
 namespace Robotron2084.Level.Spawning;
 
 /// <summary>Puts one kind of thing on the field for a wave.</summary>

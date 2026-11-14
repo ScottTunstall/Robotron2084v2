@@ -1,3 +1,5 @@
+using Robotron2084.AttractMode.Models;
+
 namespace Robotron2084.AttractMode;
 
 /// <summary>The actions of the attract movie's page script: the byte that starts each one.</summary>

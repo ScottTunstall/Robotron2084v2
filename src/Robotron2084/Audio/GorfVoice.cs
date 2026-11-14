@@ -1,3 +1,5 @@
+using Robotron2084.Audio.Models;
+
 namespace Robotron2084.Audio;
 
 /// <summary>Gorf's voice: which sample says each of its lines, and how far its voice can be raised or lowered.</summary>

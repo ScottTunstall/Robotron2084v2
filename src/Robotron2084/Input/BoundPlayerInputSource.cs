@@ -1,3 +1,5 @@
+using Robotron2084.Input.Models;
+
 namespace Robotron2084.Input;
 
 /// <summary>Reads one player's input.</summary>

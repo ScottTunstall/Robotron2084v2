@@ -1,5 +1,8 @@
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
+using Robotron2084.Level.Spawning.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level.Spawning;
@@ -62,7 +65,7 @@ public sealed class HulkWaveSpawner : IWaveSpawner
             if (slot is { } stalkedSlot)
                 getTargetPosition = () => playField.GetFamilyMemberInSlot(stalkedSlot)?.Position ?? playField.GetPlayerPosition();
 
-            waveSpawnContext.FieldEntities.Add(new Hulk(playField.TextureSet, playField.GameEvents, position, waveSpawnContext.Random,
+            waveSpawnContext.FieldEntities.Add(new Hulk(playField.EntityDependencies, position,
                 playField.WaveParameters.HulkBeatIntervalArcadeFrames, getTargetPosition));
         }
     }

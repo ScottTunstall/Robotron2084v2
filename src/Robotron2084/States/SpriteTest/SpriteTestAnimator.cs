@@ -1,5 +1,7 @@
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.States.SpriteTest.Models;
 
 namespace Robotron2084.States.SpriteTest;
 

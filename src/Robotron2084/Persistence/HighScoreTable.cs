@@ -1,3 +1,5 @@
+using Robotron2084.Persistence.Models;
+
 namespace Robotron2084.Persistence;
 
 /// <summary>

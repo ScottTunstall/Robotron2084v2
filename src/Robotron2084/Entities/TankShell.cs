@@ -1,8 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -72,29 +76,26 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes a shell. It starts a column to the right of the given position and is aimed once, at the player or at a
     ///     wall.
     /// </summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the tank shell announces what happens to it.</param>
-    /// <param name="position">The top-left corner of the tank that fired it, in port pixels.</param>
-    /// <param name="playerPosition">The top-left corner of the player, in port pixels.</param>
-    /// <param name="shellSpeed">The wave's shell setting. A bigger number is a faster shell.</param>
-    /// <param name="playfieldBounds">The inside of the playfield wall, in port pixels.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. They pick what the shell is aimed at, how far the aim is off,
-    ///     and how long the shell lasts.
+    /// <param name="dependencies">
+    ///     What the shell shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick what the shell is aimed at, how far the aim is off, and how long the shell lasts.
     /// </param>
-    public TankShell(TextureSet textureSet, IGameEvents gameEvents, IntVector2 position, IntVector2 playerPosition, int shellSpeed,
-        Rectangle playfieldBounds, Random random)
+    /// <param name="position">The top-left corner of the tank that fired it, in port pixels.</param>
+    /// <param name="aim">What the shell is aimed with: where the player is, how fast shells go on this wave, and where the walls are.</param>
+    public TankShell(
+        EntityDependencies dependencies,
+        IntVector2 position,
+        TankShellAim aim)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
-        _playfieldBounds = playfieldBounds;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
+        _playfieldBounds = aim.PlayfieldBounds;
         _position = position +
                     new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
-        var isReboundShot = random.Next(TankShellTuning.ShotTypeRandomRange) >= TankShellTuning.ReboundRandomAtOrAbove;
-        if (isReboundShot) _velocity = GetReboundVelocity(playerPosition, shellSpeed, random);
-        else _velocity = GetAimedVelocity(playerPosition, shellSpeed, random);
+        var isReboundShot = dependencies.Random.Next(TankShellTuning.ShotTypeRandomRange) >= TankShellTuning.ReboundRandomAtOrAbove;
+        if (isReboundShot) _velocity = GetReboundVelocity(aim.PlayerPosition, aim.ShellSpeed, dependencies.Random);
+        else _velocity = GetAimedVelocity(aim.PlayerPosition, aim.ShellSpeed, dependencies.Random);
 
-        _lifeBeatsRemaining = TankShellTuning.LifeBaseBeats + random.Next(TankShellTuning.LifeExtraBeatsMaxExclusive);
+        _lifeBeatsRemaining = TankShellTuning.LifeBaseBeats + dependencies.Random.Next(TankShellTuning.LifeExtraBeatsMaxExclusive);
     }
 
     /// <summary>True when this <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>'s <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> bounced the shell off a wall, so the bounce sound can be played.</summary>

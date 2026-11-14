@@ -1,3 +1,4 @@
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
 
 namespace Robotron2084.Tuning;

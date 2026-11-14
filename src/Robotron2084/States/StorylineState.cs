@@ -1,7 +1,10 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.AttractMode.Models;
 using Robotron2084.AttractMode;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
 using Robotron2084.Graphics;
 using Robotron2084.Hud;
@@ -9,6 +12,7 @@ using Robotron2084.Input;
 using Robotron2084.Level;
 using Robotron2084.Level.Attract;
 using Robotron2084.Palette;
+using Robotron2084.States.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.States;

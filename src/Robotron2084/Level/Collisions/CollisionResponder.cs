@@ -1,4 +1,5 @@
 using Robotron2084.Audio;
+using Robotron2084.Level.Collisions.Models;
 
 namespace Robotron2084.Level.Collisions;
 

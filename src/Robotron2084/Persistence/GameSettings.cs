@@ -1,3 +1,5 @@
+using Robotron2084.Level.Models;
+
 namespace Robotron2084.Persistence;
 
 /// <summary>
@@ -86,11 +88,11 @@ public sealed class GameSettings
     public const int FactoryTurnsPerPlayer = 3;
 
     /// <summary>
-    ///     Factory game style: <see cref="Level.GameStyle.Classic" />, the arcade's game. It is the starting value of
+    ///     Factory game style: <see cref="Level.Models.GameStyle.Classic" />, the arcade's game. It is the starting value of
     ///     <see cref="GameStyle" />. Restoring the factory settings leaves the game style alone, as it is not a GAME
     ///     ADJUSTMENT row.
     /// </summary>
-    public const Level.GameStyle FactoryGameStyle = Level.GameStyle.Classic;
+    public const Level.Models.GameStyle FactoryGameStyle = Level.Models.GameStyle.Classic;
 
     /// <summary>
     ///     DIFFICULTY OF PLAY's ceiling — "EXTRA CONSERVATIVE" (ROM metadata $7079: 10). It is the biggest value
@@ -165,7 +167,7 @@ public sealed class GameSettings
     public int TurnsPerPlayer { get; set; } = FactoryTurnsPerPlayer;
 
     /// <summary>Which game is played: the arcade's, or the one with the author's changes (port only).</summary>
-    public Level.GameStyle GameStyle { get; set; } = FactoryGameStyle;
+    public Level.Models.GameStyle GameStyle { get; set; } = FactoryGameStyle;
 
     /// <summary>A fresh cabinet's settings.</summary>
     public static GameSettings CreateFactoryDefaults()
@@ -230,9 +232,9 @@ public sealed class GameSettings
     /// <summary>Switches the game style from CLASSIC to EXTENDED, or back.</summary>
     public void ToggleGameStyle()
     {
-        var isClassic = GameStyle == Level.GameStyle.Classic;
-        GameStyle = Level.GameStyle.Classic;
-        if (isClassic) GameStyle = Level.GameStyle.Extended;
+        var isClassic = GameStyle == Level.Models.GameStyle.Classic;
+        GameStyle = Level.Models.GameStyle.Classic;
+        if (isClassic) GameStyle = Level.Models.GameStyle.Extended;
     }
 
     /// <summary>The EXTRA MAN EVERY score in points, as the game compares scores (<c>0</c> = never).</summary>

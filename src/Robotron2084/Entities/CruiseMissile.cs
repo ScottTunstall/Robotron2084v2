@@ -1,8 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -84,20 +88,21 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private IntVector2 _velocity; // How many pixels the missile goes left or right, and how many up or down, each time it moves.
 
     /// <summary>Makes a missile and sends it towards the player.</summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the cruise missile announces what happens to it.</param>
+    /// <param name="dependencies">
+    ///     What the missile shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick which way it goes, and how long it goes before it picks a new direction.
+    /// </param>
     /// <param name="origin">Where it appears.</param>
     /// <param name="playerPosition">Where the player is, which the missile heads for first.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. They pick which way it goes, and how long it goes before it picks a new direction.
-    /// </param>
     /// <remarks>ROM: it starts 3 columns to the right of the brain's top-left corner and 4 rows below it.</remarks>
-    public CruiseMissile(TextureSet textureSet, IGameEvents gameEvents, IntVector2 origin, IntVector2 playerPosition, Random random)
+    public CruiseMissile(
+        EntityDependencies dependencies,
+        IntVector2 origin,
+        IntVector2 playerPosition)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = origin;
-        _random = random;
+        _random = dependencies.Random;
         _velocity = GetRandomDirection(playerPosition);
         _newDirectionBeatsRemaining = ArcadeRandom.PickUpTo(_random, NewDirectionMaxBeats);
     }

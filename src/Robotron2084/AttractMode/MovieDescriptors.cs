@@ -1,3 +1,5 @@
+using Robotron2084.AttractMode.Models;
+
 namespace Robotron2084.AttractMode;
 
 /// <summary>The kinds of character in the attract movie, found by the address the scripts name them with.</summary>

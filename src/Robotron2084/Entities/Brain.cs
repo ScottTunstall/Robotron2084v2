@@ -1,9 +1,13 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Audio;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -247,18 +251,11 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private WalkSequence _walkSequence = WalkSequence.Down;
 
     /// <summary>Makes a brain. It takes its first step on its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the brain announces what happens to it.</param>
+    /// <param name="dependencies">
+    ///     What the brain shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick the waits between missiles and the shaking during reprogramming.
+    /// </param>
     /// <param name="position">Where the brain's top-left corner is.</param>
-    /// <param name="random">
-    ///     Where its random numbers come from. They pick the waits between missiles and the shaking during
-    ///     reprogramming.
-    /// </param>
-    /// <param name="beatWaitArcadeFrames">
-    ///     How long this wave's brains wait after each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. A bigger number makes a slower brain.
-    ///     The time from one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> to the next is this plus <see cref="BeatExecutionArcadeFrames" />.
-    /// </param>
-    /// <param name="fireIntervalBeats">The longest this wave's brains wait between cruise missiles, in <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>.</param>
+    /// <param name="settings">What this wave sets for its brains: how long they wait between beats, and how often they fire a cruise missile.</param>
     /// <param name="targetFamilySlot">Which place in the family list the brain chases at the start.</param>
     /// <remarks>
     ///     <list type="bullet">
@@ -275,22 +272,19 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Brain(
-        TextureSet textureSet,
-        IGameEvents gameEvents,
+        EntityDependencies dependencies,
         IntVector2 position,
-        Random random,
-        int beatWaitArcadeFrames,
-        int fireIntervalBeats,
+        BrainWaveSettings settings,
         int targetFamilySlot)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = position;
-        _random = random;
-        _fireIntervalBeats = fireIntervalBeats;
+        _random = dependencies.Random;
+        _fireIntervalBeats = settings.FireIntervalBeats;
         _targetSlot = targetFamilySlot;
-        _beatIntervalArcadeFrames = GetBeatIntervalArcadeFrames(beatWaitArcadeFrames);
-        _fireBeatsRemaining = ArcadeRandom.PickUpTo(random, fireIntervalBeats);
+        _beatIntervalArcadeFrames = GetBeatIntervalArcadeFrames(settings.BeatWaitArcadeFrames);
+        _fireBeatsRemaining = ArcadeRandom.PickUpTo(dependencies.Random, settings.FireIntervalBeats);
     }
 
     /// <summary>Alive until it is killed, then dead at once. The brain has no death animation of its own.</summary>

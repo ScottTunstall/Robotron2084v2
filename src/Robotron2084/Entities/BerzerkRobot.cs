@@ -1,8 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Models;
+using Robotron2084.Events.Models;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
+using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -71,26 +75,24 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     private IntVector2 _position;
 
     /// <summary>Makes a robot, and picks at random how long it waits before its first step.</summary>
-    /// <param name="textureSet">The shared texture set.</param>
-    /// <param name="gameEvents">Where the berzerkrobot announces what happens to it.</param>
+    /// <param name="dependencies">
+    ///     What the robot shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers.
+    /// </param>
     /// <param name="position">Where the robot's top-left corner is.</param>
-    /// <param name="random">Where its random numbers come from.</param>
     /// <param name="moveIntervalMaxBeats">
     ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> the robot waits between steps. Each wait is a random number of <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> from 1
     ///     up to this, as a grunt's is.
     /// </param>
     public BerzerkRobot(
-        TextureSet textureSet,
-        IGameEvents gameEvents,
+        EntityDependencies dependencies,
         IntVector2 position,
-        Random random,
         int moveIntervalMaxBeats = DefaultMoveIntervalMaxBeats)
     {
-        _textureSet = textureSet;
-        _gameEvents = gameEvents;
+        _textureSet = dependencies.TextureSet;
+        _gameEvents = dependencies.GameEvents;
         _position = position;
         MoveIntervalMaxBeats = moveIntervalMaxBeats;
-        _random = random;
+        _random = dependencies.Random;
         _moveBeatsRemaining = _random.Next(1, MoveIntervalMaxBeats + 1);
     }
 
