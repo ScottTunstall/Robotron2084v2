@@ -50,13 +50,20 @@ public sealed class SoundBoardAudioSink : IAudioSink
     private readonly SoundBoardRenderer _soundBoardRenderer;
     private readonly DynamicSoundEffectInstance _dynamicSoundEffectInstance;
     private readonly short[] _stereoSamples = new short[SamplesPerPortTick * ChannelsPerFrame];
+    private readonly BoardVolumeDuringSpeech _boardVolumeDuringSpeech = new();
+    private readonly Func<bool> _isSpeechTalking;
 
-    /// <summary>Starts playing a sound board through the speakers.</summary>
+    /// <summary>
+    ///     Starts playing a sound board through the speakers. The board is turned down while the speech talks (see
+    ///     <see cref="BoardVolumeDuringSpeech" />).
+    /// </summary>
     /// <param name="soundBoard">The sound board.</param>
+    /// <param name="isSpeechTalking">Says whether the speech is saying something, or waiting to say the next part of it.</param>
     /// <exception cref="NoAudioHardwareException">The computer has no sound output.</exception>
-    public SoundBoardAudioSink(ISoundBoard soundBoard)
+    public SoundBoardAudioSink(ISoundBoard soundBoard, Func<bool> isSpeechTalking)
     {
         _soundBoard = soundBoard;
+        _isSpeechTalking = isSpeechTalking;
         _soundBoardRenderer = new SoundBoardRenderer(soundBoard, SampleRate);
         _dynamicSoundEffectInstance = new DynamicSoundEffectInstance(SampleRate, AudioChannels.Stereo);
         for (var tick = 0; tick < MinimumQueuedTicks; tick++) QueueOnePortTick();
@@ -87,7 +94,8 @@ public sealed class SoundBoardAudioSink : IAudioSink
     private void QueueOnePortTick()
     {
         _soundBoardRenderer.Render(_monoSamples);
-        _stereoPanner.Spread(_monoSamples, SoundTuning.MasterVolume, _stereoSamples);
+        _boardVolumeDuringSpeech.Advance(_isSpeechTalking());
+        _stereoPanner.Spread(_monoSamples, SoundTuning.MasterVolume * _boardVolumeDuringSpeech.Volume, _stereoSamples);
         if (_dynamicSoundEffectInstance.PendingBufferCount >= MaximumQueuedTicks) return;
 
         var pcmBytes = MemoryMarshal.AsBytes(_stereoSamples.AsSpan()).ToArray();
