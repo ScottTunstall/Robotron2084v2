@@ -191,7 +191,7 @@ public sealed class RobotronGame : Game
     {
         try
         {
-            Sound.Initialise(new SoundBoardAudioSink(new SoundBoard()));
+            Sound.Initialise(new SoundBoardAudioSink(new SoundBoard(), Speech.IsBusy));
         }
         catch (NoAudioHardwareException exception)
         {
