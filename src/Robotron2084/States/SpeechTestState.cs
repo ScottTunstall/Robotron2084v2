@@ -77,36 +77,20 @@ public sealed class SpeechTestState : IGameState
 
     /// <summary>Opens the page and speaks the first line.</summary>
     /// <param name="gameServices">The shared services.</param>
-    /// <summary>The content folder of the Gorf speech lines.</summary>
-    public const string GorfFolder = "GORF";
-
-    /// <summary>The content folder of the Berzerk robot's speech lines.</summary>
-    public const string BerzerkFolder = "Berzerk";
-
     /// <summary>Opens the page on the first line of a robot's speech, and speaks it.</summary>
     /// <param name="gameServices">The attract sequence's shared services.</param>
-    /// <param name="folder">The robot's content folder under <c>Content/Speech/</c>: <see cref="GorfFolder" /> or <see cref="BerzerkFolder" />.</param>
+    /// <param name="folder">The robot's content folder under <c>Content/Speech/</c>: <see cref="SpeechFolders.Gorf" /> or <see cref="SpeechFolders.Berzerk" />.</param>
     public SpeechTestState(GameServices gameServices, string folder)
     {
         _gameServices = gameServices;
         _description = $"{folder.ToUpperInvariant()} {DescriptionWords}";
-        _lineNames = GetLineNames(folder);
+        _lineNames = SpeechFolders.GetLineNames(folder);
         _textureSet = gameServices.TextureSet;
         _previousSnapshot = InputSnapshot.Read();
         if (_textureSet.BlitterDraw.GamePalette is { } palette)
             palette.SetPaletteIndexValue(TextPaletteIndex, GamePalette.DefaultPaletteValues[TextPaletteIndex]);
 
         SpeakCurrentLine();
-    }
-
-    /// <summary>Gets the names of a robot's speech lines, in the order of <see cref="SpeechLinePaths" />.</summary>
-    /// <param name="folder">The robot's content folder under <c>Content/Speech/</c>.</param>
-    /// <returns>The names, in capitals.</returns>
-    internal static IReadOnlyList<string> GetLineNames(string folder)
-    {
-        var folderStart = $"Speech/{folder}/";
-        return SpeechLinePaths.All.Where(path => path.StartsWith(folderStart, StringComparison.Ordinal))
-            .Select(path => Path.GetFileName(path).ToUpperInvariant()).ToList();
     }
 
     /// <summary>Gets the name of the line the page is on, or an empty string when there are no lines.</summary>

@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
@@ -210,9 +211,9 @@ public sealed class DeveloperToolsState : IGameState
             () => new SpriteTestState(_gameServices),
             () => new SoundTestState(_gameServices),
             // Port only: the Gorf speech lines, one at a time (notes §149).
-            () => new SpeechTestState(_gameServices, SpeechTestState.GorfFolder),
+            () => new SpeechTestState(_gameServices, SpeechFolders.Gorf),
             // Port only: the Berzerk robot's speech lines, one at a time.
-            () => new SpeechTestState(_gameServices, SpeechTestState.BerzerkFolder)
+            () => new SpeechTestState(_gameServices, SpeechFolders.Berzerk)
         ];
         return screenMakers[line]();
     }
