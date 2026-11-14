@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -479,7 +480,7 @@ public sealed class StripEffectTests
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(TestTextures.SharedTextureSet, spot);
+        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot);
         playField.FieldEntities.Electrodes.Add(electrode);
 
         IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
@@ -498,9 +499,9 @@ public sealed class StripEffectTests
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(TestTextures.SharedTextureSet, spot);
+        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot);
         playField.FieldEntities.Electrodes.Add(electrode);
-        playField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, spot, new Random(1))); // standing on the electrode
+        playField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(1))); // standing on the electrode
 
         playField.Update(new GameTime());
 

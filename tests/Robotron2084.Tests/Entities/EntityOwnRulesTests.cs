@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -16,13 +17,13 @@ public sealed class EntityOwnRulesTests
     [Fact]
     public void AFamilyMemberIsGraspable_OnlyWhileAliveAndNotInABrainsHold()
     {
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(100, 100), FamilyMemberKind.Mommy, new Random(1));
+        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), FamilyMemberKind.Mommy, new Random(1));
         Assert.True(familyMember.IsGraspable());
 
         familyMember.BeginReprogramming();
         Assert.False(familyMember.IsGraspable());
 
-        var killedFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(100, 100), FamilyMemberKind.Daddy, new Random(2));
+        var killedFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), FamilyMemberKind.Daddy, new Random(2));
         killedFamilyMember.Kill();
         Assert.False(killedFamilyMember.IsGraspable());
     }
@@ -67,8 +68,8 @@ public sealed class EntityOwnRulesTests
     {
         var list = new EntityList<Electrode>
         {
-            new(TestTextures.SharedTextureSet, new IntVector2(10, 10)),
-            new(TestTextures.SharedTextureSet, new IntVector2(50, 10))
+            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)),
+            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 10))
         };
         Assert.Equal(2, list.Count(entity => !entity.IsDead()));
 
@@ -112,7 +113,7 @@ public sealed class EntityOwnRulesTests
     [Fact]
     public void TheLifeQuestions_AnswerForAnyEntity_FromItsLifeState()
     {
-        var electrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(10, 10));
+        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10));
         Assert.True(electrode.IsAlive());
         Assert.False(electrode.IsDying());
         Assert.False(electrode.IsDead());
@@ -122,7 +123,7 @@ public sealed class EntityOwnRulesTests
         Assert.True(electrode.IsDying());
         Assert.False(electrode.IsDead());
 
-        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(50, 50), new Random(1));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 50), new Random(1));
         grunt.Kill();
         Assert.True(grunt.IsDead());
         Assert.False(grunt.IsAlive());

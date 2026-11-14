@@ -1,5 +1,6 @@
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -21,7 +22,7 @@ public sealed class ElectrodeSizeTests
     [InlineData(20, 18, 7)]
     public void AnElectrodesBox_IsTheSizeOfItsWavesShape(int wave, int arcadeWidth, int arcadeHeight)
     {
-        var electrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(100, 100), wave);
+        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), wave);
 
         var bounds = electrode.GetBounds();
 

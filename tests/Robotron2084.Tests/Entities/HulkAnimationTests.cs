@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Level;
 using Xunit;
 
@@ -38,7 +39,7 @@ public sealed class HulkAnimationTests
         // LEFT; re-aims (RND 1..31 steps or wall contact) flip the axis.
         IntVector2 centre = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 120, bounds.Y + 120);
-        var hulk = new Hulk(TestTextures.SharedTextureSet, spot, new Random(19), 2, () => centre);
+        var hulk = new Hulk(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(19), 2, () => centre);
         playField.FieldEntities.Hulks.Add(hulk);
 
         playField.SkipWaveStart();

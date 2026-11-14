@@ -1,5 +1,6 @@
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Xunit;
 
 namespace Robotron2084.Tests.Entities;
@@ -9,7 +10,7 @@ public sealed class LaserSlotsTests
     [Fact]
     public void Fire_AllowsThreeLiveLasersThenHasNoFreeSlot()
     {
-        LaserSlots laserSlots = new(TestTextures.SharedTextureSet);
+        LaserSlots laserSlots = new(TestTextures.SharedTextureSet, NullGameEvents.Instance);
 
         laserSlots.Fire(new IntVector2(100, 100), Direction8.Up);
         laserSlots.Fire(new IntVector2(120, 100), Direction8.Up);
@@ -21,7 +22,7 @@ public sealed class LaserSlotsTests
     [Fact]
     public void Fire_AfterDeactivation_ReusesTheFreedSlot()
     {
-        LaserSlots laserSlots = new(TestTextures.SharedTextureSet);
+        LaserSlots laserSlots = new(TestTextures.SharedTextureSet, NullGameEvents.Instance);
 
         for (var i = 0; i < LaserSlots.Capacity; i++)
             laserSlots.Fire(new IntVector2(100 + i * 20, 100), Direction8.Up);

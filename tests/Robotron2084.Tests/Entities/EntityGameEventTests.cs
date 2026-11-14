@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Events;
@@ -7,24 +8,14 @@ using Xunit;
 
 namespace Robotron2084.Tests.Entities;
 
-/// <summary>What the entities announce about themselves, and that the field connects them to where announcements go.</summary>
+/// <summary>What the entities announce about themselves, and that the field gives them the place to announce to.</summary>
 public sealed class EntityGameEventTests
 {
     private static readonly IntVector2 Spot = new(120, 90);
 
     private static FamilyMember CreateFamilyMember(RecordingGameEvents recording)
     {
-        return new FamilyMember(TestTextures.SharedTextureSet, Spot, FamilyMemberKind.Mommy, new Random(1)) { GameEvents = recording };
-    }
-
-    [Fact]
-    public void AnEntityAnnouncesToNobodyUntilItIsGivenAPlaceToAnnounceTo()
-    {
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, Spot, FamilyMemberKind.Mommy, new Random(1));
-
-        familyMember.Kill();
-
-        Assert.Same(NullGameEvents.Instance, familyMember.GameEvents);
+        return new FamilyMember(TestTextures.SharedTextureSet, recording, Spot, FamilyMemberKind.Mommy, new Random(1));
     }
 
     [Fact]
@@ -78,7 +69,7 @@ public sealed class EntityGameEventTests
     public void AKilledPlayerAnnouncesTheDeath()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestTextures.SharedTextureSet, Spot, 3, new Random(1)) { InvincibleForTesting = false, GameEvents = recording };
+        var player = new Player(TestTextures.SharedTextureSet, recording, Spot, 3, new Random(1)) { InvincibleForTesting = false };
 
         player.Kill();
         player.Kill();
@@ -90,7 +81,7 @@ public sealed class EntityGameEventTests
     public void AnInvinciblePlayerAnnouncesNothing()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestTextures.SharedTextureSet, Spot, 3, new Random(1)) { InvincibleForTesting = true, GameEvents = recording };
+        var player = new Player(TestTextures.SharedTextureSet, recording, Spot, 3, new Random(1)) { InvincibleForTesting = true };
 
         player.Kill();
 
@@ -101,7 +92,7 @@ public sealed class EntityGameEventTests
     public void AnExtraLifeIsAnnounced()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestTextures.SharedTextureSet, Spot, 3, new Random(1)) { GameEvents = recording };
+        var player = new Player(TestTextures.SharedTextureSet, recording, Spot, 3, new Random(1));
 
         player.AddLife();
 
@@ -112,7 +103,7 @@ public sealed class EntityGameEventTests
     public void AKilledGruntAnnouncesWhichRobotDiedOnce()
     {
         var recording = new RecordingGameEvents();
-        var grunt = new Grunt(TestTextures.SharedTextureSet, Spot, new Random(1), 10) { GameEvents = recording };
+        var grunt = new Grunt(TestTextures.SharedTextureSet, recording, Spot, new Random(1), 10);
 
         grunt.Kill();
         grunt.Kill();
@@ -124,7 +115,7 @@ public sealed class EntityGameEventTests
     public void AKilledProgAnnouncesItWasAProg()
     {
         var recording = new RecordingGameEvents();
-        var prog = new Prog(TestTextures.SharedTextureSet, Spot, FamilyMemberKind.Daddy, new Random(1)) { GameEvents = recording };
+        var prog = new Prog(TestTextures.SharedTextureSet, recording, Spot, FamilyMemberKind.Daddy, new Random(1));
 
         prog.Kill();
         prog.Kill();
@@ -133,20 +124,100 @@ public sealed class EntityGameEventTests
     }
 
     [Fact]
-    public void TheFieldConnectsEntitiesWhenTheyAreAdded()
+    public void AKilledElectrodeAnnouncesItOnce()
     {
         var recording = new RecordingGameEvents();
-        var fieldEntities = new FieldEntities(recording);
-        var grunt = new Grunt(TestTextures.SharedTextureSet, Spot, new Random(1), 10);
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, Spot, FamilyMemberKind.Mikey, new Random(2));
-        fieldEntities.Add(grunt);
-        fieldEntities.Add(familyMember);
+        var electrode = new Electrode(TestTextures.SharedTextureSet, recording, Spot);
 
-        grunt.Kill();
-        familyMember.Rescue();
+        electrode.Kill();
+        electrode.Kill();
+
+        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.Electrode)], recording.Events);
+    }
+
+    [Fact]
+    public void AHulkThatIsKnockedBackAnnouncesIt()
+    {
+        var recording = new RecordingGameEvents();
+        var hulk = new Hulk(TestTextures.SharedTextureSet, recording, Spot, new Random(1), 2, () => Spot);
+
+        hulk.ApplyKnockback(Direction8.Right);
+
+        Assert.Equal([new GameEvent(GameEventKind.HulkKnockedBack, hulk.Position)], recording.Events);
+    }
+
+    [Fact]
+    public void AKilledGorfAnnouncesTheKillOnce()
+    {
+        var recording = new RecordingGameEvents();
+        var bounds = new Rectangle(20, 30, 600, 400);
+        var gorf = new Gorf(TestTextures.SharedTextureSet, recording, new Random(3), bounds, 10);
+
+        gorf.Kill();
+        gorf.Kill();
+
+        Assert.Equal([new GameEvent(GameEventKind.GorfKilled, gorf.Position)], recording.Events);
+    }
+
+    [Fact]
+    public void AKilledSparkAnnouncesItWasASpark()
+    {
+        var recording = new RecordingGameEvents();
+        var spark = new Spark(TestTextures.SharedTextureSet, recording, Spot, new IntVector2(300, 200), new Random(1));
+
+        spark.Kill();
+
+        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.Spark)], recording.Events);
+    }
+
+    [Fact]
+    public void AKilledTankShellAnnouncesItWasATankShell()
+    {
+        var recording = new RecordingGameEvents();
+        var bounds = new Rectangle(20, 30, 600, 400);
+        var tankShell = new TankShell(TestTextures.SharedTextureSet, recording, Spot, new IntVector2(300, 200), 3, bounds, new Random(1));
+
+        tankShell.Kill();
+
+        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, tankShell.Position, RobotKind.TankShell)], recording.Events);
+    }
+
+    [Fact]
+    public void AKilledCruiseMissileAnnouncesItWasACruiseMissile()
+    {
+        var recording = new RecordingGameEvents();
+        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, recording, Spot, new IntVector2(300, 200), new Random(1));
+
+        cruiseMissile.Kill();
+
+        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.CruiseMissile)], recording.Events);
+    }
+
+    [Fact]
+    public void ALaserThatIsUsedUpAnnouncesItOnce()
+    {
+        var recording = new RecordingGameEvents();
+        var laser = new PlayerLaser(TestTextures.SharedTextureSet, recording, Spot, Direction8.Up);
+
+        laser.Kill();
+        laser.Kill();
+
+        Assert.Equal([new GameEvent(GameEventKind.PlayerLaserDestroyed, Spot)], recording.Events);
+    }
+
+    [Fact]
+    public void TheFieldGivesItsGameEventsToThePlayerAndToTheEntitiesItBuilds()
+    {
+        var recording = new RecordingGameEvents();
+        var playField = new PlayFieldBuilder().WithGameEvents(recording).WithPlayerInvincible(false).Build();
+        playField.SpawnProg(Spot, FamilyMemberKind.Mikey);
+        var prog = playField.FieldEntities.Progs.FieldEntities.OfType<Prog>().Single();
+
+        prog.Kill();
+        playField.KillPlayer();
 
         Assert.Equal(
-            [new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.Grunt), new GameEvent(GameEventKind.FamilyMemberRescued, Spot)],
+            [new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.Prog), new GameEvent(GameEventKind.PlayerKilled, playField.Player.Position)],
             recording.Events);
     }
 }

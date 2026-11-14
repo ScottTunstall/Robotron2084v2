@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -40,7 +41,7 @@ public sealed class QuarkDropTimerTests
         var playField = CreateField(2);
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestTextures.SharedTextureSet,
+        var quark = new Quark(TestTextures.SharedTextureSet, NullGameEvents.Instance,
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(4),
             10, 1);
         playField.FieldEntities.Quarks.Add(quark);
@@ -66,7 +67,7 @@ public sealed class QuarkDropTimerTests
         var playField = CreateField(1);
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestTextures.SharedTextureSet,
+        var quark = new Quark(TestTextures.SharedTextureSet, NullGameEvents.Instance,
             new IntVector2(bounds.X + 100, bounds.Y + 60), new Random(11),
             10, 16);
         playField.FieldEntities.Quarks.Add(quark);

@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Level;
 using Xunit;
 
@@ -67,7 +68,7 @@ public sealed class GruntSpeedProgressTests
 
     private static Grunt CreateGruntAt(PlayField playField, int x, int y, int seed)
     {
-        return new Grunt(TestTextures.SharedTextureSet, new IntVector2(x, y), new Random(seed), 20);
+        return new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(x, y), new Random(seed), 20);
     }
 
     [Fact]
@@ -126,7 +127,7 @@ public sealed class GruntSpeedProgressTests
         Grunt? trackedGrunt = null;
         for (var i = 0; i < 29; i++)
         {
-            Grunt grunt = new(TestTextures.SharedTextureSet, new IntVector2(100 + i % 5 * 24, 100 + i / 5 * 24), new Random(i),
+            Grunt grunt = new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100 + i % 5 * 24, 100 + i / 5 * 24), new Random(i),
                 15);
             if (i == 0) trackedGrunt = grunt;
 
@@ -165,7 +166,7 @@ public sealed class GruntSpeedProgressTests
     public void APassThatFollowsScoring_IsGentler_AndTheFlagIsSpentByIt()
     {
         var playField = CreateField(7);
-        Grunt trackedGrunt = new(TestTextures.SharedTextureSet, new IntVector2(100, 100), new Random(1), 15);
+        Grunt trackedGrunt = new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), new Random(1), 15);
         playField.FieldEntities.Grunts.Add(trackedGrunt);
 
         // The score must come after GEXEC has started, because GEXEC opens by clearing the flag.
@@ -189,7 +190,7 @@ public sealed class GruntSpeedProgressTests
     public void AScoreMadeBeforeTheExecutiveStarts_IsForgotten_SoTheFirstPassIsTheHarshOne()
     {
         var playField = CreateField(7);
-        Grunt trackedGrunt = new(TestTextures.SharedTextureSet, new IntVector2(100, 100), new Random(1), 15);
+        Grunt trackedGrunt = new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), new Random(1), 15);
         playField.FieldEntities.Grunts.Add(trackedGrunt);
 
         // GEXEC opens with CLR SCRFLG (R5 $2A8B), 22 arcade frames after the game goes live, so this score does not count.

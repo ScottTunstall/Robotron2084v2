@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Level;
 using Xunit;
 
@@ -22,7 +23,7 @@ public sealed class PlayFieldMovementTests
         // but hunt the playfield centre so the aim is unbounded.
         IntVector2 centre = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 100, bounds.Y + 100);
-        var hulk = new Hulk(TestTextures.SharedTextureSet, spot, new Random(7), 8, () => centre);
+        var hulk = new Hulk(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(7), 8, () => centre);
         playField.FieldEntities.Hulks.Add(hulk);
 
         // The game is live (the robots are held until then); this update is the spawn aim.
@@ -49,7 +50,7 @@ public sealed class PlayFieldMovementTests
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
         // Right up against the left wall, hunting a point that keeps it aimed left.
         IntVector2 spot = new(bounds.X + 4, bounds.Y + bounds.Height / 2 - 16);
-        var hulk = new Hulk(TestTextures.SharedTextureSet, spot, new Random(11), 5, () => spot);
+        var hulk = new Hulk(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(11), 5, () => spot);
         playField.FieldEntities.Hulks.Add(hulk);
 
         playField.SkipWaveStart();

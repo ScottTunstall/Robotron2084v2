@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Input;
 using Robotron2084.Level;
 using Xunit;
@@ -51,7 +52,7 @@ public sealed class SoundWiringTests : IDisposable
         playField.SkipWaveStart();
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 250, inner.Y + 120);
-        playField.FieldEntities.CruiseMissiles.Add(new CruiseMissile(TestTextures.SharedTextureSet, spot, playField.Player.Position,
+        playField.FieldEntities.CruiseMissiles.Add(new CruiseMissile(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, playField.Player.Position,
             new Random(8)));
 
         playField.PlayerLaserSlots.Fire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down);

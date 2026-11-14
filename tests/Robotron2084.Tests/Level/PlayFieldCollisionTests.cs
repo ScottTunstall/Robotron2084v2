@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -17,7 +18,7 @@ public sealed class PlayFieldCollisionTests
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(TestTextures.SharedTextureSet, spot);
+        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot);
         playField.FieldEntities.Electrodes.Add(electrode);
 
         // The laser moves 12 px on its first Update before collisions resolve;
@@ -44,7 +45,7 @@ public sealed class PlayFieldCollisionTests
         // 6, 3, 2 arcade frames — and then the image is turned off (DMAOFF). It is a
         // shape collapse, NOT a blink (the old port toggled visibility for 2 s).
         var playField = CreateEmptyField();
-        var electrode = new Electrode(TestTextures.SharedTextureSet,
+        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance,
             new IntVector2(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100));
         playField.FieldEntities.Electrodes.Add(electrode);
 
@@ -82,7 +83,7 @@ public sealed class PlayFieldCollisionTests
         // An electrode is WAVE-derived — both its variant and its colour —
         // and each variant owns 3 consecutive animation frames (alive + the two shrivel
         // frames) out of the 27 electrode PNGs.
-        var electrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(100, 100), 3);
+        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), 3);
         Assert.Equal(2, electrode.GetVariantIndex());
         Assert.True(electrode.GetVariantIndex() * WavePaletteTables.ElectrodeAnimationFramesPerVariant +
             WavePaletteTables.ElectrodeAnimationFramesPerVariant <= 27);
@@ -107,7 +108,7 @@ public sealed class PlayFieldCollisionTests
         Assert.Equal(15, WavePaletteTables.GetElectrodePaletteIndex(1));
         Assert.Equal(11, WavePaletteTables.GetElectrodePaletteIndex(3));
         Assert.Equal(1, WavePaletteTables.GetElectrodePaletteIndex(7)); // palette index 1 = RED in the ROM's own CRTAB
-        Assert.Equal(new Electrode(TestTextures.SharedTextureSet, new IntVector2(0, 0)).GetTintPaletteIndex(),
+        Assert.Equal(new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(0, 0)).GetTintPaletteIndex(),
             WavePaletteTables.GetElectrodePaletteIndex(1));
         Assert.True(WavePaletteTables.GetElectrodePaletteIndex(1) >= 10); // 10-15 are the cycling palette indices
     }
@@ -235,7 +236,7 @@ public sealed class PlayFieldCollisionTests
     {
         var playField = CreateEmptyField(false);
         playField.SkipWaveStart();
-        var electrode = new Electrode(TestTextures.SharedTextureSet, playField.Player.Position); // directly on the player
+        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, playField.Player.Position); // directly on the player
         playField.FieldEntities.Electrodes.Add(electrode);
 
         var livesBefore = playField.Player.Lives;
@@ -255,13 +256,13 @@ public sealed class PlayFieldCollisionTests
         // it (`AttractState`), so contact kills there and only there (notes §97.5).
         var aided = CreateEmptyField();
         aided.SkipWaveStart();
-        aided.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, aided.Player.Position, new Random(1)));
+        aided.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, aided.Player.Position, new Random(1)));
         aided.Update(new GameTime());
         Assert.Equal(EntityLifeState.Alive, aided.Player.LifeState);
 
         var demoPlayField = CreateEmptyField(false);
         demoPlayField.SkipWaveStart();
-        demoPlayField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, demoPlayField.Player.Position, new Random(1)));
+        demoPlayField.FieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, demoPlayField.Player.Position, new Random(1)));
         demoPlayField.Update(new GameTime());
         Assert.Equal(EntityLifeState.Dying, demoPlayField.Player.LifeState);
     }
@@ -272,7 +273,7 @@ public sealed class PlayFieldCollisionTests
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 200, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        var grunt = new Grunt(TestTextures.SharedTextureSet, spot, new Random(1));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(1));
         playField.FieldEntities.Grunts.Add(grunt);
 
         var laser = playField.PlayerLaserSlots.FireAndGet(spot, Direction8.Down);
@@ -294,7 +295,7 @@ public sealed class PlayFieldCollisionTests
         var playField = CreateEmptyField();
         playField.SkipWaveStart();
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 200, playField.PlayfieldWall.PlayfieldBounds.Y + 200);
-        var hulk = new Hulk(TestTextures.SharedTextureSet, spot, new Random(7), 8, static () => IntVector2.Zero);
+        var hulk = new Hulk(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(7), 8, static () => IntVector2.Zero);
         playField.FieldEntities.Hulks.Add(hulk);
         var positionBefore = hulk.Position;
 

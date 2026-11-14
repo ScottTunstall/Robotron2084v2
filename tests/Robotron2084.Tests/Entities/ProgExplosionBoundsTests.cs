@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Xunit;
 
 namespace Robotron2084.Tests.Entities;
@@ -18,7 +19,7 @@ public sealed class ProgExplosionBoundsTests
         playField.SkipWaveStart();
         var bounds = playField.GetPlayfieldBounds();
         var spot = new IntVector2(bounds.X + 100, bounds.Y + 100);
-        var prog = new Prog(TestTextures.SharedTextureSet, spot, FamilyMemberKind.Mikey, new Random(3));
+        var prog = new Prog(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, FamilyMemberKind.Mikey, new Random(3));
         playField.FieldEntities.Progs.Add(prog);
         playField.Update(new GameTime());
 
@@ -34,9 +35,9 @@ public sealed class ProgExplosionBoundsTests
         var playField = new PlayFieldBuilder().Build();
         playField.SkipWaveStart();
         var bounds = playField.GetPlayfieldBounds();
-        var mikeyFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, IntVector2.Zero, FamilyMemberKind.Mikey, new Random(1)).GetBounds();
+        var mikeyFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, IntVector2.Zero, FamilyMemberKind.Mikey, new Random(1)).GetBounds();
         var corner = new IntVector2(bounds.Right - mikeyFamilyMember.Width, bounds.Bottom - mikeyFamilyMember.Height);
-        var prog = new Prog(TestTextures.SharedTextureSet, corner, FamilyMemberKind.Mikey, new Random(3));
+        var prog = new Prog(TestTextures.SharedTextureSet, NullGameEvents.Instance, corner, FamilyMemberKind.Mikey, new Random(3));
         playField.FieldEntities.Progs.Add(prog);
         playField.Player.MoveTo(new IntVector2(bounds.X + 4, bounds.Y + 4));
         playField.Update(new GameTime());

@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Input;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -189,7 +190,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var playField = CreateField(new WaveParameters(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
 
-        playField.FieldEntities.FamilyList.Add(new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(inner.X + 300, inner.Y + 150),
+        playField.FieldEntities.FamilyList.Add(new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(inner.X + 300, inner.Y + 150),
             FamilyMemberKind.Mommy, new Random(1)));
         WarmUp(playField); // run through the start of the wave (RobotsFrozen())
 
@@ -197,7 +198,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var familyMemberSpot = playField.FieldEntities.FamilyList.Members[0].Position;
         IntVector2 brainSpot = new(familyMemberSpot.X - ScreenSize.ToPortPixelsFromArcadePixels(30),
             familyMemberSpot.Y - ScreenSize.ToPortPixelsFromArcadePixels(20));
-        var brain = new Brain(TestTextures.SharedTextureSet, brainSpot, new Random(2), 8, 40, FamilyList.FirstSlot);
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, brainSpot, new Random(2), 8, 40, FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         // Beat period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
@@ -224,7 +225,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // "target is below". That ±1px vertical jitter is the arcade brain's
         // hover; the port used to hold the row perfectly still.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixelsFromArcadePixels(30), playerSpot.Y);
-        var brain = new Brain(TestTextures.SharedTextureSet, brainSpot, new Random(3), 8, 40, FamilyList.FirstSlot);
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, brainSpot, new Random(3), 8, 40, FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         // One beat in the 19-tick window (period PortTicks(9) = 10, notes 26).
@@ -247,7 +248,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // but Y has no dead zone and must still step down 1 px.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixelsFromArcadePixels(1),
             playerSpot.Y - ScreenSize.ToPortPixelsFromArcadePixels(50));
-        var brain = new Brain(TestTextures.SharedTextureSet, brainSpot, new Random(21), 8, 40, FamilyList.FirstSlot);
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, brainSpot, new Random(21), 8, 40, FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicks(12); tick++) playField.Update(OneTick());
@@ -277,7 +278,7 @@ public sealed class PlayFieldBrainProgMissileTests
         IntVector2 brainSpot =
             new(inner.Right - ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BrainCollisionSize.Width),
                 inner.Y + ScreenSize.ToPortPixelsFromArcadePixels(80));
-        var brain = new Brain(TestTextures.SharedTextureSet, brainSpot, new Random(22), 8, 40, FamilyList.FirstSlot);
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, brainSpot, new Random(22), 8, 40, FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicks(12); tick++) playField.Update(OneTick());
@@ -297,11 +298,11 @@ public sealed class PlayFieldBrainProgMissileTests
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 familyMemberSpot = new(inner.X + 200, inner.Y + 200);
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, familyMemberSpot, FamilyMemberKind.Mommy, new Random(4));
+        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, familyMemberSpot, FamilyMemberKind.Mommy, new Random(4));
         playField.FieldEntities.FamilyList.Add(familyMember);
 
         // Corners coincident — well inside the ROM's ±3px catch reach.
-        var brain = new Brain(TestTextures.SharedTextureSet, familyMemberSpot, new Random(5), 0, 40, FamilyList.FirstSlot);
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, familyMemberSpot, new Random(5), 0, 40, FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         RunFirstBeat(playField);
@@ -358,10 +359,10 @@ public sealed class PlayFieldBrainProgMissileTests
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 familyMemberSpot = new(inner.X + 2, inner.Y + 200);
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, familyMemberSpot, FamilyMemberKind.Daddy, new Random(7));
+        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, familyMemberSpot, FamilyMemberKind.Daddy, new Random(7));
         playField.FieldEntities.FamilyList.Add(familyMember);
 
-        var brain = new Brain(TestTextures.SharedTextureSet, familyMemberSpot, new Random(8), 0, 40, FamilyList.FirstSlot);
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, familyMemberSpot, new Random(8), 0, 40, FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         RunFirstBeat(playField);
@@ -384,9 +385,9 @@ public sealed class PlayFieldBrainProgMissileTests
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 familyMemberSpot = new(inner.X + 200, inner.Y + 200);
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, familyMemberSpot, FamilyMemberKind.Daddy, new Random(31));
+        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, familyMemberSpot, FamilyMemberKind.Daddy, new Random(31));
         playField.FieldEntities.FamilyList.Add(familyMember);
-        var brain = new Brain(TestTextures.SharedTextureSet, familyMemberSpot, new Random(32), 0, 40, FamilyList.FirstSlot);
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, familyMemberSpot, new Random(32), 0, 40, FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         RunFirstBeat(playField);
@@ -411,13 +412,13 @@ public sealed class PlayFieldBrainProgMissileTests
         var playField = CreateField(new WaveParameters(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 familyMemberSpot = new(inner.X + 200, inner.Y + 200);
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, familyMemberSpot, FamilyMemberKind.Mommy, new Random(14));
+        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, familyMemberSpot, FamilyMemberKind.Mommy, new Random(14));
         playField.FieldEntities.FamilyList.Add(familyMember);
 
         // Boxes overlap (the family member is well inside the brain's frame) but the
         // corners are 20px apart → the ROM's reach does not cover it.
         IntVector2 offset = new(ScreenSize.ToPortPixelsFromArcadePixels(20), 0);
-        var brain = new Brain(TestTextures.SharedTextureSet, familyMemberSpot - offset, new Random(15), 0, 40, FamilyList.FirstSlot);
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, familyMemberSpot - offset, new Random(15), 0, 40, FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         RunFirstBeat(playField);
@@ -436,11 +437,11 @@ public sealed class PlayFieldBrainProgMissileTests
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 familyMemberSpot = new(inner.X + 200, inner.Y + 200);
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, familyMemberSpot, FamilyMemberKind.Mommy, new Random(41));
+        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, familyMemberSpot, FamilyMemberKind.Mommy, new Random(41));
         playField.FieldEntities.FamilyList.Add(familyMember);
 
         IntVector2 offset = new(ScreenSize.ToPortPixelsFromArcadePixels(4), 0);
-        var brain = new Brain(TestTextures.SharedTextureSet, familyMemberSpot - offset, new Random(42), 0, 40, FamilyList.FirstSlot);
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, familyMemberSpot - offset, new Random(42), 0, 40, FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         RunFirstBeat(playField);
@@ -456,7 +457,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // NOT the field centre: the player stands there, and prog contact
         // kills the player (RobotsFrozen() would stop the simulation).
         IntVector2 spot = new(inner.X + 100, inner.Y + 100);
-        var prog = new Prog(TestTextures.SharedTextureSet, spot, FamilyMemberKind.Daddy, new Random(6));
+        var prog = new Prog(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, FamilyMemberKind.Daddy, new Random(6));
         playField.FieldEntities.Progs.Add(prog);
         WarmUp(playField); // run through the start of the wave (RobotsFrozen())
 
@@ -496,7 +497,7 @@ public sealed class PlayFieldBrainProgMissileTests
         for (var seed = 0; seed < 12; seed++)
         {
             IntVector2 spot = new(inner.X + 60, inner.Y + 60);
-            var prog = new Prog(TestTextures.SharedTextureSet, spot, FamilyMemberKind.Daddy, new Random(seed));
+            var prog = new Prog(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, FamilyMemberKind.Daddy, new Random(seed));
             playField.FieldEntities.Progs.Add(prog);
 
             for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3); tick++) playField.Update(OneTick());
@@ -530,7 +531,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var xArmed = 0;
         for (var seed = 0; seed < 400; seed++)
         {
-            var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet,
+            var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, NullGameEvents.Instance,
                 new IntVector2(inner.X + 200, inner.Y + 150),
                 new IntVector2(inner.X + 300, inner.Y + 150),
                 new Random(seed));
@@ -553,7 +554,7 @@ public sealed class PlayFieldBrainProgMissileTests
         WarmUp(playField);
 
         IntVector2 spot = new(inner.X + 200, inner.Y + 150);
-        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, spot, playField.Player.Position, new Random(7));
+        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, playField.Player.Position, new Random(7));
         playField.FieldEntities.CruiseMissiles.Add(cruiseMissile);
 
         // The first beat (2 x 1px CMMOV) lands on tick 4 (3 fiftieths of a second = 3.6),
@@ -588,7 +589,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var playField = CreateField(new WaveParameters(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 200, inner.Y + 150);
-        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, spot, playField.Player.Position, new Random(7));
+        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, playField.Player.Position, new Random(7));
         playField.FieldEntities.CruiseMissiles.Add(cruiseMissile);
 
         // Two beats = 4 CMMOVs = 4 marks (the missile flies on while the
@@ -631,7 +632,7 @@ public sealed class PlayFieldBrainProgMissileTests
         WarmUp(playField);
 
         IntVector2 spot = new(inner.X + 200, inner.Y + 100);
-        var prog = new Prog(TestTextures.SharedTextureSet, spot, FamilyMemberKind.Daddy, new Random(6));
+        var prog = new Prog(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, FamilyMemberKind.Daddy, new Random(6));
         playField.FieldEntities.Progs.Add(prog);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 3; tick++) playField.Update(OneTick());
@@ -664,7 +665,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var playField = CreateField(new WaveParameters(1));
         playField.SkipWaveStart();
         var inner = playField.PlayfieldWall.PlayfieldBounds;
-        var prog = new Prog(TestTextures.SharedTextureSet, new IntVector2(inner.X + 120, inner.Y + 120), FamilyMemberKind.Mommy,
+        var prog = new Prog(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(inner.X + 120, inner.Y + 120), FamilyMemberKind.Mommy,
             new Random(21));
         playField.FieldEntities.Progs.Add(prog);
         var spot = prog.Position;
@@ -692,7 +693,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         // Off the player's centre spot so the simulation stays live.
         IntVector2 spot = new(inner.X + 100, inner.Y + 300);
-        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, spot, playField.Player.Position, new Random(7));
+        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, playField.Player.Position, new Random(7));
         playField.FieldEntities.CruiseMissiles.Add(cruiseMissile);
 
         for (var tick = 0; tick < 1200; tick++)
@@ -710,7 +711,7 @@ public sealed class PlayFieldBrainProgMissileTests
         playField.SkipWaveStart();
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 250, inner.Y + 120);
-        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, spot, playField.Player.Position, new Random(8));
+        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, playField.Player.Position, new Random(8));
         playField.FieldEntities.CruiseMissiles.Add(cruiseMissile);
 
         playField.PlayerLaserSlots.Fire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down);
@@ -728,7 +729,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var inner = playField.PlayfieldWall.PlayfieldBounds;
 
         IntVector2 brainSpot = new(inner.X + 150, inner.Y + 120);
-        var brain = new Brain(TestTextures.SharedTextureSet, brainSpot, new Random(9), 0, 40, FamilyList.FirstSlot);
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, brainSpot, new Random(9), 0, 40, FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
         playField.PlayerLaserSlots.Fire(new IntVector2(brainSpot.X + 7, brainSpot.Y - 12), Direction8.Down);
         playField.Update(new GameTime());
@@ -736,7 +737,7 @@ public sealed class PlayFieldBrainProgMissileTests
         Assert.Equal(500, playField.ScoreBoard.Score);
 
         IntVector2 progSpot = new(inner.X + 300, inner.Y + 120);
-        var prog = new Prog(TestTextures.SharedTextureSet, progSpot, FamilyMemberKind.Daddy, new Random(10));
+        var prog = new Prog(TestTextures.SharedTextureSet, NullGameEvents.Instance, progSpot, FamilyMemberKind.Daddy, new Random(10));
         playField.FieldEntities.Progs.Add(prog);
         playField.PlayerLaserSlots.Fire(new IntVector2(progSpot.X + 5, progSpot.Y - 12), Direction8.Down);
         playField.Update(new GameTime());
@@ -764,13 +765,13 @@ public sealed class PlayFieldBrainProgMissileTests
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         Assert.True(playField.IsWaveCleared()); // empty wave
 
-        var brain = new Brain(TestTextures.SharedTextureSet, new IntVector2(inner.X + 100, inner.Y + 100), new Random(11), 0, 40,
+        var brain = new Brain(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(inner.X + 100, inner.Y + 100), new Random(11), 0, 40,
             FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
-        var prog = new Prog(TestTextures.SharedTextureSet, new IntVector2(inner.X + 200, inner.Y + 100), FamilyMemberKind.Daddy,
+        var prog = new Prog(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(inner.X + 200, inner.Y + 100), FamilyMemberKind.Daddy,
             new Random(12));
         playField.FieldEntities.Progs.Add(prog);
-        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, new IntVector2(inner.X + 300, inner.Y + 100),
+        var cruiseMissile = new CruiseMissile(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(inner.X + 300, inner.Y + 100),
             playField.Player.Position, new Random(13));
         playField.FieldEntities.CruiseMissiles.Add(cruiseMissile);
         Assert.False(playField.IsWaveCleared()); // the brain is still there

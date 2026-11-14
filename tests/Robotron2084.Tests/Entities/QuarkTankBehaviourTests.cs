@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 using Xunit;
@@ -42,7 +43,7 @@ public sealed class QuarkTankBehaviourTests
         var playField = CreateField(1);
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestTextures.SharedTextureSet, new IntVector2(bounds.X + 20, bounds.Y + 8), new Random(4), 10, 60);
+        var quark = new Quark(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(bounds.X + 20, bounds.Y + 8), new Random(4), 10, 60);
         playField.FieldEntities.Quarks.Add(quark);
 
         var prev = quark.Position;
@@ -100,7 +101,7 @@ public sealed class QuarkTankBehaviourTests
         var playField = CreateField(1);
 
         // Random(10): first Next(2) == 1 → exactly one tank to drop.
-        var quark = new Quark(TestTextures.SharedTextureSet, new IntVector2(300, 200), new Random(10), 1, 1);
+        var quark = new Quark(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(300, 200), new Random(10), 1, 1);
         playField.FieldEntities.Quarks.Add(quark);
 
         // Robots are frozen until the game goes live at the start of the wave; the
@@ -236,7 +237,7 @@ public sealed class QuarkTankBehaviourTests
         {
             var playField = CreateField(seed);
             var bounds = playField.PlayfieldWall.PlayfieldBounds;
-            var quark = new Quark(TestTextures.SharedTextureSet, new IntVector2(bounds.X + 15, bounds.Y + 200), new Random(seed),
+            var quark = new Quark(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(bounds.X + 15, bounds.Y + 200), new Random(seed),
                 10, 60);
             playField.FieldEntities.Quarks.Add(quark);
             var startX = quark.Position.X;

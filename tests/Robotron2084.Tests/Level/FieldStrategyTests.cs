@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Events;
 using Robotron2084.Level;
 using Robotron2084.Level.Collisions;
 using Xunit;
@@ -46,9 +47,9 @@ public sealed class FieldStrategyTests
     public void TheBoxContactTest_SaysTwoThingsTouch_OnlyWhenTheirBoxesOverlap()
     {
         var boxContactTest = new BoxContactTest();
-        var firstElectrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(100, 100));
-        var overlappingElectrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(100 + firstElectrode.GetBounds().Width / 2, 100));
-        var apartElectrode = new Electrode(TestTextures.SharedTextureSet, new IntVector2(100 + firstElectrode.GetBounds().Width, 100));
+        var firstElectrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100));
+        var overlappingElectrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100 + firstElectrode.GetBounds().Width / 2, 100));
+        var apartElectrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100 + firstElectrode.GetBounds().Width, 100));
 
         Assert.True(boxContactTest.Touches(firstElectrode, overlappingElectrode));
         Assert.False(boxContactTest.Touches(firstElectrode, apartElectrode));
@@ -58,8 +59,8 @@ public sealed class FieldStrategyTests
     public void TheFamilyList_HandsOutPlacesInOrder_AndFindsTheNearestFreeMember()
     {
         var familyList = new FamilyList();
-        var mikeyFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(100, 100), FamilyMemberKind.Mikey, new Random(1));
-        var mommyFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(300, 100), FamilyMemberKind.Mommy, new Random(2));
+        var mikeyFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), FamilyMemberKind.Mikey, new Random(1));
+        var mommyFamilyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(300, 100), FamilyMemberKind.Mommy, new Random(2));
         Assert.Equal(FamilyList.FirstSlot, familyList.GetNearestSlot(new IntVector2(0, 0)));
         Assert.Empty(familyList.GetOccupiedSlots());
 
@@ -86,8 +87,8 @@ public sealed class FieldStrategyTests
     public void TheFamilyList_GivesATieToTheLaterPlace()
     {
         var familyList = new FamilyList();
-        familyList.Add(new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(100, 100), FamilyMemberKind.Mikey, new Random(1)));
-        familyList.Add(new FamilyMember(TestTextures.SharedTextureSet, new IntVector2(100, 100), FamilyMemberKind.Daddy, new Random(2)));
+        familyList.Add(new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), FamilyMemberKind.Mikey, new Random(1)));
+        familyList.Add(new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100), FamilyMemberKind.Daddy, new Random(2)));
 
         Assert.Equal(FamilyList.FirstSlot + 1, familyList.GetNearestSlot(new IntVector2(100, 100)));
     }
@@ -98,12 +99,12 @@ public sealed class FieldStrategyTests
         var fieldEntities = new FieldEntities();
         foreach (var kind in Enum.GetValues<RobotKind>()) Assert.NotNull(fieldEntities.GetList(kind));
 
-        fieldEntities.Electrodes.Add(new Electrode(TestTextures.SharedTextureSet, new IntVector2(10, 10)));
+        fieldEntities.Electrodes.Add(new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)));
         fieldEntities.Hulks.Add(
-            new Hulk(TestTextures.SharedTextureSet, new IntVector2(50, 50), new Random(1), 8, () => IntVector2.Zero));
+            new Hulk(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 50), new Random(1), 8, () => IntVector2.Zero));
         Assert.True(fieldEntities.AreEnemiesGone());
 
-        fieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, new IntVector2(90, 90), new Random(1)));
+        fieldEntities.Grunts.Add(new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(90, 90), new Random(1)));
         Assert.False(fieldEntities.AreEnemiesGone());
     }
 
@@ -111,7 +112,7 @@ public sealed class FieldStrategyTests
     public void TheField_AnswersWithoutLettingCallersReachThroughIt()
     {
         var playField = new PlayFieldBuilder().Build();
-        var grunt = new Grunt(TestTextures.SharedTextureSet, new IntVector2(90, 90), new Random(1));
+        var grunt = new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(90, 90), new Random(1));
         playField.FieldEntities.Add(grunt);
 
         Assert.Contains(grunt, playField.FieldEntities.GetEntities(RobotKind.Grunt));
@@ -128,7 +129,7 @@ public sealed class FieldStrategyTests
     public void ACollisionRule_OnlyReports_AndTheFieldResponds()
     {
         var playField = new PlayFieldBuilder().Build();
-        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, playField.Player.Position, FamilyMemberKind.Mommy, new Random(1));
+        var familyMember = new FamilyMember(TestTextures.SharedTextureSet, NullGameEvents.Instance, playField.Player.Position, FamilyMemberKind.Mommy, new Random(1));
         playField.FieldEntities.Add(familyMember);
 
         var results = new PlayerRescueRule().Detect(playField, playField.FieldEntities).ToArray();
@@ -151,8 +152,8 @@ public sealed class FieldStrategyTests
         var playField = new PlayFieldBuilder().Build();
         var bounds = playField.GetPlayfieldBounds();
         IntVector2 spot = new(bounds.X + 200, bounds.Y + 200);
-        playField.FieldEntities.Add(new Grunt(TestTextures.SharedTextureSet, spot, new Random(1)));
-        playField.FieldEntities.Add(new Grunt(TestTextures.SharedTextureSet, spot, new Random(1)));
+        playField.FieldEntities.Add(new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(1)));
+        playField.FieldEntities.Add(new Grunt(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot, new Random(1)));
         playField.PlayerLaserSlots.Fire(spot, Direction8.Up);
         var collisionResponder = new CollisionResponder(playField);
 
