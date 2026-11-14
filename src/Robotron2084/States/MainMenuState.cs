@@ -31,8 +31,9 @@ namespace Robotron2084.States;
 ///         <item>The game style is saved as soon as it changes. The game shown starts as one player each time the page opens.</item>
 ///         <item>Left alone for <see cref="IdleSeconds" />, the page goes back to the title, and the attract cycle runs.</item>
 ///         <item>
-///             The robot is drawn in its own colours, in the space the title page's ROBOTRON: and 2084 take up. The row the
-///             cursor is on strobes, as on the DEVELOPER TOOLS page.
+///             The picture of the robots fills the screen, in its own colours. Each block of words sits on a dark box
+///             the picture shows through, so the words can be read. The row the cursor is on strobes, as on the
+///             DEVELOPER TOOLS page.
 ///         </item>
 ///     </list>
 /// </remarks>
@@ -41,8 +42,11 @@ public sealed class MainMenuState : IGameState
     /// <summary>How long the page waits with no key or button pressed before going back to the title, in seconds.</summary>
     private const int IdleSeconds = 30;
 
-    /// <summary>Where the top of the robot is, in port pixels from the top.</summary>
-    private const int RobotRow = 30;
+    /// <summary>The gap between the words and the edge of the dark box behind them, in port pixels.</summary>
+    private const int ShadePadding = 8;
+
+    /// <summary>How dark the box behind the words is: 0 lets all of the picture show through, 1 hides it.</summary>
+    private const float ShadeOpacity = 0.65f;
 
     /// <summary>Where the first row of the menu is, in port pixels from the top.</summary>
     private const int FirstLineRow = 190;
@@ -170,9 +174,17 @@ public sealed class MainMenuState : IGameState
     /// <inheritdoc />
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
-        DrawCentredLogo(spriteBatch, _textureSet.MainMenuRobotTexture, RobotRow);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, _textureSet.MainMenuRobotTexture,
+            new Rectangle(0, 0, ScreenSize.Width, ScreenSize.Height), Color.White);
 
         var labelColumn = GetLabelColumn();
+        var menuLeft = labelColumn - CursorGap;
+        var lastLineRow = FirstLineRow + (Lines.Length - 1) * LineStep;
+        DrawShade(spriteBatch, menuLeft, ScreenSize.Width - menuLeft, FirstLineRow, lastLineRow);
+
+        var selectLineLeft = GetCentredSmallTextColumn(SelectLine);
+        DrawShade(spriteBatch, selectLineLeft, ScreenSize.Width - selectLineLeft, SelectLineRow, ChooseLineRow);
+
         var valueColumn = labelColumn + GetWidestLabelWidth() + ValueGap;
         for (var index = 0; index < Lines.Length; index++)
         {
@@ -331,20 +343,36 @@ public sealed class MainMenuState : IGameState
         _textureSet.BlitterDraw.DrawGlyphStatic(spriteBatch, _textureSet.CursorArrowTexture, x, y, TextPaletteIndex);
     }
 
-    /// <summary>Draws a logo in the middle of the screen, at the port's sprite scale.</summary>
-    private void DrawCentredLogo(SpriteBatch spriteBatch, Texture2D texture, int y)
+    /// <summary>
+    ///     Draws a see-through dark box behind a block of words in the small font, a little bigger than the words on
+    ///     every side.
+    /// </summary>
+    /// <param name="spriteBatch">Where the box is drawn.</param>
+    /// <param name="left">Where the words start, in port pixels from the left.</param>
+    /// <param name="right">Where the words end, in port pixels from the left.</param>
+    /// <param name="firstRow">The top of the first line of words, in port pixels from the top.</param>
+    /// <param name="lastRow">The top of the last line of words, in port pixels from the top.</param>
+    private void DrawShade(SpriteBatch spriteBatch, int left, int right, int firstRow, int lastRow)
     {
-        var width = texture.Width * ScreenSize.PortPixelsPerArcadePixel;
-        var height = texture.Height * ScreenSize.PortPixelsPerArcadePixel;
-        _textureSet.BlitterDraw.DrawSprite(spriteBatch, texture, new Rectangle((ScreenSize.Width - width) / 2, y, width, height),
-            Color.White);
+        var textHeight = ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.FontSmallTextures[0].Height);
+        var bounds = new Rectangle(left - ShadePadding, firstRow - ShadePadding, right - left + 2 * ShadePadding,
+            lastRow - firstRow + textHeight + 2 * ShadePadding);
+        _textureSet.BlitterDraw.DrawSolidRectangle(spriteBatch, bounds, Color.Black * ShadeOpacity);
+    }
+
+    /// <summary>Gets where a line in the small font starts, so that it is in the middle of the screen.</summary>
+    /// <param name="text">The line.</param>
+    /// <returns>Where the line starts, in port pixels from the left.</returns>
+    private int GetCentredSmallTextColumn(string text)
+    {
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.ArcadeText.MeasureSmallText(text));
+        return (ScreenSize.Width - width) / 2;
     }
 
     /// <summary>Draws a line in the small font, in the middle of the screen.</summary>
     private void DrawCentredSmallText(SpriteBatch spriteBatch, string text, int y)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.ArcadeText.MeasureSmallText(text));
-        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, (ScreenSize.Width - width) / 2, y, TextPaletteIndex);
+        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, GetCentredSmallTextColumn(text), y, TextPaletteIndex);
     }
 
     /// <summary>Says whether any key, or any button on either controller, went down this tick.</summary>
