@@ -22,7 +22,7 @@ public sealed class FamilySavedTests
         var playField = CreateFieldWithFamily();
 
         Assert.Equal(0, playField.GetFamilyMembersLost());
-        Assert.True(playField.HasFamilyMemberLeft());
+        Assert.True(playField.FieldEntities.FamilyList.AnyAlive());
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public sealed class FamilySavedTests
             playField.CountRescuedFamilyMembers();
         }
 
-        Assert.False(playField.HasFamilyMemberLeft());
+        Assert.False(playField.FieldEntities.FamilyList.AnyAlive());
         Assert.Equal(0, playField.GetFamilyMembersLost());
     }
 

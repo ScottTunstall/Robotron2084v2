@@ -111,7 +111,7 @@ public sealed class SpheroidEnforcerTimingTests
         {
             enforcer.Update(OneTick(), playField);
             Assert.True(enforcer.Position == start, $"moved during grow-up at tick {tick}");
-            Assert.True(playField.GetActiveSparkCount() == 0, $"fired during grow-up at tick {tick}");
+            Assert.True(playField.FieldEntities.Sparks.CountAlive() == 0, $"fired during grow-up at tick {tick}");
         }
 
         for (var tick = 1; tick <= 160 && enforcer.Position == start; tick++) enforcer.Update(OneTick(), playField);

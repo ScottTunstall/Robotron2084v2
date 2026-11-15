@@ -52,7 +52,7 @@ public sealed class HulkTargetTests
     {
         var playField = CreateField(1, 1, 1, 1);
         var player = playField.GetPlayerPosition();
-        var mommy = playField.GetFamilyMemberInSlot(1)!;
+        var mommy = playField.FieldEntities.FamilyList.GetMemberInSlot(1)!;
         Assert.Equal(FamilyMemberKind.Mommy, mommy.Kind);
 
         var stalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == mommy.Position);
@@ -69,8 +69,8 @@ public sealed class HulkTargetTests
     public void TheHulksTakeTheLeftOverPlacesInTurn()
     {
         var playField = CreateField(1, 1, 1, 0, 2);
-        var mikey = playField.GetFamilyMemberInSlot(0)!.Position;
-        var daddy = playField.GetFamilyMemberInSlot(2)!.Position;
+        var mikey = playField.FieldEntities.FamilyList.GetMemberInSlot(0)!.Position;
+        var daddy = playField.FieldEntities.FamilyList.GetMemberInSlot(2)!.Position;
 
         var mikeyStalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == mikey);
         var daddyStalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == daddy);
@@ -96,12 +96,12 @@ public sealed class HulkTargetTests
         var playField = new PlayFieldBuilder()
             .WithParameters(new WaveParams(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1))
             .Build();
-        Assert.Equal([0, 1, 2], playField.GetOccupiedFamilySlots());
+        Assert.Equal([0, 1, 2], playField.FieldEntities.FamilyList.GetOccupiedSlots());
 
-        playField.GetFamilyMemberInSlot(0)!.Rescue();
-        playField.GetFamilyMemberInSlot(2)!.BeginReprogramming();
+        playField.FieldEntities.FamilyList.GetMemberInSlot(0)!.Rescue();
+        playField.FieldEntities.FamilyList.GetMemberInSlot(2)!.BeginReprogramming();
 
-        Assert.Equal([1], playField.GetOccupiedFamilySlots());
+        Assert.Equal([1], playField.FieldEntities.FamilyList.GetOccupiedSlots());
     }
 
     [Fact]

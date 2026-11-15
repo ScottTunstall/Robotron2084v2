@@ -121,7 +121,7 @@ public sealed class FieldStrategyTests
         var grunt = new Grunt(TestEntityParams.Create(new Random(1)), new IntVector2(90, 90), 15);
         playField.FieldEntities.Grunts.Add(grunt);
 
-        Assert.Contains(grunt, playField.FieldEntities.GetEntities(RobotKind.Grunt));
+        Assert.Contains(grunt, playField.FieldEntities.GetList(RobotKind.Grunt).FieldEntities);
         Assert.Equal(playField.Player.Position, playField.GetPlayerPosition());
         Assert.Equal(playField.PlayfieldWall.PlayfieldBounds, playField.GetPlayfieldBounds());
         Assert.True(playField.HitsWall(new Rectangle(playField.PlayfieldWall.GetOuterBounds().X, playField.PlayfieldWall.GetOuterBounds().Y, 4, 4)));

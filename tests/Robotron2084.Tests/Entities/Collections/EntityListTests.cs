@@ -30,6 +30,19 @@ public sealed class EntityListTests
     }
 
     [Fact]
+    public void AnyAliveIsTrueUntilTheLastOneStartsToDie()
+    {
+        var electrodes = CreateTwoElectrodes();
+        Assert.True(electrodes.AnyAlive());
+
+        electrodes[0].Kill();
+        Assert.True(electrodes.AnyAlive());
+
+        electrodes[1].Kill();
+        Assert.False(electrodes.AnyAlive());
+    }
+
+    [Fact]
     public void AListIsAllDeadOnlyWhenNothingInItIsAliveOrDying()
     {
         var electrodes = CreateTwoElectrodes();
