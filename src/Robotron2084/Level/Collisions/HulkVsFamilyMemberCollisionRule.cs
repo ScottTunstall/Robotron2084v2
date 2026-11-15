@@ -16,7 +16,7 @@ internal sealed class HulkVsFamilyMemberCollisionRule : ICollisionRule
     {
         if (collisionScene.RobotsFrozen()) yield break;
 
-        foreach (var familyMember in fieldEntities.GetFamilyMembers())
+        foreach (var familyMember in fieldEntities.FamilyList)
         {
             Hulk? hulk = null;
             if (familyMember.IsGraspable())

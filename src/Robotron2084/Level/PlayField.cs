@@ -155,7 +155,7 @@ public sealed class PlayField : ICollisionScene
 
         // The family is put on last, after every robot (ROM HUMSTV).
         new FamilyWaveSpawner().Spawn(waveSpawnParams);
-        _familyMembersAtStart = FieldEntities.CountFamilyMembersLeft();
+        _familyMembersAtStart = FieldEntities.FamilyList.CountAlive();
 
         // The robots on the arcade's robot list are brought on in the order its appear loop meets them (ROM: RRG23.ASM APPEAR).
         IEntity[] robotsInAppearOrder = [.. GetRobotsInAppearOrder()];
@@ -166,7 +166,7 @@ public sealed class PlayField : ICollisionScene
         // With the bug switched off, each brain picks again now that there is a family to pick from.
         if (!brainsChaseMikeyBugEnabled)
             foreach (var brain in FieldEntities.Brains)
-                brain.Retarget(FieldEntities.GetNearestFamilySlot(brain.Position));
+                brain.Retarget(FieldEntities.FamilyList.GetNearestSlot(brain.Position));
     }
 
     /// <summary>Where the player's moves come from.</summary>
@@ -200,13 +200,13 @@ public sealed class PlayField : ICollisionScene
     /// <returns>The family members the field started with, less those rescued and those still on the field.</returns>
     public int GetFamilyMembersLost()
     {
-        return _familyMembersAtStart - RescuesThisLife - FieldEntities.CountFamilyMembersLeft();
+        return _familyMembersAtStart - RescuesThisLife - FieldEntities.FamilyList.CountAlive();
     }
 
     /// <summary>Says whether any family member is still on the field, neither rescued nor lost.</summary>
     public bool HasFamilyMemberLeft()
     {
-        return FieldEntities.CountFamilyMembersLeft() > 0;
+        return FieldEntities.FamilyList.CountAlive() > 0;
     }
 
     /// <summary>The score board of the player on the field.</summary>
@@ -234,21 +234,21 @@ public sealed class PlayField : ICollisionScene
     /// <remarks>Original source: <c>ENFCNT</c> (notes §11).</remarks>
     public bool CanDropEnforcer()
     {
-        return FieldEntities.GetEnforcerCount() < SpawnTuning.MaxEnforcers;
+        return FieldEntities.Enforcers.CountOnField() < SpawnTuning.MaxEnforcers;
     }
 
     /// <summary>Says whether a quark may drop another tank: there may be twenty at most.</summary>
     /// <remarks>Original source: <c>TNKCNT</c> (notes §11).</remarks>
     public bool CanDropTank()
     {
-        return FieldEntities.GetTankCount() < SpawnTuning.MaxTanks;
+        return FieldEntities.Tanks.CountOnField() < SpawnTuning.MaxTanks;
     }
 
     /// <summary>Says whether a brain may fire another cruise missile.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, <c>BCMCNT</c>.</remarks>
     public bool CanFireCruiseMissile()
     {
-        return FieldEntities.GetCruiseMissileCount() < CruiseMissileTuning.Max;
+        return FieldEntities.CruiseMissiles.CountOnField() < CruiseMissileTuning.Max;
     }
 
     /// <summary>Says whether a tank may fire another shell this wave.</summary>
@@ -262,7 +262,7 @@ public sealed class PlayField : ICollisionScene
     {
         if (_tankShellBugEnabled) return _shellsFiredThisWave <= SpawnTuning.MaxShellCount;
 
-        var shellsOnField = FieldEntities.TankShells.Count(entity => !entity.IsDead());
+        var shellsOnField = FieldEntities.TankShells.CountOnField();
         return shellsOnField <= SpawnTuning.MaxShellCount;
     }
 
@@ -329,7 +329,7 @@ public sealed class PlayField : ICollisionScene
     /// <summary>Counts the sparks in flight. There may never be more than twenty.</summary>
     public int GetActiveSparkCount()
     {
-        return FieldEntities.GetSparkCount();
+        return FieldEntities.Sparks.CountAlive();
     }
 
     /// <summary>Finds where the nearest living robot to a point is, for the attract demo's player to steer by.</summary>
@@ -345,7 +345,7 @@ public sealed class PlayField : ICollisionScene
     /// </summary>
     public IReadOnlyList<int> GetOccupiedFamilySlots()
     {
-        return FieldEntities.GetOccupiedFamilySlots();
+        return FieldEntities.FamilyList.GetOccupiedSlots();
     }
 
     /// <summary>Where the player's top-left corner is.</summary>
@@ -375,6 +375,44 @@ public sealed class PlayField : ICollisionScene
     {
         var isNoGorfToReturn = _gorfReturns.Count == 0;
         return FieldEntities.AreEnemiesGone() && isNoGorfToReturn;
+    }
+
+    /// <summary>Gets the wave the next life starts with: this wave, with only what is still on the field.</summary>
+    /// <returns>The wave's parameters with the counts of what is left.</returns>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRG23.ASM</c> <c>PLEND</c> (from <c>PLEND1</c>), <c>PLSAV</c> and <c>PLRES</c>
+    ///         </item>
+    ///         <item>Disassembly: the player-death routine and the player save and restore routines it calls</item>
+    ///     </list>
+    ///     <para>
+    ///         A robot or a family member that was killed, or rescued, stays gone. What is left is counted as the arcade
+    ///         counts it: a thing that has begun to die is already off the count, and a family member in a brain's hold
+    ///         has already gone. Enforcers do not carry over; they turn back into spheroids. The speed floor goes back to
+    ///         the wave's own, and the grunts keep the speed limit they had reached, raised to that floor if it is lower
+    ///         (notes §134).
+    ///     </para>
+    /// </remarks>
+    public WaveParams GetWaveParamsForNextLife()
+    {
+        var gruntMoveInterval = FieldEntities.Grunts.GetFastestMoveInterval(WaveParams.GruntMoveDelay);
+
+        return WaveParams with
+        {
+            GruntCount = FieldEntities.Grunts.CountAlive(),
+            BerzerkRobotCount = FieldEntities.BerzerkRobots.CountAlive(),
+            ElectrodeCount = FieldEntities.Electrodes.CountAlive(),
+            MikeyCount = FieldEntities.FamilyList.CountGraspable(FamilyMemberKind.Mikey),
+            MommyCount = FieldEntities.FamilyList.CountGraspable(FamilyMemberKind.Mommy),
+            DaddyCount = FieldEntities.FamilyList.CountGraspable(FamilyMemberKind.Daddy),
+            HulkCount = FieldEntities.Hulks.CountAlive(),
+            BrainCount = FieldEntities.Brains.CountAlive(),
+            SpheroidCount = FieldEntities.Spheroids.CountForNextLife(FieldEntities.Enforcers.CountAlive(), WaveParams.SpheroidCount),
+            QuarkCount = FieldEntities.Quarks.CountAlive(),
+            TankCount = FieldEntities.Tanks.CountAlive(),
+            GruntMoveDelay = Math.Max(gruntMoveInterval, WaveParams.GruntSpeedFloor)
+        };
     }
 
     /// <summary>
@@ -578,12 +616,6 @@ public sealed class PlayField : ICollisionScene
         foreach (var gorfReturn in due) _midWaveSpawner.SpawnReturningGorf(gorfReturn.GruntsOwed, gorfReturn.DropIntervalSteps);
     }
 
-    /// <summary>Says whether any family member is standing on the field and free.</summary>
-    internal bool AnyFamilyMemberAvailable()
-    {
-        return FieldEntities.AnyFamilyMemberAvailable();
-    }
-
     /// <summary>Adds a rescue's bonus to the score, and gives the player a spare life if it earns one.</summary>
     /// <param name="rescues">How many family members have now been rescued this life.</param>
     internal void AwardRescueBonus(int rescues)
@@ -663,7 +695,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="slot">The place to look in.</param>
     internal FamilyMember? GetFamilyMemberInSlot(int slot)
     {
-        return FieldEntities.GetFamilyMemberInSlot(slot);
+        return FieldEntities.FamilyList.GetMemberInSlot(slot);
     }
 
     /// <summary>The shortest wait between moves that the grunts' speed-ups may bring a grunt to (test hook).</summary>
@@ -701,7 +733,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="from">The point to measure from.</param>
     internal int GetNearestFamilySlot(IntVector2 from)
     {
-        return FieldEntities.GetNearestFamilySlot(from);
+        return FieldEntities.FamilyList.GetNearestSlot(from);
     }
 
     /// <summary>How many robots are still waiting for their turn to appear at the start of the wave (test hook).</summary>
@@ -730,7 +762,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="bounds">The box to test, in port pixels.</param>
     public bool IsClearOfElectrodes(Rectangle bounds)
     {
-        return FieldEntities.IsClearOfElectrodes(bounds);
+        return FieldEntities.Electrodes.IsClearOf(bounds);
     }
 
     /// <summary>
@@ -764,7 +796,7 @@ public sealed class PlayField : ICollisionScene
     internal void KillWithScoreBurst(IEntity targetEntity, ScoreBurst scoreBurst)
     {
         targetEntity.GetAs<IRemovable>().Kill();
-        FieldEntities.Add(scoreBurst);
+        FieldEntities.ScoreBursts.Add(scoreBurst);
     }
 
     /// <summary>Kills a robot and shatters its sprite into strips. Each kind's row calls this, and each row has its own sound.</summary>
@@ -789,7 +821,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="position">Where the family member stood.</param>
     internal void LeaveSkull(IntVector2 position)
     {
-        FieldEntities.Add(new SkullMarker(TextureSet, position));
+        FieldEntities.Skulls.Add(new SkullMarker(TextureSet, position));
     }
 
     /// <summary>
@@ -808,7 +840,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="position">Where the family member stood.</param>
     internal void ShowRescueBonus(IntVector2 position)
     {
-        FieldEntities.Add(new RescueBonusMarker(TextureSet, position, RescuesThisLife));
+        FieldEntities.RescueBonusMarkers.Add(new RescueBonusMarker(TextureSet, position, RescuesThisLife));
     }
 
     /// <summary>
@@ -841,9 +873,9 @@ public sealed class PlayField : ICollisionScene
     {
         var explosion =
             StripEffect.CreateExplosion(deadExplodable, direction, StripClip.CreateFromPortPixels(PlayfieldWall.PlayfieldBounds));
-        if (!FieldEntities.HasRoomForStripEffect(explosion.GetEngine())) return; // ROM: no record free → no explosion
+        if (!FieldEntities.Explosions.HasRoomFor(explosion.GetEngine())) return; // ROM: no record free → no explosion
 
-        FieldEntities.Add(explosion);
+        FieldEntities.Explosions.Add(explosion);
     }
 
     /// <summary>Starts a flash of colour where a laser ran into the wall (notes §63).</summary>
@@ -921,11 +953,10 @@ public sealed class PlayField : ICollisionScene
     /// </remarks>
     private void PlayShellAndGruntMovementSounds()
     {
-        foreach (var shell in FieldEntities.TankShells)
-            if (shell.BouncedThisUpdate)
-                PlaySoundFrom(SoundTables.ShellRebound, shell.GetBounds());
+        foreach (var shell in FieldEntities.TankShells.GetBouncedThisUpdate())
+            PlaySoundFrom(SoundTables.ShellRebound, shell.GetBounds());
 
-        if (FieldEntities.HasGruntStepped()) Sound.Play(SoundTables.RobotMove);
+        if (FieldEntities.Grunts.HasAnyStepped()) Sound.Play(SoundTables.RobotMove);
     }
 
     /// <summary>

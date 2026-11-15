@@ -790,7 +790,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     {
         if (playField.GetFamilyMemberInSlot(_targetSlot) is not null) return;
 
-        if (!playField.AnyFamilyMemberAvailable()) return;
+        if (!playField.FieldEntities.FamilyList.AnyAvailable()) return;
 
         _targetSlot = playField.GetNearestFamilySlot(_position);
     }

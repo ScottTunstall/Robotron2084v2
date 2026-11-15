@@ -23,13 +23,13 @@ public sealed class LivesCounter
     /// <summary>Gives one more life.</summary>
     public void AddLife()
     {
-        Lives += 1;
+        Lives++;
     }
 
     /// <summary>Takes one life off. A count that is already 0 stays at 0.</summary>
     public void LoseLife()
     {
-        if (Lives > 0) Lives -= 1;
+        if (Lives > 0) Lives--;
     }
 
     /// <summary>Puts the count at a new value.</summary>

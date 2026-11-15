@@ -42,7 +42,7 @@ internal sealed class MidWaveSpawner
     public void SpawnCruiseMissile(IntVector2 origin)
     {
         var cruiseMissile = new CruiseMissile(_playField.EntityParams, origin, _playField.GetPlayerPosition());
-        _fieldEntities.Add(cruiseMissile);
+        _fieldEntities.CruiseMissiles.Add(cruiseMissile);
         _playField.PlaySoundFrom(SoundTables.BrainShoot, cruiseMissile.GetBounds());
     }
 
@@ -52,7 +52,7 @@ internal sealed class MidWaveSpawner
     public void SpawnEnforcer(IntVector2 position)
     {
         var enforcer = new Enforcer(_playField.EntityParams, position, _playField.WaveParams.EnforcerFireDelay);
-        _fieldEntities.Add(enforcer);
+        _fieldEntities.Enforcers.Add(enforcer);
         _playField.PlaySoundFrom(SoundTables.EnforcerDropOff, enforcer.GetBounds());
     }
 
@@ -72,7 +72,7 @@ internal sealed class MidWaveSpawner
     {
         var waveParams = _playField.WaveParams;
         var gruntLimit = Math.Max(waveParams.GruntCount, GorfTuning.MinGruntCount);
-        var isWaveFull = _fieldEntities.Grunts.Count(entity => !entity.IsDead()) >= gruntLimit;
+        var isWaveFull = _fieldEntities.Grunts.CountOnField() >= gruntLimit;
         if (isWaveFull) return;
 
         var bounds = _playField.GetPlayfieldBounds();
@@ -83,7 +83,7 @@ internal sealed class MidWaveSpawner
         var landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);
         var grunt = new Grunt(_playField.EntityParams, new IntVector2(x, startY), _playField.WaveParams.GruntMoveDelay);
         grunt.BeginFall(landingY);
-        _fieldEntities.Add(grunt);
+        _fieldEntities.Grunts.Add(grunt);
     }
 
     /// <summary>A Gorf comes on to drop the grunts a Gorf that was shot did not drop.</summary>
@@ -95,7 +95,7 @@ internal sealed class MidWaveSpawner
     public void SpawnReturningGorf(int gruntsOwed, int dropIntervalSteps)
     {
 
-        _fieldEntities.Add(new Gorf(_playField.EntityParams, new GorfPlayfieldParams(_playField.GetPlayfieldBounds()),
+        _fieldEntities.Gorfs.Add(new Gorf(_playField.EntityParams, new GorfPlayfieldParams(_playField.GetPlayfieldBounds()),
             new GorfDropParams(_playField.WaveParams.MaxDropsX2, gruntsOwed, dropIntervalSteps)));
     }
 
@@ -120,7 +120,7 @@ internal sealed class MidWaveSpawner
         var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
         var x = Math.Clamp(position.X, bounds.X, bounds.Right - width);
         var y = Math.Clamp(position.Y, bounds.Y, bounds.Bottom - height);
-        _fieldEntities.Add(new Grunt(_playField.EntityParams, new IntVector2(x, y), _playField.WaveParams.GruntMoveDelay));
+        _fieldEntities.Grunts.Add(new Grunt(_playField.EntityParams, new IntVector2(x, y), _playField.WaveParams.GruntMoveDelay));
     }
 
     /// <summary>A brain's touch turns a family member into a prog where they stand.</summary>
@@ -129,7 +129,7 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> and <c>PROGST</c>.</remarks>
     public void SpawnProg(IntVector2 position, FamilyMemberKind kind)
     {
-        _fieldEntities.Add(new Prog(_playField.EntityParams, position, kind));
+        _fieldEntities.Progs.Add(new Prog(_playField.EntityParams, position, kind));
     }
 
     /// <summary>An enforcer fires a spark at the player.</summary>
@@ -143,7 +143,7 @@ internal sealed class MidWaveSpawner
     public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition)
     {
         var spark = new Spark(_playField.EntityParams, origin, playerPosition, _playField.GetPlayfieldBounds());
-        _fieldEntities.Add(spark);
+        _fieldEntities.Sparks.Add(spark);
         _playField.PlaySoundFrom(SoundTables.EnforcerShoot, spark.GetBounds());
     }
 
@@ -155,7 +155,7 @@ internal sealed class MidWaveSpawner
     {
         Tank tank = new(_playField.EntityParams, Tank.GetPositionInside(_playField.GetPlayfieldBounds(), position),
             _playField.WaveParams.TankFireDelay, false);
-        _fieldEntities.Add(tank);
+        _fieldEntities.Tanks.Add(tank);
         _playField.PlaySoundFrom(SoundTables.TankDrop, tank.GetBounds());
         return tank;
     }
@@ -171,7 +171,7 @@ internal sealed class MidWaveSpawner
         _playField.CountShellFired();
         var tankShell = new TankShell(_playField.EntityParams, origin,
             new TankShellAimParams(_playField.GetPlayerPosition(), _playField.WaveParams.ShellSpeed, _playField.GetPlayfieldBounds()));
-        _fieldEntities.Add(tankShell);
+        _fieldEntities.TankShells.Add(tankShell);
         _playField.PlaySoundFrom(SoundTables.TankFire, tankShell.GetBounds());
     }
 }

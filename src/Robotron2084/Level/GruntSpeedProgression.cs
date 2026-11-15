@@ -1,4 +1,5 @@
 using Robotron2084.Core;
+using Robotron2084.Entities.Collections;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities;
 
@@ -289,9 +290,9 @@ public sealed class GruntSpeedProgression
     ///         §67).
     ///     </para>
     /// </remarks>
-    public void SpeedUp(IEnumerable<Grunt> grunts)
+    public void SpeedUp(GruntList grunts)
     {
-        foreach (var grunt in grunts.Where(grunt => grunt.IsAlive())) grunt.SpeedUp(Floor);
+        grunts.SpeedUpAlive(Floor);
     }
 
     /// <summary>
@@ -325,7 +326,7 @@ public sealed class GruntSpeedProgression
     ///         times as much, though never below the new floor.
     ///     </para>
     /// </remarks>
-    public void Update(EntityList<Grunt> grunts, int clockUnits)
+    public void Update(GruntList grunts, int clockUnits)
     {
         _checkClockUnits += clockUnits;
         ForgetScoreWhenTheExecutiveStarts();
@@ -334,7 +335,7 @@ public sealed class GruntSpeedProgression
         _checkClockUnits -= ArcadeClock.ToClockUnits(_checkWaitArcadeFrames);
         _checkWaitArcadeFrames = CheckIntervalArcadeFrames;
 
-        if (grunts.Count(entity => !entity.IsDead()) >= GruntCountThatHoldsTheFloor) return;
+        if (grunts.CountOnField() >= GruntCountThatHoldsTheFloor) return;
 
         var floorStep = LargeFloorStep;
         if (_hasPlayerScoredSinceLastCheck) floorStep = SmallFloorStep;
@@ -342,8 +343,7 @@ public sealed class GruntSpeedProgression
         _hasPlayerScoredSinceLastCheck = false;
 
         Floor = Math.Max(LowestFloor, Floor - floorStep);
-        foreach (var grunt in grunts.Where(grunt => grunt.IsAlive()))
-            grunt.SpeedUpAsWaveGoesOn(Floor, LimitStepPerFloorStep * floorStep);
+        grunts.SpeedUpAliveAsWaveGoesOn(Floor, LimitStepPerFloorStep * floorStep);
     }
 
     /// <summary>Forgets any score made before the game started its loop of passes, at the moment the loop starts.</summary>

@@ -1,8 +1,9 @@
 using Robotron2084.Core.Models;
 using Robotron2084.Core;
 using Robotron2084.Entities;
+using Robotron2084.Entities.Models;
 
-namespace Robotron2084.Level;
+namespace Robotron2084.Entities.Collections;
 
 /// <summary>
 ///     The family on the field: Mommy, Daddy and Mikey, each in a numbered place that the brains and hulks pick them
@@ -22,7 +23,7 @@ namespace Robotron2084.Level;
 ///     A member who is dead or in
 ///     a brain's hold is off the ROM's list, so their place reads as empty.
 /// </remarks>
-public sealed class FamilyList
+public sealed class FamilyList : EntityList<FamilyMember>
 {
     /// <summary>The first place in the family list.</summary>
     /// <remarks>Disassembly: <c>$B354</c>.</remarks>
@@ -42,23 +43,30 @@ public sealed class FamilyList
     /// <summary>The next place to give out. The places are given out in order, starting from the first.</summary>
     private int _nextSlot;
 
-    /// <summary>Every member, in the order they joined, whether or not they are still on the field.</summary>
-    internal EntityList<FamilyMember> Members { get; } = new();
-
     /// <summary>Puts a member in the next free place.</summary>
-    /// <param name="familyMember">The member to add.</param>
+    /// <param name="entity">The member to add.</param>
     /// <remarks>Original source: <c>RRH11.ASM</c> <c>HUMSTV</c>.</remarks>
-    internal void Add(FamilyMember familyMember)
+    public override void Add(FamilyMember entity)
     {
-        familyMember.FamilySlot = _nextSlot++;
-        Members.Add(familyMember);
+        ArgumentNullException.ThrowIfNull(entity);
+
+        entity.FamilySlot = _nextSlot++;
+        base.Add(entity);
     }
 
     /// <summary>Says whether any member is still standing on the field and free.</summary>
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNL0</c>, <c>MOMCNT + DADCNT + KIDCNT</c> not being zero.</remarks>
     internal bool AnyAvailable()
     {
-        return Members.Any(familyMember => familyMember.IsGraspable());
+        return this.Any(familyMember => familyMember.IsGraspable());
+    }
+
+    /// <summary>Counts the members of one kind who are standing on the field and free.</summary>
+    /// <param name="kind">Which family member to count.</param>
+    /// <returns>How many there are. One in a brain's hold is not counted.</returns>
+    internal int CountGraspable(FamilyMemberKind kind)
+    {
+        return this.Count(familyMember => familyMember.Kind == kind && familyMember.IsGraspable());
     }
 
     /// <summary>Finds the member in a place, if they are still standing and free.</summary>
@@ -66,7 +74,7 @@ public sealed class FamilyList
     /// <returns>The member, or null when the place reads as empty. That is how a brain loses its target and looks for another.</returns>
     internal FamilyMember? GetMemberInSlot(int slot)
     {
-        return Members.FirstOrDefault(familyMember => familyMember.FamilySlot == slot && familyMember.IsGraspable());
+        return this.FirstOrDefault(familyMember => familyMember.FamilySlot == slot && familyMember.IsGraspable());
     }
 
     /// <summary>Finds the place of the member nearest a point. When two are as near as each other, the later place wins.</summary>
@@ -87,7 +95,7 @@ public sealed class FamilyList
     {
         var nearestSlot = FirstSlot;
         var nearestDistance = int.MaxValue;
-        foreach (var familyMember in Members)
+        foreach (var familyMember in this)
         {
             if (!familyMember.IsGraspable()) continue;
 
@@ -120,7 +128,7 @@ public sealed class FamilyList
     internal IReadOnlyList<int> GetOccupiedSlots()
     {
         return [
-            .. Members.Where(familyMember => familyMember.IsGraspable())
+            .. this.Where(familyMember => familyMember.IsGraspable())
             .Select(familyMember => familyMember.FamilySlot)
             .Order()
         ];

@@ -28,7 +28,7 @@ public sealed class TankWaveSpawner : IWaveSpawner
             var position =
                 waveSpawnParams.SpawnPlacement.FindSpawnPointAwayFrom(waveSpawnParams.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer);
             var tank = new Tank(playField.EntityParams, position, playField.WaveParams.TankFireDelay, true);
-            waveSpawnParams.FieldEntities.Add(tank);
+            waveSpawnParams.FieldEntities.Tanks.Add(tank);
         }
     }
 }

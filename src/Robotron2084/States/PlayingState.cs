@@ -297,7 +297,7 @@ public sealed class PlayingState : IGameState
     {
         var deadPlayerSlot = _gameSession.GetCurrent();
         NoteFamilySlotsLeftOver();
-        deadPlayerSlot.SavedWaveParams = WaveSurvivors.GetFrom(_playField);
+        deadPlayerSlot.SavedWaveParams = _playField.GetWaveParamsForNextLife();
         deadPlayerSlot.FamilyMembersLostThisWave += _playField.GetFamilyMembersLost();
 
         if (_gameSession.IsTwoPlayer())

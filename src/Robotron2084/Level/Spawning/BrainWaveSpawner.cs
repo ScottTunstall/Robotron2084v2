@@ -35,8 +35,8 @@ public sealed class BrainWaveSpawner : IWaveSpawner
                 playField.EntityParams,
                 position,
                 new BrainWaveParams(playField.WaveParams.BrainBeatWaitArcadeFrames, playField.WaveParams.BrainFireDelay),
-                fieldEntities.GetNearestFamilySlot(position));
-            fieldEntities.Add(brain);
+                fieldEntities.FamilyList.GetNearestSlot(position));
+            fieldEntities.Brains.Add(brain);
         }
 
         if (playField.WaveParams.BrainCount > 0) Sound.PlayTransporter();

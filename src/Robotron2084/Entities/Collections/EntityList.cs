@@ -4,11 +4,12 @@ using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Level;
 
-namespace Robotron2084.Entities;
+namespace Robotron2084.Entities.Collections;
 
 /// <summary>
 ///     Holds every enemy or object of one kind that is on the field, and does the jobs they all share: updating them,
-///     clearing out the dead ones and drawing them.
+///     clearing out the dead ones, drawing them and counting them. Each kind has its own list type built on this one,
+///     which holds the questions that are only about that kind.
 /// </summary>
 /// <remarks>
 ///     <list type="bullet">
@@ -26,7 +27,7 @@ namespace Robotron2084.Entities;
 ///     </list>
 /// </remarks>
 /// <typeparam name="T">The kind of entity the list holds.</typeparam>
-public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
+public abstract class EntityList<T> : IEntityList, IReadOnlyList<T>
     where T : class, IEntity
 {
     private readonly List<T> _items = [];
@@ -43,7 +44,7 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
 
     /// <summary>Adds an entity to the list.</summary>
     /// <param name="entity">The entity to add.</param>
-    public void Add(T entity)
+    public virtual void Add(T entity)
     {
         _items.Add(entity);
     }
@@ -52,6 +53,26 @@ public sealed class EntityList<T> : IEntityList, IReadOnlyList<T>
     public void DrawAll(SpriteBatch spriteBatch, PlayField playField)
     {
         foreach (var entity in _items) playField.DrawEntity(entity, spriteBatch);
+    }
+
+    /// <summary>Counts the entities in the list that are still alive.</summary>
+    /// <returns>How many are alive. One that has begun to die is not counted.</returns>
+    public int CountAlive()
+    {
+        return _items.Count(entity => entity.IsAlive());
+    }
+
+    /// <summary>Counts the entities still on the field: alive, or still playing their death.</summary>
+    /// <returns>How many are not yet dead.</returns>
+    public int CountOnField()
+    {
+        return _items.Count(entity => !entity.IsDead());
+    }
+
+    /// <inheritdoc />
+    public bool AreAllDead()
+    {
+        return _items.All(entity => entity.IsDead());
     }
 
     /// <summary>Goes through the list in order.</summary>

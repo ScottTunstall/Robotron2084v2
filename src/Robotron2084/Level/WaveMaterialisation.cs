@@ -419,7 +419,7 @@ public sealed class WaveMaterialisation
         var stripEngine = StripEngine.Vertical;
         if (fansInByColumns) stripEngine = StripEngine.Horizontal;
 
-        if (!fieldEntities.HasRoomForStripEffect(stripEngine)) return;
+        if (!fieldEntities.Explosions.HasRoomFor(stripEngine)) return;
 
         var robotBounds = robotEntity.GetBounds();
 
@@ -433,7 +433,7 @@ public sealed class WaveMaterialisation
             centreFinder = GetCentreColumnFinder(robotBounds, playfieldBounds);
         }
 
-        fieldEntities.Add(StripEffect.CreateAppear(
+        fieldEntities.Explosions.Add(StripEffect.CreateAppear(
             animationFrameSource,
             robotBounds,
             fanAxis,

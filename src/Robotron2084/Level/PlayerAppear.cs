@@ -128,8 +128,8 @@ public sealed class PlayerAppear
             if (isAboveLastRow) row = rowsLeft - 1;
 
             foreach (var slope in LeaningStripSlopes)
-                if (fieldEntities.HasRoomForStripEffect(StripEngine.Diagonal))
-                    fieldEntities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, slope, clip, row,
+                if (fieldEntities.Explosions.HasRoomFor(StripEngine.Diagonal))
+                    fieldEntities.Explosions.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, slope, clip, row,
                         startClockUnits));
         }
     }
@@ -157,11 +157,11 @@ public sealed class PlayerAppear
     private static void StartStraightStrips(Player player, FieldEntities fieldEntities, StripClip clip, int startClockUnits)
     {
         for (var row = GetSpriteRows(player) - 1; row >= 0; row--)
-            fieldEntities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, 0, clip, row, startClockUnits));
+            fieldEntities.Explosions.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, 0, clip, row, startClockUnits));
 
         for (var column = GetSpriteColumns(player) - 1; column >= 0; column--)
-            if (fieldEntities.HasRoomForStripEffect(StripEngine.Horizontal))
-                fieldEntities.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Columns, 0, clip,
+            if (fieldEntities.Explosions.HasRoomFor(StripEngine.Horizontal))
+                fieldEntities.Explosions.Add(StripEffect.CreateFollowingAppear(player, StripFanAxis.Columns, 0, clip,
                     column * ScreenSize.ArcadePixelsPerByte, startClockUnits));
     }
 }

@@ -15,7 +15,7 @@ internal sealed class PlayerRescueRule : ICollisionRule
     /// <inheritdoc />
     public IEnumerable<CollisionResult> Detect(ICollisionScene collisionScene, FieldEntities fieldEntities)
     {
-        foreach (var familyMember in fieldEntities.GetFamilyMembers())
+        foreach (var familyMember in fieldEntities.FamilyList)
             if (familyMember.IsGraspable() && collisionScene.IsPlayerAlive() && collisionScene.TouchesPlayer(familyMember))
                 yield return new PlayerRescuedFamilyMemberResult(familyMember);
     }

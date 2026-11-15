@@ -95,7 +95,7 @@ public sealed class AttractState : IGameState, IAttractState
 
         if (_playField.IsPlayerDead())
         {
-            _gameSession.GetCurrent().SavedWaveParams = WaveSurvivors.GetFrom(_playField);
+            _gameSession.GetCurrent().SavedWaveParams = _playField.GetWaveParamsForNextLife();
 
             if (!_gameSession.AnyPlayerSlotHasLives())
             {

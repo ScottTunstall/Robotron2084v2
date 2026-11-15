@@ -2,7 +2,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Level;
 
-namespace Robotron2084.Entities;
+namespace Robotron2084.Entities.Collections;
 
 /// <summary>
 ///     A list of entities that can update them, draw them and clear out the dead ones, whatever kind of entity it
@@ -17,6 +17,10 @@ public interface IEntityList
     /// <param name="spriteBatch">What the entities are drawn with.</param>
     /// <param name="playField">The playfield the entities are on.</param>
     void DrawAll(SpriteBatch spriteBatch, PlayField playField);
+
+    /// <summary>Says whether every entity in the list is dead. An empty list counts as all dead.</summary>
+    /// <returns>True when none is alive or still dying.</returns>
+    bool AreAllDead();
 
     /// <summary>Takes the dead entities out of the list.</summary>
     void PruneDead();
