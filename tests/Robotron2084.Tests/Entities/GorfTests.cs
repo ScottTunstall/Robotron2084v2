@@ -138,7 +138,7 @@ public sealed class GorfTests
     {
         var playField = CreateFieldInPlay();
         var gorf = CreateRandomGorf(playField, 3);
-        playField.FieldEntities.Add(gorf);
+        playField.FieldEntities.Gorfs.Add(gorf);
         var scoreBefore = playField.ScoreBoard.Score;
 
         var ticks = RunUntilGone(playField, gorf);
@@ -166,7 +166,7 @@ public sealed class GorfTests
                      .ToList()) grunt.Kill(); // the wave's own grunts: only the ones Gorf drops are counted
 
         var gorf = new Gorf(TestEntityParams.Create(new ScriptedRandom(randomNumbers)), new GorfPlayfieldParams(playField.GetPlayfieldBounds()), new GorfDropParams(maxDropsX2, gruntDropCount));
-        playField.FieldEntities.Add(gorf);
+        playField.FieldEntities.Gorfs.Add(gorf);
         RunUntilGone(playField, gorf);
         return (playField, gorf);
     }
@@ -254,7 +254,7 @@ public sealed class GorfTests
     {
         var playField = CreateFieldInPlay();
         var gorf = new Gorf(TestEntityParams.Create(new ScriptedRandom(0, 0, 0, 0, 0)), new GorfPlayfieldParams(playField.GetPlayfieldBounds()), new GorfDropParams(10));
-        playField.FieldEntities.Add(gorf);
+        playField.FieldEntities.Gorfs.Add(gorf);
 
         for (var tick = 0; tick < 3000 && playField.FieldEntities.Grunts.Count == 0; tick++) playField.Update(OneTickGameTime);
 
@@ -307,7 +307,7 @@ public sealed class GorfTests
     {
         var playField = CreateFieldInPlay(new WaveParams(1, 0));
         var gorf = new Gorf(TestEntityParams.Create(new Random(3)), new GorfPlayfieldParams(playField.GetPlayfieldBounds()), new GorfDropParams(4, 15));
-        playField.FieldEntities.Add(gorf);
+        playField.FieldEntities.Gorfs.Add(gorf);
         var bodyHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height);
         var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
         var bounds = playField.GetPlayfieldBounds();
@@ -319,7 +319,7 @@ public sealed class GorfTests
         {
             var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(x, groundTop + bodyHeight / 2));
             electrodes.Add(electrode);
-            playField.FieldEntities.Add(electrode);
+            playField.FieldEntities.Electrodes.Add(electrode);
         }
 
         var known = new HashSet<Grunt>();
@@ -351,7 +351,7 @@ public sealed class GorfTests
         var lines = new List<GorfLine>();
         playField.SetGorfLineSayer(lines.Add);
         var gorf = new Gorf(TestEntityParams.Create(new Random(3)), new GorfPlayfieldParams(playField.GetPlayfieldBounds()), new GorfDropParams(10, 0, 0), GorfLine.GorfianDoom);
-        playField.FieldEntities.Add(gorf);
+        playField.FieldEntities.Gorfs.Add(gorf);
         Assert.Empty(lines); // not before it appears
 
         for (var tick = 0; tick < 200; tick++) playField.Update(OneTickGameTime);
@@ -365,7 +365,7 @@ public sealed class GorfTests
         var playField = CreateFieldInPlay();
         var lines = new List<GorfLine>();
         playField.SetGorfLineSayer(lines.Add);
-        playField.FieldEntities.Add(CreateRandomGorf(playField, 4));
+        playField.FieldEntities.Gorfs.Add(CreateRandomGorf(playField, 4));
 
         for (var tick = 0; tick < 200; tick++) playField.Update(OneTickGameTime);
 

@@ -48,13 +48,13 @@ public sealed class PlayFieldFamilyMemberTests
     {
         var playField = CreateField(FamilyMemberWave(2, 1, 3));
 
-        Assert.Equal(2, playField.FieldEntities.FamilyList.Members.Count(h => h.Kind == FamilyMemberKind.Mommy));
-        Assert.Equal(1, playField.FieldEntities.FamilyList.Members.Count(h => h.Kind == FamilyMemberKind.Daddy));
-        Assert.Equal(3, playField.FieldEntities.FamilyList.Members.Count(h => h.Kind == FamilyMemberKind.Mikey));
+        Assert.Equal(2, playField.FieldEntities.FamilyList.Count(h => h.Kind == FamilyMemberKind.Mommy));
+        Assert.Equal(1, playField.FieldEntities.FamilyList.Count(h => h.Kind == FamilyMemberKind.Daddy));
+        Assert.Equal(3, playField.FieldEntities.FamilyList.Count(h => h.Kind == FamilyMemberKind.Mikey));
         // ROM HUMSTV spawn order: Mikeys, then mommies, then daddies — the list order
         // matters (the hulk "last slot" target is the last-spawned member).
-        Assert.Equal(FamilyMemberKind.Mikey, playField.FieldEntities.FamilyList.Members[0].Kind);
-        Assert.Equal(FamilyMemberKind.Daddy, playField.FieldEntities.FamilyList.Members[^1].Kind);
+        Assert.Equal(FamilyMemberKind.Mikey, playField.FieldEntities.FamilyList[0].Kind);
+        Assert.Equal(FamilyMemberKind.Daddy, playField.FieldEntities.FamilyList[^1].Kind);
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public sealed class PlayFieldFamilyMemberTests
         for (var tick = 0; tick < 600; tick++)
         {
             playField.Update(OneTick());
-            foreach (var familyMember in playField.FieldEntities.FamilyList.Members)
+            foreach (var familyMember in playField.FieldEntities.FamilyList)
             {
                 Assert.InRange(familyMember.GetBounds().X, inner.X, inner.Right - familyMember.GetBounds().Width);
                 Assert.InRange(familyMember.GetBounds().Y, inner.Y, inner.Bottom - familyMember.GetBounds().Height);
@@ -80,7 +80,7 @@ public sealed class PlayFieldFamilyMemberTests
     public void FamilyMembers_MoveOverTime()
     {
         var playField = CreateField(FamilyMemberWave(0, 0, 4));
-        var first = playField.FieldEntities.FamilyList.Members[0];
+        var first = playField.FieldEntities.FamilyList[0];
         var firstPosition = first.Position;
         var anyMoved = false;
 
@@ -131,7 +131,7 @@ public sealed class PlayFieldFamilyMemberTests
     {
         var playField = CreateField(FamilyMemberWave(0, 0, 1));
         playField.SkipWaveStart();
-        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        var familyMember = playField.FieldEntities.FamilyList[0];
         var scoreBefore = playField.ScoreBoard.Score;
         familyMember.MoveTo(playField.Player.Position);
 
@@ -148,7 +148,7 @@ public sealed class PlayFieldFamilyMemberTests
     {
         var playField = CreateField(FamilyMemberWave(0, 0, 9));
         playField.SkipWaveStart();
-        foreach (var familyMember in playField.FieldEntities.FamilyList.Members) familyMember.MoveTo(playField.Player.Position);
+        foreach (var familyMember in playField.FieldEntities.FamilyList) familyMember.MoveTo(playField.Player.Position);
 
         var scoreBefore = playField.ScoreBoard.Score;
         playField.Update(new GameTime());
@@ -175,7 +175,7 @@ public sealed class PlayFieldFamilyMemberTests
         Assert.Equal(0, playerSlot.Score);
         Assert.Equal(3, playerSlot.Lives);
 
-        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        var familyMember = playField.FieldEntities.FamilyList[0];
         familyMember.MoveTo(playField.Player.Position);
         playField.Update(new GameTime());
         Assert.Equal(ScoreValues.RescueBonus(1), playerSlot.Score);
@@ -195,14 +195,14 @@ public sealed class PlayFieldFamilyMemberTests
         // a family member before the game goes live — run through the start of the wave first (notes §88).
         for (var tick = 0; tick < WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
 
-        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        var familyMember = playField.FieldEntities.FamilyList[0];
         var scoreBefore = playField.ScoreBoard.Score;
         familyMember.MoveTo(playField.FieldEntities.Hulks[0].Position);
 
         playField.Update(OneTick());
 
         Assert.Equal(EntityLifeState.Dead, familyMember.LifeState);
-        Assert.Empty(playField.FieldEntities.FamilyList.Members); // pruned after the update
+        Assert.Empty(playField.FieldEntities.FamilyList); // pruned after the update
         Assert.Single(playField.FieldEntities.Skulls);
         Assert.Equal(familyMember.Position, playField.FieldEntities.Skulls[0].Position); // skull at the death spot
         Assert.Equal(0, playField.RescuesThisLife);
@@ -218,7 +218,7 @@ public sealed class PlayFieldFamilyMemberTests
              tick < WaveStartTicks.UntilLive(playField);
              tick++) playField.Update(OneTick()); // the hulk cannot act until the game is live (notes §88)
 
-        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        var familyMember = playField.FieldEntities.FamilyList[0];
         familyMember.MoveTo(playField.FieldEntities.Hulks[0].Position);
         playField.Update(OneTick());
         Assert.Single(playField.FieldEntities.Skulls);
@@ -236,7 +236,7 @@ public sealed class PlayFieldFamilyMemberTests
     {
         var playField = CreateField(FamilyMemberWave(0, 0, 1));
         playField.SkipWaveStart();
-        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        var familyMember = playField.FieldEntities.FamilyList[0];
         familyMember.MoveTo(playField.Player.Position);
 
         playField.Update(new GameTime());
@@ -265,7 +265,7 @@ public sealed class PlayFieldFamilyMemberTests
     {
         var first = CreateField(FamilyMemberWave(0, 0, 1));
         first.SkipWaveStart();
-        first.FieldEntities.FamilyList.Members[0].MoveTo(first.Player.Position);
+        first.FieldEntities.FamilyList[0].MoveTo(first.Player.Position);
         first.Update(new GameTime());
         Assert.Equal(1, first.RescuesThisLife);
 
@@ -273,7 +273,7 @@ public sealed class PlayFieldFamilyMemberTests
         var next = CreateField(FamilyMemberWave(0, 0, 1));
         next.SkipWaveStart();
         Assert.Equal(0, next.RescuesThisLife);
-        next.FieldEntities.FamilyList.Members[0].MoveTo(next.Player.Position);
+        next.FieldEntities.FamilyList[0].MoveTo(next.Player.Position);
         next.Update(new GameTime());
 
         Assert.Equal(1, next.RescuesThisLife);

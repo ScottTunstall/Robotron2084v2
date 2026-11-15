@@ -119,8 +119,8 @@ public sealed class BerzerkRobotTests
         var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance,
             new IntVector2(playField.Player.Position.X + 200, playField.Player.Position.Y + 100));
         var berzerkRobot = new BerzerkRobot(TestEntityParams.Create(new Random(1)), electrode.Position);
-        playField.FieldEntities.Add(electrode);
-        playField.FieldEntities.Add(berzerkRobot);
+        playField.FieldEntities.Electrodes.Add(electrode);
+        playField.FieldEntities.BerzerkRobots.Add(berzerkRobot);
 
         playField.Update(new GameTime());
 
@@ -136,7 +136,7 @@ public sealed class BerzerkRobotTests
 
         playField.FieldEntities.BerzerkRobots[0].Kill();
 
-        Assert.Equal(2, WaveSurvivors.GetFrom(playField).BerzerkRobotCount);
+        Assert.Equal(2, playField.GetWaveParamsForNextLife().BerzerkRobotCount);
 
         foreach (var berzerkRobot in playField.FieldEntities.BerzerkRobots) berzerkRobot.Kill();
 

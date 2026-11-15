@@ -30,7 +30,7 @@ public sealed class FamilySavedTests
     {
         var playField = CreateFieldWithFamily();
 
-        playField.FieldEntities.FamilyList.Members.First().Kill();
+        playField.FieldEntities.FamilyList.First().Kill();
 
         Assert.Equal(1, playField.GetFamilyMembersLost());
     }
@@ -39,7 +39,7 @@ public sealed class FamilySavedTests
     public void AFamilyMemberRescuedIsNotLost()
     {
         var playField = CreateFieldWithFamily();
-        var familyMember = playField.FieldEntities.FamilyList.Members.First();
+        var familyMember = playField.FieldEntities.FamilyList.First();
 
         familyMember.Rescue();
         playField.CountRescuedFamilyMembers();
@@ -52,7 +52,7 @@ public sealed class FamilySavedTests
     {
         var playField = CreateFieldWithFamily();
 
-        foreach (var familyMember in playField.FieldEntities.FamilyList.Members.ToList())
+        foreach (var familyMember in playField.FieldEntities.FamilyList.ToList())
         {
             familyMember.Rescue();
             playField.CountRescuedFamilyMembers();

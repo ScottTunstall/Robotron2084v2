@@ -41,7 +41,7 @@ public sealed class FamilyMemberSpawnTests
             {
                 var playField = CreateField(seed, wave);
 
-                foreach (var familyMember in playField.FieldEntities.FamilyList.Members)
+                foreach (var familyMember in playField.FieldEntities.FamilyList)
                 foreach (var electrode in playField.FieldEntities.Electrodes)
                     Assert.False(
                         electrode.GetBounds().Intersects(familyMember.GetBounds()),
@@ -61,7 +61,7 @@ public sealed class FamilyMemberSpawnTests
         {
             playField.Update(OneTick());
 
-            foreach (var familyMember in playField.FieldEntities.FamilyList.Members)
+            foreach (var familyMember in playField.FieldEntities.FamilyList)
             {
                 if (!familyMember.IsAlive() || familyMember.IsBeingReprogrammed) continue;
 
@@ -86,7 +86,7 @@ public sealed class FamilyMemberSpawnTests
         // half a second the family must be moving even though the robots are not.
         var playField = CreateField(3, 7);
 
-        var familyMembers = playField.FieldEntities.FamilyList.Members.ToList();
+        var familyMembers = playField.FieldEntities.FamilyList.ToList();
         Assert.NotEmpty(familyMembers);
         var start = familyMembers.ToDictionary(h => h, h => h.Position);
 

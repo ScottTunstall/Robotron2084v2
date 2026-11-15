@@ -9,8 +9,8 @@ using Xunit;
 
 namespace Robotron2084.Tests.Level;
 
-/// <summary>What a death keeps (ROM <c>PLEND</c>, <c>PLSAV</c>, <c>PLRES</c>, notes §134).</summary>
-public sealed class WaveSurvivorsTests
+/// <summary>The wave a new life starts with: what a death keeps (ROM <c>PLEND</c>, <c>PLSAV</c>, <c>PLRES</c>, notes §134).</summary>
+public sealed class PlayFieldNextLifeTests
 {
     private static PlayField CreateField(WaveParams waveParams)
     {
@@ -30,11 +30,11 @@ public sealed class WaveSurvivorsTests
             2, 1, 3, 2));
         playField.FieldEntities.Grunts[0].Kill();
         playField.FieldEntities.Electrodes[0].Kill();
-        playField.FieldEntities.FamilyList.Members.First(familyMember => familyMember.Kind == FamilyMemberKind.Mommy).Kill();
-        playField.FieldEntities.FamilyList.Members.First(familyMember => familyMember.Kind == FamilyMemberKind.Mikey).Kill();
+        playField.FieldEntities.FamilyList.First(familyMember => familyMember.Kind == FamilyMemberKind.Mommy).Kill();
+        playField.FieldEntities.FamilyList.First(familyMember => familyMember.Kind == FamilyMemberKind.Mikey).Kill();
         playField.FieldEntities.Spheroids[0].Kill();
 
-        var left = WaveSurvivors.GetFrom(playField);
+        var left = playField.GetWaveParamsForNextLife();
 
         Assert.Equal(3, left.GruntCount);
         Assert.Equal(2, left.ElectrodeCount);
@@ -55,7 +55,7 @@ public sealed class WaveSurvivorsTests
         playField.FieldEntities.Grunts[0].Kill(); // dying, not yet gone: the ROM has already counted it off
 
         Assert.True(playField.FieldEntities.Grunts[0].IsDying() || playField.FieldEntities.Grunts[0].IsDead());
-        Assert.Equal(1, WaveSurvivors.GetFrom(playField).GruntCount);
+        Assert.Equal(1, playField.GetWaveParamsForNextLife().GruntCount);
     }
 
     [Theory]
@@ -72,7 +72,7 @@ public sealed class WaveSurvivorsTests
 
         for (var i = 0; i < enforcers; i++) playField.FieldEntities.Enforcers.Add(CreateEnforcer());
 
-        Assert.Equal(expected, WaveSurvivors.GetFrom(playField).SpheroidCount);
+        Assert.Equal(expected, playField.GetWaveParamsForNextLife().SpheroidCount);
     }
 
     [Fact]
@@ -81,8 +81,8 @@ public sealed class WaveSurvivorsTests
         var playField = CreateField(new WaveParams(1, 3, GruntMoveDelay: 20, GruntSpeedFloor: 9));
         foreach (var grunt in playField.FieldEntities.Grunts) grunt.SpeedUp(1);
 
-        Assert.Equal(17, WaveSurvivors.GetFrom(playField).GruntMoveDelay); // 20 x 7/8, truncated: kept
-        Assert.Equal(9, WaveSurvivors.GetFrom(playField).GruntSpeedFloor); // the floor goes back to the wave's own
+        Assert.Equal(17, playField.GetWaveParamsForNextLife().GruntMoveDelay); // 20 x 7/8, truncated: kept
+        Assert.Equal(9, playField.GetWaveParamsForNextLife().GruntSpeedFloor); // the floor goes back to the wave's own
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public sealed class WaveSurvivorsTests
         }
 
         Assert.True(playField.FieldEntities.Grunts[0].MoveIntervalMaxBeats < 15);
-        Assert.Equal(15, WaveSurvivors.GetFrom(playField).GruntMoveDelay); // ROM PLEND2: ROBSPD raised to RMXSPD
+        Assert.Equal(15, playField.GetWaveParamsForNextLife().GruntMoveDelay); // ROM PLEND2: ROBSPD raised to RMXSPD
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public sealed class WaveSurvivorsTests
         Assert.All(playField.FieldEntities.Tanks, tank => Assert.False(tank.IsGrowing()));
 
         playField.FieldEntities.Tanks[0].Kill();
-        Assert.Equal(2, WaveSurvivors.GetFrom(playField).TankCount);
+        Assert.Equal(2, playField.GetWaveParamsForNextLife().TankCount);
     }
 
     [Fact]
@@ -118,9 +118,9 @@ public sealed class WaveSurvivorsTests
         first.FieldEntities.Grunts[0].Kill();
         first.FieldEntities.Grunts[1].Kill();
 
-        var next = CreateField(WaveSurvivors.GetFrom(first));
+        var next = CreateField(first.GetWaveParamsForNextLife());
 
         Assert.Equal(3, next.FieldEntities.Grunts.Count);
-        Assert.Equal(2, next.FieldEntities.FamilyList.Members.Count);
+        Assert.Equal(2, next.FieldEntities.FamilyList.Count);
     }
 }

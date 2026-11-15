@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Collections;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
@@ -99,8 +100,8 @@ public sealed class PlayFieldBrainProgMissileTests
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         var first = playField.FieldEntities.Brains[0];
         var firstStart = first.Position;
-        var mikey = playField.FieldEntities.FamilyList.Members.Single(familyMember => familyMember.Kind == FamilyMemberKind.Mikey);
-        var daddy = playField.FieldEntities.FamilyList.Members.Single(familyMember => familyMember.Kind == FamilyMemberKind.Daddy);
+        var mikey = playField.FieldEntities.FamilyList.Single(familyMember => familyMember.Kind == FamilyMemberKind.Mikey);
+        var daddy = playField.FieldEntities.FamilyList.Single(familyMember => familyMember.Kind == FamilyMemberKind.Daddy);
 
         // Mikey far to the right of the field; the daddy right beside the first brain, on its left.
         mikey.MoveTo(new IntVector2(inner.Right - ScreenSize.ToPortPixelsFromArcadePixels(20),
@@ -135,7 +136,7 @@ public sealed class PlayFieldBrainProgMissileTests
             .Build();
         Assert.All(
             withoutBugPlayField.FieldEntities.Brains,
-            brain => Assert.Equal(withoutBugPlayField.FieldEntities.GetNearestFamilySlot(brain.Position), brain.TargetFamilySlot));
+            brain => Assert.Equal(withoutBugPlayField.FieldEntities.FamilyList.GetNearestSlot(brain.Position), brain.TargetFamilySlot));
         Assert.Contains(withoutBugPlayField.FieldEntities.Brains, brain => brain.TargetFamilySlot != FamilyList.FirstSlot);
     }
 
@@ -153,8 +154,8 @@ public sealed class PlayFieldBrainProgMissileTests
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         var brain = playField.FieldEntities.Brains[0];
-        var mikey = playField.FieldEntities.FamilyList.Members.Single(familyMember => familyMember.Kind == FamilyMemberKind.Mikey);
-        var daddy = playField.FieldEntities.FamilyList.Members.Single(familyMember => familyMember.Kind == FamilyMemberKind.Daddy);
+        var mikey = playField.FieldEntities.FamilyList.Single(familyMember => familyMember.Kind == FamilyMemberKind.Mikey);
+        var daddy = playField.FieldEntities.FamilyList.Single(familyMember => familyMember.Kind == FamilyMemberKind.Daddy);
 
         mikey.MoveTo(new IntVector2(inner.Right - ScreenSize.ToPortPixelsFromArcadePixels(20), brain.Position.Y));
         daddy.MoveTo(new IntVector2(brain.Position.X - ScreenSize.ToPortPixelsFromArcadePixels(60),
@@ -183,7 +184,7 @@ public sealed class PlayFieldBrainProgMissileTests
 
         var playField = CreateField(waveParams);
 
-        var mikey = playField.FieldEntities.FamilyList.Members.Single(familyMember => familyMember.Kind == FamilyMemberKind.Mikey);
+        var mikey = playField.FieldEntities.FamilyList.Single(familyMember => familyMember.Kind == FamilyMemberKind.Mikey);
         Assert.Equal(FamilyList.FirstSlot, mikey.FamilySlot);
         Assert.All(playField.FieldEntities.Brains, brain => Assert.Equal(FamilyList.FirstSlot, brain.TargetFamilySlot));
     }
@@ -198,7 +199,7 @@ public sealed class PlayFieldBrainProgMissileTests
         WarmUp(playField); // run through the start of the wave (RobotsFrozen())
 
         // 30 arcade px left of (where the family member is now) → steps right/up.
-        var familyMemberSpot = playField.FieldEntities.FamilyList.Members[0].Position;
+        var familyMemberSpot = playField.FieldEntities.FamilyList[0].Position;
         IntVector2 brainSpot = new(familyMemberSpot.X - ScreenSize.ToPortPixelsFromArcadePixels(30),
             familyMemberSpot.Y - ScreenSize.ToPortPixelsFromArcadePixels(20));
         var brain = new Brain(TestEntityParams.Create(new Random(2)), brainSpot, new BrainWaveParams(8, 40), FamilyList.FirstSlot);

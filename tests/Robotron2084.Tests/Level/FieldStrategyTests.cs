@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Collections;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
@@ -118,7 +119,7 @@ public sealed class FieldStrategyTests
     {
         var playField = new PlayFieldBuilder().Build();
         var grunt = new Grunt(TestEntityParams.Create(new Random(1)), new IntVector2(90, 90), 15);
-        playField.FieldEntities.Add(grunt);
+        playField.FieldEntities.Grunts.Add(grunt);
 
         Assert.Contains(grunt, playField.FieldEntities.GetEntities(RobotKind.Grunt));
         Assert.Equal(playField.Player.Position, playField.GetPlayerPosition());
@@ -135,7 +136,7 @@ public sealed class FieldStrategyTests
     {
         var playField = new PlayFieldBuilder().Build();
         var familyMember = new FamilyMember(TestEntityParams.Create(new Random(1)), playField.Player.Position, FamilyMemberKind.Mommy);
-        playField.FieldEntities.Add(familyMember);
+        playField.FieldEntities.FamilyList.Add(familyMember);
 
         var results = new PlayerRescueRule().Detect(playField, playField.FieldEntities).ToArray();
 
@@ -157,8 +158,8 @@ public sealed class FieldStrategyTests
         var playField = new PlayFieldBuilder().Build();
         var bounds = playField.GetPlayfieldBounds();
         IntVector2 spot = new(bounds.X + 200, bounds.Y + 200);
-        playField.FieldEntities.Add(new Grunt(TestEntityParams.Create(new Random(1)), spot, 15));
-        playField.FieldEntities.Add(new Grunt(TestEntityParams.Create(new Random(1)), spot, 15));
+        playField.FieldEntities.Grunts.Add(new Grunt(TestEntityParams.Create(new Random(1)), spot, 15));
+        playField.FieldEntities.Grunts.Add(new Grunt(TestEntityParams.Create(new Random(1)), spot, 15));
         playField.PlayerLaserSlots.Fire(spot, Direction8.Up);
         var collisionResponder = new CollisionResponder(playField);
 

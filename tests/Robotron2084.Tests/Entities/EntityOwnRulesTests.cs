@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Entities.Collections;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
@@ -68,9 +69,24 @@ public sealed class EntityOwnRulesTests
     }
 
     [Fact]
+    public void AnEntityListCountsOnlyTheAlive_SoADyingOneIsAlreadyOffTheCount()
+    {
+        var list = new ElectrodeList
+        {
+            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)),
+            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 10))
+        };
+        Assert.Equal(2, list.CountAlive());
+
+        list[0].Kill(); // an electrode shrivels: dying, not yet dead
+
+        Assert.Equal(1, list.CountAlive());
+    }
+
+    [Fact]
     public void AnEntityListCountsItsLiving_UntilTheDeadArePruned()
     {
-        var list = new EntityList<Electrode>
+        var list = new ElectrodeList
         {
             new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)),
             new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 10))

@@ -41,7 +41,7 @@ public sealed class PixelCollisionTests
     public void ASpriteThatDoesNotTouchDoesNotRescue_EvenWhereTheBoxesOverlap()
     {
         var playField = CreateField(new StubPixelCollision(false));
-        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        var familyMember = playField.FieldEntities.FamilyList[0];
         familyMember.MoveTo(playField.Player.Position);
 
         playField.Update(new GameTime());
@@ -55,7 +55,7 @@ public sealed class PixelCollisionTests
     {
         var playField = CreateField(new StubPixelCollision(true));
         playField.SkipWaveStart();
-        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        var familyMember = playField.FieldEntities.FamilyList[0];
 
         // Well outside the player's box, so nothing but the sprite test could rescue this family member.
         var inner = playField.PlayfieldWall.PlayfieldBounds;
@@ -71,7 +71,7 @@ public sealed class PixelCollisionTests
     {
         var playField = CreateField(new StubPixelCollision(false, false));
         playField.SkipWaveStart();
-        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        var familyMember = playField.FieldEntities.FamilyList[0];
         familyMember.MoveTo(playField.Player.Position);
 
         playField.Update(new GameTime());
@@ -84,7 +84,7 @@ public sealed class PixelCollisionTests
     {
         var playField = CreateField(null);
         playField.SkipWaveStart();
-        var familyMember = playField.FieldEntities.FamilyList.Members[0];
+        var familyMember = playField.FieldEntities.FamilyList[0];
         familyMember.MoveTo(playField.Player.Position);
 
         playField.Update(new GameTime());

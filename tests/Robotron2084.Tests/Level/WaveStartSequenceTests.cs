@@ -161,7 +161,7 @@ public sealed class WaveStartSequenceTests
         // The collision process is made at PLS2 (`MAKP COLCHK`, $2895), so a family member that walks into
         // the player before then is not rescued.
         var playField = CreateField(new WaveParams(1, MikeyCount: 1));
-        var mikey = playField.FieldEntities.FamilyList.Members[0];
+        var mikey = playField.FieldEntities.FamilyList[0];
 
         for (var tick = 1; tick < WaveStartTicks.UntilLive(playField); tick++)
         {

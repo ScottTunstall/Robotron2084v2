@@ -1,3 +1,4 @@
+using Robotron2084.Entities.Collections;
 using Robotron2084.Entities;
 using Robotron2084.Level.Models;
 using Robotron2084.Level;
@@ -203,8 +204,11 @@ public sealed class PlayFieldRobotRegistryTests
         Assert.Equal(Enum.GetValues<RobotKind>().Length, ExpectedEntityTypes.Length);
         foreach (var (kind, entityType) in ExpectedEntityTypes)
         {
+            // Each kind has its own list type (GruntList, TankList, ...), built on EntityList<T> of that kind's entity.
             var listType = playField.FieldEntities.GetList(kind).GetType();
-            Assert.Equal(entityType, Assert.Single(listType.GetGenericArguments()));
+            var baseListType = listType.BaseType!;
+            Assert.Equal(typeof(EntityList<>), baseListType.GetGenericTypeDefinition());
+            Assert.Equal(entityType, Assert.Single(baseListType.GetGenericArguments()));
         }
     }
 }
