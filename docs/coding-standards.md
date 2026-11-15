@@ -119,6 +119,15 @@ sizes (`Tank.GetPositionInside`, `Quark.GetStartPosition`), and a fact about a k
 its registry (STR-6). Move the method to the type whose data it uses and leave the caller a one-line call. What
 stays in a coordinating class such as `PlayField` is only what needs two or more different objects at once: the
 order of the phases, and the rules between entities (who kills whom, who is drawn first).
+- **A whole class that only works on another class's data is the same smell, at the size of a class.** A static class
+  or a stateless helper whose methods take one object and read or change its data (`WaveSurvivors.GetFrom(playField)`,
+  or anything named `...Helper`, `...Utils`, `...Manager` or `...Calculator`) is not a job of its own: it is that object's
+  behaviour kept outside it. Move each method to the class that owns the data, push the counting and checking down to the
+  object that holds the list (`EntityList.CountAlive()`, `FamilyList.CountGraspable(kind)`), and delete the class. This is
+  encapsulation: data and what is done with it live together, so the data can change without its users changing.
+- **Not the smell:** a class that needs two or more different objects at once and belongs to none of them. The collision
+  rules (STR-12) compare two kinds of entity; the spawners build entities onto a field from a wave's numbers; the
+  `...Params` models carry values between objects.
 
 **STR-9. A check on state is a method that says what it is for.** Never compare an entity's `LifeState` (or any
 other state) with an enum value outside the type that owns it. Ask `entity.IsAlive()`, `IsDying()` or `IsDead()`
@@ -143,8 +152,13 @@ near object a method that does the whole job (`field.HitsWall(box)`, `field.GetE
 collaborator in as a parameter. A short-lived local that only renames a parameter's collaborator is not a fix.
 - **Exempt:** reading plain data (`point.X`, `box.Bounds.Width`, `waveParameters.GruntCount`), one fluent chain on a single
   object (LINQ, builders), and static, namespace and enum paths (`ScreenSize.ToPortPixelsFromArcadePixels`, `EntityLifeState.Alive`).
-- **The price:** a thin delegating method on the near object. That is correct. It keeps callers from knowing the
-  structure behind it, so the structure can change in one place.
+- **Exempt: an object's own collections.** A list or collection an object exposes is called directly:
+  `fieldEntities.Grunts.Add(grunt)`, `fieldEntities.FamilyList.AnyAvailable()`. Do not write a method on the owner that
+  only forwards to it (`FieldEntities.Add(Grunt)`, `FieldEntities.AnyFamilyMemberAvailable()`): a pass-through that adds
+  nothing is a layer of indirection, not encapsulation, and the reader has to open it to find it does nothing.
+- **The price:** a delegating method on the near object, when it does a whole job the caller would otherwise piece
+  together from the object's insides (`field.HitsWall(box)`). It keeps callers from knowing the structure behind it, so
+  the structure can change in one place. A method that only passes the call on to one member is not that.
 
 **STR-12. A rule reports; the owner responds.** A class that detects a situation (a collision rule, a validator) returns a
 **result** that says what it found, and never changes the object that called it or tells it what to do. The owner takes each
@@ -199,6 +213,20 @@ namespace to match (`Robotron2084.Entities.Extensions`). The class is named for 
 beside them belongs in its own class (`InputActions.All`). A test helper that extends a type does the same in the test project's own
 `Extensions` folder (`Entities/Extensions/LaserSlotsTestExtensions`). Code that calls an extension method needs a `using` for the
 `Extensions` namespace, so a reader can find where a call comes from.
+
+**STR-18. Every kind of entity has its own collection type, and a scan of a collection is a method of that collection.**
+This is encapsulation applied to lists (STR-8): the list owns its members, so the questions about them live in the list.
+- **One list type per kind of entity**, named `<Entity>List` (`GruntList`, `GorfList`, `ElectrodeList`, `FamilyList`), built on the
+  abstract `EntityList<T>` and kept in `Entities/Collections`. `FieldEntities` holds one of each.
+- **A scan of one list is a method of that list.** Code that walks a list to count, find, test or change its members moves into the
+  list type: `GruntList.HasAnyStepped()`, `GruntList.SpeedUpAlive(floor)`, `ElectrodeList.IsClearOf(box)`,
+  `SpheroidList.CountForNextLife(enforcersLeft, startedWith)`, `StripEffectList.HasRoomFor(engine)`. A question every list can answer
+  goes in `EntityList<T>`: `CountAlive()`, `CountOnField()`, `AreAllDead()`. Code outside asks the list; it never loops over it to work
+  the answer out itself (`grunts.Count(grunt => !grunt.IsDead())` is the smell).
+- **A list that adds a rule to adding overrides `Add`.** `FamilyList` gives each member the next numbered place. `Add` is virtual so
+  the rule holds however the list is reached; a list never hides `Add` with `new`.
+- **Not covered:** a loop that needs another object at the same time, such as a collision rule pairing each brain with the family, or
+  a search that uses the scene's contact test. That is the coordinating class's job (STR-8, STR-12).
 
 ## 3. Naming (§114)
 
