@@ -174,8 +174,9 @@ complete. When a constructor takes more than four parameters, gather what belong
 (a `readonly record struct` or `sealed record` named for what it holds, in its own file, STR-3). The parameter object is
 still passed to the constructor and its members are still required. It is not a bag of optional settings.
 Group by purpose, and check what is given: a parameter object's constructor throws on a value that makes no sense
-(`ArgumentNullException`, `ArgumentOutOfRangeException`), so a bad object cannot exist. Examples: `EntityDependencies` (what every entity
-shares), `GorfPlayfield` and `GorfDrops` (where Gorf is, and what it drops), `TankShellAim`, `QuarkWaveSettings`, `BrainWaveSettings`.
+(`ArgumentNullException`, `ArgumentOutOfRangeException`), so a bad object cannot exist. Examples: `EntityParams` (what every entity
+shares), `GorfPlayfieldParams` and `GorfDropParams` (where Gorf is, and what it drops), `TankShellAimParams`, `QuarkWaveParams`,
+`BrainWaveParams`. NAM-28 says how models are named.
 Records, record structs, enums and other plain data holders live in a `Models` folder inside the folder of the code that owns them
 (`Entities/Models`, `Level/Models`, `Level/Collisions/Models`, `Level/Spawning/Models`, `States/Models`, `Audio/Synthesis/Models` and
 so on, in every folder that has such types), with the namespace to match (`Robotron2084.Entities.Models`), so that a developer can see at a glance that they are
@@ -184,7 +185,7 @@ folder of its area. Classes with behaviour (even when their name ends in `Model`
 
 **STR-16. Every game entity takes an `IGameEvents`, and announces what happens to it.** A game entity is a thing with
 behaviour in the game: the player, the family, the robots, the electrodes, the shots. The entity takes an `IGameEvents`
-as a required constructor parameter (STR-15), inside the `EntityDependencies` that every entity is built with (texture set, `IGameEvents`,
+as a required constructor parameter (STR-15), inside the `EntityParams` that every entity is built with (texture set, `IGameEvents`,
 random source), or on its own when the entity has no random numbers (`Electrode`, `PlayerLaser`), and raises a `GameEvent` from its own state changes
 (`Kill`, `Rescue`, a knock-back), only when the change really happens. It never decides what the game does about the event
 (sound, speech, score): listeners do that. A new kind of entity adds a `GameEventKind` for what is worth announcing
@@ -453,7 +454,7 @@ pull request, with no tooltip and no go-to-definition. For every parameter, loca
 the reader must be able to say what type it is from the name alone, and must not need the xmldoc to do so.
 - **An object is named with its whole type name.** Lower camel case for a parameter, local or field: `PlayField playField`,
   `TextureSet textureSet`, `GamePalette gamePalette`, `GameSession gameSession`, `ICollisionScene collisionScene`,
-  `IPlayerInputSource playerInputSource` (an interface drops its `I`), `WaveSpawnContext waveSpawnContext`. Pascal case for a
+  `IPlayerInputSource playerInputSource` (an interface drops its `I`), `WaveSpawnParams waveSpawnParams`. Pascal case for a
   property or record component: `PlayField PlayField`. A shortened form (`field`, `sprites`, `palette`, `session`, `context`,
   `scene`, `input`) is an abbreviation (NAM-5), and two different types can share it, so it is not allowed.
 - **A narrower thing puts its qualifier in front of the whole type name**: `deadPlayerSlot`, `previousKeyboardState`,
@@ -527,6 +528,33 @@ Not `Showing…`, `Shows…`, `…Shown`, `…Drawn` or `show…`.
   `Visible`, so a reader can find them all with one search.
 - **Not covered:** a bool that picks *which* of two things is shown (`_isShowingArcadeText` chooses between the arcade's text and the
   port's), and a bool that says something has *happened* (`HasPlayerAppeared`).
+
+**NAM-28. A model's name says what kind of model it is.** Models are the records, record structs, enums and plain data holders
+in a `Models` folder (STR-15). Models that do the same job end the same way, so a reader can tell what one is for from its name alone:
+
+| The model is... | It ends in | Examples |
+|---|---|---|
+| A parameter object: values grouped to be passed to a constructor or method (STR-15) | `Params` | `EntityParams`, `GorfDropParams`, `TankShellAimParams`, `QuarkWaveParams`, `WaveParams`, `WaveSpawnParams`, `GameStateParams`, `FilteredNoiseParams` |
+| What a check or an operation found or did | `Result` | `LaserHitResult`, `HulkKilledFamilyMemberResult`, `SubmitResult` |
+| One row of a fixed table of data (the arcade's or the port's) | `Row` | `WaveTableRow`, `BozoModeRow`, `RobotKindRow`, `SoundTableRow`, `SquareWaveSoundRow`, `WaveTableSoundRow` |
+| One item in a list, a queue or a page that changes as the game runs | `Entry` | `HighScoreEntry`, `SpeechChannelEntry`, `SoundTestEntry`, `SpriteTestEntry` |
+| An enum of the steps something goes through, in order | `Phase` | `PlayerDeathPhase`, `HighScorePrintPhase`, `InitialsEntryPhase` |
+| An enum of the sorts of a thing | `Kind` | `RobotKind`, `FamilyMemberKind`, `GameEventKind`, `InputBindingKind` |
+| An enum of where something is in its life, which can go back as well as forward | `State` | `EntityLifeState` |
+
+- **Never `Model`, `Data`, `Info`, `Settings`, `Context` or `Dto`** for a new model. The folder already says it is a model, and the other
+  words say nothing about what it is for. (`AttractMovieData` keeps its name: it is the generated copy of the ROM's own movie bytes.)
+- **A model that fits none of the rows** is named for the thing it holds, with no suffix: `IntVector2`, `LetterSpan`, `ScoreDigit`,
+  `MovieDescriptor`, `GameEvent`.
+- **A parameter or field holding a model is named after its whole type** (NAM-26): `EntityParams entityParams`,
+  `WaveSpawnParams waveSpawnParams`, `GameStateParams gameStateParams`.
+- **The structure that goes with each kind:**
+  - A `Params` has an explicit constructor that checks what it is given (`ArgumentNullException`, `ArgumentOutOfRangeException`) and
+    get-only properties, so a bad one cannot exist (STR-15). `WaveParams` is the one exception for now: it is copied with `with` far more
+    than it is built, and a `with` copy skips the constructor's checks.
+  - A positional record documents every parameter with a `<param>` tag on the type.
+  - An enum documents every member.
+  - Every model has a `<summary>`, its `using` lines are sorted with `System` first, and it never names its own namespace in a `using`.
 
 ## 4. Numbers and units (§112, §113)
 
@@ -1018,7 +1046,7 @@ grep -rnwE --include=*.cs 'settings' src | grep -v '///'
 
 # A shortened name for an object (NAM-26): each should print nothing. The list is the usual offenders; the rule is the
 # test, so also read the parameter list of every method you add.
-grep -rnE --include=*.cs '\b(PlayField (field|_field)|TextureSet (sprites|_sprites)|GamePalette (palette|_palette)|GameSession (session|_session)|FieldEntities entities|WaveSpawnContext context|IPlayerInputSource input|ICollisionScene scene)\b' src tests tools
+grep -rnE --include=*.cs '\b(PlayField (field|_field)|TextureSet (sprites|_sprites)|GamePalette (palette|_palette)|GameSession (session|_session)|FieldEntities entities|WaveSpawnParams params|IPlayerInputSource input|ICollisionScene scene)\b' src tests tools
 # ...and a parameter called field, which is a keyword inside a property accessor since C# 14
 grep -rnE --include=*.cs '\b[A-Z]\w*(<[^>]+>)? field\b[,)]' src tests tools | grep -v '///'
 
