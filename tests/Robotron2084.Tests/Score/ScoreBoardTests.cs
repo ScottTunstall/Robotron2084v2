@@ -1,8 +1,9 @@
 using Robotron2084.Level;
 using Robotron2084.Persistence;
+using Robotron2084.Score;
 using Xunit;
 
-namespace Robotron2084.Tests.Level;
+namespace Robotron2084.Tests.Score;
 
 /// <summary>The run's score and its EXTRA MAN EVERY threshold (notes §131; the GAME ADJUSTMENT page's first row).</summary>
 public sealed class ScoreBoardTests
