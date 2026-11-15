@@ -2,7 +2,7 @@ using Robotron2084.Core.Models;
 using Robotron2084.Core;
 using Robotron2084.Entities;
 
-namespace Robotron2084.Tests;
+namespace Robotron2084.Tests.Entities.Extensions;
 
 /// <summary>Lets a test fire a laser and get hold of it, which <see cref="LaserSlots.Fire" /> does not return.</summary>
 internal static class LaserSlotsTestExtensions
