@@ -1,6 +1,7 @@
 using Robotron2084.Input;
 using Robotron2084.Level.Models;
 using Robotron2084.Persistence;
+using Robotron2084.Score.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level;

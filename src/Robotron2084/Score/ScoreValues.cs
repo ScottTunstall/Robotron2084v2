@@ -1,4 +1,4 @@
-namespace Robotron2084.Level;
+namespace Robotron2084.Score;
 
 /// <summary>The points the player scores for each kind of kill, and for rescuing a family member.</summary>
 /// <remarks>

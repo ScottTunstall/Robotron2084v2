@@ -6,6 +6,7 @@ using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
+using Robotron2084.Score;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;

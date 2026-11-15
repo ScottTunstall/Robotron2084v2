@@ -4,6 +4,7 @@ using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities;
 using Robotron2084.Level.Models;
 using Robotron2084.Level.Spawning;
+using Robotron2084.Score;
 
 namespace Robotron2084.Level;
 

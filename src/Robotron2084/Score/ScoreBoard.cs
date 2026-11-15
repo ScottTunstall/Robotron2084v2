@@ -1,6 +1,6 @@
 using Robotron2084.Persistence;
 
-namespace Robotron2084.Level;
+namespace Robotron2084.Score;
 
 /// <summary>Keeps a player's score, and says when it has earned a spare life.</summary>
 /// <remarks>

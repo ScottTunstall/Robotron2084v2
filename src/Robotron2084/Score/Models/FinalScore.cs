@@ -1,4 +1,4 @@
-namespace Robotron2084.Level.Models;
+namespace Robotron2084.Score.Models;
 
 /// <summary>
 ///     One player's score at the end of a game, with the player's number. It is what the game offers to the high

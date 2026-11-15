@@ -2,6 +2,7 @@ using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Persistence.Models;
 using Robotron2084.Persistence;
+using Robotron2084.Score.Models;
 using Robotron2084.States.Models;
 
 namespace Robotron2084.States;
