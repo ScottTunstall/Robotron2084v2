@@ -550,6 +550,8 @@ in a `Models` folder (STR-15). Models that do the same job end the same way, so 
 | An enum of the sorts of a thing | `Kind` | `RobotKind`, `FamilyMemberKind`, `GameEventKind`, `InputBindingKind` |
 | An enum of where something is in its life, which can go back as well as forward | `State` | `EntityLifeState` |
 
+- **A class with behaviour is not a model and is not named like one.** The logic behind a screen is named for what it does: a menu
+  (`SettingsMenu`, `DefineInputsMenu`), an editor (`InitialsEditor`). It stays out of `Models`.
 - **Never `Model`, `Data`, `Info`, `Settings`, `Context` or `Dto`** for a new model. The folder already says it is a model, and the other
   words say nothing about what it is for. (`AttractMovieData` keeps its name: it is the generated copy of the ROM's own movie bytes.)
 - **A model that fits none of the rows** is named for the thing it holds, with no suffix: `IntVector2`, `LetterSpan`, `ScoreDigit`,
