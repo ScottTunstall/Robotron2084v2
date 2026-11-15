@@ -361,7 +361,7 @@ public sealed class FieldEntities
     /// <param name="from">The point to measure from.</param>
     /// <returns>The robot's position, or null when there is none.</returns>
     /// <remarks>
-    ///     Only the kinds the demo's player chases are looked at (<see cref="RobotKindInfo.IsChasedByDemoPlayer" />).
+    ///     Only the kinds the demo's player chases are looked at (<see cref="RobotKindRow.IsChasedByDemoPlayer" />).
     ///     The distance is <see cref="IntVector2.GetManhattanDistance" /> (notes §94).
     /// </remarks>
     public IntVector2? GetNearestLivingRobotPosition(IntVector2 from)

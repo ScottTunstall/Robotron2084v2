@@ -21,17 +21,18 @@ namespace Robotron2084.Core;
 ///             the arcade.
 ///         </item>
 ///     </list>
-///     <para>What it does:</para>
-///     <list type="bullet">
-///         <item>
-///             It says the wait is over on the first <see cref="ArcadeClock.PortTicksPerSecond">tick</see> at or
-///             after the moment the wait really ends.
-///         </item>
-///         <item>
-///             It keeps the time left over past that moment, and counts it towards the next wait. So the owner never
-///             drifts out of step.
-///         </item>
-///     </list>
+///     <para>
+///         <para>What it does:</para>
+///         <list type="bullet">
+///             <item>
+///                 It says the wait is over on the first <see cref="ArcadeClock.PortTicksPerSecond">tick</see> at or
+///                 after the moment the wait really ends.
+///             </item>
+///             <item>
+///                 It keeps the time left over past that moment, and counts it towards the next wait. So the owner never
+///                 drifts out of step.
+///             
+///     </para>
 ///     <para>How to use it:</para>
 ///     <list type="bullet">
 ///         <item>
@@ -45,14 +46,15 @@ namespace Robotron2084.Core;
 ///         </item>
 ///         <item>When <see cref="Tick" /> returns true, the wait is over.</item>
 ///     </list>
-///     <para>A beat:</para>
-///     <list type="bullet">
-///         <item>A beat is an entity's turn to move or act.</item>
-///         <item>
-///             An entity that has beats keeps a <see cref="ArcadeFrameTimer" /> for them, and passes it the time between
-///             beats, in <see cref="ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>.
-///         </item>
-///     </list>
+///     <para>
+///         <para>A beat:</para>
+///         <list type="bullet">
+///             <item>A beat is an entity's turn to move or act.</item>
+///             <item>
+///                 An entity that has beats keeps a <see cref="ArcadeFrameTimer" /> for them, and passes it the time between
+///                 beats, in <see cref="ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>.
+///             
+///     </para>
 ///     <code>if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);</code>
 /// </remarks>
 public sealed class ArcadeFrameTimer

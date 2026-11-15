@@ -28,20 +28,20 @@ public sealed class InitialsEntryState : IGameState
     private readonly InitialsEntryModel _initialsEntryModel = new();
     private readonly IPlayerInputSource _playerInputSource;
     private readonly FinalScore _score;
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
 
     /// <summary>Builds the screen for one qualifying score.</summary>
-    /// <param name="gameServices">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
+    /// <param name="gameStateParams">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
     /// <param name="scoreEntryCeremony">The ceremony this screen belongs to, which the entered score is written back into.</param>
     /// <param name="score">The score being entered, whose player number the page prints.</param>
-    public InitialsEntryState(GameServices gameServices, ScoreEntryCeremony scoreEntryCeremony, FinalScore score)
+    public InitialsEntryState(GameStateParams gameStateParams, ScoreEntryCeremony scoreEntryCeremony, FinalScore score)
     {
-        _gameServices = gameServices;
+        _gameStateParams = gameStateParams;
         _scoreEntryCeremony = scoreEntryCeremony;
         _score = score;
-        _textureSet = gameServices.TextureSet;
-        _playerInputSource = gameServices.PlayerInputSource;
+        _textureSet = gameStateParams.TextureSet;
+        _playerInputSource = gameStateParams.PlayerInputSource;
         RestorePalette();
     }
 
@@ -59,7 +59,7 @@ public sealed class InitialsEntryState : IGameState
         var result = _scoreEntryCeremony.Submit(_score, _initialsEntryModel.GetInitials());
         if (result.ReachedEntriesMaximum)
         {
-            gameStateManager.TransitionTo(new EntriesMaximumState(_gameServices, _scoreEntryCeremony));
+            gameStateManager.TransitionTo(new EntriesMaximumState(_gameStateParams, _scoreEntryCeremony));
             return;
         }
 

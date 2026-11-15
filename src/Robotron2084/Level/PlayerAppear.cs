@@ -16,13 +16,14 @@ namespace Robotron2084.Level;
 ///         </item>
 ///         <item>Disassembly: <c>$29F5</c> and <c>$29D2</c>, called from <c>$2874</c> and <c>$2882</c></item>
 ///     </list>
-///     The arcade makes many appear effects of the player's sprite at once, each closing in on a
-///     different row or column of it, so together they fill a cross and then two slants. The player's own
-///     sprite is not drawn until the game goes live. The effects are still running then, and they stay
-///     with the player as the player walks (<see cref="StripEffect.CreateFollowingAppear" />). Each effect
-///     needs a record from its strip routine, and a routine with none left makes no effect, so only as
-///     many column fans are made as the horizontal routine has records (notes §143).</item>
-///     </list>
+///     <para>
+///         The arcade makes many appear effects of the player's sprite at once, each closing in on a
+///         different row or column of it, so together they fill a cross and then two slants. The player's own
+///         sprite is not drawn until the game goes live. The effects are still running then, and they stay
+///         with the player as the player walks (<see cref="StripEffect.CreateFollowingAppear" />). Each effect
+///         needs a record from its strip routine, and a routine with none left makes no effect, so only as
+///         many column fans are made as the horizontal routine has records (notes §143).
+///     </para>
 /// </remarks>
 public sealed class PlayerAppear
 {

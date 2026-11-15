@@ -280,14 +280,14 @@ internal sealed class CrowdRoarSound
     }
 
     /// <summary>Loads a noise's settings (<c>NOISLD</c>).</summary>
-    /// <param name="noiseSettings">The five bytes: <c>CY2</c>, <c>NAMP</c>, <c>DECAY</c>, <c>NFFLG</c> and <c>NFRQ2</c>.</param>
-    private void LoadNoise(byte[] noiseSettings)
+    /// <param name="noiseParams">The five bytes: <c>CY2</c>, <c>NAMP</c>, <c>DECAY</c>, <c>NFFLG</c> and <c>NFRQ2</c>.</param>
+    private void LoadNoise(byte[] noiseParams)
     {
         _boardOutput.Wait(LoadNoiseCycles);
-        _noiseCyclesPerChange = noiseSettings[0];
-        _noiseLoudness = noiseSettings[1];
-        _noiseLoudnessChange = noiseSettings[2];
-        _noisePitchReload = noiseSettings[4];
+        _noiseCyclesPerChange = noiseParams[0];
+        _noiseLoudness = noiseParams[1];
+        _noiseLoudnessChange = noiseParams[2];
+        _noisePitchReload = noiseParams[4];
     }
 
     /// <summary>Reads the next whistle's settings, or notes that there are no more (<c>WISLD</c>).</summary>
@@ -331,11 +331,10 @@ internal sealed class CrowdRoarSound
     }
 
     /// <summary>
-    ///     <summary>
-    ///         Plays one noise until it ends: <c>NINIT2</c> then the loop <c>WIN</c>, which writes the whistle's
-    ///         output after every step of the noise.
-    ///     </summary>
-    ///     <returns>The output changes.</returns>
+    ///     Plays one noise until it ends: <c>NINIT2</c> then the loop <c>WIN</c>, which writes the whistle's
+    ///     output after every step of the noise.
+    /// </summary>
+    /// <returns>The output changes.</returns>
     private IEnumerable<OutputChange> RunNoise()
     {
         _boardOutput.Wait(StartNoiseCycles);

@@ -40,7 +40,7 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BRNSHT</c>, which asks for <c>BSHSND</c>.</remarks>
     public void SpawnCruiseMissile(IntVector2 origin)
     {
-        var cruiseMissile = new CruiseMissile(_playField.EntityDependencies, origin, _playField.GetPlayerPosition());
+        var cruiseMissile = new CruiseMissile(_playField.EntityParams, origin, _playField.GetPlayerPosition());
         _fieldEntities.Add(cruiseMissile);
         _playField.PlaySoundFrom(SoundTables.BrainShoot, cruiseMissile.GetBounds());
     }
@@ -50,7 +50,7 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRC11.ASM</c>, which asks for <c>ENDSND</c>.</remarks>
     public void SpawnEnforcer(IntVector2 position)
     {
-        var enforcer = new Enforcer(_playField.EntityDependencies, position, _playField.WaveParameters.EnforcerFireDelay);
+        var enforcer = new Enforcer(_playField.EntityParams, position, _playField.WaveParams.EnforcerFireDelay);
         _fieldEntities.Add(enforcer);
         _playField.PlaySoundFrom(SoundTables.EnforcerDropOff, enforcer.GetBounds());
     }
@@ -69,8 +69,8 @@ internal sealed class MidWaveSpawner
     /// </remarks>
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
-        var waveParameters = _playField.WaveParameters;
-        var gruntLimit = Math.Max(waveParameters.GruntCount, GorfTuning.MinGruntCount);
+        var waveParams = _playField.WaveParams;
+        var gruntLimit = Math.Max(waveParams.GruntCount, GorfTuning.MinGruntCount);
         var isWaveFull = _fieldEntities.Grunts.Count(entity => !entity.IsDead()) >= gruntLimit;
         if (isWaveFull) return;
 
@@ -80,7 +80,7 @@ internal sealed class MidWaveSpawner
         var x = Math.Clamp(from.X, bounds.X, bounds.Right - width);
         var startY = Math.Clamp(from.Y, bounds.Y, bounds.Bottom - height);
         var landingY = Math.Clamp(landing.Y, startY, bounds.Bottom - height);
-        var grunt = new Grunt(_playField.EntityDependencies, new IntVector2(x, startY), _playField.WaveParameters.GruntMoveDelay);
+        var grunt = new Grunt(_playField.EntityParams, new IntVector2(x, startY), _playField.WaveParams.GruntMoveDelay);
         grunt.BeginFall(landingY);
         _fieldEntities.Add(grunt);
     }
@@ -94,8 +94,8 @@ internal sealed class MidWaveSpawner
     public void SpawnReturningGorf(int gruntsOwed, int dropIntervalSteps)
     {
 
-        _fieldEntities.Add(new Gorf(_playField.EntityDependencies, new GorfPlayfield(_playField.GetPlayfieldBounds()),
-            new GorfDrops(_playField.WaveParameters.MaxDropsX2, gruntsOwed, dropIntervalSteps)));
+        _fieldEntities.Add(new Gorf(_playField.EntityParams, new GorfPlayfieldParams(_playField.GetPlayfieldBounds()),
+            new GorfDropParams(_playField.WaveParams.MaxDropsX2, gruntsOwed, dropIntervalSteps)));
     }
 
     /// <summary>A grunt comes through a door in the wall: it appears just inside the wall, in the opening.</summary>
@@ -107,7 +107,7 @@ internal sealed class MidWaveSpawner
     ///         <item>The wave's limit on grunts does not hold it back, since the wave's flag asked for it.</item>
     ///         <item>
     ///             It starts at its slowest: the longest wait between steps the wave gives its grunts at the start
-    ///             (<see cref="WaveParameters.GruntMoveDelay" />), whatever the grunts already on the field have since been
+    ///             (<see cref="WaveParams.GruntMoveDelay" />), whatever the grunts already on the field have since been
     ///             speeded up to.
     ///         </item>
     ///     </list>
@@ -119,7 +119,7 @@ internal sealed class MidWaveSpawner
         var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
         var x = Math.Clamp(position.X, bounds.X, bounds.Right - width);
         var y = Math.Clamp(position.Y, bounds.Y, bounds.Bottom - height);
-        _fieldEntities.Add(new Grunt(_playField.EntityDependencies, new IntVector2(x, y), _playField.WaveParameters.GruntMoveDelay));
+        _fieldEntities.Add(new Grunt(_playField.EntityParams, new IntVector2(x, y), _playField.WaveParams.GruntMoveDelay));
     }
 
     /// <summary>A brain's touch turns a family member into a prog where they stand.</summary>
@@ -128,7 +128,7 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> and <c>PROGST</c>.</remarks>
     public void SpawnProg(IntVector2 position, FamilyMemberKind kind)
     {
-        _fieldEntities.Add(new Prog(_playField.EntityDependencies, position, kind));
+        _fieldEntities.Add(new Prog(_playField.EntityParams, position, kind));
     }
 
     /// <summary>An enforcer fires a spark at the player.</summary>
@@ -141,7 +141,7 @@ internal sealed class MidWaveSpawner
     /// </remarks>
     public void SpawnSpark(IntVector2 origin, IntVector2 playerPosition)
     {
-        var spark = new Spark(_playField.EntityDependencies, origin, playerPosition, _playField.GetPlayfieldBounds());
+        var spark = new Spark(_playField.EntityParams, origin, playerPosition, _playField.GetPlayfieldBounds());
         _fieldEntities.Add(spark);
         _playField.PlaySoundFrom(SoundTables.EnforcerShoot, spark.GetBounds());
     }
@@ -152,8 +152,8 @@ internal sealed class MidWaveSpawner
     /// <remarks>Original source: <c>RRTK4.ASM</c>, which asks for <c>TKDSND</c>.</remarks>
     public Tank SpawnTank(IntVector2 position)
     {
-        Tank tank = new(_playField.EntityDependencies, Tank.GetPositionInside(_playField.GetPlayfieldBounds(), position),
-            _playField.WaveParameters.TankFireDelay, false);
+        Tank tank = new(_playField.EntityParams, Tank.GetPositionInside(_playField.GetPlayfieldBounds(), position),
+            _playField.WaveParams.TankFireDelay, false);
         _fieldEntities.Add(tank);
         _playField.PlaySoundFrom(SoundTables.TankDrop, tank.GetBounds());
         return tank;
@@ -168,8 +168,8 @@ internal sealed class MidWaveSpawner
     public void SpawnTankShell(IntVector2 origin)
     {
         _playField.CountShellFired();
-        var tankShell = new TankShell(_playField.EntityDependencies, origin,
-            new TankShellAim(_playField.GetPlayerPosition(), _playField.WaveParameters.ShellSpeed, _playField.GetPlayfieldBounds()));
+        var tankShell = new TankShell(_playField.EntityParams, origin,
+            new TankShellAimParams(_playField.GetPlayerPosition(), _playField.WaveParams.ShellSpeed, _playField.GetPlayfieldBounds()));
         _fieldEntities.Add(tankShell);
         _playField.PlaySoundFrom(SoundTables.TankFire, tankShell.GetBounds());
     }

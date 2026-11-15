@@ -23,7 +23,7 @@ namespace Robotron2084.Audio.Synthesis.Models;
 /// <param name="PitchSteps">Byte 4: how many times the pitch moves (<c>GDCNT</c>).</param>
 /// <param name="PatternLength">Byte 5: how many pitches the pattern has.</param>
 /// <param name="PatternStart">Byte 6: where the pattern starts in <see cref="WaveTableData.Patterns" />.</param>
-internal readonly record struct WaveTableVector(
+internal readonly record struct WaveTableSoundRow(
     byte EchoesAndPlays,
     byte EchoDecayAndWave,
     byte PreDecay,

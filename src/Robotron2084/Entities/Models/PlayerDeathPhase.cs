@@ -11,7 +11,7 @@ namespace Robotron2084.Entities.Models;
 ///     The white flash and the coloured flash are repeated several times before the fade. The fade is made by changing
 ///     the colour of one palette index (<see cref="PlayerTuning.PlayerDeathFadePaletteIndex" />).
 /// </remarks>
-internal enum PlayerDeathStage
+internal enum PlayerDeathPhase
 {
     /// <summary>The white flash.</summary>
     White,

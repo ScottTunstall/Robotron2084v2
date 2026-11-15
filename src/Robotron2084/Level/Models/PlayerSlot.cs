@@ -15,11 +15,12 @@ namespace Robotron2084.Level.Models;
 ///         </item>
 ///         <item>Disassembly: the player 1 block starting at <c>p1_score</c> ($BDE4) and the player 2 block starting at <c>p2_score</c> ($BE20)</item>
 ///     </list>
-///     In a two-player game each player keeps their
-///     own score, lives and wave while the other plays. When a life is lost the turn passes to the other
-///     player, unless they have no lives left, and they carry on from their own wave (<c>RRG23.ASM</c>
-///     <c>PLE1B</c>).</item>
-///     </list>
+///     <para>
+///         In a two-player game each player keeps their
+///         own score, lives and wave while the other plays. When a life is lost the turn passes to the other
+///         player, unless they have no lives left, and they carry on from their own wave (<c>RRG23.ASM</c>
+///         <c>PLE1B</c>).
+///     </para>
 /// </remarks>
 /// <param name="Number">1 or 2. It is printed after "PLAYER " when two people play.</param>
 /// <param name="PlayerInputSource">
@@ -95,7 +96,7 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource
     ///         <item>Disassembly: the unlabelled routine at $2B69, which copies the wave into the player's own snapshot (called from <c>POST_PLAYER_DEATH_WAVE_ADJUST</c> at $3163), and <c>LOAD_SETTINGS_AND_OBJECT_COUNTS_FOR_CURRENT_PLAYER_WAVE</c> ($2B0B), which brings it back.</item>
     ///     </list>
     /// </remarks>
-    public WaveParameters? SavedWaveParameters { get; set; }
+    public WaveParams? SavedWaveParams { get; set; }
 
     /// <summary>True while the player can still be given a turn.</summary>
     public bool HasLives()

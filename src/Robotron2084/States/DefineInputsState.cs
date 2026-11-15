@@ -96,15 +96,15 @@ public sealed class DefineInputsState : IGameState
     private readonly ControlSettingsStore _controlSettingsStore;
     private readonly DefineInputsHighlight _defineInputsHighlight = new();
     private readonly DefineInputsModel _defineInputsModel = new();
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
     private InputSnapshot _previousSnapshot;
 
-    public DefineInputsState(GameServices gameServices, ControlSettingsStore controlSettingsStore)
+    public DefineInputsState(GameStateParams gameStateParams, ControlSettingsStore controlSettingsStore)
     {
-        _gameServices = gameServices;
-        _textureSet = gameServices.TextureSet;
-        _controlSettings = gameServices.ControlSettings;
+        _gameStateParams = gameStateParams;
+        _textureSet = gameStateParams.TextureSet;
+        _controlSettings = gameStateParams.ControlSettings;
         _controlSettingsStore = controlSettingsStore;
         _previousSnapshot = InputSnapshot.Read();
         RestorePalette();
@@ -288,7 +288,7 @@ public sealed class DefineInputsState : IGameState
         if (WasKeyboardPressed(now, Keys.F10))
         {
             _controlSettingsStore.Save(_controlSettings);
-            gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices, _controlSettingsStore));
+            gameStateManager.TransitionTo(new DeveloperToolsState(_gameStateParams, _controlSettingsStore));
         }
     }
 

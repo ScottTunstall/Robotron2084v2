@@ -17,13 +17,14 @@ namespace Robotron2084.Level;
 ///             <c>$2B7C</c>
 ///         </item>
 ///     </list>
-///     The values are copied byte for byte from the arcade's ROM and checked
-///     against <c>ref/robowaves.md</c> (notes §11.1 and §11.2). The counts are nine columns, one for each
-///     kind of thing, of forty waves each. The settings are twelve records, each a multiplier, a minimum
-///     and a maximum followed by forty values. The arrays here hold the values for the recommended
-///     difficulty. A wave after the fortieth takes away twenty, again and again, until it is forty or
-///     less, so the second half of the table repeats for ever.</item>
-///     </list>
+///     <para>
+///         The values are copied byte for byte from the arcade's ROM and checked
+///         against <c>ref/robowaves.md</c> (notes §11.1 and §11.2). The counts are nine columns, one for each
+///         kind of thing, of forty waves each. The settings are twelve records, each a multiplier, a minimum
+///         and a maximum followed by forty values. The arrays here hold the values for the recommended
+///         difficulty. A wave after the fortieth takes away twenty, again and again, until it is forty or
+///         less, so the second half of the table repeats for ever.
+///     </para>
 /// </remarks>
 public static class WaveTable
 {

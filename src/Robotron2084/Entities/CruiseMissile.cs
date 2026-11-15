@@ -88,21 +88,21 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private IntVector2 _velocity; // How many pixels the missile goes left or right, and how many up or down, each time it moves.
 
     /// <summary>Makes a missile and sends it towards the player.</summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the missile shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick which way it goes, and how long it goes before it picks a new direction.
     /// </param>
     /// <param name="origin">Where it appears.</param>
     /// <param name="playerPosition">Where the player is, which the missile heads for first.</param>
     /// <remarks>ROM: it starts 3 columns to the right of the brain's top-left corner and 4 rows below it.</remarks>
     public CruiseMissile(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 origin,
         IntVector2 playerPosition)
     {
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = origin;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
         _velocity = GetRandomDirection(playerPosition);
         _newDirectionBeatsRemaining = ArcadeRandom.PickUpTo(_random, NewDirectionMaxBeats);
     }

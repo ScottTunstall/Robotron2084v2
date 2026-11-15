@@ -38,37 +38,38 @@ namespace Robotron2084.Palette;
 ///         </item>
 ///     </list>
 ///     <para>
-///         The two pulsing tables end in a zero that sends the process back to the start of the table, which is why they pulse
-///         instead of stopping. The wall's table simply starts again at its end.
+///         <para>
+///             The two pulsing tables end in a zero that sends the process back to the start of the table, which is why they pulse
+///             instead of stopping. The wall's table simply starts again at its end.
+///         </para>
+///         <para>
+///             The cycles are counted in fiftieths of a second, and a fiftieth of a second is 6/5 of a port tick. So the timers
+///             use the clock-unit counter that the entities use (notes §52): a 3-frame cycle comes round every 3.6 ticks, and a
+///             4-frame one every 4.8.
+///         </para>
+///         <para>
+///             The page also clears the palette first, so it comes up from black. And entries 10, 12 and 13 are taken over from
+///             the in-game animator, which the original does by ending the animator's colour processes with the game
+///             (notes §4.12).
+///         </para>
+///         <list type="bullet">
+///             <item>
+///                 <description>
+///                     Original source: <c>RRTABLE.ASM</c>. <c>TABLE</c> starts <c>LOOPP</c> (the wall) and then <c>DECAZ</c>,
+///                     <c>COLA</c>, <c>COLC</c> and <c>COLD</c>. <c>OUTCOL</c> shifts the wall's colours, <c>COLA3</c> sends a
+///                     pulsing table back to its start, <c>FRAMER</c> clears the palette, and the tables are <c>COLTAB</c>,
+///                     <c>CATAB</c> and <c>CCTAB</c>.
+///                 </description>
+///             </item>
+///             <item>
+///                 <description>
+///                     Disassembly: <c>asm/robomame.asm</c> at <c>$E26F</c> (<c>LOOPP</c>), <c>$E289</c> (<c>OUTCOL</c>),
+///                     <c>$E29A</c> (<c>COLA</c>), <c>$E2AB</c> (<c>COLA3</c>), <c>$E2DF</c> (<c>DECAZ</c>), <c>$E2E9</c>
+///                     (<c>COLC</c>), <c>$E2F5</c> (<c>COLD</c>), <c>$E2FE</c> (<c>COLTAB</c>), <c>$E2C2</c> (<c>CATAB</c>) and
+///                     <c>$E2D1</c> (<c>CCTAB</c>). The disassembly gives no label for these, only addresses.
+///                 </description>
+///             
 ///     </para>
-///     <para>
-///         The cycles are counted in fiftieths of a second, and a fiftieth of a second is 6/5 of a port tick. So the timers
-///         use the clock-unit counter that the entities use (notes §52): a 3-frame cycle comes round every 3.6 ticks, and a
-///         4-frame one every 4.8.
-///     </para>
-///     <para>
-///         The page also clears the palette first, so it comes up from black. And entries 10, 12 and 13 are taken over from
-///         the in-game animator, which the original does by ending the animator's colour processes with the game
-///         (notes §4.12).
-///     </para>
-///     <list type="bullet">
-///         <item>
-///             <description>
-///                 Original source: <c>RRTABLE.ASM</c>. <c>TABLE</c> starts <c>LOOPP</c> (the wall) and then <c>DECAZ</c>,
-///                 <c>COLA</c>, <c>COLC</c> and <c>COLD</c>. <c>OUTCOL</c> shifts the wall's colours, <c>COLA3</c> sends a
-///                 pulsing table back to its start, <c>FRAMER</c> clears the palette, and the tables are <c>COLTAB</c>,
-///                 <c>CATAB</c> and <c>CCTAB</c>.
-///             </description>
-///         </item>
-///         <item>
-///             <description>
-///                 Disassembly: <c>asm/robomame.asm</c> at <c>$E26F</c> (<c>LOOPP</c>), <c>$E289</c> (<c>OUTCOL</c>),
-///                 <c>$E29A</c> (<c>COLA</c>), <c>$E2AB</c> (<c>COLA3</c>), <c>$E2DF</c> (<c>DECAZ</c>), <c>$E2E9</c>
-///                 (<c>COLC</c>), <c>$E2F5</c> (<c>COLD</c>), <c>$E2FE</c> (<c>COLTAB</c>), <c>$E2C2</c> (<c>CATAB</c>) and
-///                 <c>$E2D1</c> (<c>CCTAB</c>). The disassembly gives no label for these, only addresses.
-///             </description>
-///         </item>
-///     </list>
 /// </remarks>
 public sealed class HighScorePalette
 {

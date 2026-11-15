@@ -100,7 +100,7 @@ public sealed class MainMenuState : IGameState
     ];
 
     private readonly DefineInputsHighlight _defineInputsHighlight = new();
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private readonly GameSettingsStore _gameSettingsStore;
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(IdleSeconds);
     private readonly TextureSet _textureSet;
@@ -109,12 +109,12 @@ public sealed class MainMenuState : IGameState
     private InputSnapshot _previousSnapshot;
 
     /// <summary>Opens the page with the cursor on its first row.</summary>
-    /// <param name="gameServices">The attract screens' shared services.</param>
+    /// <param name="gameStateParams">The attract screens' shared services.</param>
     /// <param name="gameSettingsStore">Where the game style is saved when it changes, and what SETTINGS hands on.</param>
-    public MainMenuState(GameServices gameServices, GameSettingsStore? gameSettingsStore = null)
+    public MainMenuState(GameStateParams gameStateParams, GameSettingsStore? gameSettingsStore = null)
     {
-        _gameServices = gameServices;
-        _textureSet = gameServices.TextureSet;
+        _gameStateParams = gameStateParams;
+        _textureSet = gameStateParams.TextureSet;
         _gameSettingsStore = gameSettingsStore ?? new GameSettingsStore();
         _previousSnapshot = InputSnapshot.Read();
 
@@ -200,7 +200,7 @@ public sealed class MainMenuState : IGameState
             }
 
             _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, GetLabel(Lines[index]), labelColumn, y, paletteIndex);
-            _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, GetValue(Lines[index], _gameMode, _gameServices.GameSettings.GameStyle),
+            _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, GetValue(Lines[index], _gameMode, _gameStateParams.GameSettings.GameStyle),
                 valueColumn, y, paletteIndex);
         }
 
@@ -221,7 +221,7 @@ public sealed class MainMenuState : IGameState
         _previousSnapshot = now;
         if (isLeaving) return;
 
-        if (_idleElapsed >= _idleDuration) gameStateManager.TransitionTo(new TitleScreenState(_gameServices));
+        if (_idleElapsed >= _idleDuration) gameStateManager.TransitionTo(new TitleScreenState(_gameStateParams));
     }
 
     /// <summary>
@@ -293,8 +293,8 @@ public sealed class MainMenuState : IGameState
     /// <summary>Switches between CLASSIC and EXTENDED, and saves the choice at once.</summary>
     private void SwitchGameStyle()
     {
-        _gameServices.GameSettings.ToggleGameStyle();
-        _gameSettingsStore.Save(_gameServices.GameSettings);
+        _gameStateParams.GameSettings.ToggleGameStyle();
+        _gameSettingsStore.Save(_gameStateParams.GameSettings);
     }
 
     /// <summary>Does what a row says: starts the game shown, switches the game style, or opens a page.</summary>
@@ -307,8 +307,8 @@ public sealed class MainMenuState : IGameState
         switch (line)
         {
             case MainMenuLine.StartGame:
-                gameStateManager.TransitionTo(PlayingState.CreateNewGame(_gameServices.ControlSettings, _gameServices.GameSettings,
-                    _gameMode, _textureSet, _gameServices.HighScoreStore, _gameServices.Random));
+                gameStateManager.TransitionTo(PlayingState.CreateNewGame(_gameStateParams.ControlSettings, _gameStateParams.GameSettings,
+                    _gameMode, _textureSet, _gameStateParams.HighScoreStore, _gameStateParams.Random));
                 return true;
 
             case MainMenuLine.GameStyle:
@@ -316,11 +316,11 @@ public sealed class MainMenuState : IGameState
                 return false;
 
             case MainMenuLine.Settings:
-                gameStateManager.TransitionTo(new SettingsState(_gameServices, _gameSettingsStore));
+                gameStateManager.TransitionTo(new SettingsState(_gameStateParams, _gameSettingsStore));
                 return true;
 
             default:
-                gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices, null, _gameSettingsStore));
+                gameStateManager.TransitionTo(new DeveloperToolsState(_gameStateParams, null, _gameSettingsStore));
                 return true;
         }
     }

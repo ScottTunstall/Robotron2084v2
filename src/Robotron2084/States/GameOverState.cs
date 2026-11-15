@@ -27,7 +27,7 @@ public sealed class GameOverState : IGameState
 {
     private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.GameOverMessageArcadeFrames);
     private readonly IReadOnlyList<FinalScore> _scores;
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private int _elapsedTicks;
 
     /// <summary>Builds the screen for a finished game's scores.</summary>
@@ -47,7 +47,7 @@ public sealed class GameOverState : IGameState
         ControlSettings? controlSettings = null,
         GameSettings? gameSettings = null)
     {
-        _gameServices = new GameServices(textureSet, highScoreStore, controlSettings ?? ControlSettings.CreateDefaults(),
+        _gameStateParams = new GameStateParams(textureSet, highScoreStore, controlSettings ?? ControlSettings.CreateDefaults(),
             playerInputSource, gameSettings ?? GameSettings.CreateFactoryDefaults(), random);
         _scores = scores;
     }
@@ -70,7 +70,7 @@ public sealed class GameOverState : IGameState
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
         // ROM string 40 (GOMP): "GAME OVER" in the LARGE font, colour $AA, at (62, 128).
-        _gameServices.TextureSet.ArcadeText.DrawLargeFontText(
+        _gameStateParams.TextureSet.ArcadeText.DrawLargeFontText(
             spriteBatch,
             "GAME OVER",
             HudLayout.ToPortColumnX(HudLayout.GameOverMessageColumn),
@@ -85,6 +85,6 @@ public sealed class GameOverState : IGameState
 
         // ENDPRC → ENDGAM → GOV: the scores are offered to the table in turn, and the table itself is
         // the end of the ceremony (notes §98).
-        gameStateManager.TransitionTo(new ScoreEntryCeremony(_gameServices, _scores).NextScreen());
+        gameStateManager.TransitionTo(new ScoreEntryCeremony(_gameStateParams, _scores).NextScreen());
     }
 }

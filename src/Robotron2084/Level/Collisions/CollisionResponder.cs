@@ -124,9 +124,9 @@ internal sealed class CollisionResponder
     private void RespondToLaserHit(LaserHitResult laserHitResult)
     {
         var hitBounds = laserHitResult.TargetEntity.GetBounds();
-        laserHitResult.RobotKindInfo.LaserHit(_playField, laserHitResult.TargetEntity, laserHitResult.PlayerLaser.Direction);
-        _playField.PlaySoundFrom(laserHitResult.RobotKindInfo.LaserHitSound, hitBounds);
-        _playField.AwardScore(laserHitResult.RobotKindInfo.Score);
+        laserHitResult.RobotKindRow.LaserHit(_playField, laserHitResult.TargetEntity, laserHitResult.PlayerLaser.Direction);
+        _playField.PlaySoundFrom(laserHitResult.RobotKindRow.LaserHitSound, hitBounds);
+        _playField.AwardScore(laserHitResult.RobotKindRow.Score);
         laserHitResult.PlayerLaser.Kill();
     }
 

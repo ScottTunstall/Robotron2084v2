@@ -15,19 +15,20 @@ namespace Robotron2084.Level;
 ///         </item>
 ///         <item>Disassembly: <c>$2A85</c> to <c>$2B08</c>, working on <c>$BE5D</c></item>
 ///     </list>
-///     A grunt has a
-///     beat every few fiftieths of a second, and moves only after a random number of beats, so the fewer beats it
-///     waits, the faster it is. Each time a grunt dies, the grunts that are left have their waits made
-///     shorter. The floor is the fewest beats they may be brought down to, so it is the grunts' speed
-///     limit. Lowering the floor eases that limit and lets them get faster. The wave starts at the floor
-///     the wave table gives it (notes §31, §134). Every so often the game makes a check on the floor, and
-///     fiftieths of a second are used in this class only to time those checks. The count of fiftieths of a second starts
-///     when
-///     the game goes live (the arcade's <c>CLR STATUS</c> at <c>PLS2</c>, when the player may move and
-///     fire and the robots may act), so the playfield does not call <see cref="Update" /> before then. At
-///     a check the game lowers the floor, unless many grunts are still alive. The waits and the floor
-///     themselves are counted in beats.</item>
-///     </list>
+///     <para>
+///         A grunt has a
+///         beat every few fiftieths of a second, and moves only after a random number of beats, so the fewer beats it
+///         waits, the faster it is. Each time a grunt dies, the grunts that are left have their waits made
+///         shorter. The floor is the fewest beats they may be brought down to, so it is the grunts' speed
+///         limit. Lowering the floor eases that limit and lets them get faster. The wave starts at the floor
+///         the wave table gives it (notes §31, §134). Every so often the game makes a check on the floor, and
+///         fiftieths of a second are used in this class only to time those checks. The count of fiftieths of a second starts
+///         when
+///         the game goes live (the arcade's <c>CLR STATUS</c> at <c>PLS2</c>, when the player may move and
+///         fire and the robots may act), so the playfield does not call <see cref="Update" /> before then. At
+///         a check the game lowers the floor, unless many grunts are still alive. The waits and the floor
+///         themselves are counted in beats.
+///     </para>
 /// </remarks>
 public sealed class GruntSpeedProgression
 {
@@ -281,10 +282,11 @@ public sealed class GruntSpeedProgression
     ///         </item>
     ///         <item>Disassembly: <c>$3A94</c> to <c>$3A9F</c></item>
     ///     </list>
-    ///     A grunt's longest wait is made a
-    ///     little shorter, rounding down. The wait it is already part-way through is left alone (notes
-    ///     §67).</item>
-    ///     </list>
+    ///     <para>
+    ///         A grunt's longest wait is made a
+    ///         little shorter, rounding down. The wait it is already part-way through is left alone (notes
+    ///         §67).
+    ///     </para>
     /// </remarks>
     public void SpeedUp(IEnumerable<Grunt> grunts)
     {
@@ -308,18 +310,19 @@ public sealed class GruntSpeedProgression
     ///         </item>
     ///         <item>Disassembly: <c>$2AC7</c> to <c>$2AF1</c></item>
     ///     </list>
-    ///     At each check,
-    ///     <see
-    ///         cref="LargeFloorStep" />
-    ///     beats are subtracted from the floor, or <see cref="SmallFloorStep" />
-    ///     beats if the player has scored since the previous check, but the floor never goes below
-    ///     <see
-    ///         cref="LowestFloor" />
-    ///     . Each live grunt's longest random wait is cut too, by
-    ///     <see
-    ///         cref="LimitStepPerFloorStep" />
-    ///     times as much, though never below the new floor.</item>
-    ///     </list>
+    ///     <para>
+    ///         At each check,
+    ///         <see
+    ///             cref="LargeFloorStep" />
+    ///         beats are subtracted from the floor, or <see cref="SmallFloorStep" />
+    ///         beats if the player has scored since the previous check, but the floor never goes below
+    ///         <see
+    ///             cref="LowestFloor" />
+    ///         . Each live grunt's longest random wait is cut too, by
+    ///         <see
+    ///             cref="LimitStepPerFloorStep" />
+    ///         times as much, though never below the new floor.
+    ///     </para>
     /// </remarks>
     public void Update(EntityList<Grunt> grunts, int clockUnits)
     {

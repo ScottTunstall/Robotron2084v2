@@ -15,20 +15,51 @@ namespace Robotron2084.AttractMode.Models;
 /// </remarks>
 public enum MovieAnimation
 {
+    /// <summary>Mommy.</summary>
     Mommy,
+
+    /// <summary>Daddy.</summary>
     Daddy,
+
+    /// <summary>Mikey.</summary>
     Mikey,
+
+    /// <summary>A hulk.</summary>
     Hulk,
+
+    /// <summary>A brain.</summary>
     Brain,
+
+    /// <summary>A grunt.</summary>
     Grunt,
+
+    /// <summary>The electrodes.</summary>
     Electrodes,
+
+    /// <summary>An enforcer.</summary>
     Enforcer,
+
+    /// <summary>The player (the arcade's <c>YOU</c>).</summary>
     Player,
+
+    /// <summary>A quark (the arcade's <c>SQUARE</c>).</summary>
     Quark,
+
+    /// <summary>A spheroid.</summary>
     Spheroid,
+
+    /// <summary>A tank that is still growing.</summary>
     TankGrow,
+
+    /// <summary>A tank.</summary>
     Tank,
+
+    /// <summary>The points a kill is worth.</summary>
     Points,
+
+    /// <summary>The skull a dead family member leaves.</summary>
     Skull,
+
+    /// <summary>A cruise missile (the arcade's <c>CRUSM</c>).</summary>
     Cruise
 }

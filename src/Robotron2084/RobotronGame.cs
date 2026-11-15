@@ -55,7 +55,7 @@ public sealed class RobotronGame : Game
     private GamePadState _previousPadTwoState;
     private RenderTarget2D _renderTarget2D = null!;
     private const ScaleMode CanvasScaleMode = ScaleMode.Integer;
-    private GameServices _gameServices = null!;
+    private GameStateParams _gameStateParams = null!;
 
     /// <summary>The one source of random numbers the whole game shares.</summary>
     private readonly Random _random = new();
@@ -148,9 +148,9 @@ public sealed class RobotronGame : Game
         _gameSettings = _gameSettingsStore.Load();
         _playerInputSource = new BoundPlayerInputSource(_controlSettings, 0);
         _highScoreStore = new HighScoreStore();
-        _gameServices = new GameServices(_textureSet, _highScoreStore, _controlSettings, _playerInputSource, _gameSettings,
+        _gameStateParams = new GameStateParams(_textureSet, _highScoreStore, _controlSettings, _playerInputSource, _gameSettings,
             _random);
-        _gameStateManager = new GameStateManager(new TitleScreenState(_gameServices));
+        _gameStateManager = new GameStateManager(new TitleScreenState(_gameStateParams));
 
         StartSound();
         StartSpeech();
@@ -255,11 +255,11 @@ public sealed class RobotronGame : Game
         if (!onAttractScreen) return;
 
         if (WasPressed(keyboardState, Keys.End))
-            _gameStateManager.TransitionTo(new StorylineState(_gameServices));
+            _gameStateManager.TransitionTo(new StorylineState(_gameStateParams));
         else if (WasPressed(keyboardState, Keys.Home))
-            _gameStateManager.TransitionTo(new AttractState(_gameServices));
+            _gameStateManager.TransitionTo(new AttractState(_gameStateParams));
         else if (WasPressed(keyboardState, Keys.Insert))
-            _gameStateManager.TransitionTo(new HighScoreTableState(_gameServices));
+            _gameStateManager.TransitionTo(new HighScoreTableState(_gameStateParams));
         else if (WasPressed(keyboardState, Keys.Delete)) StartEndOfGameFlow();
     }
 
@@ -280,7 +280,7 @@ public sealed class RobotronGame : Game
         if (direction == 0) return;
 
         var nextStep = AttractNavigation.GetNeighbourStep(currentStep, direction);
-        _gameStateManager.TransitionTo(AttractNavigation.CreateState(nextStep, _gameServices));
+        _gameStateManager.TransitionTo(AttractNavigation.CreateState(nextStep, _gameStateParams));
     }
 
     /// <summary>
@@ -299,7 +299,7 @@ public sealed class RobotronGame : Game
         if (_gameStateManager.CurrentGameState is DeveloperToolsState or SettingsState or DefineInputsState or SoundTestState or SpeechTestState)
             return;
 
-        _gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices, _controlSettingsStore, _gameSettingsStore));
+        _gameStateManager.TransitionTo(new DeveloperToolsState(_gameStateParams, _controlSettingsStore, _gameSettingsStore));
     }
 
     /// <summary>The port-only presentation key: Alt+Enter toggles full screen.</summary>
@@ -344,7 +344,7 @@ public sealed class RobotronGame : Game
 
         var isAltHeld = keyboardState.IsKeyDown(Keys.LeftAlt) || keyboardState.IsKeyDown(Keys.RightAlt);
         if (WasPressed(keyboardState, Keys.Enter) && !isAltHeld)
-            _gameStateManager.TransitionTo(new MainMenuState(_gameServices, _gameSettingsStore));
+            _gameStateManager.TransitionTo(new MainMenuState(_gameStateParams, _gameSettingsStore));
     }
 
     /// <summary>Drops straight into the end of a game, with a score that has to qualify (notes §116).</summary>

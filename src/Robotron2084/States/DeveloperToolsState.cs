@@ -101,7 +101,7 @@ public sealed class DeveloperToolsState : IGameState
     private readonly ControlSettingsStore _controlSettingsStore;
     private readonly GameSettingsStore _gameSettingsStore;
     private readonly DefineInputsHighlight _defineInputsHighlight = new();
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
 
     private int _line;
@@ -110,7 +110,7 @@ public sealed class DeveloperToolsState : IGameState
     /// <summary>
     ///     Opens the page.
     /// </summary>
-    /// <param name="gameServices">The attract screens' shared dependencies.</param>
+    /// <param name="gameStateParams">The attract screens' shared dependencies.</param>
     /// <param name="controlSettingsStore">
     ///     The store the DEFINE INPUTS option hands to the definitions page itself. The shell passes its own;
     ///     a page opened from outside the shell (the sound test, the settings page) takes the default.
@@ -119,11 +119,11 @@ public sealed class DeveloperToolsState : IGameState
     ///     The store the GAME ADJUSTMENT option hands to that page (notes §131), on the same
     ///     terms as <paramref name="controlSettingsStore" />.
     /// </param>
-    public DeveloperToolsState(GameServices gameServices, ControlSettingsStore? controlSettingsStore = null,
+    public DeveloperToolsState(GameStateParams gameStateParams, ControlSettingsStore? controlSettingsStore = null,
         GameSettingsStore? gameSettingsStore = null)
     {
-        _gameServices = gameServices;
-        _textureSet = gameServices.TextureSet;
+        _gameStateParams = gameStateParams;
+        _textureSet = gameStateParams.TextureSet;
         _controlSettingsStore = controlSettingsStore ?? new ControlSettingsStore();
         _gameSettingsStore = gameSettingsStore ?? new GameSettingsStore();
         _previousSnapshot = InputSnapshot.Read();
@@ -168,7 +168,7 @@ public sealed class DeveloperToolsState : IGameState
 
         if (WasKeyboardPressed(now, Keys.F10))
         {
-            gameStateManager.TransitionTo(new TitleScreenState(_gameServices));
+            gameStateManager.TransitionTo(new TitleScreenState(_gameStateParams));
             return;
         }
 
@@ -198,24 +198,24 @@ public sealed class DeveloperToolsState : IGameState
         Func<IGameState>[] screenMakers =
         [
             // Port only: the page where a game is started, the game style chosen and the settings opened.
-            () => new MainMenuState(_gameServices, _gameSettingsStore),
+            () => new MainMenuState(_gameStateParams, _gameSettingsStore),
             // The title page as the cabinet prints it: its own pane, held open (notes §107).
-            () => new TitleScreenState(_gameServices, TitleTextPane.Arcade),
+            () => new TitleScreenState(_gameStateParams, TitleTextPane.Arcade),
             // The title page on the pane that carries the port's credit.
-            () => new TitleScreenState(_gameServices, TitleTextPane.Port),
-            () => new StorylineState(_gameServices),
-            () => new AttractState(_gameServices),
-            () => new HighScoreTableState(_gameServices),
-            () => new DefineInputsState(_gameServices, _controlSettingsStore),
+            () => new TitleScreenState(_gameStateParams, TitleTextPane.Port),
+            () => new StorylineState(_gameStateParams),
+            () => new AttractState(_gameStateParams),
+            () => new HighScoreTableState(_gameStateParams),
+            () => new DefineInputsState(_gameStateParams, _controlSettingsStore),
             // The arcade's service-mode settings: the gameplay adjustments (notes §131).
-            () => new SettingsState(_gameServices, _gameSettingsStore),
+            () => new SettingsState(_gameStateParams, _gameSettingsStore),
             // Port only: every sprite, animating as it does in the game.
-            () => new SpriteTestState(_gameServices),
-            () => new SoundTestState(_gameServices),
+            () => new SpriteTestState(_gameStateParams),
+            () => new SoundTestState(_gameStateParams),
             // Port only: the Gorf speech lines, one at a time (notes §149).
-            () => new SpeechTestState(_gameServices, SpeechFolders.Gorf),
+            () => new SpeechTestState(_gameStateParams, SpeechFolders.Gorf),
             // Port only: the Berzerk robot's speech lines, one at a time.
-            () => new SpeechTestState(_gameServices, SpeechFolders.Berzerk)
+            () => new SpeechTestState(_gameStateParams, SpeechFolders.Berzerk)
         ];
         return screenMakers[line]();
     }

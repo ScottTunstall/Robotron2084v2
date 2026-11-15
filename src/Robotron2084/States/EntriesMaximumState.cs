@@ -27,15 +27,15 @@ public sealed class EntriesMaximumState : IGameState
 
     private readonly ScoreEntryCeremony _scoreEntryCeremony;
     private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.EntriesMaximumHoldArcadeFrames);
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private int _elapsedTicks;
 
     /// <summary>Builds the page for the score whose initials hit the maximum.</summary>
-    /// <param name="gameServices">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
+    /// <param name="gameStateParams">The attract screens' bundle: sprites, the store, the controls and player 1's input.</param>
     /// <param name="scoreEntryCeremony">The ceremony to carry on with once the page has been held.</param>
-    public EntriesMaximumState(GameServices gameServices, ScoreEntryCeremony scoreEntryCeremony)
+    public EntriesMaximumState(GameStateParams gameStateParams, ScoreEntryCeremony scoreEntryCeremony)
     {
-        _gameServices = gameServices;
+        _gameStateParams = gameStateParams;
         _scoreEntryCeremony = scoreEntryCeremony;
     }
 
@@ -54,7 +54,7 @@ public sealed class EntriesMaximumState : IGameState
 
     private void DrawLine(SpriteBatch spriteBatch, string text, int column, int row)
     {
-        _gameServices.TextureSet.ArcadeText.DrawLargeFontText(
+        _gameStateParams.TextureSet.ArcadeText.DrawLargeFontText(
             spriteBatch,
             text,
             HudLayout.ToPortColumnX(column),

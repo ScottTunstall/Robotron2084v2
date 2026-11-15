@@ -78,7 +78,7 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
             1; // Which walk animation frame is showing. The first one is number 1, as in the arcade.
 
     /// <summary>Makes a grunt, and picks at random how long it waits before its first step.</summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the grunt shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers.
     /// </param>
     /// <param name="position">Where the grunt's top-left corner is.</param>
@@ -88,15 +88,15 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// </param>
     /// <remarks>ROM: <c>ROBSPD</c>.</remarks>
     public Grunt(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 position,
         int moveIntervalMaxBeats)
     {
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = position;
         MoveIntervalMaxBeats = moveIntervalMaxBeats;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
         // The grunt waits a random number of beats before its first step.
         _moveBeatsRemaining = _random.Next(1, MoveIntervalMaxBeats + 1);
     }

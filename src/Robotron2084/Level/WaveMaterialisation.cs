@@ -20,25 +20,26 @@ namespace Robotron2084.Level;
 ///         </item>
 ///         <item>Disassembly: <c>$28FE</c> to <c>$2962</c></item>
 ///     </list>
-///     The robots are switched off before the
-///     loop starts (<c>ROBOFF</c>), so a robot is not on the screen until the loop draws it whole. The
-///     loop does that for one more robot on each pass, starting some passes after it began (
-///     <see
-///         cref="PassesBeforeRobotIsDrawnWhole" />
-///     ), by which time that robot's appear effect has finished
-///     (notes §62, §143).
 ///     <para>
-///         The arcade walks its robot list, and only the robots on that list appear
-///         this way: the grunts, the hulks, the brains and the tanks. The spheroids and the quarks are on
-///         another list and are on the screen from the start.
+///         The robots are switched off before the
+///         loop starts (<c>ROBOFF</c>), so a robot is not on the screen until the loop draws it whole. The
+///         loop does that for one more robot on each pass, starting some passes after it began (
+///         <see
+///             cref="PassesBeforeRobotIsDrawnWhole" />
+///         ), by which time that robot's appear effect has finished
+///         (notes §62, §143).
+///         <para>
+///             The arcade walks its robot list, and only the robots on that list appear
+///             this way: the grunts, the hulks, the brains and the tanks. The spheroids and the quarks are on
+///             another list and are on the screen from the start.
+///         </para>
+///         <para>
+///             "Transport" in the names here is
+///             the arcade's own name for beaming the robots in at the start of a brain wave: the original source
+///             calls that effect the transporter (<c>RRT2.ASM</c>, titled <c>TRANSPORTER</c>, started by
+///             <c>TRNSTV</c>, "START TRANSPORTING"). Here it is done by <see cref="RobotTransporter" />.
+///         </para>
 ///     </para>
-///     <para>
-///         "Transport" in the names here is
-///         the arcade's own name for beaming the robots in at the start of a brain wave: the original source
-///         calls that effect the transporter (<c>RRT2.ASM</c>, titled <c>TRANSPORTER</c>, started by
-///         <c>TRNSTV</c>, "START TRANSPORTING"). Here it is done by <see cref="RobotTransporter" />.
-///     </para></item>
-///     </list>
 /// </remarks>
 public sealed class WaveMaterialisation
 {
@@ -232,9 +233,10 @@ public sealed class WaveMaterialisation
     ///         </item>
     ///         <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>)</item>
     ///     </list>
-    ///     "Transport"
-    ///     is the arcade's own word for beaming the robots in.</item>
-    ///     </list>
+    ///     <para>
+    ///         "Transport"
+    ///         is the arcade's own word for beaming the robots in.
+    ///     </para>
     /// </remarks>
     public void DrawTransport(SpriteBatch spriteBatch, TextureSet textureSet)
     {
@@ -404,9 +406,10 @@ public sealed class WaveMaterialisation
     ///             record
     ///         </item>
     ///     </list>
-    ///     The arcade does not set a lean before it asks for a row fan here, and
-    ///     its vertical routine has none, so the lean is nothing.</item>
-    ///     </list>
+    ///     <para>
+    ///         The arcade does not set a lean before it asks for a row fan here, and
+    ///         its vertical routine has none, so the lean is nothing.
+    ///     </para>
     /// </remarks>
     private void StartAppear(IEntity robotEntity, FieldEntities fieldEntities, Rectangle playfieldBounds)
     {

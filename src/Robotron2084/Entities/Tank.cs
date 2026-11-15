@@ -154,7 +154,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     Makes a tank at <paramref name="position" />. Unless it starts fully grown, it has to grow before it can move
     ///     or fire.
     /// </summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the tank shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick where it goes, how long before it picks again, and the wait before its first shot.
     /// </param>
     /// <param name="position">Where the tank's top-left corner is.</param>
@@ -171,7 +171,7 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Tank(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 position,
         int fireIntervalBeats,
         bool startFullyGrown)
@@ -179,16 +179,16 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         _growStep = 0;
         if (startFullyGrown) _growStep = TankTuning.GrowSteps;
 
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = position;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
         _fireIntervalBeats = fireIntervalBeats;
         _destination = position;
         // The tank picks where to go at the end of its first beat (ROM: TANKL).
         _newDestinationBeatsRemaining = 0;
         // The first shot waits this wave's gap between shots, plus a random number of extra beats.
-        _fireBeatsRemaining = fireIntervalBeats + dependencies.Random.Next(0, FirstShotExtraBeatsMaxExclusive);
+        _fireBeatsRemaining = fireIntervalBeats + entityParams.Random.Next(0, FirstShotExtraBeatsMaxExclusive);
     }
 
     /// <summary>Alive until it is killed. It is never Dying, because it has no death animation (see <see cref="Kill" />).</summary>

@@ -1,39 +1,61 @@
-using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
-using Robotron2084.AttractMode.Models;
+using Robotron2084.Entities.Models;
 
 namespace Robotron2084.AttractMode.Models;
 
+/// <summary>
+///     One program running in the attract movie: it reads a character's script and moves, animates or changes that
+///     character, one step at a time.
+/// </summary>
+/// <remarks>
+///     <list type="bullet">
+///         <item>Original source: <c>RRSCRIPT.ASM</c>, the object script reader <c>OSCAN</c> and its opcodes</item>
+///         <item>Disassembly: the script reader that <c>INTRODUCE_GAME_CHARACTER_FROM_SCRIPT</c> ($7B0F) starts</item>
+///     </list>
+/// </remarks>
 internal sealed record MovieProcess
 {
+    /// <summary>The character this program moves and draws.</summary>
     public required MovieObject MovieObject { get; init; }
 
     /// <summary>Where the program has got to in <see cref="AttractMovieData.Scripts" />.</summary>
     /// <remarks>The scripts name places by the arcade's memory addresses, which are turned into this index.</remarks>
     public int ScriptIndex { get; set; }
 
+    /// <summary>How many arcade frames to wait before the next step.</summary>
     public int WaitArcadeFrames { get; set; }
 
+    /// <summary>The action it is part way through, or <see cref="MovieAction.None" />.</summary>
     public MovieAction Action { get; set; }
 
+    /// <summary>How many walking steps are left in the walk.</summary>
     public int StepsLeft { get; set; }
 
+    /// <summary>Where it is in its walk table, or which way a brain is walking.</summary>
     public int WalkIndex { get; set; }
 
+    /// <summary>Where a brain is in its four-frame walk cycle (<c>ANATAB</c>).</summary>
     public int WalkCycleIndex { get; set; }
 
+    /// <summary>How many more animation frames <see cref="MovieAction.Cycle" /> will show.</summary>
     public int CycleAdvancesLeft { get; set; }
 
+    /// <summary>How many arcade frames each animation frame of <see cref="MovieAction.Cycle" /> is shown for.</summary>
     public int CycleArcadeFrames { get; set; }
 
+    /// <summary>How many more steps <see cref="MovieAction.Mono" /> lasts.</summary>
     public int MonoStepsLeft { get; set; }
 
+    /// <summary>How many more shakes <see cref="MovieAction.ReprogramShake" /> makes.</summary>
     public int ReprogramShakesLeft { get; set; }
 
+    /// <summary>Whether the next shake moves the character up.</summary>
     public bool IsShakingUp { get; set; }
 
+    /// <summary>How many more times a <c>LOOPER</c> block runs.</summary>
     public int LoopPassesLeft { get; set; }
 
+    /// <summary>Whether the program is still running.</summary>
     public bool IsAlive { get; set; } = true;
 
     /// <summary>One step of this process.</summary>

@@ -99,7 +99,7 @@ public sealed class SoundTestState : IGameState
         new("TRANSPORTER", "TRSPRC", "BRAIN WAVE", null)
     ];
 
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
     private int _index;
     private bool _isAutoUp;
@@ -109,11 +109,11 @@ public sealed class SoundTestState : IGameState
     private int _settleTicksLeft;
 
     /// <summary>Opens the page and starts the first sound.</summary>
-    /// <param name="gameServices">The attract sequence's shared services.</param>
-    public SoundTestState(GameServices gameServices)
+    /// <param name="gameStateParams">The attract sequence's shared services.</param>
+    public SoundTestState(GameStateParams gameStateParams)
     {
-        _gameServices = gameServices;
-        _textureSet = gameServices.TextureSet;
+        _gameStateParams = gameStateParams;
+        _textureSet = gameStateParams.TextureSet;
         _previousSnapshot = InputSnapshot.Read();
         if (_textureSet.BlitterDraw.GamePalette is { } palette) palette.SetPaletteIndexValue(TextPaletteIndex, GamePalette.DefaultPaletteValues[TextPaletteIndex]);
 
@@ -147,7 +147,7 @@ public sealed class SoundTestState : IGameState
         if (IsPressed(now, Keys.F10))
         {
             Silence();
-            gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices));
+            gameStateManager.TransitionTo(new DeveloperToolsState(_gameStateParams));
             return;
         }
 

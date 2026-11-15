@@ -1,7 +1,7 @@
 namespace Robotron2084.Entities.Models;
 
 /// <summary>What a wave sets for its quarks: how many tanks they drop, how long they wait between drops, and how fast they drift.</summary>
-public sealed record QuarkWaveSettings
+public sealed record QuarkWaveParams
 {
     /// <summary>The limit used when a wave does not set one.</summary>
     internal const int DefaultMaxDropsX2 = 10;
@@ -20,7 +20,7 @@ public sealed record QuarkWaveSettings
     /// <param name="dropIntervalMaxBeats">The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> this wave's quark waits between tank drops.</param>
     /// <param name="maxSpeed">The quark's top drifting speed on this wave (ROM: <c>SQSPD</c>).</param>
     /// <exception cref="ArgumentOutOfRangeException">Any of them is below 0.</exception>
-    public QuarkWaveSettings(
+    public QuarkWaveParams(
         int maxDropsX2 = DefaultMaxDropsX2,
         int dropIntervalMaxBeats = DefaultDropIntervalMaxBeats,
         int maxSpeed = DefaultMaxSpeed)

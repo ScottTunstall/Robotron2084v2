@@ -257,7 +257,7 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     private int _walkCycleIndex;
 
     /// <summary>Makes a hulk. It picks its first direction when the game goes live.</summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the hulk shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick how many steps it takes before it turns, and move its direction a little.
     /// </param>
     /// <param name="position">Where the hulk's top-left corner is.</param>
@@ -280,15 +280,15 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Hulk(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 position,
         int beatIntervalArcadeFrames,
         Func<IntVector2> getTargetPosition)
     {
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = position;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
         _beatIntervalArcadeFrames = beatIntervalArcadeFrames;
         _getTargetPosition = getTargetPosition;
         _newDirectionStepsRemaining = GetRandomNewDirectionSteps();

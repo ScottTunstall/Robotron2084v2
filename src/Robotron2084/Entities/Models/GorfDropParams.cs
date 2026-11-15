@@ -1,7 +1,7 @@
 namespace Robotron2084.Entities.Models;
 
 /// <summary>How many grunts a Gorf drops, and how its drops are spaced along its way across.</summary>
-public sealed record GorfDrops
+public sealed record GorfDropParams
 {
     /// <summary>Makes the plan for a Gorf's drops.</summary>
     /// <param name="maxDropsX2">
@@ -18,7 +18,7 @@ public sealed record GorfDrops
     ///     that comes back is given a shorter one than the Gorf it follows.
     /// </param>
     /// <exception cref="ArgumentOutOfRangeException">Any of them is below 0.</exception>
-    public GorfDrops(int maxDropsX2, int gruntDropCount = 0, int dropIntervalSteps = 0)
+    public GorfDropParams(int maxDropsX2, int gruntDropCount = 0, int dropIntervalSteps = 0)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(maxDropsX2);
         ArgumentOutOfRangeException.ThrowIfNegative(gruntDropCount);

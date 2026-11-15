@@ -41,25 +41,25 @@ public sealed class StorylineState : IGameState, IAttractState
     private readonly List<StripEffect> _stripEffects = [];
     private readonly IPlayerInputSource _humanPlayerInputSource;
     private readonly AttractMovie _attractMovie;
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private readonly GameSession _gameSession;
     private readonly TextureSet _textureSet;
     private readonly PlayfieldWall _playfieldWall;
 
     /// <summary>Opens the story at its start, or at the start of a page of it.</summary>
-    /// <param name="gameServices">The attract screens' shared dependencies.</param>
+    /// <param name="gameStateParams">The attract screens' shared dependencies.</param>
     /// <param name="startPage">The page to open at, counted from 1, or null to open at the very start.</param>
-    public StorylineState(GameServices gameServices, int? startPage = null)
+    public StorylineState(GameStateParams gameStateParams, int? startPage = null)
     {
-        _gameServices = gameServices;
-        _textureSet = gameServices.TextureSet;
-        _humanPlayerInputSource = gameServices.PlayerInputSource;
+        _gameStateParams = gameStateParams;
+        _textureSet = gameStateParams.TextureSet;
+        _humanPlayerInputSource = gameStateParams.PlayerInputSource;
 
         _playfieldWall = new PlayfieldWall(PlayfieldLayout.GetInnerBounds(), new WallColourCycle());
         _gameSession = GameSession.CreateNewGame(_humanPlayerInputSource, 1);
         var storylineScript = AttractStoryline.Create(AttractMovieData.Rom.Histo);
-        _attractMovie = new AttractMovie(AttractMovieData.Rom, storylineScript, gameServices.Random);
-        if (startPage is { } page) _attractMovie = AttractMovie.CreateAtPage(AttractMovieData.Rom, storylineScript, gameServices.Random, page);
+        _attractMovie = new AttractMovie(AttractMovieData.Rom, storylineScript, gameStateParams.Random);
+        if (startPage is { } page) _attractMovie = AttractMovie.CreateAtPage(AttractMovieData.Rom, storylineScript, gameStateParams.Random, page);
     }
 
     /// <summary>Gets the page of the story the movie is on, counted from 1. The very start counts as the first page.</summary>
@@ -113,7 +113,7 @@ public sealed class StorylineState : IGameState, IAttractState
         var familyMember = _humanPlayerInputSource.Poll();
         if (_buttonEdgeDetector.Advance(familyMember).AnyPressed())
         {
-            gameStateManager.TransitionTo(new MainMenuState(_gameServices));
+            gameStateManager.TransitionTo(new MainMenuState(_gameStateParams));
             return;
         }
 
@@ -156,7 +156,7 @@ public sealed class StorylineState : IGameState, IAttractState
 
         // HISTO ends with DONE2, which the ROM answers with RUNIT: the machine
         // starts its phony-player game.
-        if (_attractMovie.IsFinished()) gameStateManager.TransitionTo(new AttractState(_gameServices));
+        if (_attractMovie.IsFinished()) gameStateManager.TransitionTo(new AttractState(_gameStateParams));
     }
 
     /// <summary>The movie interior, in canvas pixels: a strip that falls outside it is dropped (the ROM's clip).</summary>

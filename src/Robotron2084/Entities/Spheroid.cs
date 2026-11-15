@@ -190,7 +190,7 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes a spheroid at <paramref name="position" />, part of the way through a spin. It picks at random how many
     ///     enforcers it will drop.
     /// </summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the spheroid shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick how many enforcers it drops, how its speed changes and which way it escapes.
     /// </param>
     /// <param name="position">Where the spheroid's top-left corner is.</param>
@@ -211,26 +211,26 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, so there is no single number that could make it faster.
     /// </remarks>
     public Spheroid(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 position,
         int maxDropsX2,
         int dropDelayRotations)
     {
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = position;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
         _dropDelayRotations = dropDelayRotations;
         // How many enforcers the spheroid may drop: a random number from 1 up to this wave's limit, halved and rounded up.
-        var randomDrops = ArcadeRandom.PickUpTo(dependencies.Random, maxDropsX2);
+        var randomDrops = ArcadeRandom.PickUpTo(entityParams.Random, maxDropsX2);
         _enforcersRemaining = (randomDrops + 1) / 2;
         // Pick at random whether the spheroid will escape to the left or to the right.
         _escapeDirectionSignX = DirectionSigns.Right;
-        var isEscapingLeft = dependencies.Random.Next(2) == 0;
+        var isEscapingLeft = entityParams.Random.Next(2) == 0;
         if (isEscapingLeft) _escapeDirectionSignX = DirectionSigns.Left;
 
         // How many times the spheroid spins before it first drops an enforcer.
-        _dropRotationsRemaining = ArcadeRandom.PickUpTo(dependencies.Random, dropDelayRotations);
+        _dropRotationsRemaining = ArcadeRandom.PickUpTo(entityParams.Random, dropDelayRotations);
         // The spheroid starts on the last animation frame of a spin, so its first beat finishes a spin.
         _animationFrameIndex = SpinLastAnimationFrame;
         SetRandomAccelerations();

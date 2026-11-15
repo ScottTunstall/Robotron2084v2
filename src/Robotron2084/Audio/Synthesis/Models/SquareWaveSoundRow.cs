@@ -13,7 +13,7 @@ namespace Robotron2084.Audio.Synthesis.Models;
 ///     <c>LOMOD</c>).
 /// </param>
 /// <param name="Level">The level the sound starts by writing (<c>VAMP</c>).</param>
-internal readonly record struct SquareWaveVector(
+internal readonly record struct SquareWaveSoundRow(
     byte LowWait,
     byte HighWait,
     byte LowWaitStep,

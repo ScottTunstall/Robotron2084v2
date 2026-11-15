@@ -6,4 +6,7 @@ namespace Robotron2084.Audio.Models;
 ///     <see cref="RomTableAddress" /> is the table address in
 ///     <c>ref/rom/robotron64k.bin</c>, for provenance.
 /// </summary>
-public sealed record SoundSequence(int Priority, int RomTableAddress, SoundEntry[] Entries);
+/// <param name="Priority">The request's priority: a sound can only be cut off by one whose priority is as high or higher.</param>
+/// <param name="RomTableAddress">Where the table starts in the sound ROM image.</param>
+/// <param name="Entries">The rows of the table, in the order they are played.</param>
+public sealed record SoundSequence(int Priority, int RomTableAddress, SoundTableRow[] Entries);

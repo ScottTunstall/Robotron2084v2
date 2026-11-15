@@ -12,9 +12,10 @@ namespace Robotron2084.Level.Models;
 ///         </item>
 ///         <item>Disassembly: <c>LASER_HIT_WALL</c> ($3389)</item>
 ///     </list>
-///     A flash on a side wall is solid. A flash on
-///     the top or bottom wall is dithered, so the wall shows through every other row.</item>
-///     </list>
+///     <para>
+///         A flash on a side wall is solid. A flash on
+///         the top or bottom wall is dithered, so the wall shows through every other row.
+///     </para>
 /// </remarks>
 /// <param name="Bounds">Where the flash is drawn.</param>
 /// <param name="Dithered">True for a flash on the top or bottom wall, which lets the wall show through every other row.</param>

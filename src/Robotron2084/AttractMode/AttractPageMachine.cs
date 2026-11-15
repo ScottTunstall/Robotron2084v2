@@ -24,16 +24,17 @@ namespace Robotron2084.AttractMode;
 ///             three frames, exactly the ROM's `NAP 3`.
 ///         </item>
 ///     </list>
-///     Besides reading the bytes:
-///     <list type="bullet">
-///         <item>
-///             It starts the object machine's programs (SCRPT, FORK, GRUNTS) and builds the layer of text that is
-///             drawn.
-///         </item>
-///         <item>It runs one <see cref="StepFrame" /> for each 50th of a second.</item>
-///         <item>Original source: <c>RRSCRIPT.ASM</c> <c>SPWAKE</c> (notes §95.2)</item>
-///         <item>Disassembly: the unlabelled loop at $79DD, started from $79D4</item>
-///     </list>
+///     <para>
+///         Besides reading the bytes:
+///         <list type="bullet">
+///             <item>
+///                 It starts the object machine's programs (SCRPT, FORK, GRUNTS) and builds the layer of text that is
+///                 drawn.
+///             </item>
+///             <item>It runs one <see cref="StepFrame" /> for each 50th of a second.</item>
+///             <item>Original source: <c>RRSCRIPT.ASM</c> <c>SPWAKE</c> (notes §95.2)</item>
+///             <item>Disassembly: the unlabelled loop at $79DD, started from $79D4
+///     </para>
 /// </remarks>
 public sealed class AttractPageMachine
 {

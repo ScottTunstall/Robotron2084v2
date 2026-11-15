@@ -66,7 +66,7 @@ public sealed class HighScoreTableState : IClosableGameState, IAttractState
     private bool _rampsStarted;
 
     /// <summary>Creates the table screen for the scores this session just offered.</summary>
-    /// <param name="gameServices">The attract screens' shared dependencies.</param>
+    /// <param name="gameStateParams">The attract screens' shared dependencies.</param>
     /// <param name="postedScores">
     ///     The scores this session just offered to the table (highest first) — the
     ///     ROM's <c>ZP1SCR</c>/<c>ZP2SCR</c> at <c>CLSET</c> time: their rows are
@@ -78,14 +78,14 @@ public sealed class HighScoreTableState : IClosableGameState, IAttractState
     ///     from <c>TODTAB</c> at power-up) and a reload would lose the scores just posted. Null loads it
     ///     from the store, which is what the attract cycle and the Insert dev key want.
     /// </param>
-    public HighScoreTableState(GameServices gameServices, IReadOnlyList<int>? postedScores = null,
+    public HighScoreTableState(GameStateParams gameStateParams, IReadOnlyList<int>? postedScores = null,
         HighScoreTable? highScoreTable = null)
     {
-        _playerInputSource = gameServices.PlayerInputSource;
-        _textureSet = gameServices.TextureSet;
-        _highScoreStore = gameServices.HighScoreStore;
-        _gameSettings = gameServices.GameSettings;
-        _random = gameServices.Random;
+        _playerInputSource = gameStateParams.PlayerInputSource;
+        _textureSet = gameStateParams.TextureSet;
+        _highScoreStore = gameStateParams.HighScoreStore;
+        _gameSettings = gameStateParams.GameSettings;
+        _random = gameStateParams.Random;
         _postedScores = [.. postedScores ?? []];
         _highScoreTable = highScoreTable ?? _highScoreStore.Load();
 
@@ -380,7 +380,7 @@ public sealed class HighScoreTableState : IClosableGameState, IAttractState
 
     private void Leave(GameStateManager gameStateManager)
     {
-        gameStateManager.TransitionTo(new TitleScreenState(new GameServices(_textureSet, _highScoreStore,
+        gameStateManager.TransitionTo(new TitleScreenState(new GameStateParams(_textureSet, _highScoreStore,
             ControlSettings.CreateDefaults(), _playerInputSource, _gameSettings, _random)));
     }
 }

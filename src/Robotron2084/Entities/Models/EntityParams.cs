@@ -10,14 +10,14 @@ namespace Robotron2084.Entities.Models;
 ///         <item>Nothing here is optional. A test that does not care where announcements go gives <see cref="NullGameEvents.Instance" />.</item>
 ///     </list>
 /// </remarks>
-public sealed record EntityDependencies
+public sealed record EntityParams
 {
     /// <summary>Makes the dependencies an entity is built with.</summary>
     /// <param name="textureSet">The shared texture set.</param>
     /// <param name="gameEvents">Where the entity announces what happens to it.</param>
     /// <param name="random">Where the entity's random numbers come from.</param>
     /// <exception cref="ArgumentNullException">Any of them is null.</exception>
-    public EntityDependencies(TextureSet textureSet, IGameEvents gameEvents, Random random)
+    public EntityParams(TextureSet textureSet, IGameEvents gameEvents, Random random)
     {
         ArgumentNullException.ThrowIfNull(textureSet);
         ArgumentNullException.ThrowIfNull(gameEvents);

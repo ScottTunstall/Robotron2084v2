@@ -27,33 +27,34 @@ namespace Robotron2084.Palette;
 ///         </item>
 ///     </list>
 ///     <para>
-///         Both timers count in clock units (notes §52), where a fiftieth of a second is 6/5 of a port tick. The 28 is the
-///         border ring's own rate: the ring has 28 logos and the page handles one each frame, so a given logo is painted
-///         once every 28 frames.
+///         <para>
+///             Both timers count in clock units (notes §52), where a fiftieth of a second is 6/5 of a port tick. The 28 is the
+///             border ring's own rate: the ring has 28 logos and the page handles one each frame, so a given logo is painted
+///             once every 28 frames.
+///         </para>
+///         <para>
+///             <b>Why it is called the white flash.</b> The original source calls this the white process: <c>COL1</c> starts it,
+///             and <c>COLL</c> keeps a white pointer that it kicks up to the next entry. The project's notes called it the
+///             chase. Here it is called the white flash, because that is what you see: one entry at a time turns white, and the
+///             white moves on through the seven.
+///         </para>
+///         <list type="bullet">
+///             <item>
+///                 <description>
+///                     Original source: <c>RRLOG.ASM</c>. <c>LOGG2</c> builds the page, <c>CSET</c> copies the colour table
+///                     <c>LCTAB</c>, <c>COL1</c> and <c>COLL</c> run the white flash, <c>LINOUT</c> prints the welcome message,
+///                     <c>FORMX</c> changes the border logos' colour, and <c>DOBALL</c> and <c>WILL55</c> run the ring of logos.
+///                 </description>
+///             </item>
+///             <item>
+///                 <description>
+///                     Disassembly: <c>asm/robomame.asm</c> at <c>$87A6</c> (<c>LOGG2</c>), <c>$8A3A</c> (<c>CSET</c>),
+///                     <c>$8A4F</c> (<c>COL1</c>), <c>$884E</c> (<c>LINOUT</c>), <c>$89DA</c> (<c>FORMX</c>), <c>$87D9</c>
+///                     (<c>DOBALL</c>), <c>$88EF</c> (<c>WILL55</c>) and <c>$8A70</c> (<c>LCTAB</c>). The disassembly gives no
+///                     label for these routines, only addresses.
+///                 </description>
+///             
 ///     </para>
-///     <para>
-///         <b>Why it is called the white flash.</b> The original source calls this the white process: <c>COL1</c> starts it,
-///         and <c>COLL</c> keeps a white pointer that it kicks up to the next entry. The project's notes called it the
-///         chase. Here it is called the white flash, because that is what you see: one entry at a time turns white, and the
-///         white moves on through the seven.
-///     </para>
-///     <list type="bullet">
-///         <item>
-///             <description>
-///                 Original source: <c>RRLOG.ASM</c>. <c>LOGG2</c> builds the page, <c>CSET</c> copies the colour table
-///                 <c>LCTAB</c>, <c>COL1</c> and <c>COLL</c> run the white flash, <c>LINOUT</c> prints the welcome message,
-///                 <c>FORMX</c> changes the border logos' colour, and <c>DOBALL</c> and <c>WILL55</c> run the ring of logos.
-///             </description>
-///         </item>
-///         <item>
-///             <description>
-///                 Disassembly: <c>asm/robomame.asm</c> at <c>$87A6</c> (<c>LOGG2</c>), <c>$8A3A</c> (<c>CSET</c>),
-///                 <c>$8A4F</c> (<c>COL1</c>), <c>$884E</c> (<c>LINOUT</c>), <c>$89DA</c> (<c>FORMX</c>), <c>$87D9</c>
-///                 (<c>DOBALL</c>), <c>$88EF</c> (<c>WILL55</c>) and <c>$8A70</c> (<c>LCTAB</c>). The disassembly gives no
-///                 label for these routines, only addresses.
-///             </description>
-///         </item>
-///     </list>
 /// </remarks>
 public sealed class PresentationPagePalette
 {

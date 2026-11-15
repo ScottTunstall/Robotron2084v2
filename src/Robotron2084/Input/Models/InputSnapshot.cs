@@ -4,6 +4,9 @@ using Microsoft.Xna.Framework.Input;
 namespace Robotron2084.Input.Models;
 
 /// <summary>One tick's raw hardware, as the definitions page and the game read it.</summary>
+/// <param name="KeyboardState">The keyboard.</param>
+/// <param name="PlayerOneGamePadState">The first gamepad.</param>
+/// <param name="PlayerTwoGamePadState">The second gamepad.</param>
 public readonly record struct InputSnapshot(KeyboardState KeyboardState, GamePadState PlayerOneGamePadState, GamePadState PlayerTwoGamePadState)
 {
     /// <summary>Gets the state of one gamepad.</summary>
@@ -17,6 +20,7 @@ public readonly record struct InputSnapshot(KeyboardState KeyboardState, GamePad
     }
 
     /// <summary>Reads the live keyboard and both gamepads.</summary>
+    /// <returns>What they are doing now.</returns>
     public static InputSnapshot Read()
     {
         return new InputSnapshot(

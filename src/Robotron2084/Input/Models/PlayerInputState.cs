@@ -1,5 +1,5 @@
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 
 namespace Robotron2084.Input.Models;
 
@@ -17,6 +17,12 @@ namespace Robotron2084.Input.Models;
 ///     are the arcade's coin-door START 1 / START 2 buttons (ROM PIA2 B4/B5 → RRG23
 ///     START1/START2), read by the title screen to pick the number of players.
 /// </summary>
+/// <param name="MoveDirection">The way the move stick is pushed, or <see cref="IntVector2.Zero" /> when it is not.</param>
+/// <param name="ShootDirection">The way the aim stick is pushed, or <see cref="IntVector2.Zero" /> when it is not.</param>
+/// <param name="FireHeld">Whether the fire control is held.</param>
+/// <param name="SkipWaveHeld">Whether the port's skip-wave key is held.</param>
+/// <param name="StartOnePlayerHeld">Whether START 1 is held.</param>
+/// <param name="StartTwoPlayersHeld">Whether START 2 is held.</param>
 public readonly record struct PlayerInputState(
     IntVector2 MoveDirection,
     IntVector2 ShootDirection,
@@ -26,6 +32,8 @@ public readonly record struct PlayerInputState(
     bool StartTwoPlayersHeld = false)
 {
     /// <summary>No-aim constructor: the player fires along their facing direction.</summary>
+    /// <param name="moveDirection">The way the move stick is pushed.</param>
+    /// <param name="fireHeld">Whether the fire control is held.</param>
     public PlayerInputState(IntVector2 moveDirection, bool fireHeld)
         : this(moveDirection, IntVector2.Zero, fireHeld)
     {

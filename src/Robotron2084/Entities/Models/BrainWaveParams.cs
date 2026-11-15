@@ -1,7 +1,7 @@
 namespace Robotron2084.Entities.Models;
 
 /// <summary>What a wave sets for its brains: how long they wait between beats, and how often they fire a cruise missile.</summary>
-public sealed record BrainWaveSettings
+public sealed record BrainWaveParams
 {
     /// <summary>Makes the settings of one wave's brains.</summary>
     /// <param name="beatWaitArcadeFrames">
@@ -9,7 +9,7 @@ public sealed record BrainWaveSettings
     /// </param>
     /// <param name="fireIntervalBeats">The longest this wave's brains wait between cruise missiles, in <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>.</param>
     /// <exception cref="ArgumentOutOfRangeException">Either is below 0.</exception>
-    public BrainWaveSettings(int beatWaitArcadeFrames, int fireIntervalBeats)
+    public BrainWaveParams(int beatWaitArcadeFrames, int fireIntervalBeats)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(beatWaitArcadeFrames);
         ArgumentOutOfRangeException.ThrowIfNegative(fireIntervalBeats);

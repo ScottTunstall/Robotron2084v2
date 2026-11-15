@@ -8,6 +8,8 @@ namespace Robotron2084.Input.Models;
 ///     time: arming a line and pressing a key
 ///     replaces the keyboard slot and leaves the pad slot alone, and vice versa.
 /// </summary>
+/// <param name="KeyBinding">The keyboard key, or <see cref="InputBinding.None" />.</param>
+/// <param name="PadBinding">The gamepad button or stick direction, or <see cref="InputBinding.None" />.</param>
 public readonly record struct ActionBinding(InputBinding KeyBinding, InputBinding PadBinding)
 {
     /// <summary>An unbound line.</summary>
@@ -39,6 +41,8 @@ public readonly record struct ActionBinding(InputBinding KeyBinding, InputBindin
     ///     key to <see cref="KeyBinding" />, anything from a gamepad to <see cref="PadBinding" /> — and
     ///     clears both when given <see cref="InputBinding.None" /> (the page's Del).
     /// </summary>
+    /// <param name="binding">The binding to put in its slot.</param>
+    /// <returns>The line with that slot changed.</returns>
     public ActionBinding With(InputBinding binding)
     {
         return binding.Kind switch
@@ -49,7 +53,11 @@ public readonly record struct ActionBinding(InputBinding KeyBinding, InputBindin
         };
     }
 
-    /// <summary>True while either slot is held.</summary>
+    /// <summary>Says whether either slot is held.</summary>
+    /// <param name="keyboardState">The keyboard this tick.</param>
+    /// <param name="playerOneGamePadState">The first gamepad this tick.</param>
+    /// <param name="playerTwoGamePadState">The second gamepad this tick.</param>
+    /// <returns>True while the key, or the gamepad control, is held.</returns>
     public bool IsHeld(KeyboardState keyboardState, GamePadState playerOneGamePadState, GamePadState playerTwoGamePadState)
     {
         return KeyBinding.IsHeld(keyboardState, playerOneGamePadState, playerTwoGamePadState) || PadBinding.IsHeld(keyboardState, playerOneGamePadState, playerTwoGamePadState);

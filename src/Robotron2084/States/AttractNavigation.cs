@@ -71,16 +71,16 @@ internal static class AttractNavigation
 
     /// <summary>Makes the screen for a step.</summary>
     /// <param name="step">The step.</param>
-    /// <param name="gameServices">The shared services the screens are made with.</param>
-    public static IGameState CreateState(int step, GameServices gameServices)
+    /// <param name="gameStateParams">The shared services the screens are made with.</param>
+    public static IGameState CreateState(int step, GameStateParams gameStateParams)
     {
-        if (step == TitleArcadePaneStep) return new TitleScreenState(gameServices, TitleTextPane.Arcade);
-        if (step == TitlePortPaneStep) return new TitleScreenState(gameServices, TitleTextPane.Port);
-        if (step == DemoStep) return new AttractState(gameServices);
-        if (step == HighScoresStep) return new HighScoreTableState(gameServices);
+        if (step == TitleArcadePaneStep) return new TitleScreenState(gameStateParams, TitleTextPane.Arcade);
+        if (step == TitlePortPaneStep) return new TitleScreenState(gameStateParams, TitleTextPane.Port);
+        if (step == DemoStep) return new AttractState(gameStateParams);
+        if (step == HighScoresStep) return new HighScoreTableState(gameStateParams);
 
         var storyPage = step - FirstStoryPageStep + 1;
-        return new StorylineState(gameServices, storyPage);
+        return new StorylineState(gameStateParams, storyPage);
     }
 
     private static int GetTitleStep(TitleScreenState titleScreenState)

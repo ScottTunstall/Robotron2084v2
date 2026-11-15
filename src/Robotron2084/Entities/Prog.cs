@@ -208,21 +208,21 @@ public sealed class Prog : IExplodable, IRemovable
     private int _walkCycleIndex;
 
     /// <summary>Makes a prog where the family member was. It has that family member's animation frames and size.</summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the prog shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick how far off the player the spot it heads for is, and when it turns.
     /// </param>
     /// <param name="position">Where the prog's top-left corner is.</param>
     /// <param name="kind">Which family member it used to be. This decides its animation frames and its size.</param>
     public Prog(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 position,
         FamilyMemberKind kind)
     {
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = position;
         Kind = kind;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
         _collisionSize = (
             ScreenSize.ToPortPixelsFromArcadePixels(kind.GetArcadeCollisionSize().Width),
             ScreenSize.ToPortPixelsFromArcadePixels(kind.GetArcadeCollisionSize().Height));

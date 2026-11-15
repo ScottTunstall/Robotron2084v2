@@ -17,7 +17,7 @@ namespace Robotron2084.Audio.Synthesis;
 ///         <item>Disassembly: none in this repo; ROM <c>$F780</c> (<c>CANNON</c>, from the jump table <c>JMPTBL</c>).</item>
 ///     </list>
 ///     The cannon, the hyperspace bomb, the thrust and the first background sound share this routine; their tables
-///     (<c>CANTB</c>, <c>HBMBTB</c>, <c>THTB</c>, <c>BG1TB</c>) differ in the numbers in <see cref="FilteredNoiseSettings" />. The
+///     (<c>CANTB</c>, <c>HBMBTB</c>, <c>THTB</c>, <c>BG1TB</c>) differ in the numbers in <see cref="FilteredNoiseParams" />. The
 ///     thrust and the background neither distort nor shrink, so they play until another sound number arrives.
 /// </remarks>
 internal sealed class FilteredNoise
@@ -101,7 +101,7 @@ internal sealed class FilteredNoise
     private const int WordMask = 0xFFFF;
 
     private readonly BoardMemory _boardMemory;
-    private readonly FilteredNoiseSettings _noiseSettings;
+    private readonly FilteredNoiseParams _noiseParams;
     private readonly BoardOutput _boardOutput;
     private bool _isFirstStretch = true;
     private byte _level;
@@ -111,13 +111,13 @@ internal sealed class FilteredNoise
     /// <summary>Creates the sound on the board's memory and output port.</summary>
     /// <param name="boardMemory">The board's lasting variables, for the random numbers.</param>
     /// <param name="boardOutput">The board's output port.</param>
-    /// <param name="noiseSettings">The settings table's numbers.</param>
-    private FilteredNoise(BoardMemory boardMemory, BoardOutput boardOutput, FilteredNoiseSettings noiseSettings)
+    /// <param name="noiseParams">The settings table's numbers.</param>
+    private FilteredNoise(BoardMemory boardMemory, BoardOutput boardOutput, FilteredNoiseParams noiseParams)
     {
         _boardMemory = boardMemory;
         _boardOutput = boardOutput;
-        _noiseSettings = noiseSettings;
-        _limit = (ushort)(noiseSettings.FirstLimit << ByteBits);
+        _noiseParams = noiseParams;
+        _limit = (ushort)(noiseParams.FirstLimit << ByteBits);
     }
 
     /// <summary>
@@ -130,7 +130,7 @@ internal sealed class FilteredNoise
     public static IEnumerable<OutputChange> PlayBackground1(BoardMemory boardMemory, BoardOutput boardOutput)
     {
         return Start(boardMemory, boardOutput,
-            new FilteredNoiseSettings(Background1FirstLimit, 0, 0, Immediate + StoreDirect + CannonSetUpCycles, false, false));
+            new FilteredNoiseParams(Background1FirstLimit, 0, 0, Immediate + StoreDirect + CannonSetUpCycles, false, false));
     }
 
     /// <summary>Plays the hyperspace bomb sound (sound <c>HBOMB</c>, settings <c>HBMBTB</c>).</summary>
@@ -140,7 +140,7 @@ internal sealed class FilteredNoise
     public static IEnumerable<OutputChange> PlayBomb(BoardMemory boardMemory, BoardOutput boardOutput)
     {
         return Start(boardMemory, boardOutput,
-            new FilteredNoiseSettings(BombFirstLimit, BombLevelsPerShrink, BombSmallestSlope, CannonSetUpCycles - Branch));
+            new FilteredNoiseParams(BombFirstLimit, BombLevelsPerShrink, BombSmallestSlope, CannonSetUpCycles - Branch));
     }
 
     /// <summary>Plays the cannon sound (sound <c>CANNON</c>).</summary>
@@ -150,7 +150,7 @@ internal sealed class FilteredNoise
     public static IEnumerable<OutputChange> PlayCannon(BoardMemory boardMemory, BoardOutput boardOutput)
     {
         return Start(boardMemory, boardOutput,
-            new FilteredNoiseSettings(CannonFirstLimit, CannonLevelsPerShrink, CannonSmallestSlope, CannonSetUpCycles));
+            new FilteredNoiseParams(CannonFirstLimit, CannonLevelsPerShrink, CannonSmallestSlope, CannonSetUpCycles));
     }
 
     /// <summary>
@@ -162,13 +162,13 @@ internal sealed class FilteredNoise
     /// <returns>The sound's output changes.</returns>
     public static IEnumerable<OutputChange> PlayThrust(BoardMemory boardMemory, BoardOutput boardOutput)
     {
-        return Start(boardMemory, boardOutput, new FilteredNoiseSettings(ThrustFirstLimit, 0, 0, CannonSetUpCycles, false, false));
+        return Start(boardMemory, boardOutput, new FilteredNoiseParams(ThrustFirstLimit, 0, 0, CannonSetUpCycles, false, false));
     }
 
-    private static IEnumerable<OutputChange> Start(BoardMemory boardMemory, BoardOutput boardOutput, FilteredNoiseSettings noiseSettings)
+    private static IEnumerable<OutputChange> Start(BoardMemory boardMemory, BoardOutput boardOutput, FilteredNoiseParams noiseParams)
     {
-        boardOutput.Wait(noiseSettings.SetUpCycles);
-        return new FilteredNoise(boardMemory, boardOutput, noiseSettings).Play();
+        boardOutput.Wait(noiseParams.SetUpCycles);
+        return new FilteredNoise(boardMemory, boardOutput, noiseParams).Play();
     }
 
     /// <summary>
@@ -179,9 +179,9 @@ internal sealed class FilteredNoise
     private byte ChooseSlopeHigh()
     {
         var limitHigh = (byte)(_limit >> ByteBits);
-        if (!_noiseSettings.IsDistorted) return limitHigh;
+        if (!_noiseParams.IsDistorted) return limitHigh;
 
-        return (byte)((limitHigh & _boardMemory.RandomHigh) + _noiseSettings.SmallestSlope);
+        return (byte)((limitHigh & _boardMemory.RandomHigh) + _noiseParams.SmallestSlope);
     }
 
     /// <summary>Plays stretches of slides, shrinking the limit after each, until it reaches its end (<c>FNOIS0</c>).</summary>
@@ -190,10 +190,10 @@ internal sealed class FilteredNoise
     {
         do
         {
-            if (_noiseSettings.Shrinks || _isFirstStretch)
+            if (_noiseParams.Shrinks || _isFirstStretch)
             {
                 _boardOutput.Wait(StartStretchCycles);
-                _levelsLeft = _noiseSettings.LevelsPerShrink;
+                _levelsLeft = _noiseParams.LevelsPerShrink;
                 _level = _boardOutput.Level;
                 _isFirstStretch = false;
             }
@@ -212,7 +212,7 @@ internal sealed class FilteredNoise
     /// <returns>True to play another stretch; false once the limit has shrunk to its end.</returns>
     private bool ShrinkLimit()
     {
-        if (!_noiseSettings.Shrinks)
+        if (!_noiseParams.Shrinks)
         {
             _boardOutput.Wait(Direct + Branch);
             return true;
@@ -236,7 +236,7 @@ internal sealed class FilteredNoise
         foreach (var change in RandomStep.Run(_boardMemory, _boardOutput, _level, RandomStep.MixLevelCycles)) yield return change;
 
         var slopeCycles = ChooseSlopeCycles;
-        if (!_noiseSettings.IsDistorted) slopeCycles = ChooseSlopeCycles - 2 * Direct;
+        if (!_noiseParams.IsDistorted) slopeCycles = ChooseSlopeCycles - 2 * Direct;
 
         _boardOutput.Wait(slopeCycles);
         var slopeHigh = ChooseSlopeHigh();

@@ -36,27 +36,28 @@ namespace Robotron2084.Palette;
 ///         </item>
 ///     </list>
 ///     <para>
-///         The cycles are counted in fiftieths of a second, and a fiftieth of a second is 6/5 of a port tick. So the timers use
-///         the clock-unit counter that the entities use (notes §52): a 1-frame process comes round every 1.2 ticks, a
-///         2-frame one every 2.4, and an 8-frame one every 9.6.
+///         <para>
+///             The cycles are counted in fiftieths of a second, and a fiftieth of a second is 6/5 of a port tick. So the timers use
+///             the clock-unit counter that the entities use (notes §52): a 1-frame process comes round every 1.2 ticks, a
+///             2-frame one every 2.4, and an 8-frame one every 9.6.
+///         </para>
+///         <list type="bullet">
+///             <item>
+///                 <description>
+///                     Original source: <c>RRS22.ASM</c>. <c>COLSTV</c> starts the processes, <c>TABDRI</c> runs the table-driven
+///                     ones (<c>RGB</c>, <c>DECAY</c>, <c>BPR</c>, <c>RGOLD</c> and <c>LASER</c>) and writes a colour before it
+///                     sleeps, <c>LF</c> is the laser flash, and <c>COLTAB</c> is the long colour table.
+///                 </description>
+///             </item>
+///             <item>
+///                 <description>
+///                     Disassembly: <c>asm/robomame.asm</c> at <c>$D981</c> (<c>RGB</c>), <c>$D98E</c> (<c>DECAY</c>), <c>$D9AE</c>
+///                     (<c>BPR</c>), <c>$D9D2</c> (<c>RGOLD</c>), <c>$D9DF</c> (<c>LASER</c>), <c>$D9E8</c> (<c>TABDRI</c>),
+///                     <c>$DA0D</c> (<c>LF</c>) and <c>$DA2C</c> (<c>COLTAB</c>). The disassembly gives no label for these, only
+///                     addresses.
+///                 </description>
+///             
 ///     </para>
-///     <list type="bullet">
-///         <item>
-///             <description>
-///                 Original source: <c>RRS22.ASM</c>. <c>COLSTV</c> starts the processes, <c>TABDRI</c> runs the table-driven
-///                 ones (<c>RGB</c>, <c>DECAY</c>, <c>BPR</c>, <c>RGOLD</c> and <c>LASER</c>) and writes a colour before it
-///                 sleeps, <c>LF</c> is the laser flash, and <c>COLTAB</c> is the long colour table.
-///             </description>
-///         </item>
-///         <item>
-///             <description>
-///                 Disassembly: <c>asm/robomame.asm</c> at <c>$D981</c> (<c>RGB</c>), <c>$D98E</c> (<c>DECAY</c>), <c>$D9AE</c>
-///                 (<c>BPR</c>), <c>$D9D2</c> (<c>RGOLD</c>), <c>$D9DF</c> (<c>LASER</c>), <c>$D9E8</c> (<c>TABDRI</c>),
-///                 <c>$DA0D</c> (<c>LF</c>) and <c>$DA2C</c> (<c>COLTAB</c>). The disassembly gives no label for these, only
-///                 addresses.
-///             </description>
-///         </item>
-///     </list>
 /// </remarks>
 public sealed class PaletteAnimator
 {

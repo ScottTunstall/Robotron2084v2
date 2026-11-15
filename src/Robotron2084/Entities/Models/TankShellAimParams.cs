@@ -1,11 +1,11 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 
 namespace Robotron2084.Entities.Models;
 
 /// <summary>What a tank shell is aimed with: where the player is, how fast shells go on this wave, and where the walls are.</summary>
-public sealed record TankShellAim
+public sealed record TankShellAimParams
 {
     /// <summary>Makes the aim for one shell.</summary>
     /// <param name="playerPosition">The top-left corner of the player, in port pixels.</param>
@@ -14,7 +14,7 @@ public sealed record TankShellAim
     /// <exception cref="ArgumentOutOfRangeException">
     ///     <paramref name="shellSpeed" /> is below 0, or <paramref name="playfieldBounds" /> has no width or no height.
     /// </exception>
-    public TankShellAim(IntVector2 playerPosition, int shellSpeed, Rectangle playfieldBounds)
+    public TankShellAimParams(IntVector2 playerPosition, int shellSpeed, Rectangle playfieldBounds)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(shellSpeed);
         EntityArguments.ThrowIfEmpty(playfieldBounds);

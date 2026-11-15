@@ -48,25 +48,25 @@ public sealed class HulkWaveSpawner : IWaveSpawner
     private const int TargetMaxExclusive = 256;
 
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext waveSpawnContext)
+    public void Spawn(WaveSpawnParams waveSpawnParams)
     {
-        var playField = waveSpawnContext.PlayField;
+        var playField = waveSpawnParams.PlayField;
         var phantomTargetPosition = Hulk.GetPhantomTargetPosition(playField.GetPlayfieldBounds());
         var nextSlotToSearch = FamilyList.FirstSlot;
-        for (var i = 0; i < playField.WaveParameters.HulkCount; i++)
+        for (var i = 0; i < playField.WaveParams.HulkCount; i++)
         {
-            var position = waveSpawnContext.SpawnPlacement.FindSpawnPointAwayFrom(waveSpawnContext.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
+            var position = waveSpawnParams.SpawnPlacement.FindSpawnPointAwayFrom(waveSpawnParams.PlayerStart, SpawnTuning.HulkMinDistanceFromPlayer);
             int? slot = FamilyList.LastSlot;
-            var isSearchingFamilyList = waveSpawnContext.Random.Next(TargetMaxExclusive) <= SearchFamilyListThreshold;
+            var isSearchingFamilyList = waveSpawnParams.Random.Next(TargetMaxExclusive) <= SearchFamilyListThreshold;
             if (isSearchingFamilyList)
-                (slot, nextSlotToSearch) = FindNextLeftOverSlot(waveSpawnContext.FamilySlotsLeftOver, nextSlotToSearch);
+                (slot, nextSlotToSearch) = FindNextLeftOverSlot(waveSpawnParams.FamilySlotsLeftOver, nextSlotToSearch);
 
             Func<IntVector2> getTargetPosition = () => phantomTargetPosition;
             if (slot is { } stalkedSlot)
                 getTargetPosition = () => playField.GetFamilyMemberInSlot(stalkedSlot)?.Position ?? playField.GetPlayerPosition();
 
-            waveSpawnContext.FieldEntities.Add(new Hulk(playField.EntityDependencies, position,
-                playField.WaveParameters.HulkBeatIntervalArcadeFrames, getTargetPosition));
+            waveSpawnParams.FieldEntities.Add(new Hulk(playField.EntityParams, position,
+                playField.WaveParams.HulkBeatIntervalArcadeFrames, getTargetPosition));
         }
     }
 

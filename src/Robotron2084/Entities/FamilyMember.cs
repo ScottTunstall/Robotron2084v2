@@ -131,24 +131,24 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes one family member. It picks at random which way it walks first, and how long it waits before its first
     ///     step.
     /// </summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the family member shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick its direction, how many steps it takes before it turns, and its wait before the first step.
     /// </param>
     /// <param name="position">Where the family member's top-left corner is.</param>
     /// <param name="kind">Which family member it is. This decides its animation frames and its size.</param>
     public FamilyMember(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 position,
         FamilyMemberKind kind)
     {
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = position;
         Kind = kind;
-        _random = dependencies.Random;
-        _directionBlock = dependencies.Random.Next(PossibleDirections);
-        _newDirectionStepsRemaining = 1 + dependencies.Random.Next(NewDirectionMaxSteps);
-        _firstStepTicksRemaining = 1 + dependencies.Random.Next(FirstStepMaxTicks);
+        _random = entityParams.Random;
+        _directionBlock = entityParams.Random.Next(PossibleDirections);
+        _newDirectionStepsRemaining = 1 + entityParams.Random.Next(NewDirectionMaxSteps);
+        _firstStepTicksRemaining = 1 + entityParams.Random.Next(FirstStepMaxTicks);
     }
 
     /// <summary>

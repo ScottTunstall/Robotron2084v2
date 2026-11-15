@@ -36,23 +36,23 @@ public sealed class AttractState : IGameState, IAttractState
 {
     private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
     private readonly DemoPlayerInputSource _demoPlayerInputSource;
-    private readonly WaveParameterGenerator _waveParameterGenerator = new();
+    private readonly WaveParamsGenerator _waveParamsGenerator = new();
     private readonly HighScoreStore _highScoreStore;
     private readonly IPlayerInputSource _humanPlayerInputSource;
     private readonly Random _random;
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private readonly GameSession _gameSession;
     private readonly TextureSet _textureSet;
     private PlayField _playField;
 
-    public AttractState(GameServices gameServices)
+    public AttractState(GameStateParams gameStateParams)
     {
-        _gameServices = gameServices;
-        _random = gameServices.Random;
+        _gameStateParams = gameStateParams;
+        _random = gameStateParams.Random;
         _demoPlayerInputSource = new DemoPlayerInputSource(_random);
-        _textureSet = gameServices.TextureSet;
-        _highScoreStore = gameServices.HighScoreStore;
-        _humanPlayerInputSource = gameServices.PlayerInputSource;
+        _textureSet = gameStateParams.TextureSet;
+        _highScoreStore = gameStateParams.HighScoreStore;
+        _humanPlayerInputSource = gameStateParams.PlayerInputSource;
         _gameSession = GameSession.CreateNewGame(_demoPlayerInputSource, 1);
         _playField = BuildField();
     }
@@ -71,7 +71,7 @@ public sealed class AttractState : IGameState, IAttractState
         var humanInputState = _humanPlayerInputSource.Poll();
         if (_buttonEdgeDetector.Advance(humanInputState).AnyPressed())
         {
-            gameStateManager.TransitionTo(new MainMenuState(_gameServices));
+            gameStateManager.TransitionTo(new MainMenuState(_gameStateParams));
             return;
         }
 
@@ -91,7 +91,7 @@ public sealed class AttractState : IGameState, IAttractState
             var playerSlot = _gameSession.GetCurrent();
             SyncSlotFromField();
             playerSlot.Wave = playerSlot.Wave % 255 + 1; // ROM GEXX: skip 0
-            playerSlot.SavedWaveParameters = null;
+            playerSlot.SavedWaveParams = null;
             gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession, _random, true));
             return;
         }
@@ -99,7 +99,7 @@ public sealed class AttractState : IGameState, IAttractState
         if (_playField.IsPlayerDead())
         {
             SyncSlotFromField();
-            _gameSession.GetCurrent().SavedWaveParameters = WaveSurvivors.GetFrom(_playField);
+            _gameSession.GetCurrent().SavedWaveParams = WaveSurvivors.GetFrom(_playField);
 
             if (!_gameSession.AnyPlayerSlotHasLives())
             {
@@ -108,7 +108,7 @@ public sealed class AttractState : IGameState, IAttractState
                 // (`JSR SCRCLR / JSR TABORG`), and only then the family page again
                 // (notes §98.1). The demo's own score is NOT posted (notes §98.4,
                 // open question).
-                gameStateManager.TransitionTo(new HighScoreTableState(_gameServices));
+                gameStateManager.TransitionTo(new HighScoreTableState(_gameStateParams));
                 return;
             }
 
@@ -121,10 +121,10 @@ public sealed class AttractState : IGameState, IAttractState
         var slot = _gameSession.GetCurrent();
         // The demo is the same game, so a death keeps the survivors here too (notes §134). It is the arcade's demo, so it
         // plays the arcade's waves whatever the game style.
-        var waveParameters = BozoMode.Apply(slot.SavedWaveParameters ?? _waveParameterGenerator.Generate(slot.Wave, GameStyle.Classic),
+        var waveParams = BozoMode.Apply(slot.SavedWaveParams ?? _waveParamsGenerator.Generate(slot.Wave, GameStyle.Classic),
             slot.GetSpareLives());
         WallColourCycle wallColourCycle = new();
-        return new PlayField(_textureSet, waveParameters, _demoPlayerInputSource, PlayfieldLayout.GetInnerBounds(), wallColourCycle, _random,
+        return new PlayField(_textureSet, waveParams, _demoPlayerInputSource, PlayfieldLayout.GetInnerBounds(), wallColourCycle, _random,
             slot.Lives, slot.Score, _textureSet.BlitterDraw.GamePalette, false, new PixelContactTest(new SpriteCollision()));
     }
 

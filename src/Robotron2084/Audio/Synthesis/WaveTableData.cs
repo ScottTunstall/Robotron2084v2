@@ -101,7 +101,7 @@ internal static class WaveTableData
     public static IReadOnlyList<byte> Patterns { get; } = [.. PatternsInOrder.SelectMany(pattern => pattern)];
 
     /// <summary><c>SVTAB</c>: every wave table sound's settings. A sound number picks one by its place, counting from 0.</summary>
-    public static IReadOnlyList<WaveTableVector> Vectors { get; } =
+    public static IReadOnlyList<WaveTableSoundRow> Vectors { get; } =
     [
         new(0x81, 0x24, 0, 0, 0, 22, StartOf(HeartbeatDistorto)), // HBDV
         new(0x12, 0x05, 0x1A, 0xFF, 0, 39, StartOf(StartDistorto)), // STDV

@@ -7,4 +7,8 @@ namespace Robotron2084.AttractMode.Models;
 ///         <item>Disassembly: <c>PRINT_CHARACTER_NAME_FROM_SCRIPT</c> ($7A60), with the message pointer table at $6377</item>
 ///     </list>
 /// </remarks>
+/// <param name="X">Where the text starts across the screen, in arcade pixels.</param>
+/// <param name="Y">The row the text is printed on.</param>
+/// <param name="Text">The words to show.</param>
+/// <param name="PaletteIndex">The palette index the text is drawn in.</param>
 public readonly record struct MovieMessage(int X, int Y, string Text, int PaletteIndex);

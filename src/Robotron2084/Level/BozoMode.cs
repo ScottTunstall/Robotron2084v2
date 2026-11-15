@@ -15,11 +15,12 @@ namespace Robotron2084.Level;
 ///         </item>
 ///         <item>Disassembly: <c>$2B26</c> to <c>$2B68</c>, with the table at <c>$2B59</c></item>
 ///     </list>
-///     It runs
-///     each time a player's wave is loaded. On the first four waves, a player with no spare lives left gets
-///     it. On the first two waves, so does a player who has lost a life. The wave's enforcers, spheroids
-///     and grunts are then slowed to the values in the table.</item>
-///     </list>
+///     <para>
+///         It runs
+///         each time a player's wave is loaded. On the first four waves, a player with no spare lives left gets
+///         it. On the first two waves, so does a player who has lost a life. The wave's enforcers, spheroids
+///         and grunts are then slowed to the values in the table.
+///     </para>
 /// </remarks>
 public static class BozoMode
 {
@@ -70,16 +71,16 @@ public static class BozoMode
     }
 
     /// <summary>Gives a wave's parameters, slowed down when the mercy is given.</summary>
-    /// <param name="waveParameters">The wave table's parameters.</param>
+    /// <param name="waveParams">The wave table's parameters.</param>
     /// <param name="spareLives">The lives the player has left besides the one in play.</param>
     /// <param name="startingLives">The lives each player starts with (see <see cref="AppliesTo" />).</param>
-    public static WaveParameters Apply(WaveParameters waveParameters, int spareLives,
+    public static WaveParams Apply(WaveParams waveParams, int spareLives,
         int startingLives = PlayerTuning.StartingLives)
     {
-        if (!AppliesTo(waveParameters.WaveNumber, spareLives, startingLives)) return waveParameters;
+        if (!AppliesTo(waveParams.WaveNumber, spareLives, startingLives)) return waveParams;
 
-        var row = Table[waveParameters.WaveNumber - 1];
-        return waveParameters with
+        var row = Table[waveParams.WaveNumber - 1];
+        return waveParams with
         {
             SpheroidDropDelay = row.SpheroidDropDelay,
             EnforcerFireDelay = row.EnforcerFireDelay,

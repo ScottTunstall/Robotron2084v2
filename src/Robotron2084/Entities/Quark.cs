@@ -108,7 +108,7 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     Makes a quark at <paramref name="position" />. It picks at random how many tanks it will drop, and how long it
     ///     waits before the first.
     /// </summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the quark shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick how many tanks it drops, how it drifts and which way it flees.
     /// </param>
     /// <param name="position">Where the quark's top-left corner is.</param>
@@ -123,21 +123,21 @@ public sealed class Quark : IEntity, IAnimationFrameSource, IRemovable
     ///     </list>
     /// </remarks>
     public Quark(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 position,
-        QuarkWaveSettings settings)
+        QuarkWaveParams settings)
     {
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = position;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
         _dropIntervalMaxBeats = settings.DropIntervalMaxBeats;
         _maxSpeed = settings.MaxSpeed;
         // How many tanks the quark may drop: a random number up to this wave's limit, halved and rounded up (ROM: PD3).
-        var randomDrops = ArcadeRandom.PickUpTo(dependencies.Random, settings.MaxDropsX2);
+        var randomDrops = ArcadeRandom.PickUpTo(entityParams.Random, settings.MaxDropsX2);
         _tanksRemaining = (randomDrops + 1) / 2;
         // The wait before the first tank drop. It counts down once each time the animation starts again, not once a beat (ROM: PD2).
-        _dropBeatsRemaining = ArcadeRandom.PickUpTo(dependencies.Random, settings.DropIntervalMaxBeats);
+        _dropBeatsRemaining = ArcadeRandom.PickUpTo(entityParams.Random, settings.DropIntervalMaxBeats);
     }
 
     /// <summary>Alive until it is shot or flees off the field. It is never Dying (see <see cref="Kill" />).</summary>

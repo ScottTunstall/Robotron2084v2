@@ -17,4 +17,4 @@ namespace Robotron2084.Audio.Models;
 /// <param name="Repetitions">How many times the sound number is sent (<c>REPCNT</c>).</param>
 /// <param name="LengthVblanks">How many vblanks each send lasts before the next (<c>SNDTMR</c>).</param>
 /// <param name="SoundNumber">Which sound the sound board plays (<c>SND#</c>).</param>
-public readonly record struct SoundEntry(byte Repetitions, byte LengthVblanks, byte SoundNumber);
+public readonly record struct SoundTableRow(byte Repetitions, byte LengthVblanks, byte SoundNumber);

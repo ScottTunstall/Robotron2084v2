@@ -31,7 +31,7 @@ public static class RobotKinds
     // the tanks and then the grunts (ROM: RRG23.ASM PLS0A, JSR HULKST / BRNST / TANKST ... RINIT; disassembly $2831 onwards).
     // The author's own BerzerkRobot is put after the grunts, since it is a grunt in all but looks.
     /// <summary>Every kind, in the order the arcade's collision code deals with them.</summary>
-    public static readonly RobotKindInfo[] All =
+    public static readonly RobotKindRow[] All =
     [
         // The electrodes come first, and a laser that reaches one is spent on it.
         new(RobotKind.Electrode,
@@ -157,7 +157,7 @@ public static class RobotKinds
 
     /// <summary>Finds the row for a kind.</summary>
     /// <param name="kind">The kind to look up.</param>
-    public static RobotKindInfo GetInfo(RobotKind kind)
+    public static RobotKindRow GetInfo(RobotKind kind)
     {
         return All[(int)kind];
     }

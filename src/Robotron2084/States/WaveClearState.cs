@@ -112,7 +112,7 @@ public sealed class WaveClearState : IClosableGameState
         {
             IGameState nextGameState = new PlayingState(_textureSet, _highScoreStore, _gameSession, _random);
             if (_isAttractMode)
-                nextGameState = new AttractState(GameServices.CreateFrom(_gameSession, _textureSet, _highScoreStore,
+                nextGameState = new AttractState(GameStateParams.CreateFrom(_gameSession, _textureSet, _highScoreStore,
                     _gameSession.GetCurrent().PlayerInputSource, _random));
 
             gameStateManager.TransitionTo(nextGameState);

@@ -79,16 +79,16 @@ public sealed class SettingsState : IGameState
     private readonly DefineInputsHighlight _defineInputsHighlight = new();
     private readonly HighScoreStore _highScoreStore;
     private readonly SettingsModel _settingsModel = new();
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
     private InputSnapshot _previousSnapshot;
 
-    public SettingsState(GameServices gameServices, GameSettingsStore gameSettingsStore)
+    public SettingsState(GameStateParams gameStateParams, GameSettingsStore gameSettingsStore)
     {
-        _gameServices = gameServices;
-        _textureSet = gameServices.TextureSet;
-        _gameSettings = gameServices.GameSettings;
-        _highScoreStore = gameServices.HighScoreStore;
+        _gameStateParams = gameStateParams;
+        _textureSet = gameStateParams.TextureSet;
+        _gameSettings = gameStateParams.GameSettings;
+        _highScoreStore = gameStateParams.HighScoreStore;
         _gameSettingsStore = gameSettingsStore;
         _previousSnapshot = InputSnapshot.Read();
         RestorePalette();
@@ -127,7 +127,7 @@ public sealed class SettingsState : IGameState
         if (WasKeyboardPressed(now, Keys.F10))
         {
             _gameSettingsStore.Save(_gameSettings);
-            gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices, null, _gameSettingsStore));
+            gameStateManager.TransitionTo(new DeveloperToolsState(_gameStateParams, null, _gameSettingsStore));
         }
 
         _previousSnapshot = now;

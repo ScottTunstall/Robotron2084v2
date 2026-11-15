@@ -31,7 +31,7 @@ namespace Robotron2084.Entities;
 ///     the ground.
 ///     How many it drops is picked at random, the way a spheroid picks how many enforcers to drop, from the wave's
 ///     <c>ENFNUM</c>
-///     (<see cref="WaveParameters.MaxDropsX2" />). So later waves and harder settings drop more. A wave can only hold so
+///     (<see cref="WaveParams.MaxDropsX2" />). So later waves and harder settings drop more. A wave can only hold so
 ///     many
 ///     grunts, so Gorf drops fewer, or none, when the wave is full.
 ///     A Gorf that gets across scores nothing. A Gorf that is shot scores the same as a grunt.
@@ -75,7 +75,7 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     Makes a Gorf just off the screen, on a random side and at a random height, and works out where on its way it
     ///     will drop grunts.
     /// </summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What Gorf shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick the side, the height and how many grunts it drops.
     /// </param>
     /// <param name="playfield">The playfield this Gorf is built for: where the walls are, and the player's box to keep clear of.</param>
@@ -85,19 +85,19 @@ public sealed class Gorf : IExplodable, IRemovable
     ///     It is said once.
     /// </param>
     public Gorf(
-        EntityDependencies dependencies,
-        GorfPlayfield playfield,
-        GorfDrops drops,
+        EntityParams entityParams,
+        GorfPlayfieldParams playfield,
+        GorfDropParams drops,
         GorfLine? lineToSay = null)
     {
         _lineToSay = lineToSay;
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _playfieldBounds = playfield.Bounds;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
         _maxDropsX2 = drops.MaxDropsX2;
         _directionSignX = DirectionSigns.Left;
-        var isEnteringFromLeft = dependencies.Random.Next(2) == 0;
+        var isEnteringFromLeft = entityParams.Random.Next(2) == 0;
         if (isEnteringFromLeft) _directionSignX = DirectionSigns.Right;
 
         var highest = playfield.Bounds.Y + HopPixels;

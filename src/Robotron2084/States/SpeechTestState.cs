@@ -70,7 +70,7 @@ public sealed class SpeechTestState : IGameState
     private readonly IReadOnlyList<string> _lineNames;
 
     private readonly string _description;
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
     private int _index;
     private bool _isAutoUp;
@@ -78,16 +78,16 @@ public sealed class SpeechTestState : IGameState
     private int _quietTicks;
 
     /// <summary>Opens the page and speaks the first line.</summary>
-    /// <param name="gameServices">The shared services.</param>
+    /// <param name="gameStateParams">The shared services.</param>
     /// <summary>Opens the page on the first line of a robot's speech, and speaks it.</summary>
-    /// <param name="gameServices">The attract sequence's shared services.</param>
+    /// <param name="gameStateParams">The attract sequence's shared services.</param>
     /// <param name="folder">The robot's content folder under <c>Content/Speech/</c>: <see cref="SpeechFolders.Gorf" /> or <see cref="SpeechFolders.Berzerk" />.</param>
-    public SpeechTestState(GameServices gameServices, string folder)
+    public SpeechTestState(GameStateParams gameStateParams, string folder)
     {
-        _gameServices = gameServices;
+        _gameStateParams = gameStateParams;
         _description = $"{folder.ToUpperInvariant()} {DescriptionWords}";
         _lineNames = SpeechFolders.GetLineNames(folder);
-        _textureSet = gameServices.TextureSet;
+        _textureSet = gameStateParams.TextureSet;
         _previousSnapshot = InputSnapshot.Read();
         if (_textureSet.BlitterDraw.GamePalette is { } palette)
             palette.SetPaletteIndexValue(TextPaletteIndex, GamePalette.DefaultPaletteValues[TextPaletteIndex]);
@@ -126,7 +126,7 @@ public sealed class SpeechTestState : IGameState
 
         if (IsPressed(now, Keys.F10))
         {
-            gameStateManager.TransitionTo(new DeveloperToolsState(_gameServices));
+            gameStateManager.TransitionTo(new DeveloperToolsState(_gameStateParams));
             return;
         }
 

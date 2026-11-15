@@ -45,7 +45,7 @@ public sealed class PlayingState : IGameState
     private readonly GameEventHub _gameEventHub = new();
     private readonly GameSettings _gameSettings;
 
-    private readonly WaveParameterGenerator _waveParameterGenerator = new();
+    private readonly WaveParamsGenerator _waveParamsGenerator = new();
     private readonly HighScoreStore _highScoreStore;
     private readonly PauseToggle _pauseToggle = new();
     private readonly Random _random;
@@ -182,7 +182,7 @@ public sealed class PlayingState : IGameState
             return;
         }
 
-        WaveStartSpeech.Say(_gameSession, _playField.WaveParameters);
+        WaveStartSpeech.Say(_gameSession, _playField.WaveParams);
         _playField.Update(gameTime);
 
         // The HUD is drawn from the session's slots, and the ROM reads the score,
@@ -241,13 +241,13 @@ public sealed class PlayingState : IGameState
     }
 
     /// <summary>Eases the wave for a player losing lives early, unless BOZO MODE is switched off on the GAME ADJUSTMENT page.</summary>
-    /// <param name="waveParameters">The wave's parameters.</param>
+    /// <param name="waveParams">The wave's parameters.</param>
     /// <param name="playerSlot">The player whose turn it is.</param>
-    private WaveParameters ApplyBozoMode(WaveParameters waveParameters, PlayerSlot playerSlot)
+    private WaveParams ApplyBozoMode(WaveParams waveParams, PlayerSlot playerSlot)
     {
-        if (!_gameSettings.BozoModeEnabled) return waveParameters;
+        if (!_gameSettings.BozoModeEnabled) return waveParams;
 
-        return BozoMode.Apply(waveParameters, playerSlot.GetSpareLives(), _gameSettings.TurnsPerPlayer);
+        return BozoMode.Apply(waveParams, playerSlot.GetSpareLives(), _gameSettings.TurnsPerPlayer);
     }
 
     /// <summary>Builds the playfield for whoever's turn it is, from their own state.</summary>
@@ -255,12 +255,12 @@ public sealed class PlayingState : IGameState
     {
         var playerSlot = _gameSession.GetCurrent();
 
-        var waveParameters = GetWaveToPlay(playerSlot);
+        var waveParams = GetWaveToPlay(playerSlot);
 
         WallColourCycle wallColourCycle = new();
         return new PlayField(
             _textureSet,
-            waveParameters,
+            waveParams,
             playerSlot.PlayerInputSource,
             PlayfieldLayout.GetInnerBounds(),
             wallColourCycle,
@@ -284,13 +284,13 @@ public sealed class PlayingState : IGameState
     ///     their last lives (Bozo). The difficulty setting is applied once, when the wave is first made (<c>GETWV</c>), so a
     ///     life after a death does not apply it again.
     /// </remarks>
-    private WaveParameters GetWaveToPlay(PlayerSlot playerSlot)
+    private WaveParams GetWaveToPlay(PlayerSlot playerSlot)
     {
-        if (playerSlot.SavedWaveParameters is { } saved) return ApplyBozoMode(saved, playerSlot);
+        if (playerSlot.SavedWaveParams is { } saved) return ApplyBozoMode(saved, playerSlot);
 
         // Bozo mercy first, then the difficulty adjustment — the ROM's own order ($2B26 before $2B7C).
-        var waveParameters = ApplyBozoMode(_waveParameterGenerator.Generate(playerSlot.Wave, _gameSettings.GameStyle), playerSlot);
-        return DifficultyTuning.Apply(waveParameters, _gameSettings.Difficulty, playerSlot.Lives);
+        var waveParams = ApplyBozoMode(_waveParamsGenerator.Generate(playerSlot.Wave, _gameSettings.GameStyle), playerSlot);
+        return DifficultyTuning.Apply(waveParams, _gameSettings.Difficulty, playerSlot.Lives);
     }
 
     /// <summary>
@@ -303,7 +303,7 @@ public sealed class PlayingState : IGameState
         var deadPlayerSlot = _gameSession.GetCurrent();
         SyncSlotFromField();
         NoteFamilySlotsLeftOver();
-        deadPlayerSlot.SavedWaveParameters = WaveSurvivors.GetFrom(_playField);
+        deadPlayerSlot.SavedWaveParams = WaveSurvivors.GetFrom(_playField);
         deadPlayerSlot.FamilyMembersLostThisWave += _playField.GetFamilyMembersLost();
 
         if (_gameSession.IsTwoPlayer())
@@ -358,7 +358,7 @@ public sealed class PlayingState : IGameState
 
         // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
         playerSlot.Wave = playerSlot.Wave % WaveCounterWrap + 1;
-        playerSlot.SavedWaveParameters = null;
+        playerSlot.SavedWaveParams = null;
         RecordFamilySaved(playerSlot);
 
         _gameEventHub.Raise(new GameEvent(GameEventKind.WaveCompleted, IntVector2.Zero));

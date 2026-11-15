@@ -251,7 +251,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     private WalkSequence _walkSequence = WalkSequence.Down;
 
     /// <summary>Makes a brain. It takes its first step on its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the brain shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick the waits between missiles and the shaking during reprogramming.
     /// </param>
     /// <param name="position">Where the brain's top-left corner is.</param>
@@ -272,19 +272,19 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public Brain(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 position,
-        BrainWaveSettings settings,
+        BrainWaveParams settings,
         int targetFamilySlot)
     {
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = position;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
         _fireIntervalBeats = settings.FireIntervalBeats;
         _targetSlot = targetFamilySlot;
         _beatIntervalArcadeFrames = GetBeatIntervalArcadeFrames(settings.BeatWaitArcadeFrames);
-        _fireBeatsRemaining = ArcadeRandom.PickUpTo(dependencies.Random, settings.FireIntervalBeats);
+        _fireBeatsRemaining = ArcadeRandom.PickUpTo(entityParams.Random, settings.FireIntervalBeats);
     }
 
     /// <summary>Alive until it is killed, then dead at once. The brain has no death animation of its own.</summary>

@@ -146,11 +146,11 @@ public static class SpriteTestEntries
     /// <summary>Makes the grunt: it walks the same whichever way it goes, and steps after a random number of beats.</summary>
     private static SpriteTestEntry CreateGrunt(TextureSet textureSet)
     {
-        var waveParameters = GetFirstWaveWith(WaveTable.Grunts);
+        var waveParams = GetFirstWaveWith(WaveTable.Grunts);
         return SpriteTestEntry.CreateUnsteerable("GRUNT", SpriteTestCycle.CreateFromArcadeFrames(
             Enumerable.Range(1, Grunt.WalkAnimationFrameCount)
                 .Select(arcadeAnimationFrameNumber => textureSet.GruntAnimationFrameTextures[Grunt.GetAnimationFrameIndex(arcadeAnimationFrameNumber)]),
-            Grunt.BeatIntervalArcadeFrames, waveParameters.GruntMoveDelay)) with
+            Grunt.BeatIntervalArcadeFrames, waveParams.GruntMoveDelay)) with
         {
             WalkOn = new SpriteTestWalkOn([GruntChaseStep.StepXPixels])
         };
@@ -158,10 +158,10 @@ public static class SpriteTestEntries
 
     private static SpriteTestEntry CreateHulk(TextureSet textureSet)
     {
-        var waveParameters = GetFirstWaveWith(WaveTable.Hulks);
+        var waveParams = GetFirstWaveWith(WaveTable.Hulks);
         return CreateSteerable("HULK", direction => direction, direction => SpriteTestCycle.CreateFromArcadeFrames(
             Hulk.GetFrames(direction).Select(frame => textureSet.HulkAnimationFrameTextures[frame]),
-            waveParameters.HulkBeatIntervalArcadeFrames)) with
+            waveParams.HulkBeatIntervalArcadeFrames)) with
         {
             WalkOn = new SpriteTestWalkOn([
                 .. Enumerable.Range(0, Hulk.GetFrames(Direction8.Left).Length)
@@ -172,12 +172,12 @@ public static class SpriteTestEntries
 
     private static SpriteTestEntry CreateBrain(TextureSet textureSet)
     {
-        var waveParameters = GetFirstWaveWith(WaveTable.Brains);
+        var waveParams = GetFirstWaveWith(WaveTable.Brains);
         return CreateSteerable("BRAIN", direction => Brain.GetWalkSequence(direction.ToIntVector()), walkSequence =>
             SpriteTestCycle.CreateFromArcadeFrames(
                 Enumerable.Range(0, Brain.WalkCycleLength)
                     .Select(step => textureSet.BrainAnimationFrameTextures[Brain.GetWalkAnimationFrameIndex(walkSequence, step)]),
-                Brain.GetBeatIntervalArcadeFrames(waveParameters.BrainBeatWaitArcadeFrames))) with
+                Brain.GetBeatIntervalArcadeFrames(waveParams.BrainBeatWaitArcadeFrames))) with
         {
             WalkOn = new SpriteTestWalkOn([Brain.StepXPixels])
         };
@@ -220,7 +220,7 @@ public static class SpriteTestEntries
     /// </summary>
     private static SpriteTestEntry CreateBerzerkRobot(TextureSet textureSet)
     {
-        var waveParameters = GetFirstWaveWith(WaveTable.Grunts);
+        var waveParams = GetFirstWaveWith(WaveTable.Grunts);
         var idle = SpriteTestCycle.CreateFromArcadeFrames(textureSet.BerzerkRobotIdleAnimationFrameTextures,
             BerzerkRobot.BeatIntervalArcadeFrames);
 
@@ -231,7 +231,7 @@ public static class SpriteTestEntries
             walkSequence => SpriteTestCycle.CreateFromArcadeFrames(
                 Enumerable.Range(0, stepsInAWholeWalk).Select(step =>
                     BerzerkRobot.GetWalkFrames(textureSet, walkSequence)[BerzerkRobot.GetWalkFrameIndex(walkSequence, step)]),
-                BerzerkRobot.BeatIntervalArcadeFrames, waveParameters.GruntMoveDelay),
+                BerzerkRobot.BeatIntervalArcadeFrames, waveParams.GruntMoveDelay),
             idle) with
         {
             // It takes a grunt's step (BerzerkRobot.Step).
@@ -278,10 +278,10 @@ public static class SpriteTestEntries
 
     /// <summary>Gets the parameters of the first wave whose count in a wave table column is more than 0.</summary>
     /// <param name="countByWave">A column of <see cref="WaveTable" />, one count per wave.</param>
-    private static WaveParameters GetFirstWaveWith(int[] countByWave)
+    private static WaveParams GetFirstWaveWith(int[] countByWave)
     {
         var wave = Array.FindIndex(countByWave, count => count > 0) + 1;
-        return WaveParameters.CreateFromWave(wave, WaveTable.GetParameters(wave));
+        return WaveParams.CreateFromWave(wave, WaveTable.GetParameters(wave));
     }
 
     /// <summary>Gets the first wave that shows an electrode shape.</summary>

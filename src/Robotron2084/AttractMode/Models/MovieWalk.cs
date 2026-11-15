@@ -18,8 +18,15 @@ namespace Robotron2084.AttractMode.Models;
 /// </remarks>
 public enum MovieWalk
 {
+    /// <summary>It does not walk.</summary>
     None,
+
+    /// <summary>It walks by the family's walk table, <c>HUMANA</c>.</summary>
     FamilyMember,
+
+    /// <summary>It walks by the hulk's walk table, <c>HLKANA</c>.</summary>
     Hulk,
+
+    /// <summary>It walks by its own step size and wait, as a brain does.</summary>
     BrainStep
 }

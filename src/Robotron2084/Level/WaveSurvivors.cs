@@ -13,13 +13,14 @@ namespace Robotron2084.Level;
 ///         </item>
 ///         <item>Disassembly: the player-death routine and the player save and restore routines it calls</item>
 ///     </list>
-///     A robot or a family member that was killed, or rescued, stays gone. What is left is
-///     counted as the arcade counts it: a thing that has begun to die is already off the count, and a
-///     family member in a brain's hold has already gone. Enforcers do not carry over; they turn back into
-///     spheroids, one for every four, and at least one when there are enforcers but no spheroids, never
-///     more than the wave began with. The speed floor goes back to the wave's own, and the grunts keep
-///     the speed limit they had reached, raised to that floor if it is lower (notes §134).</item>
-///     </list>
+///     <para>
+///         A robot or a family member that was killed, or rescued, stays gone. What is left is
+///         counted as the arcade counts it: a thing that has begun to die is already off the count, and a
+///         family member in a brain's hold has already gone. Enforcers do not carry over; they turn back into
+///         spheroids, one for every four, and at least one when there are enforcers but no spheroids, never
+///         more than the wave began with. The speed floor goes back to the wave's own, and the grunts keep
+///         the speed limit they had reached, raised to that floor if it is lower (notes §134).
+///     </para>
 /// </remarks>
 public static class WaveSurvivors
 {
@@ -29,14 +30,14 @@ public static class WaveSurvivors
     /// <summary>Counts what is left on a field.</summary>
     /// <param name="playField">The field the player has died on.</param>
     /// <returns>The wave's parameters with the counts of what is left, to start the next life with.</returns>
-    public static WaveParameters GetFrom(PlayField playField)
+    public static WaveParams GetFrom(PlayField playField)
     {
         var fieldEntities = playField.FieldEntities;
-        var waveParameters = playField.WaveParameters;
+        var waveParams = playField.WaveParams;
         var gruntLimit = fieldEntities.Grunts.Where(grunt => grunt.IsAlive()).Select(grunt => grunt.MoveIntervalMaxBeats)
-            .DefaultIfEmpty(waveParameters.GruntMoveDelay).Min();
+            .DefaultIfEmpty(waveParams.GruntMoveDelay).Min();
 
-        return waveParameters with
+        return waveParams with
         {
             GruntCount = CountAlive(fieldEntities.Grunts),
             BerzerkRobotCount = CountAlive(fieldEntities.BerzerkRobots),
@@ -47,10 +48,10 @@ public static class WaveSurvivors
             HulkCount = CountAlive(fieldEntities.Hulks),
             BrainCount = CountAlive(fieldEntities.Brains),
             SpheroidCount = CountSpheroidsAfterConverting(CountAlive(fieldEntities.Enforcers),
-                CountAlive(fieldEntities.Spheroids), waveParameters.SpheroidCount),
+                CountAlive(fieldEntities.Spheroids), waveParams.SpheroidCount),
             QuarkCount = CountAlive(fieldEntities.Quarks),
             TankCount = CountAlive(fieldEntities.Tanks),
-            GruntMoveDelay = Math.Max(gruntLimit, waveParameters.GruntSpeedFloor)
+            GruntMoveDelay = Math.Max(gruntLimit, waveParams.GruntSpeedFloor)
         };
     }
 

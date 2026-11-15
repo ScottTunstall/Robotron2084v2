@@ -94,7 +94,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     private IntVector2 _velocitySubpixels;
 
     /// <summary>Makes an enforcer. It cannot move until it has grown.</summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the enforcer shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick where it heads for and how long it waits between shots.
     /// </param>
     /// <param name="position">Where the enforcer's top-left corner is.</param>
@@ -104,18 +104,18 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
     /// </param>
     /// <remarks>ROM: <c>ENSTIM</c>.</remarks>
     public Enforcer(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 position,
         int fireIntervalBeats)
     {
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = position;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
         _fireIntervalBeats = fireIntervalBeats;
         // The enforcer picks where to go on its first beat. Its first shot comes after a random number of beats.
         _newDestinationBeatsRemaining = 0;
-        _fireBeatsRemaining = ArcadeRandom.PickUpTo(dependencies.Random, _fireIntervalBeats);
+        _fireBeatsRemaining = ArcadeRandom.PickUpTo(entityParams.Random, _fireIntervalBeats);
     }
 
     /// <summary>Alive until it is killed. It is never Dying, because it has no death animation.</summary>

@@ -61,7 +61,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _velocitySubpixels; // How far the spark goes on each move, sideways and up or down, in 256ths of a pixel (ROM: OXV/OYV).
 
     /// <summary>Makes a spark and aims it near the player. It is aimed only this once.</summary>
-    /// <param name="dependencies">
+    /// <param name="entityParams">
     ///     What the spark shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: it stands in for the arcade's own random numbers (<c>SEED</c>, <c>LSEED</c> and <c>HSEED</c>).
     /// </param>
     /// <param name="position">Where it starts, which is where the enforcer that fired it is.</param>
@@ -71,15 +71,15 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     ///     moved sideways. If this is null, that rule is not used.
     /// </param>
     public Spark(
-        EntityDependencies dependencies,
+        EntityParams entityParams,
         IntVector2 position,
         IntVector2 playerPosition,
         Rectangle? playfieldBounds = null)
     {
-        _textureSet = dependencies.TextureSet;
-        _gameEvents = dependencies.GameEvents;
+        _textureSet = entityParams.TextureSet;
+        _gameEvents = entityParams.GameEvents;
         _position = position;
-        _random = dependencies.Random;
+        _random = entityParams.Random;
 
         // The spark is not aimed exactly at the Player. Its aim is moved a random amount sideways and a random amount up or down. There is no sideways change when the Player is near the left wall.
         var jitterX = _random.Next(-SparkTuning.SparkJitterRange, SparkTuning.SparkJitterRange);

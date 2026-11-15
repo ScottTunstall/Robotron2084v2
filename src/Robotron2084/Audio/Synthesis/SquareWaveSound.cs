@@ -58,13 +58,13 @@ internal sealed class SquareWaveSound
     /// <summary>The part of a count that runs before the sweep check can leave the loop: <c>DEX</c>, <c>BEQ</c>.</summary>
     private const int SweepCheckCycles = IndexStep + Branch;
 
-    /// <summary>How many bytes a <see cref="SquareWaveVector" /> takes in the ROM.</summary>
+    /// <summary>How many bytes a <see cref="SquareWaveSoundRow" /> takes in the ROM.</summary>
     private const int VectorBytes = 9;
 
     /// <summary>
     ///     <c>VVECT</c>: every square wave sound's settings. A sound number picks one by its place, counting from 0.
     /// </summary>
-    private static readonly SquareWaveVector[] Vectors =
+    private static readonly SquareWaveSoundRow[] Vectors =
     [
         new(0x40, 0x01, 0x00, 0x10, 0xE1, 0x0080, 0xFF, 0xFF), // SAW
         new(0x28, 0x01, 0x00, 0x08, 0x81, 0x0200, 0xFF, 0xFF), // FOSHIT
@@ -79,7 +79,7 @@ internal sealed class SquareWaveSound
     private byte _highCount;
     private byte _lowCount;
     private ushort _sweepCountsLeft;
-    private SquareWaveVector _vector;
+    private SquareWaveSoundRow _vector;
 
     /// <summary>Creates the sound on the board's output port.</summary>
     /// <param name="boardOutput">The board's output port.</param>

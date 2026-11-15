@@ -20,15 +20,15 @@ namespace Robotron2084.Level.Spawning;
 public sealed class TankWaveSpawner : IWaveSpawner
 {
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext waveSpawnContext)
+    public void Spawn(WaveSpawnParams waveSpawnParams)
     {
-        var playField = waveSpawnContext.PlayField;
-        for (var i = 0; i < playField.WaveParameters.TankCount; i++)
+        var playField = waveSpawnParams.PlayField;
+        for (var i = 0; i < playField.WaveParams.TankCount; i++)
         {
             var position =
-                waveSpawnContext.SpawnPlacement.FindSpawnPointAwayFrom(waveSpawnContext.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer);
-            var tank = new Tank(playField.EntityDependencies, position, playField.WaveParameters.TankFireDelay, true);
-            waveSpawnContext.FieldEntities.Add(tank);
+                waveSpawnParams.SpawnPlacement.FindSpawnPointAwayFrom(waveSpawnParams.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer);
+            var tank = new Tank(playField.EntityParams, position, playField.WaveParams.TankFireDelay, true);
+            waveSpawnParams.FieldEntities.Add(tank);
         }
     }
 }

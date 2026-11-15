@@ -8,12 +8,27 @@ namespace Robotron2084.Input.Models;
 /// </summary>
 public enum InputAction
 {
+    /// <summary>Move up.</summary>
     MoveUp,
+
+    /// <summary>Move down.</summary>
     MoveDown,
+
+    /// <summary>Move left.</summary>
     MoveLeft,
+
+    /// <summary>Move right.</summary>
     MoveRight,
+
+    /// <summary>Shoot up.</summary>
     ShootUp,
+
+    /// <summary>Shoot down.</summary>
     ShootDown,
+
+    /// <summary>Shoot left.</summary>
     ShootLeft,
+
+    /// <summary>Shoot right.</summary>
     ShootRight
 }

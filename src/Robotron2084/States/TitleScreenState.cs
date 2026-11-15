@@ -128,7 +128,7 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
     private readonly TitleTextPane? _pinnedPane;
 
     private readonly TimeSpan _portTextDuration = TimeSpan.FromSeconds(AttractTuning.TitlePortTextSeconds);
-    private readonly GameServices _gameServices;
+    private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
     private readonly LargeTitleLetterAppear _largeTitleLetterAppear;
 
@@ -147,18 +147,18 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
     /// <summary>
     ///     Opens the title page.
     /// </summary>
-    /// <param name="gameServices">The attract screens' shared dependencies.</param>
+    /// <param name="gameStateParams">The attract screens' shared dependencies.</param>
     /// <param name="pinnedPane">
     ///     The text pane to open on and hold (notes §107) — what the DEVELOPER TOOLS page's
     ///     TITLE PAGE 1 / TITLE PAGE 2 options pass. Null, the attract cycle's own, alternates the two.
     /// </param>
-    public TitleScreenState(GameServices gameServices, TitleTextPane? pinnedPane = null)
+    public TitleScreenState(GameStateParams gameStateParams, TitleTextPane? pinnedPane = null)
     {
-        _gameServices = gameServices;
+        _gameStateParams = gameStateParams;
         _pinnedPane = pinnedPane;
         _isShowingArcadeText = pinnedPane != TitleTextPane.Port;
-        _playerInputSource = gameServices.PlayerInputSource;
-        _textureSet = gameServices.TextureSet;
+        _playerInputSource = gameStateParams.PlayerInputSource;
+        _textureSet = gameStateParams.TextureSet;
         _williamsLogoBorder = new WilliamsLogoBorder(SpriteMask.CreateFromTexture(_textureSet.WilliamsLogoTexture));
         _largeTitleLetterAppear = LargeTitleLetterAppear.CreateFromMasks(
             _textureSet.LargeTitleLettersRimTexture,
@@ -228,7 +228,7 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
         // buttons start a game themselves).
         if (_buttonEdgeDetector.Advance(playerInputState).AnyPressed())
         {
-            gameStateManager.TransitionTo(new MainMenuState(_gameServices));
+            gameStateManager.TransitionTo(new MainMenuState(_gameStateParams));
             return;
         }
 
@@ -268,7 +268,7 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
         if (_idleElapsed >= _idleDuration)
         {
             _idleElapsed = TimeSpan.Zero;
-            gameStateManager.TransitionTo(new StorylineState(_gameServices));
+            gameStateManager.TransitionTo(new StorylineState(_gameStateParams));
         }
     }
 

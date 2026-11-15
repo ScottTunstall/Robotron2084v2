@@ -9,7 +9,7 @@ namespace Robotron2084.Level.Collisions;
 ///     dies.
 /// </summary>
 /// <remarks>
-///     Which kinds are deadly comes from <see cref="RobotKindInfo.KillsPlayerOnContact" />. The thing touched is not
+///     Which kinds are deadly comes from <see cref="RobotKindRow.KillsPlayerOnContact" />. The thing touched is not
 ///     removed; only a laser removes a shot.
 /// </remarks>
 internal sealed class PlayerContactKillRule : ICollisionRule

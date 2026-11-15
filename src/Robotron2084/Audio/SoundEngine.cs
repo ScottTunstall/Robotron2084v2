@@ -27,7 +27,7 @@ namespace Robotron2084.Audio;
 public sealed class SoundEngine
 {
     private readonly IAudioSink _audioSink;
-    private SoundEntry[] _entries = [];
+    private SoundTableRow[] _entries = [];
     private int _entryIndex = -1;
     private int _holdTicksLeft;
     private float _pan;
@@ -140,7 +140,7 @@ public sealed class SoundEngine
     }
 
     /// <summary>Sends a line's sound number to the board and starts timing it.</summary>
-    private void Send(SoundEntry entry)
+    private void Send(SoundTableRow entry)
     {
         _ticksLeftInSend = entry.LengthVblanks;
         _audioSink.SendSoundNumber(entry.SoundNumber, _pan);

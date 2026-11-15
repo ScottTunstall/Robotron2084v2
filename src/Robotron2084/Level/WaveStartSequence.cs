@@ -17,15 +17,16 @@ namespace Robotron2084.Level;
 ///             <c>$2962</c>
 ///         </item>
 ///     </list>
-///     The arcade sets the wave up with everything switched off (
-///     <c>
-///         LDA #$19
-///         / STA STATUS
-///     </c>
-///     ), brings the robots in, brings the player in (<c>PLS1</c>), and then switches
-///     everything on (<c>CLR STATUS</c> at <c>PLS2</c>). The times here are counted in fiftieths of a second from
-///     when the wave is set up, on the clock described on <see cref="ArcadeClock" /> (notes §141, §142).</item>
-///     </list>
+///     <para>
+///         The arcade sets the wave up with everything switched off (
+///         <c>
+///             LDA #$19
+///             / STA STATUS
+///         </c>
+///         ), brings the robots in, brings the player in (<c>PLS1</c>), and then switches
+///         everything on (<c>CLR STATUS</c> at <c>PLS2</c>). The times here are counted in fiftieths of a second from
+///         when the wave is set up, on the clock described on <see cref="ArcadeClock" /> (notes §141, §142).
+///     </para>
 /// </remarks>
 public sealed class WaveStartSequence
 {

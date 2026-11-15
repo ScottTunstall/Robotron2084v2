@@ -1,7 +1,7 @@
-using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
-using Robotron2084.Core.Models;
+using Robotron2084.Audio.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
 using Robotron2084.Level.Spawning;
 
@@ -19,10 +19,11 @@ namespace Robotron2084.Level.Models;
 ///         </item>
 ///         <item>Disassembly: no address in the disassembly: this record is the port's own gathering of them</item>
 ///     </list>
-///     The wave counts come from <see cref="WaveParameters" />, the scores from <see cref="ScoreValues" />
-///     (notes §11.3), and <see cref="LaserHit" /> from the part of each kind's routine that handles a
-///     laser (notes §61, §64).</item>
-///     </list>
+///     <para>
+///         The wave counts come from <see cref="WaveParams" />, the scores from <see cref="ScoreValues" />
+///         (notes §11.3), and <see cref="LaserHit" /> from the part of each kind's routine that handles a
+///         laser (notes §61, §64).
+///     </para>
 /// </remarks>
 /// <param name="Kind">Which kind this row describes.</param>
 /// <param name="WaveCount">How many of them the wave table brings; null when only another robot makes them.</param>
@@ -44,9 +45,9 @@ namespace Robotron2084.Level.Models;
 ///     <see cref="WaveMaterialisation" />). The number of robots on the list sets when the player appears and the game
 ///     goes live (<see cref="WaveStartSequence" />).
 /// </param>
-public sealed record RobotKindInfo(
+public sealed record RobotKindRow(
     RobotKind Kind,
-    Func<WaveParameters, int>? WaveCount,
+    Func<WaveParams, int>? WaveCount,
     int Score,
     Action<PlayField, IEntity, Direction8> LaserHit,
     SoundSequence LaserHitSound,

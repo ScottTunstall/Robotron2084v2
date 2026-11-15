@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework.Input;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 
 namespace Robotron2084.Input.Models;
 
@@ -12,6 +12,9 @@ namespace Robotron2084.Input.Models;
 ///     coordinate in the port) even though XNA's <c>ThumbSticks</c> is up-positive; the
 ///     sign flip happens once, in <see cref="GamePadSticks" />.
 /// </summary>
+/// <param name="Kind">What it is attached to: a key, a gamepad button or a stick.</param>
+/// <param name="Code">Which key or button it is, or which of the stick's eight directions.</param>
+/// <param name="GamePadIndex">0 for the first gamepad, 1 for the second. Not used for a key.</param>
 public readonly record struct InputBinding(InputBindingKind Kind, int Code, int GamePadIndex)
 {
     /// <summary>The unbound binding. <c>Del</c> stores this.</summary>
@@ -66,6 +69,8 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
             gamePadIndex);
     }
 
+    /// <summary>Gets which way across the screen a stick direction points.</summary>
+    /// <returns>-1 for left, 1 for right, and 0 for neither or for a binding that is not a stick.</returns>
     public int GetDirectionX()
     {
         if (IsStick()) return Code / 3 - 1;
@@ -73,6 +78,8 @@ public readonly record struct InputBinding(InputBindingKind Kind, int Code, int 
         return 0;
     }
 
+    /// <summary>Gets which way up or down the screen a stick direction points.</summary>
+    /// <returns>-1 for up, 1 for down, and 0 for neither or for a binding that is not a stick.</returns>
     public int GetDirectionY()
     {
         if (IsStick()) return Code % 3 - 1;

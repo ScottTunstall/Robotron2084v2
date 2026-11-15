@@ -15,22 +15,23 @@ namespace Robotron2084.Level;
 ///             <c>$2C20</c>
 ///         </item>
 ///     </list>
-///     By default it uses the arcade's own wave tables (
-///     <see
-///         cref="WaveTable" />
-///     , notes §11), where the waves after the fortieth repeat the second half of the
-///     table. If a <c>CustomWaveTable.csv</c> file is found, either at a path it is given or in the game's
-///     <c>Content</c> folder, its rows are used instead and start again from the top after the last row.
-///     A missing or damaged file is ignored.</item>
-///     </list>
+///     <para>
+///         By default it uses the arcade's own wave tables (
+///         <see
+///             cref="WaveTable" />
+///         , notes §11), where the waves after the fortieth repeat the second half of the
+///         table. If a <c>CustomWaveTable.csv</c> file is found, either at a path it is given or in the game's
+///         <c>Content</c> folder, its rows are used instead and start again from the top after the last row.
+///         A missing or damaged file is ignored.
+///     </para>
 /// </remarks>
-public sealed class WaveParameterGenerator
+public sealed class WaveParamsGenerator
 {
     /// <summary>The rows of the table that replaces the arcade's wave tables, or null to use the arcade's.</summary>
     private readonly CustomWaveTableRow[]? _customWaveTable;
 
     /// <summary>Makes a generator that looks for a <c>CustomWaveTable.csv</c> in the game's <c>Content</c> folder.</summary>
-    public WaveParameterGenerator()
+    public WaveParamsGenerator()
         : this(null)
     {
     }
@@ -41,7 +42,7 @@ public sealed class WaveParameterGenerator
     ///     QuarkCount, ElectrodeCount, MaxEnforcersPerSpheroid, MaxTanksPerQuark. When it is null, the game's <c>Content</c>
     ///     folder is looked in.
     /// </param>
-    public WaveParameterGenerator(string? customWaveTablePath)
+    public WaveParamsGenerator(string? customWaveTablePath)
     {
         _customWaveTable = LoadTable(customWaveTablePath);
     }
@@ -55,38 +56,38 @@ public sealed class WaveParameterGenerator
     /// </param>
     /// <returns>The wave's parameters.</returns>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="gameStyle" /> is not a game style.</exception>
-    public WaveParameters Generate(int waveNumber, GameStyle gameStyle)
+    public WaveParams Generate(int waveNumber, GameStyle gameStyle)
     {
-        var classicWaveParameters = GenerateClassic(waveNumber);
+        var classicWaveParams = GenerateClassic(waveNumber);
         return gameStyle switch
         {
-            GameStyle.Classic => classicWaveParameters,
-            GameStyle.Extended => CreateExtended(classicWaveParameters),
+            GameStyle.Classic => classicWaveParams,
+            GameStyle.Extended => CreateExtended(classicWaveParams),
             _ => throw new ArgumentOutOfRangeException(nameof(gameStyle), gameStyle, "Not a game style.")
         };
     }
 
     /// <summary>Makes the <see cref="GameStyle.Extended" /> wave from the arcade's wave.</summary>
-    /// <param name="classicWaveParameters">The arcade's wave, which is left as it is.</param>
+    /// <param name="classicWaveParams">The arcade's wave, which is left as it is.</param>
     /// <returns>
     ///     The same wave, with the Berzerk robot's speech on when the wave has grunts and neither brains nor quarks (a
     ///     brain wave or a tank wave), and Gorf's speech off.
     /// </returns>
-    private static WaveParameters CreateExtended(WaveParameters classicWaveParameters)
+    private static WaveParams CreateExtended(WaveParams classicWaveParams)
     {
-        var isBerzerkSpeakWave = classicWaveParameters is { GruntCount: > 0, BrainCount: 0, QuarkCount: 0 };
-        return classicWaveParameters with { EnableBerzerkSpeak = isBerzerkSpeakWave, EnableGorfSpeak = false };
+        var isBerzerkSpeakWave = classicWaveParams is { GruntCount: > 0, BrainCount: 0, QuarkCount: 0 };
+        return classicWaveParams with { EnableBerzerkSpeak = isBerzerkSpeakWave, EnableGorfSpeak = false };
     }
 
     /// <summary>Works out what a wave contains in the arcade's game.</summary>
     /// <param name="waveNumber">The wave number, starting at 1.</param>
     /// <returns>The arcade's wave, or the replacement table's row for it.</returns>
-    private WaveParameters GenerateClassic(int waveNumber)
+    private WaveParams GenerateClassic(int waveNumber)
     {
         if (_customWaveTable is { Length: > 0 } table)
         {
             var customWaveTableRow = table[(waveNumber - 1) % table.Length];
-            return new WaveParameters(
+            return new WaveParams(
                 waveNumber,
                 customWaveTableRow.GruntCount,
                 HulkCount: customWaveTableRow.HulkCount,
@@ -98,7 +99,7 @@ public sealed class WaveParameterGenerator
                 EnemySpeedBonus: Math.Min(waveNumber - 1, SpawnTuning.EnemySpeedBonusMaxPerWave));
         }
 
-        return WaveParameters.CreateFromWave(waveNumber, WaveTable.GetParameters(waveNumber));
+        return WaveParams.CreateFromWave(waveNumber, WaveTable.GetParameters(waveNumber));
     }
 
     /// <summary>Reads the replacement table.</summary>

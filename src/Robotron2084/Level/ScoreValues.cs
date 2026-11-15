@@ -9,10 +9,11 @@ namespace Robotron2084.Level;
 ///         </item>
 ///         <item>Disassembly: the calls to the score update routine at <c>$DB9C</c></item>
 ///     </list>
-///     An electrode
-///     scores nothing, and a hulk cannot be killed. The player never loses points. A rescue's bonus is
-///     given where the rescue happens (<see cref="RescueBonus" />), not here (notes §11.3).</item>
-///     </list>
+///     <para>
+///         An electrode
+///         scores nothing, and a hulk cannot be killed. The player never loses points. A rescue's bonus is
+///         given where the rescue happens (<see cref="RescueBonus" />), not here (notes §11.3).
+///     </para>
 /// </remarks>
 public static class ScoreValues
 {

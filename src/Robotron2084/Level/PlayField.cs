@@ -86,7 +86,7 @@ public sealed class PlayField : ICollisionScene
 
     /// <summary>Makes the field for one wave and puts everything on it.</summary>
     /// <param name="textureSet">The sprites everything is drawn with.</param>
-    /// <param name="waveParameters">The wave's numbers: how many of each kind, and how fast.</param>
+    /// <param name="waveParams">The wave's numbers: how many of each kind, and how fast.</param>
     /// <param name="playerInputSource">Where the player's moves come from.</param>
     /// <param name="innerBounds">The inside of the wall, in port pixels.</param>
     /// <param name="wallColourCycle">The wall's colours when no live palette is given.</param>
@@ -112,7 +112,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="gameEvents">Where the player and the field's entities announce what happens to them. Null means nowhere.</param>
     public PlayField(
         TextureSet textureSet,
-        WaveParameters waveParameters,
+        WaveParams waveParams,
         IPlayerInputSource playerInputSource,
         Rectangle innerBounds,
         WallColourCycle wallColourCycle,
@@ -129,14 +129,14 @@ public sealed class PlayField : ICollisionScene
         IGameEvents? gameEvents = null)
     {
         GameEvents = gameEvents ?? NullGameEvents.Instance;
-        EntityDependencies = new EntityDependencies(textureSet, GameEvents, random);
+        EntityParams = new EntityParams(textureSet, GameEvents, random);
         _tankShellBugEnabled = tankShellBugEnabled;
         TextureSet = textureSet;
-        WaveParameters = waveParameters;
-        _gruntSpeedProgression = new GruntSpeedProgression(waveParameters.GruntSpeedFloor);
+        WaveParams = waveParams;
+        _gruntSpeedProgression = new GruntSpeedProgression(waveParams.GruntSpeedFloor);
         PlayerInputSource = playerInputSource;
         ScoreBoard = new ScoreBoard(startingScore, extraLifeEveryPoints);
-        _waveMaterialisation = new WaveMaterialisation(random, waveParameters.BrainCount > 0);
+        _waveMaterialisation = new WaveMaterialisation(random, waveParams.BrainCount > 0);
         GamePalette = gamePalette;
         _contactTest = contactTest ?? new BoxContactTest();
         _midWaveSpawner = new MidWaveSpawner(this, FieldEntities, random);
@@ -144,23 +144,23 @@ public sealed class PlayField : ICollisionScene
         PlayfieldWall = new PlayfieldWall(innerBounds, wallColourCycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
-        Player = new Player(EntityDependencies, playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
+        Player = new Player(EntityParams, playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
         PlayerLaserSlots = new LaserSlots(TextureSet, GameEvents);
 
         // Each kind's spawner is in its registry row, so a new kind needs no edit here (notes §119).
-        var waveSpawnContext = new WaveSpawnContext(this, FieldEntities, new SpawnPlacement(random, innerBounds), random,
+        var waveSpawnParams = new WaveSpawnParams(this, FieldEntities, new SpawnPlacement(random, innerBounds), random,
             playerStart, familySlotsLeftOver ?? []);
-        foreach (var robot in RobotKinds.All) robot.Spawn?.Spawn(waveSpawnContext);
+        foreach (var robot in RobotKinds.All) robot.Spawn?.Spawn(waveSpawnParams);
 
         // The family is put on last, after every robot (ROM HUMSTV).
-        new FamilyWaveSpawner().Spawn(waveSpawnContext);
+        new FamilyWaveSpawner().Spawn(waveSpawnParams);
         _familyMembersAtStart = FieldEntities.CountFamilyMembersLeft();
 
         // The robots on the arcade's robot list are brought on in the order its appear loop meets them (ROM: RRG23.ASM APPEAR).
         IEntity[] robotsInAppearOrder = [.. GetRobotsInAppearOrder()];
         foreach (var robot in robotsInAppearOrder) _waveMaterialisation.Queue(robot);
 
-        _waveStartSequence = new WaveStartSequence(robotsInAppearOrder.Length, waveParameters.BrainCount > 0);
+        _waveStartSequence = new WaveStartSequence(robotsInAppearOrder.Length, waveParams.BrainCount > 0);
 
         // With the bug switched off, each brain picks again now that there is a family to pick from.
         if (!brainsChaseMikeyBugEnabled)
@@ -172,7 +172,7 @@ public sealed class PlayField : ICollisionScene
     public IPlayerInputSource PlayerInputSource { get; }
 
     /// <summary>The wave's numbers: how many of each kind, and how fast.</summary>
-    public WaveParameters WaveParameters { get; }
+    public WaveParams WaveParams { get; }
 
     /// <summary>The player.</summary>
     public Player Player { get; }
@@ -221,7 +221,7 @@ public sealed class PlayField : ICollisionScene
     internal IGameEvents GameEvents { get; }
 
     /// <summary>What every entity this field builds shares with the rest of the game: sprites, where it announces events, and random numbers.</summary>
-    internal EntityDependencies EntityDependencies { get; }
+    internal EntityParams EntityParams { get; }
 
     /// <summary>The live palette, or null in a test. The player's death fade writes to it (notes §66).</summary>
     internal GamePalette? GamePalette { get; }
@@ -279,7 +279,7 @@ public sealed class PlayField : ICollisionScene
         DrawWall(spriteBatch);
 
         // 1b. Laser-vs-wall flares (RRG23 LASDIE): painted OVER the wall, exactly as the ROM writes those pixels.
-        _laserWallFlares.Draw(spriteBatch, TextureSet, WaveParameters.WaveNumber);
+        _laserWallFlares.Draw(spriteBatch, TextureSet, WaveParams.WaveNumber);
 
         // 2-4. The electrodes, the family and their markers, then the robots — one loop over the field's draw order.
         FieldEntities.DrawBehindShots(spriteBatch, this);
@@ -316,7 +316,7 @@ public sealed class PlayField : ICollisionScene
     public void DrawWall(SpriteBatch spriteBatch)
     {
         PlayfieldWall.Draw(spriteBatch, TextureSet.WallPixelTexture,
-            GamePalette?.GetColour(WavePaletteTables.GetWallPaletteIndex(WaveParameters.WaveNumber)));
+            GamePalette?.GetColour(WavePaletteTables.GetWallPaletteIndex(WaveParams.WaveNumber)));
     }
 
     /// <summary>Lists the player's lasers that are in flight.</summary>

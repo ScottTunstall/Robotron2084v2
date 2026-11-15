@@ -16,27 +16,27 @@ namespace Robotron2084.Level.Spawning;
 public sealed class FamilyWaveSpawner : IWaveSpawner
 {
     /// <inheritdoc />
-    public void Spawn(WaveSpawnContext waveSpawnContext)
+    public void Spawn(WaveSpawnParams waveSpawnParams)
     {
-        var waveParameters = waveSpawnContext.PlayField.WaveParameters;
-        SpawnKind(waveSpawnContext, FamilyMemberKind.Mikey, waveParameters.MikeyCount);
-        SpawnKind(waveSpawnContext, FamilyMemberKind.Mommy, waveParameters.MommyCount);
-        SpawnKind(waveSpawnContext, FamilyMemberKind.Daddy, waveParameters.DaddyCount);
+        var waveParams = waveSpawnParams.PlayField.WaveParams;
+        SpawnKind(waveSpawnParams, FamilyMemberKind.Mikey, waveParams.MikeyCount);
+        SpawnKind(waveSpawnParams, FamilyMemberKind.Mommy, waveParams.MommyCount);
+        SpawnKind(waveSpawnParams, FamilyMemberKind.Daddy, waveParams.DaddyCount);
     }
 
     /// <summary>Puts a number of one family member on the field.</summary>
-    /// <param name="waveSpawnContext">The field being filled and what is needed to choose spots on it.</param>
+    /// <param name="waveSpawnParams">The field being filled and what is needed to choose spots on it.</param>
     /// <param name="kind">Which member.</param>
     /// <param name="count">How many of them.</param>
-    private static void SpawnKind(WaveSpawnContext waveSpawnContext, FamilyMemberKind kind, int count)
+    private static void SpawnKind(WaveSpawnParams waveSpawnParams, FamilyMemberKind kind, int count)
     {
-        var playField = waveSpawnContext.PlayField;
-        var fieldEntities = waveSpawnContext.FieldEntities;
-        var placement = waveSpawnContext.SpawnPlacement;
+        var playField = waveSpawnParams.PlayField;
+        var fieldEntities = waveSpawnParams.FieldEntities;
+        var placement = waveSpawnParams.SpawnPlacement;
         for (var i = 0; i < count; i++)
         {
             var position = placement.FindSpawnPoint(playField.IsClearOfElectrodes, FamilyMember.GetSpawnSquarePortPixels(kind));
-            fieldEntities.Add(new FamilyMember(playField.EntityDependencies, position, kind));
+            fieldEntities.Add(new FamilyMember(playField.EntityParams, position, kind));
         }
     }
 }

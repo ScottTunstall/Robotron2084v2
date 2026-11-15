@@ -128,10 +128,10 @@ public sealed class SpriteTestState : IGameState
     private SpriteTestWalkOnRun? _walkOnRun;
 
     /// <summary>Opens the page on the first sprite.</summary>
-    /// <param name="gameServices">The attract screens' shared services.</param>
-    public SpriteTestState(GameServices gameServices)
+    /// <param name="gameStateParams">The attract screens' shared services.</param>
+    public SpriteTestState(GameStateParams gameStateParams)
     {
-        _textureSet = gameServices.TextureSet;
+        _textureSet = gameStateParams.TextureSet;
         _entries = SpriteTestEntries.Create(_textureSet);
         _animator = new SpriteTestAnimator(_entries[0], _random);
         _previousSnapshot = InputSnapshot.Read();

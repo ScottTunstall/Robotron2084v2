@@ -19,12 +19,13 @@ namespace Robotron2084.Level;
 ///         </item>
 ///         <item>Disassembly: the transporter overlay (<c>RTORG</c>, <c>$4140</c>)</item>
 ///     </list>
-///     Every fiftieth of a second
-///     it takes one step of each image, and it draws each image where its robots stand. The sound is the
-///     transporter's own (<see cref="Audio.Sound.PlayTransporter" />). Other waves use the strip appear
-///     instead (<see cref="WaveMaterialisation" />). "Transporter" is the arcade's own name for beaming
-///     the robots in at the start of a brain wave (<c>RRT2.ASM</c> is titled <c>TRANSPORTER</c>).</item>
-///     </list>
+///     <para>
+///         Every fiftieth of a second
+///         it takes one step of each image, and it draws each image where its robots stand. The sound is the
+///         transporter's own (<see cref="Audio.Sound.PlayTransporter" />). Other waves use the strip appear
+///         instead (<see cref="WaveMaterialisation" />). "Transporter" is the arcade's own name for beaming
+///         the robots in at the start of a brain wave (<c>RRT2.ASM</c> is titled <c>TRANSPORTER</c>).
+///     </para>
 /// </remarks>
 public sealed class RobotTransporter
 {
