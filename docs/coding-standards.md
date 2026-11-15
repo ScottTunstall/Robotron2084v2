@@ -192,6 +192,14 @@ random source), or on its own when the entity has no random numbers (`Electrode`
 about it, or uses `RobotKilled` with its `RobotKind`. The entity's xmldoc says which kinds it announces, and nothing about who listens.
 The purely visual effects (explosions, score bursts, skulls, markers, ghosts) are not game entities and do not take one.
 
+**STR-17. Extension methods live in an `Extensions` folder.** A static class whose methods use `this` on their first parameter goes in an
+`Extensions` folder inside the folder of the code it extends (`Entities/Extensions`, `Core/Extensions`, `Input/Extensions`), with the
+namespace to match (`Robotron2084.Entities.Extensions`). The class is named for the type it extends, with `Extensions` on the end
+(`EntityLifeExtensions`, `Direction8Extensions`, `InputActionExtensions`), and holds only extension methods: a list or a table that sits
+beside them belongs in its own class (`InputActions.All`). A test helper that extends a type does the same in the test project's own
+`Extensions` folder (`Entities/Extensions/LaserSlotsTestExtensions`). Code that calls an extension method needs a `using` for the
+`Extensions` namespace, so a reader can find where a call comes from.
+
 ## 3. Naming (§114)
 
 **NAM-1. Methods are verb phrases in the domain's own words**: `SetRandomOffsets`, `GetRandomDirection`,
