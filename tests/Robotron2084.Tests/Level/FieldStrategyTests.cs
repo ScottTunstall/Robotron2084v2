@@ -63,8 +63,8 @@ public sealed class FieldStrategyTests
     public void TheFamilyList_HandsOutPlacesInOrder_AndFindsTheNearestFreeMember()
     {
         var familyList = new FamilyList();
-        var mikeyFamilyMember = new FamilyMember(TestEntityDependencies.Create(new Random(1)), new IntVector2(100, 100), FamilyMemberKind.Mikey);
-        var mommyFamilyMember = new FamilyMember(TestEntityDependencies.Create(new Random(2)), new IntVector2(300, 100), FamilyMemberKind.Mommy);
+        var mikeyFamilyMember = new FamilyMember(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), FamilyMemberKind.Mikey);
+        var mommyFamilyMember = new FamilyMember(TestEntityParams.Create(new Random(2)), new IntVector2(300, 100), FamilyMemberKind.Mommy);
         Assert.Equal(FamilyList.FirstSlot, familyList.GetNearestSlot(new IntVector2(0, 0)));
         Assert.Empty(familyList.GetOccupiedSlots());
 
@@ -91,8 +91,8 @@ public sealed class FieldStrategyTests
     public void TheFamilyList_GivesATieToTheLaterPlace()
     {
         var familyList = new FamilyList();
-        familyList.Add(new FamilyMember(TestEntityDependencies.Create(new Random(1)), new IntVector2(100, 100), FamilyMemberKind.Mikey));
-        familyList.Add(new FamilyMember(TestEntityDependencies.Create(new Random(2)), new IntVector2(100, 100), FamilyMemberKind.Daddy));
+        familyList.Add(new FamilyMember(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), FamilyMemberKind.Mikey));
+        familyList.Add(new FamilyMember(TestEntityParams.Create(new Random(2)), new IntVector2(100, 100), FamilyMemberKind.Daddy));
 
         Assert.Equal(FamilyList.FirstSlot + 1, familyList.GetNearestSlot(new IntVector2(100, 100)));
     }
@@ -105,10 +105,10 @@ public sealed class FieldStrategyTests
 
         fieldEntities.Electrodes.Add(new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)));
         fieldEntities.Hulks.Add(
-            new Hulk(TestEntityDependencies.Create(new Random(1)), new IntVector2(50, 50), 8, () => IntVector2.Zero));
+            new Hulk(TestEntityParams.Create(new Random(1)), new IntVector2(50, 50), 8, () => IntVector2.Zero));
         Assert.True(fieldEntities.AreEnemiesGone());
 
-        fieldEntities.Grunts.Add(new Grunt(TestEntityDependencies.Create(new Random(1)), new IntVector2(90, 90), 15));
+        fieldEntities.Grunts.Add(new Grunt(TestEntityParams.Create(new Random(1)), new IntVector2(90, 90), 15));
         Assert.False(fieldEntities.AreEnemiesGone());
     }
 
@@ -116,7 +116,7 @@ public sealed class FieldStrategyTests
     public void TheField_AnswersWithoutLettingCallersReachThroughIt()
     {
         var playField = new PlayFieldBuilder().Build();
-        var grunt = new Grunt(TestEntityDependencies.Create(new Random(1)), new IntVector2(90, 90), 15);
+        var grunt = new Grunt(TestEntityParams.Create(new Random(1)), new IntVector2(90, 90), 15);
         playField.FieldEntities.Add(grunt);
 
         Assert.Contains(grunt, playField.FieldEntities.GetEntities(RobotKind.Grunt));
@@ -133,7 +133,7 @@ public sealed class FieldStrategyTests
     public void ACollisionRule_OnlyReports_AndTheFieldResponds()
     {
         var playField = new PlayFieldBuilder().Build();
-        var familyMember = new FamilyMember(TestEntityDependencies.Create(new Random(1)), playField.Player.Position, FamilyMemberKind.Mommy);
+        var familyMember = new FamilyMember(TestEntityParams.Create(new Random(1)), playField.Player.Position, FamilyMemberKind.Mommy);
         playField.FieldEntities.Add(familyMember);
 
         var results = new PlayerRescueRule().Detect(playField, playField.FieldEntities).ToArray();
@@ -156,8 +156,8 @@ public sealed class FieldStrategyTests
         var playField = new PlayFieldBuilder().Build();
         var bounds = playField.GetPlayfieldBounds();
         IntVector2 spot = new(bounds.X + 200, bounds.Y + 200);
-        playField.FieldEntities.Add(new Grunt(TestEntityDependencies.Create(new Random(1)), spot, 15));
-        playField.FieldEntities.Add(new Grunt(TestEntityDependencies.Create(new Random(1)), spot, 15));
+        playField.FieldEntities.Add(new Grunt(TestEntityParams.Create(new Random(1)), spot, 15));
+        playField.FieldEntities.Add(new Grunt(TestEntityParams.Create(new Random(1)), spot, 15));
         playField.PlayerLaserSlots.Fire(spot, Direction8.Up);
         var collisionResponder = new CollisionResponder(playField);
 

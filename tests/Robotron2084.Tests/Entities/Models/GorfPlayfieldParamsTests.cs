@@ -5,7 +5,7 @@ using Xunit;
 namespace Robotron2084.Tests.Entities.Models;
 
 /// <summary>The playfield a Gorf is built for.</summary>
-public sealed class GorfPlayfieldTests
+public sealed class GorfPlayfieldParamsTests
 {
     private static readonly Rectangle Bounds = new(20, 30, 600, 400);
 
@@ -14,7 +14,7 @@ public sealed class GorfPlayfieldTests
     {
         var box = new Rectangle(100, 100, 20, 30);
 
-        var playfield = new GorfPlayfield(Bounds, box);
+        var playfield = new GorfPlayfieldParams(Bounds, box);
 
         Assert.Equal(Bounds, playfield.Bounds);
         Assert.Equal(box, playfield.PlayerBoxToAvoid);
@@ -23,7 +23,7 @@ public sealed class GorfPlayfieldTests
     [Fact]
     public void HasNoBoxToAvoidUnlessOneIsGiven()
     {
-        Assert.Null(new GorfPlayfield(Bounds).PlayerBoxToAvoid);
+        Assert.Null(new GorfPlayfieldParams(Bounds).PlayerBoxToAvoid);
     }
 
     [Theory]
@@ -32,13 +32,13 @@ public sealed class GorfPlayfieldTests
     [InlineData(-5, 10)]
     public void RefusesBoundsWithNoArea(int width, int height)
     {
-        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new GorfPlayfield(new Rectangle(0, 0, width, height)));
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new GorfPlayfieldParams(new Rectangle(0, 0, width, height)));
     }
 
     [Fact]
     public void RefusesABoxToAvoidWithNoArea()
     {
-        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new GorfPlayfield(Bounds, new Rectangle(5, 5, 0, 10)));
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new GorfPlayfieldParams(Bounds, new Rectangle(5, 5, 0, 10)));
 
         Assert.Equal("playerBoxToAvoid", exception.ParamName);
     }

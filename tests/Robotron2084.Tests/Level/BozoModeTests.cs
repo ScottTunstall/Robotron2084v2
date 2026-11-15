@@ -23,7 +23,7 @@ public sealed class BozoModeTests
     [Fact]
     public void WaveOneGetsTheFirstRowOfTheTable()
     {
-        var eased = BozoMode.Apply(new WaveParameters(1), 0);
+        var eased = BozoMode.Apply(new WaveParams(1), 0);
 
         Assert.Equal(38, eased.SpheroidDropDelay);
         Assert.Equal(96, eased.EnforcerFireDelay);
@@ -34,8 +34,8 @@ public sealed class BozoModeTests
     [Fact]
     public void ParametersAreUntouchedWhenTheMercyDoesNotApply()
     {
-        var waveParameters = new WaveParameters(3);
+        var waveParams = new WaveParams(3);
 
-        Assert.Same(waveParameters, BozoMode.Apply(waveParameters, 2));
+        Assert.Same(waveParams, BozoMode.Apply(waveParams, 2));
     }
 }

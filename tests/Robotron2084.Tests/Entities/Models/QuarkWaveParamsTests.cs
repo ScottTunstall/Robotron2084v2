@@ -4,12 +4,12 @@ using Xunit;
 namespace Robotron2084.Tests.Entities.Models;
 
 /// <summary>What a wave sets for its quarks.</summary>
-public sealed class QuarkWaveSettingsTests
+public sealed class QuarkWaveParamsTests
 {
     [Fact]
     public void KeepsWhatItIsGiven()
     {
-        var settings = new QuarkWaveSettings(4, 20, 30);
+        var settings = new QuarkWaveParams(4, 20, 30);
 
         Assert.Equal(4, settings.MaxDropsX2);
         Assert.Equal(20, settings.DropIntervalMaxBeats);
@@ -19,11 +19,11 @@ public sealed class QuarkWaveSettingsTests
     [Fact]
     public void UsesTheDefaultsForWhatIsNotGiven()
     {
-        var settings = new QuarkWaveSettings();
+        var settings = new QuarkWaveParams();
 
-        Assert.Equal(QuarkWaveSettings.DefaultMaxDropsX2, settings.MaxDropsX2);
-        Assert.Equal(QuarkWaveSettings.DefaultDropIntervalMaxBeats, settings.DropIntervalMaxBeats);
-        Assert.Equal(QuarkWaveSettings.DefaultMaxSpeed, settings.MaxSpeed);
+        Assert.Equal(QuarkWaveParams.DefaultMaxDropsX2, settings.MaxDropsX2);
+        Assert.Equal(QuarkWaveParams.DefaultDropIntervalMaxBeats, settings.DropIntervalMaxBeats);
+        Assert.Equal(QuarkWaveParams.DefaultMaxSpeed, settings.MaxSpeed);
     }
 
     [Theory]
@@ -32,6 +32,6 @@ public sealed class QuarkWaveSettingsTests
     [InlineData(0, 0, -1)]
     public void RefusesANumberBelowZero(int maxDropsX2, int dropIntervalMaxBeats, int maxSpeed)
     {
-        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new QuarkWaveSettings(maxDropsX2, dropIntervalMaxBeats, maxSpeed));
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new QuarkWaveParams(maxDropsX2, dropIntervalMaxBeats, maxSpeed));
     }
 }

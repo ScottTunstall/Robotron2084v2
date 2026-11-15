@@ -106,7 +106,7 @@ public sealed class TankShellTests
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 tank = new(bounds.X + 200, bounds.Y + 100);
         var player = tank + new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
-        var tankShell = new TankShell(TestEntityDependencies.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0)), tank, new TankShellAim(player, ShellSpeed, bounds));
+        var tankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0)), tank, new TankShellAimParams(player, ShellSpeed, bounds));
 
         var ticks = 0;
         while (tankShell.IsAlive() && ticks < 1000)
@@ -131,7 +131,7 @@ public sealed class TankShellTests
         var start = tank + new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
         var player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(40), 0);
 
-        var tankShell = new TankShell(TestEntityDependencies.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0)), tank, new TankShellAim(player, ShellSpeed, bounds));
+        var tankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0)), tank, new TankShellAimParams(player, ShellSpeed, bounds));
 
         Assert.Equal(216, tankShell.VelocityX);
         Assert.Equal(0, tankShell.VelocityY);
@@ -146,8 +146,8 @@ public sealed class TankShellTests
         IntVector2 playerOnTheLeft = new(bounds.X + bounds.Width / 4, bounds.Y + 100);
 
         // Not the top-or-bottom kind (a coin of 0), the near side (a random number of 1), no miss.
-        var nearSideTankShell = new TankShell(TestEntityDependencies.Create(new ScriptedRandom(ReboundRandom, 0, 1, NoMiss, 0)), tank, new TankShellAim(playerOnTheLeft, ShellSpeed, bounds));
-        var farSideTankShell = new TankShell(TestEntityDependencies.Create(new ScriptedRandom(ReboundRandom, 0, TankShellTuning.ReboundFarSideRandom, NoMiss, 0)), tank, new TankShellAim(playerOnTheLeft, ShellSpeed, bounds));
+        var nearSideTankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(ReboundRandom, 0, 1, NoMiss, 0)), tank, new TankShellAimParams(playerOnTheLeft, ShellSpeed, bounds));
+        var farSideTankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(ReboundRandom, 0, TankShellTuning.ReboundFarSideRandom, NoMiss, 0)), tank, new TankShellAimParams(playerOnTheLeft, ShellSpeed, bounds));
 
         Assert.True(nearSideTankShell.VelocityX < 0, "a player on the left sends the shell to the left wall");
         Assert.True(farSideTankShell.VelocityX > 0, "the one random number in eight sends it to the far wall");
@@ -165,7 +165,7 @@ public sealed class TankShellTests
         IntVector2 tank = new(bounds.Right - boxWidth - 12 - startOffset, bounds.Y + 100);
         var start = tank + new IntVector2(startOffset, 0);
         var player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(20), 0);
-        var tankShell = new TankShell(TestEntityDependencies.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, TankShellTuning.LifeExtraBeatsMaxExclusive - 1)), tank, new TankShellAim(player, ShellSpeed, bounds));
+        var tankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, TankShellTuning.LifeExtraBeatsMaxExclusive - 1)), tank, new TankShellAimParams(player, ShellSpeed, bounds));
         var sidewaysBefore = tankShell.VelocityX;
         Assert.True(sidewaysBefore > 0);
 

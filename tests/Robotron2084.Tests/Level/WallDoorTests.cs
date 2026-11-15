@@ -165,8 +165,8 @@ public sealed class WallDoorTests
     [Fact]
     public void AGruntThroughADoor_StartsAtTheSlowestTheWaveAllows_WhateverTheOthersHaveBeenSpeededUpTo()
     {
-        var waveParameters = new WaveParameters(1, 6, GruntMoveDelay: 15);
-        var playField = new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(5).Build();
+        var waveParams = new WaveParams(1, 6, GruntMoveDelay: 15);
+        var playField = new PlayFieldBuilder().WithParameters(waveParams).WithSeed(5).Build();
         var gameTime = new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
         for (var tick = 0; tick < 400 && playField.RobotsFrozen(); tick++) playField.Update(gameTime);
 
@@ -178,7 +178,7 @@ public sealed class WallDoorTests
         playField.SpawnDoorwayGrunt(new IntVector2(Playfield.X + 100, Playfield.Y + 100));
 
         var newcomer = Assert.Single(playField.FieldEntities.Grunts.Except(knownGrunts));
-        Assert.Equal(waveParameters.GruntMoveDelay, newcomer.MoveIntervalMaxBeats);
+        Assert.Equal(waveParams.GruntMoveDelay, newcomer.MoveIntervalMaxBeats);
     }
 
     [Fact]

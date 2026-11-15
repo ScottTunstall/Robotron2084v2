@@ -23,7 +23,7 @@ public sealed class PlayerAnimationAndAimTests
 {
     private static PlayField CreateField(IPlayerInputSource playerInputSource)
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithInput(playerInputSource).WithSeed(1).Build();
+        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithInput(playerInputSource).WithSeed(1).Build();
     }
 
     [Fact]

@@ -40,7 +40,7 @@ public sealed class HulkAnimationTests
         // LEFT; re-aims (RND 1..31 steps or wall contact) flip the axis.
         IntVector2 centre = new(bounds.X + bounds.Width / 2 - 16, bounds.Y + bounds.Height / 2 - 16);
         IntVector2 spot = new(bounds.X + 120, bounds.Y + 120);
-        var hulk = new Hulk(TestEntityDependencies.Create(new Random(19)), spot, 2, () => centre);
+        var hulk = new Hulk(TestEntityParams.Create(new Random(19)), spot, 2, () => centre);
         playField.FieldEntities.Hulks.Add(hulk);
 
         playField.SkipWaveStart();
@@ -115,7 +115,7 @@ public sealed class HulkAnimationTests
 
     private static PlayField CreateField()
     {
-        var waveParameters = new WaveParameters(
+        var waveParams = new WaveParams(
             1,
             HulkCount: 0,
             SpheroidCount: 0,
@@ -124,6 +124,6 @@ public sealed class HulkAnimationTests
             MaxEnforcersPerSpheroid: 1,
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(1).Build();
+        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(1).Build();
     }
 }

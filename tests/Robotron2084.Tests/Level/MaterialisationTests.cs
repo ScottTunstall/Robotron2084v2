@@ -24,7 +24,7 @@ public class MaterialisationTests
 
     private static PlayField CreateField(int grunts, int hulks = 0, int spheroids = 0, int quarks = 0, int tanks = 0)
     {
-        var waveParameters = new WaveParameters(
+        var waveParams = new WaveParams(
             1,
             grunts,
             HulkCount: hulks,
@@ -36,7 +36,7 @@ public class MaterialisationTests
             EnemySpeedBonus: 0,
             TankCount: tanks);
 
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithBounds(InnerBounds).WithSeed(1234).Build();
+        return new PlayFieldBuilder().WithParameters(waveParams).WithBounds(InnerBounds).WithSeed(1234).Build();
     }
 
     private static void Advance(PlayField playField, int ticks)

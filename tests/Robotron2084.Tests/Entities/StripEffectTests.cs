@@ -504,7 +504,7 @@ public sealed class StripEffectTests
         IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
         var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot);
         playField.FieldEntities.Electrodes.Add(electrode);
-        playField.FieldEntities.Grunts.Add(new Grunt(TestEntityDependencies.Create(new Random(1)), spot, 15)); // standing on the electrode
+        playField.FieldEntities.Grunts.Add(new Grunt(TestEntityParams.Create(new Random(1)), spot, 15)); // standing on the electrode
 
         playField.Update(new GameTime());
 
@@ -558,7 +558,7 @@ public sealed class StripEffectTests
 
     private static PlayField CreateEmptyField()
     {
-        var waveParameters = new WaveParameters(
+        var waveParams = new WaveParams(
             1,
             HulkCount: 0,
             SpheroidCount: 0,
@@ -568,7 +568,7 @@ public sealed class StripEffectTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
 
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(99).Build();
+        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(99).Build();
     }
 
     private sealed class FakeDead : IExplodable

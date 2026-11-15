@@ -40,9 +40,9 @@ public sealed class PlayFieldBrainProgMissileTests
         playField.SkipWaveStart();
     }
 
-    private static PlayField CreateField(WaveParameters waveParameters, IPlayerInputSource? playerInputSource = null)
+    private static PlayField CreateField(WaveParams waveParams, IPlayerInputSource? playerInputSource = null)
     {
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithInput(playerInputSource ?? new FakeInputSource()).WithSeed(99)
+        return new PlayFieldBuilder().WithParameters(waveParams).WithInput(playerInputSource ?? new FakeInputSource()).WithSeed(99)
             .Build();
     }
 
@@ -64,9 +64,9 @@ public sealed class PlayFieldBrainProgMissileTests
         return Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
     }
 
-    private static WaveParameters BrainWave(int brains, int mommies = 0, int daddies = 0, int Mikeys = 0)
+    private static WaveParams BrainWave(int brains, int mommies = 0, int daddies = 0, int Mikeys = 0)
     {
-        return new WaveParameters(
+        return new WaveParams(
             1,
             BrainCount: brains,
             MommyCount: mommies,
@@ -91,8 +91,8 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brains_AllChaseMikey_EvenWhenAnotherFamilyMemberIsNearer()
     {
-        WaveParameters waveParameters = new(1, BrainCount: 2, DaddyCount: 1, MikeyCount: 1, BrainBeatWaitArcadeFrames: 0);
-        var playField = CreateField(waveParameters);
+        WaveParams waveParams = new(1, BrainCount: 2, DaddyCount: 1, MikeyCount: 1, BrainBeatWaitArcadeFrames: 0);
+        var playField = CreateField(waveParams);
         WarmUp(playField);
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
@@ -125,12 +125,12 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brains_StartOnTheNearestMember_WhenTheMikeyBugIsSwitchedOff()
     {
-        WaveParameters waveParameters = new(1, BrainCount: 6, MommyCount: 2, DaddyCount: 2, MikeyCount: 2);
+        WaveParams waveParams = new(1, BrainCount: 6, MommyCount: 2, DaddyCount: 2, MikeyCount: 2);
 
-        var arcadePlayField = new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(99).Build();
+        var arcadePlayField = new PlayFieldBuilder().WithParameters(waveParams).WithSeed(99).Build();
         Assert.All(arcadePlayField.FieldEntities.Brains, brain => Assert.Equal(FamilyList.FirstSlot, brain.TargetFamilySlot));
 
-        var withoutBugPlayField = new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(99).WithBrainsChaseMikeyBug(false)
+        var withoutBugPlayField = new PlayFieldBuilder().WithParameters(waveParams).WithSeed(99).WithBrainsChaseMikeyBug(false)
             .Build();
         Assert.All(
             withoutBugPlayField.FieldEntities.Brains,
@@ -146,8 +146,8 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brains_TargetTheNearestMember_OnceMikeysSlotIsFree()
     {
-        WaveParameters waveParameters = new(1, BrainCount: 1, DaddyCount: 1, MikeyCount: 1, BrainBeatWaitArcadeFrames: 0);
-        var playField = CreateField(waveParameters);
+        WaveParams waveParams = new(1, BrainCount: 1, DaddyCount: 1, MikeyCount: 1, BrainBeatWaitArcadeFrames: 0);
+        var playField = CreateField(waveParams);
         WarmUp(playField);
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
@@ -176,11 +176,11 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void WaveFive_EveryBrainStartsOnMikeysFamilySlot()
     {
-        var waveParameters = WaveParameters.CreateFromWave(5, WaveTable.GetParameters(5));
-        Assert.Equal(15, waveParameters.BrainCount);
-        Assert.Equal(1, waveParameters.MikeyCount);
+        var waveParams = WaveParams.CreateFromWave(5, WaveTable.GetParameters(5));
+        Assert.Equal(15, waveParams.BrainCount);
+        Assert.Equal(1, waveParams.MikeyCount);
 
-        var playField = CreateField(waveParameters);
+        var playField = CreateField(waveParams);
 
         var mikey = playField.FieldEntities.FamilyList.Members.Single(familyMember => familyMember.Kind == FamilyMemberKind.Mikey);
         Assert.Equal(FamilyList.FirstSlot, mikey.FamilySlot);
@@ -190,17 +190,17 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brain_StepsTowardNearestFamilyMember_OneColumnSidewaysAndOneRowUpAndDownPerBeat()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
 
-        playField.FieldEntities.FamilyList.Add(new FamilyMember(TestEntityDependencies.Create(new Random(1)), new IntVector2(inner.X + 300, inner.Y + 150), FamilyMemberKind.Mommy));
+        playField.FieldEntities.FamilyList.Add(new FamilyMember(TestEntityParams.Create(new Random(1)), new IntVector2(inner.X + 300, inner.Y + 150), FamilyMemberKind.Mommy));
         WarmUp(playField); // run through the start of the wave (RobotsFrozen())
 
         // 30 arcade px left of (where the family member is now) → steps right/up.
         var familyMemberSpot = playField.FieldEntities.FamilyList.Members[0].Position;
         IntVector2 brainSpot = new(familyMemberSpot.X - ScreenSize.ToPortPixelsFromArcadePixels(30),
             familyMemberSpot.Y - ScreenSize.ToPortPixelsFromArcadePixels(20));
-        var brain = new Brain(TestEntityDependencies.Create(new Random(2)), brainSpot, new BrainWaveSettings(8, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(2)), brainSpot, new BrainWaveParams(8, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         // Beat period = PortTicks(1 + BRNSPD) = PortTicks(9) = 11 ticks
@@ -216,7 +216,7 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brain_WithNoLivingFamilyMembers_ChasesThePlayer()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var playerSpot = playField.Player.Position;
 
         WarmUp(playField); // run through the start of the wave (RobotsFrozen())
@@ -227,7 +227,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // "target is below". That ±1px vertical jitter is the arcade brain's
         // hover; the port used to hold the row perfectly still.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixelsFromArcadePixels(30), playerSpot.Y);
-        var brain = new Brain(TestEntityDependencies.Create(new Random(3)), brainSpot, new BrainWaveSettings(8, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(3)), brainSpot, new BrainWaveParams(8, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         // One beat in the 19-tick window (period PortTicks(9) = 10, notes 26).
@@ -240,7 +240,7 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brain_XApproachHasADeadZone_ButYDoesNot()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var playerSpot = playField.Player.Position;
 
         WarmUp(playField);
@@ -250,7 +250,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // but Y has no dead zone and must still step down 1 px.
         IntVector2 brainSpot = new(playerSpot.X + ScreenSize.ToPortPixelsFromArcadePixels(1),
             playerSpot.Y - ScreenSize.ToPortPixelsFromArcadePixels(50));
-        var brain = new Brain(TestEntityDependencies.Create(new Random(21)), brainSpot, new BrainWaveSettings(8, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(21)), brainSpot, new BrainWaveParams(8, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicks(12); tick++) playField.Update(OneTick());
@@ -262,7 +262,7 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brain_DoesNotDeadlockOnAWall_SlidesAlongItInstead()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
 
         WarmUp(playField);
@@ -280,7 +280,7 @@ public sealed class PlayFieldBrainProgMissileTests
         IntVector2 brainSpot =
             new(inner.Right - ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BrainCollisionSize.Width),
                 inner.Y + ScreenSize.ToPortPixelsFromArcadePixels(80));
-        var brain = new Brain(TestEntityDependencies.Create(new Random(22)), brainSpot, new BrainWaveSettings(8, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(22)), brainSpot, new BrainWaveParams(8, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicks(12); tick++) playField.Update(OneTick());
@@ -292,7 +292,7 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Brain_CatchingFamilyMember_ReprogramsItThenLeavesAProg_NoSkull()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         // The reprogram animation is robot activity, so RobotsFrozen() pauses it
         // (the port's "ALL ROBOTS ARE IMMOBILE" rule) — run through the start of the wave
         // or the loop never advances.
@@ -300,11 +300,11 @@ public sealed class PlayFieldBrainProgMissileTests
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 familyMemberSpot = new(inner.X + 200, inner.Y + 200);
-        var familyMember = new FamilyMember(TestEntityDependencies.Create(new Random(4)), familyMemberSpot, FamilyMemberKind.Mommy);
+        var familyMember = new FamilyMember(TestEntityParams.Create(new Random(4)), familyMemberSpot, FamilyMemberKind.Mommy);
         playField.FieldEntities.FamilyList.Add(familyMember);
 
         // Corners coincident — well inside the ROM's ±3px catch reach.
-        var brain = new Brain(TestEntityDependencies.Create(new Random(5)), familyMemberSpot, new BrainWaveSettings(0, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(5)), familyMemberSpot, new BrainWaveParams(0, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         RunFirstBeat(playField);
@@ -356,15 +356,15 @@ public sealed class PlayFieldBrainProgMissileTests
         // would cross XMIN, BMUT10 puts it 8 columns to the RIGHT and loads BRRP1
         // instead — the brain faces the family member either way (author, 2026-09-20:
         // "the brain does not face the human it is progging").
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         WarmUp(playField);
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 familyMemberSpot = new(inner.X + 2, inner.Y + 200);
-        var familyMember = new FamilyMember(TestEntityDependencies.Create(new Random(7)), familyMemberSpot, FamilyMemberKind.Daddy);
+        var familyMember = new FamilyMember(TestEntityParams.Create(new Random(7)), familyMemberSpot, FamilyMemberKind.Daddy);
         playField.FieldEntities.FamilyList.Add(familyMember);
 
-        var brain = new Brain(TestEntityDependencies.Create(new Random(8)), familyMemberSpot, new BrainWaveSettings(0, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(8)), familyMemberSpot, new BrainWaveParams(0, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         RunFirstBeat(playField);
@@ -382,14 +382,14 @@ public sealed class PlayFieldBrainProgMissileTests
         // ROM BRNKIL: past BMUT3 the brain frees the family member and drops a skull —
         // no prog. Without this the victim would be stranded mid-animation
         // (frozen, un-rescuable, never a prog).
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         WarmUp(playField);
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 familyMemberSpot = new(inner.X + 200, inner.Y + 200);
-        var familyMember = new FamilyMember(TestEntityDependencies.Create(new Random(31)), familyMemberSpot, FamilyMemberKind.Daddy);
+        var familyMember = new FamilyMember(TestEntityParams.Create(new Random(31)), familyMemberSpot, FamilyMemberKind.Daddy);
         playField.FieldEntities.FamilyList.Add(familyMember);
-        var brain = new Brain(TestEntityDependencies.Create(new Random(32)), familyMemberSpot, new BrainWaveSettings(0, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(32)), familyMemberSpot, new BrainWaveParams(0, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         RunFirstBeat(playField);
@@ -411,16 +411,16 @@ public sealed class PlayFieldBrainProgMissileTests
         // ROM BRNL1 compares TOP-LEFT CORNERS within ±3px on both axes. The old
         // GetBounds().Overlaps test fired whenever the 14x16 brain box touched the
         // family member box — far too eager.
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 familyMemberSpot = new(inner.X + 200, inner.Y + 200);
-        var familyMember = new FamilyMember(TestEntityDependencies.Create(new Random(14)), familyMemberSpot, FamilyMemberKind.Mommy);
+        var familyMember = new FamilyMember(TestEntityParams.Create(new Random(14)), familyMemberSpot, FamilyMemberKind.Mommy);
         playField.FieldEntities.FamilyList.Add(familyMember);
 
         // Boxes overlap (the family member is well inside the brain's frame) but the
         // corners are 20px apart → the ROM's reach does not cover it.
         IntVector2 offset = new(ScreenSize.ToPortPixelsFromArcadePixels(20), 0);
-        var brain = new Brain(TestEntityDependencies.Create(new Random(15)), familyMemberSpot - offset, new BrainWaveSettings(0, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(15)), familyMemberSpot - offset, new BrainWaveParams(0, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         RunFirstBeat(playField);
@@ -434,16 +434,16 @@ public sealed class PlayFieldBrainProgMissileTests
         // ROM BRNL1 `ADDA #3 / CMPA #6` compares X in columns: 3 columns is 6 arcade
         // pixels. 4 arcade pixels apart is inside the X dead zone (2 columns), so the
         // brain does not step, and is still within reach.
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         WarmUp(playField);
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 familyMemberSpot = new(inner.X + 200, inner.Y + 200);
-        var familyMember = new FamilyMember(TestEntityDependencies.Create(new Random(41)), familyMemberSpot, FamilyMemberKind.Mommy);
+        var familyMember = new FamilyMember(TestEntityParams.Create(new Random(41)), familyMemberSpot, FamilyMemberKind.Mommy);
         playField.FieldEntities.FamilyList.Add(familyMember);
 
         IntVector2 offset = new(ScreenSize.ToPortPixelsFromArcadePixels(4), 0);
-        var brain = new Brain(TestEntityDependencies.Create(new Random(42)), familyMemberSpot - offset, new BrainWaveSettings(0, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(42)), familyMemberSpot - offset, new BrainWaveParams(0, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
 
         RunFirstBeat(playField);
@@ -454,12 +454,12 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void Prog_WalksStraightCardinalLines_InsideTheField()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         // NOT the field centre: the player stands there, and prog contact
         // kills the player (RobotsFrozen() would stop the simulation).
         IntVector2 spot = new(inner.X + 100, inner.Y + 100);
-        var prog = new Prog(TestEntityDependencies.Create(new Random(6)), spot, FamilyMemberKind.Daddy);
+        var prog = new Prog(TestEntityParams.Create(new Random(6)), spot, FamilyMemberKind.Daddy);
         playField.FieldEntities.Progs.Add(prog);
         WarmUp(playField); // run through the start of the wave (RobotsFrozen())
 
@@ -491,7 +491,7 @@ public sealed class PlayFieldBrainProgMissileTests
         // OX16, a screen address, so it is TWO COLUMNS, not two pixels: a column is 2 px
         // (§55). Both axes therefore cover the same 4 px a beat, and the port's old 2 px
         // horizontal step walked at half the arcade's speed (notes §87).
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         WarmUp(playField);
 
@@ -499,7 +499,7 @@ public sealed class PlayFieldBrainProgMissileTests
         for (var seed = 0; seed < 12; seed++)
         {
             IntVector2 spot = new(inner.X + 60, inner.Y + 60);
-            var prog = new Prog(TestEntityDependencies.Create(new Random(seed)), spot, FamilyMemberKind.Daddy);
+            var prog = new Prog(TestEntityParams.Create(new Random(seed)), spot, FamilyMemberKind.Daddy);
             playField.FieldEntities.Progs.Add(prog);
 
             for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3); tick++) playField.Update(OneTick());
@@ -533,7 +533,7 @@ public sealed class PlayFieldBrainProgMissileTests
         var xArmed = 0;
         for (var seed = 0; seed < 400; seed++)
         {
-            var cruiseMissile = new CruiseMissile(TestEntityDependencies.Create(new Random(seed)), new IntVector2(inner.X + 200, inner.Y + 150), new IntVector2(inner.X + 300, inner.Y + 150));
+            var cruiseMissile = new CruiseMissile(TestEntityParams.Create(new Random(seed)), new IntVector2(inner.X + 200, inner.Y + 150), new IntVector2(inner.X + 300, inner.Y + 150));
 
             Assert.NotEqual(IntVector2.Zero, cruiseMissile.Velocity); // never stalls
             if (cruiseMissile.Velocity.X != 0) xArmed++;
@@ -548,12 +548,12 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void CruiseMissile_MovesOneColumnOnXAndOneRowOnYPerCMMOV()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         WarmUp(playField);
 
         IntVector2 spot = new(inner.X + 200, inner.Y + 150);
-        var cruiseMissile = new CruiseMissile(TestEntityDependencies.Create(new Random(7)), spot, playField.Player.Position);
+        var cruiseMissile = new CruiseMissile(TestEntityParams.Create(new Random(7)), spot, playField.Player.Position);
         playField.FieldEntities.CruiseMissiles.Add(cruiseMissile);
 
         // The first beat (2 x 1px CMMOV) lands on tick 4 (3 fiftieths of a second = 3.6),
@@ -585,10 +585,10 @@ public sealed class PlayFieldBrainProgMissileTests
         // is erased off the screen EVERY STEP, so the tail is a fixed nine
         // marks, never a snake across the field (author: "the trail is too
         // long"), and CMKIL then wipes the remaining nine.
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 200, inner.Y + 150);
-        var cruiseMissile = new CruiseMissile(TestEntityDependencies.Create(new Random(7)), spot, playField.Player.Position);
+        var cruiseMissile = new CruiseMissile(TestEntityParams.Create(new Random(7)), spot, playField.Player.Position);
         playField.FieldEntities.CruiseMissiles.Add(cruiseMissile);
 
         // Two beats = 4 CMMOVs = 4 marks (the missile flies on while the
@@ -626,12 +626,12 @@ public sealed class PlayFieldBrainProgMissileTests
         // `PD` = 7 and `SPSIZE` = 31 that is byte offsets 17,19,...29, so SEVEN
         // ghosts trail the prog. Each is blitted once and never again, so it
         // keeps the pose it was born in.
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         WarmUp(playField);
 
         IntVector2 spot = new(inner.X + 200, inner.Y + 100);
-        var prog = new Prog(TestEntityDependencies.Create(new Random(6)), spot, FamilyMemberKind.Daddy);
+        var prog = new Prog(TestEntityParams.Create(new Random(6)), spot, FamilyMemberKind.Daddy);
         playField.FieldEntities.Progs.Add(prog);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(3) * 3; tick++) playField.Update(OneTick());
@@ -661,10 +661,10 @@ public sealed class PlayFieldBrainProgMissileTests
         // card. The port instead drew the card as a 20-tick static pop in a Dying
         // state, which the author saw as "the explosion effect looks weird"
         // (2026-09-17, notes §90). There is no Dying phase any more.
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         playField.SkipWaveStart();
         var inner = playField.PlayfieldWall.PlayfieldBounds;
-        var prog = new Prog(TestEntityDependencies.Create(new Random(21)), new IntVector2(inner.X + 120, inner.Y + 120), FamilyMemberKind.Mommy);
+        var prog = new Prog(TestEntityParams.Create(new Random(21)), new IntVector2(inner.X + 120, inner.Y + 120), FamilyMemberKind.Mommy);
         playField.FieldEntities.Progs.Add(prog);
         var spot = prog.Position;
 
@@ -687,11 +687,11 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void CruiseMissile_ReflectsOffWalls_AndStaysInside_OverManyTicks()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         // Off the player's centre spot so the simulation stays live.
         IntVector2 spot = new(inner.X + 100, inner.Y + 300);
-        var cruiseMissile = new CruiseMissile(TestEntityDependencies.Create(new Random(7)), spot, playField.Player.Position);
+        var cruiseMissile = new CruiseMissile(TestEntityParams.Create(new Random(7)), spot, playField.Player.Position);
         playField.FieldEntities.CruiseMissiles.Add(cruiseMissile);
 
         for (var tick = 0; tick < 1200; tick++)
@@ -705,11 +705,11 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void LaserKillsCruiseMissile_Scores25()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         playField.SkipWaveStart();
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 250, inner.Y + 120);
-        var cruiseMissile = new CruiseMissile(TestEntityDependencies.Create(new Random(8)), spot, playField.Player.Position);
+        var cruiseMissile = new CruiseMissile(TestEntityParams.Create(new Random(8)), spot, playField.Player.Position);
         playField.FieldEntities.CruiseMissiles.Add(cruiseMissile);
 
         playField.PlayerLaserSlots.Fire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down);
@@ -722,12 +722,12 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void LaserKillsBrain_Scores500_AndLaserKillsProg_Scores100()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         playField.SkipWaveStart();
         var inner = playField.PlayfieldWall.PlayfieldBounds;
 
         IntVector2 brainSpot = new(inner.X + 150, inner.Y + 120);
-        var brain = new Brain(TestEntityDependencies.Create(new Random(9)), brainSpot, new BrainWaveSettings(0, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(9)), brainSpot, new BrainWaveParams(0, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
         playField.PlayerLaserSlots.Fire(new IntVector2(brainSpot.X + 7, brainSpot.Y - 12), Direction8.Down);
         playField.Update(new GameTime());
@@ -735,7 +735,7 @@ public sealed class PlayFieldBrainProgMissileTests
         Assert.Equal(500, playField.ScoreBoard.Score);
 
         IntVector2 progSpot = new(inner.X + 300, inner.Y + 120);
-        var prog = new Prog(TestEntityDependencies.Create(new Random(10)), progSpot, FamilyMemberKind.Daddy);
+        var prog = new Prog(TestEntityParams.Create(new Random(10)), progSpot, FamilyMemberKind.Daddy);
         playField.FieldEntities.Progs.Add(prog);
         playField.PlayerLaserSlots.Fire(new IntVector2(progSpot.X + 5, progSpot.Y - 12), Direction8.Down);
         playField.Update(new GameTime());
@@ -759,15 +759,15 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void IsWaveCleared_RequiresBrainsGone_ButNotProgsOrMissiles()
     {
-        var playField = CreateField(new WaveParameters(1));
+        var playField = CreateField(new WaveParams(1));
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         Assert.True(playField.IsWaveCleared()); // empty wave
 
-        var brain = new Brain(TestEntityDependencies.Create(new Random(11)), new IntVector2(inner.X + 100, inner.Y + 100), new BrainWaveSettings(0, 40), FamilyList.FirstSlot);
+        var brain = new Brain(TestEntityParams.Create(new Random(11)), new IntVector2(inner.X + 100, inner.Y + 100), new BrainWaveParams(0, 40), FamilyList.FirstSlot);
         playField.FieldEntities.Brains.Add(brain);
-        var prog = new Prog(TestEntityDependencies.Create(new Random(12)), new IntVector2(inner.X + 200, inner.Y + 100), FamilyMemberKind.Daddy);
+        var prog = new Prog(TestEntityParams.Create(new Random(12)), new IntVector2(inner.X + 200, inner.Y + 100), FamilyMemberKind.Daddy);
         playField.FieldEntities.Progs.Add(prog);
-        var cruiseMissile = new CruiseMissile(TestEntityDependencies.Create(new Random(13)), new IntVector2(inner.X + 300, inner.Y + 100), playField.Player.Position);
+        var cruiseMissile = new CruiseMissile(TestEntityParams.Create(new Random(13)), new IntVector2(inner.X + 300, inner.Y + 100), playField.Player.Position);
         playField.FieldEntities.CruiseMissiles.Add(cruiseMissile);
         Assert.False(playField.IsWaveCleared()); // the brain is still there
 
@@ -785,7 +785,7 @@ public sealed class PlayFieldBrainProgMissileTests
     public void Player_HoldingFire_AutoReFires_AfterTheCooldown_AndCapsAtThreeLasers()
     {
         var playerInputSource = new PhaseInput { State = new PlayerInputState(IntVector2.Zero, IntVector2.Zero, true) };
-        var playField = CreateField(new WaveParameters(1), playerInputSource);
+        var playField = CreateField(new WaveParams(1), playerInputSource);
         playField.SkipWaveStart();
         var inner = playField.PlayfieldWall.PlayfieldBounds;
 

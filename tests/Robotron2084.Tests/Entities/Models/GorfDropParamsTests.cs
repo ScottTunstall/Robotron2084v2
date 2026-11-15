@@ -4,12 +4,12 @@ using Xunit;
 namespace Robotron2084.Tests.Entities.Models;
 
 /// <summary>How many grunts a Gorf drops.</summary>
-public sealed class GorfDropsTests
+public sealed class GorfDropParamsTests
 {
     [Fact]
     public void KeepsWhatItIsGiven()
     {
-        var drops = new GorfDrops(10, 4, 7);
+        var drops = new GorfDropParams(10, 4, 7);
 
         Assert.Equal(10, drops.MaxDropsX2);
         Assert.Equal(4, drops.GruntDropCount);
@@ -19,7 +19,7 @@ public sealed class GorfDropsTests
     [Fact]
     public void LeavesTheDropsToChanceUnlessToldHowMany()
     {
-        var drops = new GorfDrops(10);
+        var drops = new GorfDropParams(10);
 
         Assert.Equal(0, drops.GruntDropCount);
         Assert.Equal(0, drops.DropIntervalSteps);
@@ -31,6 +31,6 @@ public sealed class GorfDropsTests
     [InlineData(10, 0, -1)]
     public void RefusesANumberBelowZero(int maxDropsX2, int gruntDropCount, int dropIntervalSteps)
     {
-        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new GorfDrops(maxDropsX2, gruntDropCount, dropIntervalSteps));
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new GorfDropParams(maxDropsX2, gruntDropCount, dropIntervalSteps));
     }
 }

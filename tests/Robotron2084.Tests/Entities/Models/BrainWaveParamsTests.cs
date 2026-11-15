@@ -4,12 +4,12 @@ using Xunit;
 namespace Robotron2084.Tests.Entities.Models;
 
 /// <summary>What a wave sets for its brains.</summary>
-public sealed class BrainWaveSettingsTests
+public sealed class BrainWaveParamsTests
 {
     [Fact]
     public void KeepsWhatItIsGiven()
     {
-        var settings = new BrainWaveSettings(8, 40);
+        var settings = new BrainWaveParams(8, 40);
 
         Assert.Equal(8, settings.BeatWaitArcadeFrames);
         Assert.Equal(40, settings.FireIntervalBeats);
@@ -20,6 +20,6 @@ public sealed class BrainWaveSettingsTests
     [InlineData(0, -1)]
     public void RefusesANumberBelowZero(int beatWaitArcadeFrames, int fireIntervalBeats)
     {
-        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new BrainWaveSettings(beatWaitArcadeFrames, fireIntervalBeats));
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new BrainWaveParams(beatWaitArcadeFrames, fireIntervalBeats));
     }
 }

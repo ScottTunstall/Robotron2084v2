@@ -172,6 +172,6 @@ public class SoundEngineTests
         params (byte Repetitions, byte LengthVblanks, byte SoundNumber)[] lines)
     {
         return new SoundSequence(priority, 0,
-            [.. lines.Select(line => new SoundEntry(line.Repetitions, line.LengthVblanks, line.SoundNumber))]);
+            [.. lines.Select(line => new SoundTableRow(line.Repetitions, line.LengthVblanks, line.SoundNumber))]);
     }
 }

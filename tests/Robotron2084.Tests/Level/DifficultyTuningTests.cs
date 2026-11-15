@@ -13,17 +13,17 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public sealed class DifficultyTuningTests
 {
-    private static WaveParameters Wave(int number)
+    private static WaveParams Wave(int number)
     {
-        return WaveParameters.CreateFromWave(number, WaveTable.GetParameters(number));
+        return WaveParams.CreateFromWave(number, WaveTable.GetParameters(number));
     }
 
     [Fact]
     public void TheRecommendedDifficultyChangesNothing()
     {
-        var waveParameters = Wave(6);
+        var waveParams = Wave(6);
 
-        Assert.Same(waveParameters, DifficultyTuning.Apply(waveParameters, GameSettings.RecommendedDifficulty, 3));
+        Assert.Same(waveParams, DifficultyTuning.Apply(waveParams, GameSettings.RecommendedDifficulty, 3));
     }
 
     [Fact]
@@ -68,17 +68,17 @@ public sealed class DifficultyTuningTests
     [Fact]
     public void AnEasierSettingIsRaisedToRecommendedForAPlayerAtWaveFourteen()
     {
-        var waveParameters = Wave(14);
+        var waveParams = Wave(14);
 
-        Assert.Same(waveParameters, DifficultyTuning.Apply(waveParameters, 2, 1));
+        Assert.Same(waveParams, DifficultyTuning.Apply(waveParams, 2, 1));
     }
 
     [Fact]
     public void AnEasierSettingIsRaisedToRecommendedFromWaveFiveWithThreeMenLeft()
     {
-        var waveParameters = Wave(5);
+        var waveParams = Wave(5);
 
-        Assert.Same(waveParameters, DifficultyTuning.Apply(waveParameters, 2, 3));
+        Assert.Same(waveParams, DifficultyTuning.Apply(waveParams, 2, 3));
     }
 
     [Fact]
@@ -103,8 +103,8 @@ public sealed class DifficultyTuningTests
     [InlineData(1, 6)]
     public void AHarderSettingIsNeverMercied(int wave, int difficulty)
     {
-        var waveParameters = Wave(wave);
+        var waveParams = Wave(wave);
 
-        Assert.NotSame(waveParameters, DifficultyTuning.Apply(waveParameters, difficulty, 1));
+        Assert.NotSame(waveParams, DifficultyTuning.Apply(waveParams, difficulty, 1));
     }
 }

@@ -20,13 +20,13 @@ public sealed class EntityOwnRulesTests
     [Fact]
     public void AFamilyMemberIsGraspable_OnlyWhileAliveAndNotInABrainsHold()
     {
-        var familyMember = new FamilyMember(TestEntityDependencies.Create(new Random(1)), new IntVector2(100, 100), FamilyMemberKind.Mommy);
+        var familyMember = new FamilyMember(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), FamilyMemberKind.Mommy);
         Assert.True(familyMember.IsGraspable());
 
         familyMember.BeginReprogramming();
         Assert.False(familyMember.IsGraspable());
 
-        var killedFamilyMember = new FamilyMember(TestEntityDependencies.Create(new Random(2)), new IntVector2(100, 100), FamilyMemberKind.Daddy);
+        var killedFamilyMember = new FamilyMember(TestEntityParams.Create(new Random(2)), new IntVector2(100, 100), FamilyMemberKind.Daddy);
         killedFamilyMember.Kill();
         Assert.False(killedFamilyMember.IsGraspable());
     }
@@ -126,7 +126,7 @@ public sealed class EntityOwnRulesTests
         Assert.True(electrode.IsDying());
         Assert.False(electrode.IsDead());
 
-        var grunt = new Grunt(TestEntityDependencies.Create(new Random(1)), new IntVector2(50, 50), 15);
+        var grunt = new Grunt(TestEntityParams.Create(new Random(1)), new IntVector2(50, 50), 15);
         grunt.Kill();
         Assert.True(grunt.IsDead());
         Assert.False(grunt.IsAlive());

@@ -24,16 +24,16 @@ public sealed class PlayFieldRobotRegistryTests
     ///     The kinds the wave table brings, and the count each row must read.
     ///     Every other kind is made by another robot, so it has no wave count.
     /// </summary>
-    private static readonly (RobotKind Kind, Func<WaveParameters, int> Count)[] WaveBrought =
+    private static readonly (RobotKind Kind, Func<WaveParams, int> Count)[] WaveBrought =
     [
-        (RobotKind.Electrode, static waveParameters => waveParameters.ElectrodeCount),
-        (RobotKind.Grunt, static waveParameters => waveParameters.GruntCount),
-        (RobotKind.Hulk, static waveParameters => waveParameters.HulkCount),
-        (RobotKind.Spheroid, static waveParameters => waveParameters.SpheroidCount),
-        (RobotKind.Quark, static waveParameters => waveParameters.QuarkCount),
-        (RobotKind.Tank, static waveParameters => waveParameters.TankCount),
-        (RobotKind.Brain, static waveParameters => waveParameters.BrainCount),
-        (RobotKind.BerzerkRobot, static waveParameters => waveParameters.BerzerkRobotCount)
+        (RobotKind.Electrode, static waveParams => waveParams.ElectrodeCount),
+        (RobotKind.Grunt, static waveParams => waveParams.GruntCount),
+        (RobotKind.Hulk, static waveParams => waveParams.HulkCount),
+        (RobotKind.Spheroid, static waveParams => waveParams.SpheroidCount),
+        (RobotKind.Quark, static waveParams => waveParams.QuarkCount),
+        (RobotKind.Tank, static waveParams => waveParams.TankCount),
+        (RobotKind.Brain, static waveParams => waveParams.BrainCount),
+        (RobotKind.BerzerkRobot, static waveParams => waveParams.BerzerkRobotCount)
     ];
 
     /// <summary>
@@ -94,9 +94,9 @@ public sealed class PlayFieldRobotRegistryTests
         (RobotKind.BerzerkRobot, typeof(BerzerkRobot))
     ];
 
-    private static WaveParameters OneOfEverything()
+    private static WaveParams OneOfEverything()
     {
-        return new WaveParameters(
+        return new WaveParams(
             1,
             2,
             3,
@@ -110,7 +110,7 @@ public sealed class PlayFieldRobotRegistryTests
 
     private static PlayField CreateField()
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithSeed(99).Build();
+        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithSeed(99).Build();
     }
 
     [Fact]
@@ -151,14 +151,14 @@ public sealed class PlayFieldRobotRegistryTests
     [Fact]
     public void OnlyTheWaveBroughtKindsHaveAWaveCount_AndEachReadsItsOwnCount()
     {
-        var waveParameters = OneOfEverything();
+        var waveParams = OneOfEverything();
 
         foreach (var (kind, count) in WaveBrought)
         {
             var row = RobotKinds.GetInfo(kind).WaveCount;
 
             Assert.NotNull(row);
-            Assert.Equal(count(waveParameters), row(waveParameters));
+            Assert.Equal(count(waveParams), row(waveParams));
         }
 
         foreach (var kind in Enum.GetValues<RobotKind>())

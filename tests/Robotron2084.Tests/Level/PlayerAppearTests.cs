@@ -40,7 +40,7 @@ public sealed class PlayerAppearTests
 
     private static PlayField CreateEmptyField(IPlayerInputSource? playerInputSource = null)
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithInput(playerInputSource ?? new FakeInputSource())
+        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithInput(playerInputSource ?? new FakeInputSource())
             .WithSeed(7).Build();
     }
 

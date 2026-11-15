@@ -30,7 +30,7 @@ public sealed class HulkKnockbackTests
 
     private static PlayField CreateField()
     {
-        var waveParameters = new WaveParameters(
+        var waveParams = new WaveParams(
             1,
             HulkCount: 0,
             SpheroidCount: 0,
@@ -39,7 +39,7 @@ public sealed class HulkKnockbackTests
             MaxEnforcersPerSpheroid: 1,
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(1).Build();
+        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(1).Build();
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public sealed class HulkKnockbackTests
 
         foreach (var direction in Enum.GetValues<Direction8>())
         {
-            var hulk = new Hulk(TestEntityDependencies.Create(new Random(1000 + (int)direction)), spot, 2, () => spot);
+            var hulk = new Hulk(TestEntityParams.Create(new Random(1000 + (int)direction)), spot, 2, () => spot);
             playField.FieldEntities.Hulks.Add(hulk);
             playField.SkipWaveStart();
             playField.Update(new GameTime()); // caches the playfield bounds
@@ -112,7 +112,7 @@ public sealed class HulkKnockbackTests
 
         // Top-left corner, pushed outward (up-left): the hulk may sit on the
         // wall (spec: "pushed back into the WALL") but never leave the field.
-        var hulk = new Hulk(TestEntityDependencies.Create(new Random(7)), new IntVector2(b.X, b.Y), 2, () => new IntVector2(b.X, b.Y));
+        var hulk = new Hulk(TestEntityParams.Create(new Random(7)), new IntVector2(b.X, b.Y), 2, () => new IntVector2(b.X, b.Y));
         playField.FieldEntities.Hulks.Add(hulk);
         playField.SkipWaveStart();
         playField.Update(new GameTime());

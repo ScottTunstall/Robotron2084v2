@@ -19,7 +19,7 @@ public sealed class EntityGameEventTests
 
     private static FamilyMember CreateFamilyMember(RecordingGameEvents recording)
     {
-        return new FamilyMember(TestEntityDependencies.Create(new Random(1), recording), Spot, FamilyMemberKind.Mommy);
+        return new FamilyMember(TestEntityParams.Create(new Random(1), recording), Spot, FamilyMemberKind.Mommy);
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public sealed class EntityGameEventTests
     public void AKilledPlayerAnnouncesTheDeath()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestEntityDependencies.Create(new Random(1), recording), Spot, 3) { InvincibleForTesting = false };
+        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, 3) { InvincibleForTesting = false };
 
         player.Kill();
         player.Kill();
@@ -85,7 +85,7 @@ public sealed class EntityGameEventTests
     public void AnInvinciblePlayerAnnouncesNothing()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestEntityDependencies.Create(new Random(1), recording), Spot, 3) { InvincibleForTesting = true };
+        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, 3) { InvincibleForTesting = true };
 
         player.Kill();
 
@@ -96,7 +96,7 @@ public sealed class EntityGameEventTests
     public void AnExtraLifeIsAnnounced()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestEntityDependencies.Create(new Random(1), recording), Spot, 3);
+        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, 3);
 
         player.AddLife();
 
@@ -107,7 +107,7 @@ public sealed class EntityGameEventTests
     public void AKilledGruntAnnouncesWhichRobotDiedOnce()
     {
         var recording = new RecordingGameEvents();
-        var grunt = new Grunt(TestEntityDependencies.Create(new Random(1), recording), Spot, 10);
+        var grunt = new Grunt(TestEntityParams.Create(new Random(1), recording), Spot, 10);
 
         grunt.Kill();
         grunt.Kill();
@@ -119,7 +119,7 @@ public sealed class EntityGameEventTests
     public void AKilledProgAnnouncesItWasAProg()
     {
         var recording = new RecordingGameEvents();
-        var prog = new Prog(TestEntityDependencies.Create(new Random(1), recording), Spot, FamilyMemberKind.Daddy);
+        var prog = new Prog(TestEntityParams.Create(new Random(1), recording), Spot, FamilyMemberKind.Daddy);
 
         prog.Kill();
         prog.Kill();
@@ -143,7 +143,7 @@ public sealed class EntityGameEventTests
     public void AHulkThatIsKnockedBackAnnouncesIt()
     {
         var recording = new RecordingGameEvents();
-        var hulk = new Hulk(TestEntityDependencies.Create(new Random(1), recording), Spot, 2, () => Spot);
+        var hulk = new Hulk(TestEntityParams.Create(new Random(1), recording), Spot, 2, () => Spot);
 
         hulk.ApplyKnockback(Direction8.Right);
 
@@ -155,7 +155,7 @@ public sealed class EntityGameEventTests
     {
         var recording = new RecordingGameEvents();
         var bounds = new Rectangle(20, 30, 600, 400);
-        var gorf = new Gorf(TestEntityDependencies.Create(new Random(3), recording), new GorfPlayfield(bounds), new GorfDrops(10));
+        var gorf = new Gorf(TestEntityParams.Create(new Random(3), recording), new GorfPlayfieldParams(bounds), new GorfDropParams(10));
 
         gorf.Kill();
         gorf.Kill();
@@ -167,7 +167,7 @@ public sealed class EntityGameEventTests
     public void AKilledSparkAnnouncesItWasASpark()
     {
         var recording = new RecordingGameEvents();
-        var spark = new Spark(TestEntityDependencies.Create(new Random(1), recording), Spot, new IntVector2(300, 200));
+        var spark = new Spark(TestEntityParams.Create(new Random(1), recording), Spot, new IntVector2(300, 200));
 
         spark.Kill();
 
@@ -179,7 +179,7 @@ public sealed class EntityGameEventTests
     {
         var recording = new RecordingGameEvents();
         var bounds = new Rectangle(20, 30, 600, 400);
-        var tankShell = new TankShell(TestEntityDependencies.Create(new Random(1), recording), Spot, new TankShellAim(new IntVector2(300, 200), 3, bounds));
+        var tankShell = new TankShell(TestEntityParams.Create(new Random(1), recording), Spot, new TankShellAimParams(new IntVector2(300, 200), 3, bounds));
 
         tankShell.Kill();
 
@@ -190,7 +190,7 @@ public sealed class EntityGameEventTests
     public void AKilledCruiseMissileAnnouncesItWasACruiseMissile()
     {
         var recording = new RecordingGameEvents();
-        var cruiseMissile = new CruiseMissile(TestEntityDependencies.Create(new Random(1), recording), Spot, new IntVector2(300, 200));
+        var cruiseMissile = new CruiseMissile(TestEntityParams.Create(new Random(1), recording), Spot, new IntVector2(300, 200));
 
         cruiseMissile.Kill();
 

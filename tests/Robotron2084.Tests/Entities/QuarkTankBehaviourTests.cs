@@ -32,7 +32,7 @@ public sealed class QuarkTankBehaviourTests
 
     private static PlayField CreateField(int seed)
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParameters(
+        return new PlayFieldBuilder().WithParameters(new WaveParams(
             1,
             SpheroidCount: 0,
             MaxDropsX2: 10,
@@ -45,7 +45,7 @@ public sealed class QuarkTankBehaviourTests
         var playField = CreateField(1);
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestEntityDependencies.Create(new Random(4)), new IntVector2(bounds.X + 20, bounds.Y + 8), new QuarkWaveSettings(10, 60));
+        var quark = new Quark(TestEntityParams.Create(new Random(4)), new IntVector2(bounds.X + 20, bounds.Y + 8), new QuarkWaveParams(10, 60));
         playField.FieldEntities.Quarks.Add(quark);
 
         var prev = quark.Position;
@@ -103,7 +103,7 @@ public sealed class QuarkTankBehaviourTests
         var playField = CreateField(1);
 
         // Random(10): first Next(2) == 1 → exactly one tank to drop.
-        var quark = new Quark(TestEntityDependencies.Create(new Random(10)), new IntVector2(300, 200), new QuarkWaveSettings(1, 1));
+        var quark = new Quark(TestEntityParams.Create(new Random(10)), new IntVector2(300, 200), new QuarkWaveParams(1, 1));
         playField.FieldEntities.Quarks.Add(quark);
 
         // Robots are frozen until the game goes live at the start of the wave; the
@@ -239,7 +239,7 @@ public sealed class QuarkTankBehaviourTests
         {
             var playField = CreateField(seed);
             var bounds = playField.PlayfieldWall.PlayfieldBounds;
-            var quark = new Quark(TestEntityDependencies.Create(new Random(seed)), new IntVector2(bounds.X + 15, bounds.Y + 200), new QuarkWaveSettings(10, 60));
+            var quark = new Quark(TestEntityParams.Create(new Random(seed)), new IntVector2(bounds.X + 15, bounds.Y + 200), new QuarkWaveParams(10, 60));
             playField.FieldEntities.Quarks.Add(quark);
             var startX = quark.Position.X;
 

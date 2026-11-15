@@ -11,7 +11,7 @@ public sealed class FamilySavedTests
 {
     private static PlayField CreateFieldWithFamily()
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParameters(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1)).WithSeed(1)
+        return new PlayFieldBuilder().WithParameters(new WaveParams(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1)).WithSeed(1)
             .Build();
     }
 

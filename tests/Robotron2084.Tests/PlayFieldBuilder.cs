@@ -34,7 +34,7 @@ internal sealed class PlayFieldBuilder
     private int _lives = DefaultLives;
     private GamePalette? _gamePalette;
 
-    private WaveParameters _waveParameters = new(1);
+    private WaveParams _waveParams = new(1);
     private IPixelCollision? _pixelCollision;
     private bool _playerInvincible = true;
     private Random _random = new(DefaultSeed);
@@ -42,10 +42,10 @@ internal sealed class PlayFieldBuilder
     private bool _tankShellBugEnabled = true;
 
     /// <summary>Uses these wave parameters.</summary>
-    /// <param name="waveParameters">The wave.</param>
-    public PlayFieldBuilder WithParameters(WaveParameters waveParameters)
+    /// <param name="waveParams">The wave.</param>
+    public PlayFieldBuilder WithParameters(WaveParams waveParams)
     {
-        _waveParameters = waveParameters;
+        _waveParams = waveParams;
         return this;
     }
 
@@ -159,7 +159,7 @@ internal sealed class PlayFieldBuilder
     {
         return new PlayField(
             TestTextures.SharedTextureSet,
-            _waveParameters,
+            _waveParams,
             _playerInputSource,
             _bounds,
             new WallColourCycle(),

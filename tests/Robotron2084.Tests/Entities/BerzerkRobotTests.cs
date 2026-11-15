@@ -13,9 +13,9 @@ namespace Robotron2084.Tests.Entities;
 /// <summary>The BerzerkRobot: the author's own robot, which moves, dies and kills as a grunt does (notes §138).</summary>
 public sealed class BerzerkRobotTests
 {
-    private static PlayField CreateField(WaveParameters? waveParameters = null)
+    private static PlayField CreateField(WaveParams? waveParams = null)
     {
-        return new PlayFieldBuilder().WithParameters(waveParameters ?? new WaveParameters(1)).WithSeed(5).Build();
+        return new PlayFieldBuilder().WithParameters(waveParams ?? new WaveParams(1)).WithSeed(5).Build();
     }
 
     /// <summary>A field whose robots are free to move: the start of the wave is over, so the game is live.</summary>
@@ -40,8 +40,8 @@ public sealed class BerzerkRobotTests
     {
         var playField = CreateFieldInPlay();
         IntVector2 start = new(playField.Player.Position.X + 120, playField.Player.Position.Y - 90);
-        var grunt = new Grunt(TestEntityDependencies.Create(new Random(11)), start, 6);
-        var berzerkRobot = new BerzerkRobot(TestEntityDependencies.Create(new Random(11)), start, 6);
+        var grunt = new Grunt(TestEntityParams.Create(new Random(11)), start, 6);
+        var berzerkRobot = new BerzerkRobot(TestEntityParams.Create(new Random(11)), start, 6);
 
         for (var tick = 0; tick < 200; tick++)
         {
@@ -58,7 +58,7 @@ public sealed class BerzerkRobotTests
     public void ItStandsStillInTheIdleCycleUntilItFirstMoves_ThenWalks()
     {
         var playField = CreateFieldInPlay();
-        var berzerkRobot = new BerzerkRobot(TestEntityDependencies.Create(new Random(2)), new IntVector2(playField.Player.Position.X + 100, playField.Player.Position.Y), 3);
+        var berzerkRobot = new BerzerkRobot(TestEntityParams.Create(new Random(2)), new IntVector2(playField.Player.Position.X + 100, playField.Player.Position.Y), 3);
         var start = berzerkRobot.Position;
 
         Tick(playField, 1, berzerkRobot);
@@ -102,7 +102,7 @@ public sealed class BerzerkRobotTests
     [Fact]
     public void ItIsRegisteredLikeAGrunt_ScoringTheSame_FatalToTouch_AndPutOnTheFieldByTheWave()
     {
-        var playField = CreateField(new WaveParameters(1, BerzerkRobotCount: 3));
+        var playField = CreateField(new WaveParams(1, BerzerkRobotCount: 3));
 
         Assert.Equal(3, playField.FieldEntities.BerzerkRobots.Count);
         Assert.Equal(ScoreValues.Grunt, RobotKinds.GetInfo(RobotKind.BerzerkRobot).Score);
@@ -116,7 +116,7 @@ public sealed class BerzerkRobotTests
         playField.SkipWaveStart();
         var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance,
             new IntVector2(playField.Player.Position.X + 200, playField.Player.Position.Y + 100));
-        var berzerkRobot = new BerzerkRobot(TestEntityDependencies.Create(new Random(1)), electrode.Position);
+        var berzerkRobot = new BerzerkRobot(TestEntityParams.Create(new Random(1)), electrode.Position);
         playField.FieldEntities.Add(electrode);
         playField.FieldEntities.Add(berzerkRobot);
 
@@ -129,7 +129,7 @@ public sealed class BerzerkRobotTests
     [Fact]
     public void TheWaveIsNotWonWhileOneIsLeft_AndADeathKeepsTheOnesThatSurvive()
     {
-        var playField = CreateField(new WaveParameters(1, BerzerkRobotCount: 3));
+        var playField = CreateField(new WaveParams(1, BerzerkRobotCount: 3));
         Assert.False(playField.IsWaveCleared());
 
         playField.FieldEntities.BerzerkRobots[0].Kill();

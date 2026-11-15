@@ -26,7 +26,7 @@ public sealed class QuarkDropTimerTests
 
     private static PlayField CreateField(int seed)
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParameters(7, SpheroidCount: 0, MaxDropsX2: 10,
+        return new PlayFieldBuilder().WithParameters(new WaveParams(7, SpheroidCount: 0, MaxDropsX2: 10,
             SpheroidDropDelay: 18,
             QuarkDropDelay: 16)).WithRandom(new Random(seed)).Build();
     }
@@ -43,7 +43,7 @@ public sealed class QuarkDropTimerTests
         var playField = CreateField(2);
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestEntityDependencies.Create(new Random(4)), new IntVector2(bounds.X + 100, bounds.Y + 60), new QuarkWaveSettings(10, 1));
+        var quark = new Quark(TestEntityParams.Create(new Random(4)), new IntVector2(bounds.X + 100, bounds.Y + 60), new QuarkWaveParams(10, 1));
         playField.FieldEntities.Quarks.Add(quark);
 
         var tick = 0;
@@ -67,7 +67,7 @@ public sealed class QuarkDropTimerTests
         var playField = CreateField(1);
         var bounds = playField.PlayfieldWall.PlayfieldBounds;
 
-        var quark = new Quark(TestEntityDependencies.Create(new Random(11)), new IntVector2(bounds.X + 100, bounds.Y + 60), new QuarkWaveSettings(10, 16));
+        var quark = new Quark(TestEntityParams.Create(new Random(11)), new IntVector2(bounds.X + 100, bounds.Y + 60), new QuarkWaveParams(10, 16));
         playField.FieldEntities.Quarks.Add(quark);
 
         for (var tick = 0; tick < ArcadeClock.ToPortTicksRoundedUp(QuarkTuning.BeatIntervalArcadeFrames) + 2; tick++)

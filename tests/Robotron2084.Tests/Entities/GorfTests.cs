@@ -18,9 +18,9 @@ public sealed class GorfTests
 {
     private static readonly GameTime OneTickGameTime = new(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
 
-    private static PlayField CreateFieldInPlay(WaveParameters? waveParameters = null)
+    private static PlayField CreateFieldInPlay(WaveParams? waveParams = null)
     {
-        var playField = new PlayFieldBuilder().WithParameters(waveParameters ?? new WaveParameters(1)).WithSeed(5).Build();
+        var playField = new PlayFieldBuilder().WithParameters(waveParams ?? new WaveParams(1)).WithSeed(5).Build();
         for (var tick = 0; tick < 400 && playField.RobotsFrozen(); tick++) playField.Update(OneTickGameTime);
 
         return playField;
@@ -29,13 +29,13 @@ public sealed class GorfTests
     /// <summary>A Gorf whose random numbers are chosen: the side, the ground's height and the drops.</summary>
     private static Gorf CreateGorf(PlayField playField, params int[] randomNumbers)
     {
-        return new Gorf(TestEntityDependencies.Create(new ScriptedRandom(randomNumbers)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(10));
+        return new Gorf(TestEntityParams.Create(new ScriptedRandom(randomNumbers)), new GorfPlayfieldParams(playField.GetPlayfieldBounds()), new GorfDropParams(10));
     }
 
     /// <summary>A Gorf that picks at random as a real game would, for the tests that run it right across.</summary>
     private static Gorf CreateRandomGorf(PlayField playField, int seed)
     {
-        return new Gorf(TestEntityDependencies.Create(new Random(seed)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(10));
+        return new Gorf(TestEntityParams.Create(new Random(seed)), new GorfPlayfieldParams(playField.GetPlayfieldBounds()), new GorfDropParams(10));
     }
 
     /// <summary>Runs the field until the Gorf is gone, and counts the ticks it took (or gives up).</summary>
@@ -150,21 +150,21 @@ public sealed class GorfTests
     }
 
     /// <summary>Builds a field, puts a Gorf with these random numbers on it, and runs it right across.</summary>
-    private static (PlayField PlayField, Gorf Gorf) RunAGorfAcross(WaveParameters waveParameters, int maxDropsX2,
+    private static (PlayField PlayField, Gorf Gorf) RunAGorfAcross(WaveParams waveParams, int maxDropsX2,
         params int[] randomNumbers)
     {
-        return RunAGorfAcrossDroppingExactly(waveParameters, maxDropsX2, 0, randomNumbers);
+        return RunAGorfAcrossDroppingExactly(waveParams, maxDropsX2, 0, randomNumbers);
     }
 
-    private static (PlayField PlayField, Gorf Gorf) RunAGorfAcrossDroppingExactly(WaveParameters waveParameters,
+    private static (PlayField PlayField, Gorf Gorf) RunAGorfAcrossDroppingExactly(WaveParams waveParams,
         int maxDropsX2, int gruntDropCount, params int[] randomNumbers)
     {
-        var playField = CreateFieldInPlay(waveParameters);
+        var playField = CreateFieldInPlay(waveParams);
         foreach (var grunt in
                  playField.FieldEntities.Grunts
                      .ToList()) grunt.Kill(); // the wave's own grunts: only the ones Gorf drops are counted
 
-        var gorf = new Gorf(TestEntityDependencies.Create(new ScriptedRandom(randomNumbers)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(maxDropsX2, gruntDropCount));
+        var gorf = new Gorf(TestEntityParams.Create(new ScriptedRandom(randomNumbers)), new GorfPlayfieldParams(playField.GetPlayfieldBounds()), new GorfDropParams(maxDropsX2, gruntDropCount));
         playField.FieldEntities.Add(gorf);
         RunUntilGone(playField, gorf);
         return (playField, gorf);
@@ -188,7 +188,7 @@ public sealed class GorfTests
     public void EachStopDropsHalfTheRandomNumberRoundedUp_AsASpheroidPicksItsEnforcers_UpToSix(int randomNumber, int expected)
     {
         // The field has no grunts of its own and a maximum of 30, so nothing holds the drops back.
-        var (playField, _) = RunAGorfAcross(new WaveParameters(1, 30), 12, 0, 0, randomNumber, randomNumber, randomNumber);
+        var (playField, _) = RunAGorfAcross(new WaveParams(1, 30), 12, 0, 0, randomNumber, randomNumber, randomNumber);
 
         Assert.Equal(3 * expected, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
     }
@@ -197,8 +197,8 @@ public sealed class GorfTests
     public void ABiggerWaveBoundCanDropMoreAtOnceThanASmallOne()
     {
         // A bound of 4 never gives more than 2 (a random number of 4 halved and rounded up); a bound of 12 can give 6.
-        var (small, _) = RunAGorfAcross(new WaveParameters(1, 30), 4, 0, 0, 3, 3, 3);
-        var (big, _) = RunAGorfAcross(new WaveParameters(1, 30), 12, 0, 0, 11, 11, 11);
+        var (small, _) = RunAGorfAcross(new WaveParams(1, 30), 4, 0, 0, 3, 3, 3);
+        var (big, _) = RunAGorfAcross(new WaveParams(1, 30), 12, 0, 0, 11, 11, 11);
 
         Assert.Equal(6, small.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
         Assert.Equal(18, big.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
@@ -215,7 +215,7 @@ public sealed class GorfTests
 
         for (var seed = 0; seed < 300; seed++)
         {
-            var gorf = new Gorf(TestEntityDependencies.Create(new Random(seed)), new GorfPlayfield(bounds, playerBox), new GorfDrops(10, 0, 0));
+            var gorf = new Gorf(TestEntityParams.Create(new Random(seed)), new GorfPlayfieldParams(bounds, playerBox), new GorfDropParams(10, 0, 0));
 
             var top = gorf.Position.Y - hop;
             var bottom = gorf.Position.Y + bodyHeight;
@@ -233,7 +233,7 @@ public sealed class GorfTests
         var hop = ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows);
 
         var meetsThePlayer = Enumerable.Range(0, 300)
-            .Select(seed => new Gorf(TestEntityDependencies.Create(new Random(seed)), new GorfPlayfield(bounds), new GorfDrops(10)))
+            .Select(seed => new Gorf(TestEntityParams.Create(new Random(seed)), new GorfPlayfieldParams(bounds), new GorfDropParams(10)))
             .Any(gorf => gorf.Position.Y + bodyHeight >= playerBox.Y && gorf.Position.Y - hop <= playerBox.Bottom);
 
         Assert.True(meetsThePlayer);
@@ -243,7 +243,7 @@ public sealed class GorfTests
     public void AWaveOnlyHoldsSoManyGrunts_SoAFullOneGetsFewerOrNone()
     {
         // The wave's grunt count is 2, but a wave always holds at least six: three stops of six drop one burst and no more.
-        var (playField, _) = RunAGorfAcross(new WaveParameters(1, 2), 12, 0, 0, 11, 11, 11);
+        var (playField, _) = RunAGorfAcross(new WaveParams(1, 2), 12, 0, 0, 11, 11, 11);
 
         Assert.Equal(GorfTuning.MinGruntCount, playField.FieldEntities.Grunts.Count(entity => !entity.IsDead()));
     }
@@ -252,7 +252,7 @@ public sealed class GorfTests
     public void ADroppedGruntFallsFromGorfToTheGround_WithNoAppearEffect()
     {
         var playField = CreateFieldInPlay();
-        var gorf = new Gorf(TestEntityDependencies.Create(new ScriptedRandom(0, 0, 0, 0, 0)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(10));
+        var gorf = new Gorf(TestEntityParams.Create(new ScriptedRandom(0, 0, 0, 0, 0)), new GorfPlayfieldParams(playField.GetPlayfieldBounds()), new GorfDropParams(10));
         playField.FieldEntities.Add(gorf);
 
         for (var tick = 0; tick < 3000 && playField.FieldEntities.Grunts.Count == 0; tick++) playField.Update(OneTickGameTime);
@@ -274,7 +274,7 @@ public sealed class GorfTests
     public void AFallingGruntDoesNotWalkUntilItHasLanded()
     {
         var playField = CreateFieldInPlay();
-        var grunt = new Grunt(TestEntityDependencies.Create(new Random(1)), new IntVector2(300, 100), 1);
+        var grunt = new Grunt(TestEntityParams.Create(new Random(1)), new IntVector2(300, 100), 1);
         grunt.BeginFall(100 + 40);
 
         for (var tick = 0; tick < 4; tick++) grunt.Update(OneTickGameTime, playField);
@@ -304,8 +304,8 @@ public sealed class GorfTests
     [Fact]
     public void AGruntIsNeverDroppedOntoAnElectrode_ItsDropWaitsUntilGorfHasMovedOn()
     {
-        var playField = CreateFieldInPlay(new WaveParameters(1, 0));
-        var gorf = new Gorf(TestEntityDependencies.Create(new Random(3)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(4, 15));
+        var playField = CreateFieldInPlay(new WaveParams(1, 0));
+        var gorf = new Gorf(TestEntityParams.Create(new Random(3)), new GorfPlayfieldParams(playField.GetPlayfieldBounds()), new GorfDropParams(4, 15));
         playField.FieldEntities.Add(gorf);
         var bodyHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Height);
         var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
@@ -349,7 +349,7 @@ public sealed class GorfTests
         var playField = CreateFieldInPlay();
         var lines = new List<GorfLine>();
         playField.SetGorfLineSayer(lines.Add);
-        var gorf = new Gorf(TestEntityDependencies.Create(new Random(3)), new GorfPlayfield(playField.GetPlayfieldBounds()), new GorfDrops(10, 0, 0), GorfLine.GorfianDoom);
+        var gorf = new Gorf(TestEntityParams.Create(new Random(3)), new GorfPlayfieldParams(playField.GetPlayfieldBounds()), new GorfDropParams(10, 0, 0), GorfLine.GorfianDoom);
         playField.FieldEntities.Add(gorf);
         Assert.Empty(lines); // not before it appears
 

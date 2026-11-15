@@ -31,8 +31,8 @@ public sealed class DemoPlayerInputSourceTests
 
     private static PlayField EmptyFieldWithInput(Rectangle bounds, IPlayerInputSource playerInputSource)
     {
-        var waveParameters = new WaveParameters(1);
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithInput(playerInputSource).WithBounds(bounds).WithSeed(1234)
+        var waveParams = new WaveParams(1);
+        return new PlayFieldBuilder().WithParameters(waveParams).WithInput(playerInputSource).WithBounds(bounds).WithSeed(1234)
             .Build();
     }
 

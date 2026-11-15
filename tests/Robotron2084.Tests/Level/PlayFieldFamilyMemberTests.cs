@@ -17,9 +17,9 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public sealed class PlayFieldFamilyMemberTests
 {
-    private static WaveParameters FamilyMemberWave(int mom, int daddy, int mikey, int hulks = 0)
+    private static WaveParams FamilyMemberWave(int mom, int daddy, int mikey, int hulks = 0)
     {
-        return new WaveParameters(
+        return new WaveParams(
             1,
             0,
             0,
@@ -29,9 +29,9 @@ public sealed class PlayFieldFamilyMemberTests
             hulks);
     }
 
-    private static PlayField CreateField(WaveParameters waveParameters)
+    private static PlayField CreateField(WaveParams waveParams)
     {
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(99).Build();
+        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(99).Build();
     }
 
     /// <summary>
@@ -106,7 +106,7 @@ public sealed class PlayFieldFamilyMemberTests
         for (var tick = 0; tick < 130; tick++) playField.Update(OneTick()); // the robots are held until the game goes live
 
         var inner = playField.PlayfieldWall.PlayfieldBounds;
-        var familyMember = new FamilyMember(TestEntityDependencies.Create(new Random(7)), new IntVector2(inner.Center.X, inner.Center.Y), FamilyMemberKind.Mommy);
+        var familyMember = new FamilyMember(TestEntityParams.Create(new Random(7)), new IntVector2(inner.Center.X, inner.Center.Y), FamilyMemberKind.Mommy);
 
         List<int> starts = new();
         var seen = 0;

@@ -28,7 +28,7 @@ public sealed class PlayerDeathTests
 
     private static (PlayField PlayField, GamePalette GamePalette) CreateField()
     {
-        var waveParameters = new WaveParameters(
+        var waveParams = new WaveParams(
             1,
             0,
             HulkCount: 0,
@@ -40,7 +40,7 @@ public sealed class PlayerDeathTests
             EnemySpeedBonus: 0);
 
         var gamePalette = new GamePalette();
-        var playField = new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(5).WithPalette(gamePalette).Build();
+        var playField = new PlayFieldBuilder().WithParameters(waveParams).WithSeed(5).WithPalette(gamePalette).Build();
         return (playField, gamePalette);
     }
 

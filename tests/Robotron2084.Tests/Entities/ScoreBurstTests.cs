@@ -140,7 +140,7 @@ public sealed class ScoreBurstTests
 
     private static PlayField CreateField(int spheroids = 0, int quarks = 0)
     {
-        var waveParameters = new WaveParameters(
+        var waveParams = new WaveParams(
             1,
             HulkCount: 0,
             SpheroidCount: spheroids,
@@ -150,7 +150,7 @@ public sealed class ScoreBurstTests
             MaxTanksPerQuark: 0,
             EnemySpeedBonus: 0);
 
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(7).Build();
+        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(7).Build();
     }
 
     /// <summary>Drains the wave-start appear chain so only kill effects remain.</summary>

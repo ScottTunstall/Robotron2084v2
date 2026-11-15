@@ -42,7 +42,7 @@ public sealed class SpheroidAnimationTests
     /// </summary>
     private static PlayField CreateField(int seed)
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParameters(
+        return new PlayFieldBuilder().WithParameters(new WaveParams(
             1,
             SpheroidCount: 1,
             MaxDropsX2: 2,

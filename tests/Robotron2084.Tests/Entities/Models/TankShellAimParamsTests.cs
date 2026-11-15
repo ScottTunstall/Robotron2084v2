@@ -7,14 +7,14 @@ using Xunit;
 namespace Robotron2084.Tests.Entities.Models;
 
 /// <summary>What a tank shell is aimed with.</summary>
-public sealed class TankShellAimTests
+public sealed class TankShellAimParamsTests
 {
     private static readonly Rectangle Bounds = new(20, 30, 600, 400);
 
     [Fact]
     public void KeepsWhatItIsGiven()
     {
-        var aim = new TankShellAim(new IntVector2(5, 6), 3, Bounds);
+        var aim = new TankShellAimParams(new IntVector2(5, 6), 3, Bounds);
 
         Assert.Equal(new IntVector2(5, 6), aim.PlayerPosition);
         Assert.Equal(3, aim.ShellSpeed);
@@ -24,13 +24,13 @@ public sealed class TankShellAimTests
     [Fact]
     public void RefusesAShellSpeedBelowZero()
     {
-        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new TankShellAim(IntVector2.Zero, -1, Bounds));
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new TankShellAimParams(IntVector2.Zero, -1, Bounds));
     }
 
     [Fact]
     public void RefusesPlayfieldBoundsWithNoArea()
     {
-        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new TankShellAim(IntVector2.Zero, 3, new Rectangle(0, 0, 0, 0)));
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new TankShellAimParams(IntVector2.Zero, 3, new Rectangle(0, 0, 0, 0)));
 
         Assert.Equal("playfieldBounds", exception.ParamName);
     }

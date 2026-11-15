@@ -20,9 +20,9 @@ public sealed class PixelCollisionTests
     /// <summary>A one-pixel sprite, which is all the stub below needs to describe.</summary>
     private static readonly SpriteMask DotSpriteMask = SpriteMask.CreateFromPixels(1, 1, [(0, 0)]);
 
-    private static WaveParameters OneMikey()
+    private static WaveParams OneMikey()
     {
-        return new WaveParameters(
+        return new WaveParams(
             1,
             0,
             0,

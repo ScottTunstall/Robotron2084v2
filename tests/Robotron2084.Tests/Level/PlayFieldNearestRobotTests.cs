@@ -21,8 +21,8 @@ public sealed class PlayFieldNearestRobotTests
 
     private static PlayField EmptyField()
     {
-        var waveParameters = new WaveParameters(1);
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithBounds(Bounds).WithSeed(42).Build();
+        var waveParams = new WaveParams(1);
+        return new PlayFieldBuilder().WithParameters(waveParams).WithBounds(Bounds).WithSeed(42).Build();
     }
 
     [Fact]

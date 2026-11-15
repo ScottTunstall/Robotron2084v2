@@ -79,7 +79,7 @@ public sealed class PlayFieldSpawnTests
 
     private static PlayField CreateField(int grunts, int hulks, int spheroids, int quarks, int electrodes)
     {
-        var waveParameters = new WaveParameters(
+        var waveParams = new WaveParams(
             1,
             grunts,
             HulkCount: hulks,
@@ -90,7 +90,7 @@ public sealed class PlayFieldSpawnTests
             MaxTanksPerQuark: 2,
             EnemySpeedBonus: 0);
 
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithBounds(InnerBounds).WithSeed(1234).Build();
+        return new PlayFieldBuilder().WithParameters(waveParams).WithBounds(InnerBounds).WithSeed(1234).Build();
     }
 
     private static void AssertAllAreFartherThan<T>(IReadOnlyList<T> entities, IntVector2 playerStart,

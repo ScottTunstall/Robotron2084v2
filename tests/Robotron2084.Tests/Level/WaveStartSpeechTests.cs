@@ -32,9 +32,9 @@ public sealed class WaveStartSpeechTests : IDisposable
         return GameSession.CreateNewGame(new FakeInputSource(), 1);
     }
 
-    private static WaveParameters CreateWave(int waveNumber, GameStyle gameStyle)
+    private static WaveParams CreateWave(int waveNumber, GameStyle gameStyle)
     {
-        return new WaveParameterGenerator().Generate(waveNumber, gameStyle);
+        return new WaveParamsGenerator().Generate(waveNumber, gameStyle);
     }
 
     private void Listen()

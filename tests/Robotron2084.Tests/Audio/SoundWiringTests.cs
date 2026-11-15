@@ -36,7 +36,7 @@ public sealed class SoundWiringTests : IDisposable
     public void FiringTheLaser_SendsLASSND_SoundNumber01_NotTheTwoPlayerStartSound()
     {
         var firingFakeInputSource = new FakeInputSource(new PlayerInputState(IntVector2.Zero, new IntVector2(1, 0), true));
-        var playField = new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithInput(firingFakeInputSource).WithSeed(1).Build();
+        var playField = new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithInput(firingFakeInputSource).WithSeed(1).Build();
 
         for (var tick = 0; tick < 200 && _recordingSink.Sends.Count == 0; tick++)
         {
@@ -50,11 +50,11 @@ public sealed class SoundWiringTests : IDisposable
     [Fact]
     public void ShootingACruiseMissile_SendsCMKSND()
     {
-        var playField = new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithSeed(99).Build();
+        var playField = new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithSeed(99).Build();
         playField.SkipWaveStart();
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 spot = new(inner.X + 250, inner.Y + 120);
-        playField.FieldEntities.CruiseMissiles.Add(new CruiseMissile(TestEntityDependencies.Create(new Random(8)), spot, playField.Player.Position));
+        playField.FieldEntities.CruiseMissiles.Add(new CruiseMissile(TestEntityParams.Create(new Random(8)), spot, playField.Player.Position));
 
         playField.PlayerLaserSlots.Fire(new IntVector2(spot.X, spot.Y - 12), Direction8.Down);
         playField.Update(new GameTime());
@@ -66,7 +66,7 @@ public sealed class SoundWiringTests : IDisposable
     [Fact]
     public void ASoundFromTheLeftOfThePlayfield_IsHeardOnTheLeft()
     {
-        var playField = new PlayFieldBuilder().WithParameters(new WaveParameters(1)).WithSeed(99).Build();
+        var playField = new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithSeed(99).Build();
         var inner = playField.PlayfieldWall.PlayfieldBounds;
 
         playField.PlaySoundFrom(SoundTables.TankFire, new Rectangle(inner.X, inner.Center.Y, 8, 8));

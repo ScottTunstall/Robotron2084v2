@@ -27,9 +27,9 @@ public sealed class RobotFirstMoveTests
         return new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
     }
 
-    private static PlayField CreateField(WaveParameters waveParameters)
+    private static PlayField CreateField(WaveParams waveParams)
     {
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithInput(new FakeInputSource()).WithSeed(7).Build();
+        return new PlayFieldBuilder().WithParameters(waveParams).WithInput(new FakeInputSource()).WithSeed(7).Build();
     }
 
     private static int TickToArcadeFrame(PlayField playField, int ticks, int arcadeFrame)
@@ -74,7 +74,7 @@ public sealed class RobotFirstMoveTests
     public void TheGrunts_TakeTheirFirstStep_TenFramesAfterTheirFirstLook(int grunts, int firstStepArcadeFrame)
     {
         // A move delay of 1 makes every grunt step on every pass, so the first pass is the first step.
-        var playField = CreateField(new WaveParameters(1, grunts, GruntMoveDelay: 1));
+        var playField = CreateField(new WaveParams(1, grunts, GruntMoveDelay: 1));
         IntVector2[] starts = [.. playField.FieldEntities.Grunts.Select(grunt => grunt.Position)];
         var ticks = 0;
 
@@ -96,7 +96,7 @@ public sealed class RobotFirstMoveTests
     {
         // One hulk: the player appears on fiftieth of a second 44 and the game is live on 54. The hulk looks on frames 0, 8, 16
         // and so on, so its first look after that is on frame 56, and it steps on that look.
-        var playField = CreateField(new WaveParameters(1, HulkCount: 1));
+        var playField = CreateField(new WaveParams(1, HulkCount: 1));
         var hulk = playField.FieldEntities.Hulks[0];
         var start = hulk.Position;
         var ticks = 0;
@@ -114,7 +114,7 @@ public sealed class RobotFirstMoveTests
     {
         // A brain wave is live on fiftieth of a second 160, which is a frame the brains look on, so the first beat is on 172.
         // A brain has no target until its first beat (BRNL0 resolves it).
-        var playField = CreateField(new WaveParameters(5, BrainCount: 1, MikeyCount: 1));
+        var playField = CreateField(new WaveParams(5, BrainCount: 1, MikeyCount: 1));
         var brain = playField.FieldEntities.Brains[0];
         var ticks = 0;
 
@@ -131,7 +131,7 @@ public sealed class RobotFirstMoveTests
     {
         // One tank: the game is live on fiftieth of a second 54. The tank looks on frames 0, 15, 30 and so on, so its first
         // look after that is on frame 60. Its tread moves on by one picture each beat (TANK3).
-        var playField = CreateField(new WaveParameters(1, TankCount: 1));
+        var playField = CreateField(new WaveParams(1, TankCount: 1));
         var tank = playField.FieldEntities.Tanks[0];
         var treadAtStart = tank.TreadFrameIndex;
         var ticks = 0;

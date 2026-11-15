@@ -11,20 +11,20 @@ namespace Robotron2084.Tests.Level;
 /// <summary>What a death keeps (ROM <c>PLEND</c>, <c>PLSAV</c>, <c>PLRES</c>, notes §134).</summary>
 public sealed class WaveSurvivorsTests
 {
-    private static PlayField CreateField(WaveParameters waveParameters)
+    private static PlayField CreateField(WaveParams waveParams)
     {
-        return new PlayFieldBuilder().WithParameters(waveParameters).WithSeed(7).Build();
+        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(7).Build();
     }
 
     private static Enforcer CreateEnforcer()
     {
-        return new Enforcer(TestEntityDependencies.Create(new Random(1)), new IntVector2(100, 100), 24);
+        return new Enforcer(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), 24);
     }
 
     [Fact]
     public void WhatWasKilledOrRescued_StaysGone_AndWhatIsLeftIsKept()
     {
-        var playField = CreateField(new WaveParameters(
+        var playField = CreateField(new WaveParams(
             5, 4, 3, 2, 1, 2,
             2, 1, 3, 2));
         playField.FieldEntities.Grunts[0].Kill();
@@ -50,7 +50,7 @@ public sealed class WaveSurvivorsTests
     [Fact]
     public void ALifeThatHasBegunToEndIsAlreadyOffTheCount()
     {
-        var playField = CreateField(new WaveParameters(1, 2));
+        var playField = CreateField(new WaveParams(1, 2));
         playField.FieldEntities.Grunts[0].Kill(); // dying, not yet gone: the ROM has already counted it off
 
         Assert.True(playField.FieldEntities.Grunts[0].IsDying() || playField.FieldEntities.Grunts[0].IsDead());
@@ -66,7 +66,7 @@ public sealed class WaveSurvivorsTests
     public void LeftoverEnforcers_TurnBackIntoSpheroids_AsTheArcadeDoes(int enforcers, int spheroidsLeft, int startedWith,
         int expected)
     {
-        var playField = CreateField(new WaveParameters(1, SpheroidCount: startedWith));
+        var playField = CreateField(new WaveParams(1, SpheroidCount: startedWith));
         for (var i = 0; i < startedWith - spheroidsLeft; i++) playField.FieldEntities.Spheroids[i].Kill();
 
         for (var i = 0; i < enforcers; i++) playField.FieldEntities.Enforcers.Add(CreateEnforcer());
@@ -77,7 +77,7 @@ public sealed class WaveSurvivorsTests
     [Fact]
     public void TheGrunts_KeepTheSpeedLimitTheyReached_ButNeverSlowerThanTheWavesFloorAllows()
     {
-        var playField = CreateField(new WaveParameters(1, 3, GruntMoveDelay: 20, GruntSpeedFloor: 9));
+        var playField = CreateField(new WaveParams(1, 3, GruntMoveDelay: 20, GruntSpeedFloor: 9));
         foreach (var grunt in playField.FieldEntities.Grunts) grunt.SpeedUp(1);
 
         Assert.Equal(17, WaveSurvivors.GetFrom(playField).GruntMoveDelay); // 20 x 7/8, truncated: kept
@@ -87,7 +87,7 @@ public sealed class WaveSurvivorsTests
     [Fact]
     public void TheGruntLimit_IsRaisedToTheFloor_WhenTheWaveHasPushedItBelowIt()
     {
-        var playField = CreateField(new WaveParameters(1, 2, GruntMoveDelay: 20, GruntSpeedFloor: 15));
+        var playField = CreateField(new WaveParams(1, 2, GruntMoveDelay: 20, GruntSpeedFloor: 15));
         foreach (var grunt in playField.FieldEntities.Grunts)
         {
             grunt.SpeedUpAsWaveGoesOn(1);
@@ -101,7 +101,7 @@ public sealed class WaveSurvivorsTests
     [Fact]
     public void ATankThatWasAlive_ComesBackAtFullSize_AndOneThatWasKilledDoesNot()
     {
-        var playField = CreateField(new WaveParameters(1, TankCount: 3));
+        var playField = CreateField(new WaveParams(1, TankCount: 3));
 
         Assert.Equal(3, playField.FieldEntities.Tanks.Count);
         Assert.All(playField.FieldEntities.Tanks, tank => Assert.False(tank.IsGrowing()));
@@ -113,7 +113,7 @@ public sealed class WaveSurvivorsTests
     [Fact]
     public void TheNextLifeIsMadeFromWhatWasLeft()
     {
-        var first = CreateField(new WaveParameters(1, 5, MikeyCount: 2));
+        var first = CreateField(new WaveParams(1, 5, MikeyCount: 2));
         first.FieldEntities.Grunts[0].Kill();
         first.FieldEntities.Grunts[1].Kill();
 

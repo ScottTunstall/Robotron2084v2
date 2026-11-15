@@ -44,7 +44,7 @@ public sealed class ElectrodeSizeTests
     public void TheWide2084Electrodes_AreAllPutInsideTheWall()
     {
         var playField = new PlayFieldBuilder()
-            .WithParameters(new WaveParameters(10, ElectrodeCount: 60))
+            .WithParameters(new WaveParams(10, ElectrodeCount: 60))
             .Build();
         var bounds = playField.GetPlayfieldBounds();
 

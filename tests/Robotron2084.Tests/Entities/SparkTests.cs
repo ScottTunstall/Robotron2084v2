@@ -35,7 +35,7 @@ public sealed class SparkTests
 
     private static PlayField CreateField(int seed)
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParameters(
+        return new PlayFieldBuilder().WithParameters(new WaveParams(
             1,
             SpheroidCount: 0,
             MaxDropsX2: 10,
@@ -210,7 +210,7 @@ public sealed class SparkTests
 
         for (var seed = 0; seed < 200; seed++)
         {
-            var spark = new Spark(TestEntityDependencies.Create(new Random(seed)), new IntVector2(300, 200), new IntVector2(100, 100));
+            var spark = new Spark(TestEntityParams.Create(new Random(seed)), new IntVector2(300, 200), new IntVector2(100, 100));
             Assert.InRange(spark.AccelerationSubpixels.Y, -upAndDownLimit, upAndDownLimit);
             sidewaysUsedMoreThanTheUpAndDownRange |= Math.Abs(spark.AccelerationSubpixels.X) > upAndDownLimit;
         }

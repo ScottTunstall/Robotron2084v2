@@ -94,7 +94,7 @@ public sealed class HulkTargetTests
     public void TheField_ReportsThePlacesThatStillHoldAFamilyMember()
     {
         var playField = new PlayFieldBuilder()
-            .WithParameters(new WaveParameters(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1))
+            .WithParameters(new WaveParams(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1))
             .Build();
         Assert.Equal([0, 1, 2], playField.GetOccupiedFamilySlots());
 
@@ -126,7 +126,7 @@ public sealed class HulkTargetTests
         playField.SkipWaveStart();
         var bounds = playField.GetPlayfieldBounds();
         var phantom = Hulk.GetPhantomTargetPosition(bounds);
-        var hulk = new Hulk(TestEntityDependencies.Create(new Random(5)), new IntVector2(bounds.X + 40, bounds.Bottom - 80), 2, () => phantom);
+        var hulk = new Hulk(TestEntityParams.Create(new Random(5)), new IntVector2(bounds.X + 40, bounds.Bottom - 80), 2, () => phantom);
         playField.FieldEntities.Hulks.Add(hulk);
         playField.Player.MoveTo(new IntVector2(bounds.X + 4, bounds.Bottom - 40));
 
@@ -152,7 +152,7 @@ public sealed class HulkTargetTests
     private static PlayField CreateField(int mikeys, int mommies, int daddies, params int[] familySlotsLeftOver)
     {
         return new PlayFieldBuilder()
-            .WithParameters(new WaveParameters(1, MikeyCount: mikeys, MommyCount: mommies, DaddyCount: daddies,
+            .WithParameters(new WaveParams(1, MikeyCount: mikeys, MommyCount: mommies, DaddyCount: daddies,
                 HulkCount: ManyHulks))
             .WithFamilySlotsLeftOver(familySlotsLeftOver)
             .Build();
@@ -172,7 +172,7 @@ public sealed class HulkTargetTests
         var hulks = new List<Hulk>();
         for (var seed = 0; seed < ManyHulks; seed++)
         {
-            var hulk = new Hulk(TestEntityDependencies.Create(new Random(seed)), spot, 8, () => target);
+            var hulk = new Hulk(TestEntityParams.Create(new Random(seed)), spot, 8, () => target);
             hulks.Add(hulk);
             playField.FieldEntities.Hulks.Add(hulk);
         }

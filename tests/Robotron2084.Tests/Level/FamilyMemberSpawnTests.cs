@@ -25,7 +25,7 @@ public sealed class FamilyMemberSpawnTests
     private static PlayField CreateField(int seed, int wave)
     {
         return new PlayFieldBuilder()
-            .WithParameters(WaveParameters.CreateFromWave(wave, WaveTable.GetParameters(wave)))
+            .WithParameters(WaveParams.CreateFromWave(wave, WaveTable.GetParameters(wave)))
             .WithRandom(new Random(seed)).Build();
     }
 
