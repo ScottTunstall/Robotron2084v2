@@ -1,4 +1,5 @@
 using Robotron2084.Input;
+using Robotron2084.Score;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Level.Models;
@@ -29,7 +30,11 @@ namespace Robotron2084.Level.Models;
 /// </param>
 /// <param name="Lives">The lives the player has, counting the one in play.</param>
 /// <param name="Wave">The wave the player is on. Only they move it on.</param>
-public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource, int Lives, int Wave)
+/// <param name="ScoreBoard">
+///     The player's score, kept for the whole game. Each field the player plays on adds to it; none has a score of
+///     its own.
+/// </param>
+public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource, int Lives, int Wave, ScoreBoard ScoreBoard)
 {
     /// <summary>The wave the player is on. Only they move it on.</summary>
     /// <remarks>
@@ -40,14 +45,8 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource
     /// </remarks>
     public int Wave { get; set; } = Wave;
 
-    /// <summary>The player's score.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRF.ASM</c> <c>ZP1SCR</c> and <c>ZP2SCR</c>.</item>
-    ///         <item>Disassembly: <c>p1_score</c> and <c>p2_score</c>.</item>
-    ///     </list>
-    /// </remarks>
-    public int Score { get; set; }
+    /// <summary>The player's score so far.</summary>
+    public int Score => ScoreBoard.Score;
 
     /// <summary>The lives the player has, counting the one in play.</summary>
     /// <remarks>

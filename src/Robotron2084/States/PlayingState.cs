@@ -185,11 +185,9 @@ public sealed class PlayingState : IGameState
         WaveStartSpeech.Say(_gameSession, _playField.WaveParams);
         _playField.Update(gameTime);
 
-        // The HUD is drawn from the session's slots, and the ROM reads the score,
-        // the lives and SAVCNT out of the player's own data block every time it
-        // draws — so hand the live counters over EVERY tick (notes §97). Syncing
-        // only at a wave clear / death left the displayed score (and an earned
-        // spare life) stale for the rest of the wave.
+        // The HUD is drawn from the session's slots, and the ROM reads the lives out of the player's own data block
+        // every time it draws, so hand them over EVERY tick (notes §97). The score needs no copy: the field adds to the
+        // slot's own score board.
         SyncSlotFromField();
 
         var playerInputState = _gameSession.GetCurrent().PlayerInputSource.Poll();
@@ -266,10 +264,9 @@ public sealed class PlayingState : IGameState
             wallColourCycle,
             _random,
             playerSlot.Lives,
-            playerSlot.Score,
+            playerSlot.ScoreBoard,
             _textureSet.BlitterDraw.GamePalette,
             contactTest: new PixelContactTest(new SpriteCollision()),
-            extraLifeEveryPoints: _gameSettings.GetExtraLifeEveryPoints(),
             tankShellBugEnabled: _gameSettings.TankShellBugEnabled,
             brainsChaseMikeyBugEnabled: _gameSettings.BrainsChaseMikeyBugEnabled,
             familySlotsLeftOver: _gameSession.FamilySlotsLeftOver,

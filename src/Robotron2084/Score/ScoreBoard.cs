@@ -12,10 +12,10 @@ public sealed class ScoreBoard
     private readonly int _extraLifeEveryPoints;
     private int _nextExtraLifeThreshold;
 
-    /// <summary>Makes a score board that carries on from the score a player already has.</summary>
+    /// <summary>Makes a player's score board.</summary>
     /// <param name="startingScore">
-    ///     The score carried in from the last wave. Spare lives it has already earned are not given
-    ///     again.
+    ///     The score the player starts with: 0 at the start of a game. Spare lives it has already earned are not
+    ///     given again.
     /// </param>
     /// <param name="extraLifeEveryPoints">
     ///     How many points earn a spare life: the EXTRA MAN EVERY setting. Nothing earns one
@@ -23,11 +23,8 @@ public sealed class ScoreBoard
     /// </param>
     public ScoreBoard(int startingScore, int extraLifeEveryPoints = GameSettings.FactoryExtraLifeEveryPoints)
     {
-        Score = startingScore;
         _extraLifeEveryPoints = extraLifeEveryPoints;
-        _nextExtraLifeThreshold = int.MaxValue;
-        if (_extraLifeEveryPoints > 0)
-            _nextExtraLifeThreshold = (startingScore / _extraLifeEveryPoints + 1) * _extraLifeEveryPoints;
+        SetScore(startingScore);
     }
 
     /// <summary>The player's score.</summary>
@@ -46,5 +43,20 @@ public sealed class ScoreBoard
         }
 
         return false;
+    }
+
+    /// <summary>
+    ///     Puts the score at a new value, as if the player had just reached it. Spare lives it has already passed are
+    ///     not given; the next one comes at the next multiple of the extra life setting above it.
+    /// </summary>
+    /// <param name="score">The new score.</param>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="score" /> is below 0.</exception>
+    public void SetScore(int score)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(score);
+
+        Score = score;
+        _nextExtraLifeThreshold = int.MaxValue;
+        if (_extraLifeEveryPoints > 0) _nextExtraLifeThreshold = (score / _extraLifeEveryPoints + 1) * _extraLifeEveryPoints;
     }
 }

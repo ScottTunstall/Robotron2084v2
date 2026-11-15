@@ -1,6 +1,7 @@
 using Robotron2084.Input;
 using Robotron2084.Level.Models;
 using Robotron2084.Persistence;
+using Robotron2084.Score;
 using Robotron2084.Score.Models;
 using Robotron2084.Tuning;
 
@@ -138,7 +139,8 @@ public sealed class GameSession
                 i + 1,
                 i == 0 ? firstPlayerInputSource : secondPlayerInputSource ?? firstPlayerInputSource,
                 gameSettings?.TurnsPerPlayer ?? PlayerTuning.StartingLives,
-                PlayerTuning.StartingWaveNumber);
+                PlayerTuning.StartingWaveNumber,
+                new ScoreBoard(0, chosenGameSettings.GetExtraLifeEveryPoints()));
 
         return new GameSession(playerSlots)
         {

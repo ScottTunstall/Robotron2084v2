@@ -125,7 +125,7 @@ public sealed class AttractState : IGameState, IAttractState
             slot.GetSpareLives());
         WallColourCycle wallColourCycle = new();
         return new PlayField(_textureSet, waveParams, _demoPlayerInputSource, PlayfieldLayout.GetInnerBounds(), wallColourCycle, _random,
-            slot.Lives, slot.Score, _textureSet.BlitterDraw.GamePalette, false, new PixelContactTest(new SpriteCollision()));
+            slot.Lives, slot.ScoreBoard, _textureSet.BlitterDraw.GamePalette, false, new PixelContactTest(new SpriteCollision()));
     }
 
     private void SyncSlotFromField()

@@ -356,7 +356,7 @@ public sealed class RobotronGame : Game
     {
         var gameSession = GameSession.CreateNewGame(GameMode.OnePlayer, _playerInputSource, controlSettings: _controlSettings,
             gameSettings: _gameSettings);
-        gameSession.GetCurrent().Score = DeveloperKeys.QualifyingScore;
+        gameSession.GetCurrent().ScoreBoard.SetScore(DeveloperKeys.QualifyingScore);
         _gameStateManager.TransitionTo(GameOverState.CreateFromSession(_playerInputSource, _textureSet, _highScoreStore, gameSession,
             _random));
     }

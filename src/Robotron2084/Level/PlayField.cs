@@ -94,11 +94,10 @@ public sealed class PlayField : ICollisionScene
     /// <param name="wallColourCycle">The wall's colours when no live palette is given.</param>
     /// <param name="random">The field's random source.</param>
     /// <param name="startingLives">How many lives the player has.</param>
-    /// <param name="startingScore">The score carried in from the last wave.</param>
+    /// <param name="scoreBoard">The player's score board, which the field adds to.</param>
     /// <param name="gamePalette">The live palette, or null in a test.</param>
     /// <param name="playerInvincibleForTesting">True for the playtest player, who cannot be killed.</param>
     /// <param name="contactTest">How two things are tested for touching; null compares their boxes.</param>
-    /// <param name="extraLifeEveryPoints">How many points earn a spare life.</param>
     /// <param name="tankShellBugEnabled">
     ///     True to keep the arcade's bug: a shell that fizzles out stays on the wave's shell
     ///     count.
@@ -120,11 +119,10 @@ public sealed class PlayField : ICollisionScene
         WallColourCycle wallColourCycle,
         Random random,
         int startingLives,
-        int startingScore = 0,
+        ScoreBoard scoreBoard,
         GamePalette? gamePalette = null,
         bool playerInvincibleForTesting = true,
         IContactTest? contactTest = null,
-        int extraLifeEveryPoints = GameSettings.FactoryExtraLifeEveryPoints,
         bool tankShellBugEnabled = GameSettings.FactoryTankShellBugEnabled,
         bool brainsChaseMikeyBugEnabled = GameSettings.FactoryBrainsChaseMikeyBugEnabled,
         IReadOnlyList<int>? familySlotsLeftOver = null,
@@ -137,7 +135,8 @@ public sealed class PlayField : ICollisionScene
         WaveParams = waveParams;
         _gruntSpeedProgression = new GruntSpeedProgression(waveParams.GruntSpeedFloor);
         PlayerInputSource = playerInputSource;
-        ScoreBoard = new ScoreBoard(startingScore, extraLifeEveryPoints);
+        ArgumentNullException.ThrowIfNull(scoreBoard);
+        ScoreBoard = scoreBoard;
         _waveMaterialisation = new WaveMaterialisation(random, waveParams.BrainCount > 0);
         GamePalette = gamePalette;
         _contactTest = contactTest ?? new BoxContactTest();
@@ -210,7 +209,7 @@ public sealed class PlayField : ICollisionScene
         return FieldEntities.CountFamilyMembersLeft() > 0;
     }
 
-    /// <summary>The player's score.</summary>
+    /// <summary>The score board of the player on the field.</summary>
     public ScoreBoard ScoreBoard { get; }
 
     /// <summary>The wall round the playfield.</summary>
@@ -513,11 +512,10 @@ public sealed class PlayField : ICollisionScene
         _midWaveSpawner.SpawnTankShell(origin);
     }
 
-    /// <summary>Copies the live score and lives to the player's session slot, every tick, so the HUD never lags (notes §97).</summary>
+    /// <summary>Copies the live lives to the player's session slot, every tick, so the HUD never lags (notes §97).</summary>
     /// <param name="playerSlot">The player's session slot.</param>
     public void SyncInto(PlayerSlot playerSlot)
     {
-        playerSlot.Score = ScoreBoard.Score;
         playerSlot.Lives = Player.Lives;
     }
 
