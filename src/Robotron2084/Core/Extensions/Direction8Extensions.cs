@@ -1,6 +1,6 @@
 using Robotron2084.Core.Models;
 
-namespace Robotron2084.Core;
+namespace Robotron2084.Core.Extensions;
 
 /// <summary>
 ///     <see cref="Direction8" /> conversions, all pure integer math: the 8 nonzero

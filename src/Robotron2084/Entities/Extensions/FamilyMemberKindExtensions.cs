@@ -3,7 +3,7 @@ using Robotron2084.Entities.Models;
 using Robotron2084.Graphics;
 using Robotron2084.Tuning;
 
-namespace Robotron2084.Entities;
+namespace Robotron2084.Entities.Extensions;
 
 /// <summary>What depends on which family member it is: how big it is, and the animation frames it is drawn with.</summary>
 public static class FamilyMemberKindExtensions

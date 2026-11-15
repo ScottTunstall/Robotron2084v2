@@ -1,6 +1,6 @@
 using Robotron2084.Entities.Models;
 
-namespace Robotron2084.Entities;
+namespace Robotron2084.Entities.Extensions;
 
 /// <summary>
 ///     Questions about where an entity is in its life, so that nothing outside the entity compares its life state

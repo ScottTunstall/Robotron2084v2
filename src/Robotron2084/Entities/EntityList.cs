@@ -1,6 +1,7 @@
 using System.Collections;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Entities.Extensions;
 using Robotron2084.Level;
 
 namespace Robotron2084.Entities;

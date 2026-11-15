@@ -2,7 +2,7 @@ using Robotron2084.Input.Models;
 
 namespace Robotron2084.Input;
 
-/// <summary>Names and ordering for <see cref="InputAction" /> (the page draws these).</summary>
+/// <summary>The ordering of <see cref="InputAction" /> (the page draws them in this order).</summary>
 public static class InputActions
 {
     /// <summary>The eight actions in the page's order: the move stick, then the shoot stick.</summary>
@@ -17,27 +17,4 @@ public static class InputActions
         InputAction.ShootLeft,
         InputAction.ShootRight
     ];
-
-    /// <summary>The page's label, e.g. "MOVE UP" / "SHOOT LEFT".</summary>
-    public static string GetLabel(this InputAction action)
-    {
-        return action switch
-        {
-            InputAction.MoveUp => "MOVE UP",
-            InputAction.MoveDown => "MOVE DOWN",
-            InputAction.MoveLeft => "MOVE LEFT",
-            InputAction.MoveRight => "MOVE RIGHT",
-            InputAction.ShootUp => "SHOOT UP",
-            InputAction.ShootDown => "SHOOT DOWN",
-            InputAction.ShootLeft => "SHOOT LEFT",
-            _ => "SHOOT RIGHT"
-        };
-    }
-
-    /// <summary>True for the four move actions (the left stick).</summary>
-    public static bool IsMove(this InputAction action)
-    {
-        return action
-            is InputAction.MoveUp or InputAction.MoveDown or InputAction.MoveLeft or InputAction.MoveRight;
-    }
 }

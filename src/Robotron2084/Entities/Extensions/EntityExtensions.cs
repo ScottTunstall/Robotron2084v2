@@ -1,4 +1,4 @@
-namespace Robotron2084.Entities;
+namespace Robotron2084.Entities.Extensions;
 
 /// <summary>A helper that hands back an entity as a more exact type.</summary>
 internal static class EntityExtensions
