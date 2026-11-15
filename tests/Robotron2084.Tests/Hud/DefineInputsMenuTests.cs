@@ -12,170 +12,170 @@ namespace Robotron2084.Tests.Hud;
 ///     screen at a time, and the author's two-step flow: Enter arms a line, the next input
 ///     becomes its binding, and the highlight moves on (stepping over the blanks).
 /// </summary>
-public sealed class DefineInputsModelTests
+public sealed class DefineInputsMenuTests
 {
     [Fact]
     public void ItStartsOnPlayerOnesFirstLine_WithNothingArmed()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
 
-        Assert.Equal(0, defineInputsModel.Line);
-        Assert.Equal(0, defineInputsModel.FirstVisibleLine);
-        Assert.False(defineInputsModel.IsArmed);
-        Assert.Equal(InputAction.MoveUp, defineInputsModel.GetHighlightedAction());
+        Assert.Equal(0, defineInputsMenu.Line);
+        Assert.Equal(0, defineInputsMenu.FirstVisibleLine);
+        Assert.False(defineInputsMenu.IsArmed);
+        Assert.Equal(InputAction.MoveUp, defineInputsMenu.GetHighlightedAction());
     }
 
     [Fact]
     public void ThePageIsTwentyOneLines_WithGapsBetweenTheSections()
     {
         Assert.Equal(8, InputActions.All.Length);
-        Assert.Equal(8, DefineInputsModel.LinesPerPlayer);
-        Assert.Equal(2, DefineInputsModel.SpacerLines);
-        Assert.Equal(10, DefineInputsModel.PlayerTwoLine);
-        Assert.Equal(20, DefineInputsModel.PauseLine);
-        Assert.Equal(21, DefineInputsModel.LineCount);
+        Assert.Equal(8, DefineInputsMenu.LinesPerPlayer);
+        Assert.Equal(2, DefineInputsMenu.SpacerLines);
+        Assert.Equal(10, DefineInputsMenu.PlayerTwoLine);
+        Assert.Equal(20, DefineInputsMenu.PauseLine);
+        Assert.Equal(21, DefineInputsMenu.LineCount);
 
-        Assert.Equal(0, DefineInputsModel.PlayerOf(0));
-        Assert.Equal(1, DefineInputsModel.PlayerOf(15));
-        Assert.Equal(InputAction.MoveUp, DefineInputsModel.GetAction(0));
-        Assert.Equal(InputAction.ShootRight, DefineInputsModel.GetAction(7));
-        Assert.True(DefineInputsModel.IsSpacer(8)); // the blank lines between player 1 and player 2
-        Assert.True(DefineInputsModel.IsSpacer(9));
-        Assert.Equal(InputAction.MoveUp, DefineInputsModel.GetAction(DefineInputsModel.PlayerTwoLine));
-        Assert.Equal(InputAction.ShootRight, DefineInputsModel.GetAction(17));
-        Assert.True(DefineInputsModel.IsSpacer(18)); // and before PAUSE
-        Assert.True(DefineInputsModel.IsSpacer(19));
-        Assert.False(DefineInputsModel.IsSpacer(DefineInputsModel.PauseLine));
-        Assert.Null(DefineInputsModel.GetAction(DefineInputsModel.PauseLine));
+        Assert.Equal(0, DefineInputsMenu.PlayerOf(0));
+        Assert.Equal(1, DefineInputsMenu.PlayerOf(15));
+        Assert.Equal(InputAction.MoveUp, DefineInputsMenu.GetAction(0));
+        Assert.Equal(InputAction.ShootRight, DefineInputsMenu.GetAction(7));
+        Assert.True(DefineInputsMenu.IsSpacer(8)); // the blank lines between player 1 and player 2
+        Assert.True(DefineInputsMenu.IsSpacer(9));
+        Assert.Equal(InputAction.MoveUp, DefineInputsMenu.GetAction(DefineInputsMenu.PlayerTwoLine));
+        Assert.Equal(InputAction.ShootRight, DefineInputsMenu.GetAction(17));
+        Assert.True(DefineInputsMenu.IsSpacer(18)); // and before PAUSE
+        Assert.True(DefineInputsMenu.IsSpacer(19));
+        Assert.False(DefineInputsMenu.IsSpacer(DefineInputsMenu.PauseLine));
+        Assert.Null(DefineInputsMenu.GetAction(DefineInputsMenu.PauseLine));
     }
 
     [Fact]
     public void TheCursorStepsOverTheBlankSpacers_NeverLandingOnOne()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
 
-        for (var i = 0; i < DefineInputsModel.LinesPerPlayer; i++) defineInputsModel.MoveDown();
+        for (var i = 0; i < DefineInputsMenu.LinesPerPlayer; i++) defineInputsMenu.MoveDown();
 
         // Seven steps through player 1, then straight onto player 2's first line.
-        Assert.Equal(DefineInputsModel.PlayerTwoLine, defineInputsModel.Line);
-        Assert.Equal(InputAction.MoveUp, defineInputsModel.GetHighlightedAction());
+        Assert.Equal(DefineInputsMenu.PlayerTwoLine, defineInputsMenu.Line);
+        Assert.Equal(InputAction.MoveUp, defineInputsMenu.GetHighlightedAction());
 
-        for (var i = 0; i < DefineInputsModel.LinesPerPlayer; i++) defineInputsModel.MoveDown();
+        for (var i = 0; i < DefineInputsMenu.LinesPerPlayer; i++) defineInputsMenu.MoveDown();
 
-        Assert.True(defineInputsModel.IsPauseLine()); // the gap before PAUSE is stepped over too
+        Assert.True(defineInputsMenu.IsPauseLine()); // the gap before PAUSE is stepped over too
 
-        defineInputsModel.MoveDown();
-        Assert.Equal(0, defineInputsModel.Line); // and the wrap round the page
+        defineInputsMenu.MoveDown();
+        Assert.Equal(0, defineInputsMenu.Line); // and the wrap round the page
 
-        defineInputsModel.MoveUp();
-        Assert.True(defineInputsModel.IsPauseLine()); // back up over the gap
+        defineInputsMenu.MoveUp();
+        Assert.True(defineInputsMenu.IsPauseLine()); // back up over the gap
     }
 
     [Fact]
     public void ScrollingDown_WalksThroughPlayerTwo_AndOntoPause()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
 
-        for (var i = 0; i < DefineInputsModel.LinesPerPlayer - 1; i++) defineInputsModel.MoveDown();
+        for (var i = 0; i < DefineInputsMenu.LinesPerPlayer - 1; i++) defineInputsMenu.MoveDown();
 
-        Assert.Equal(InputAction.ShootRight, defineInputsModel.GetHighlightedAction());
-        Assert.Equal(0, DefineInputsModel.PlayerOf(defineInputsModel.Line));
+        Assert.Equal(InputAction.ShootRight, defineInputsMenu.GetHighlightedAction());
+        Assert.Equal(0, DefineInputsMenu.PlayerOf(defineInputsMenu.Line));
 
-        defineInputsModel.MoveDown();
-        Assert.Equal(InputAction.MoveUp, defineInputsModel.GetHighlightedAction());
-        Assert.Equal(1, DefineInputsModel.PlayerOf(defineInputsModel.Line)); // player 2's section
+        defineInputsMenu.MoveDown();
+        Assert.Equal(InputAction.MoveUp, defineInputsMenu.GetHighlightedAction());
+        Assert.Equal(1, DefineInputsMenu.PlayerOf(defineInputsMenu.Line)); // player 2's section
 
-        for (var i = 0; i < DefineInputsModel.LinesPerPlayer; i++) defineInputsModel.MoveDown();
+        for (var i = 0; i < DefineInputsMenu.LinesPerPlayer; i++) defineInputsMenu.MoveDown();
 
-        Assert.True(defineInputsModel.IsPauseLine());
+        Assert.True(defineInputsMenu.IsPauseLine());
 
-        defineInputsModel.MoveDown();
-        Assert.Equal(0, defineInputsModel.Line); // and back round to the top
+        defineInputsMenu.MoveDown();
+        Assert.Equal(0, defineInputsMenu.Line); // and back round to the top
     }
 
     [Fact]
     public void ScrollingUp_FromTheFirstLine_LandsOnPause()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
 
-        defineInputsModel.MoveUp();
+        defineInputsMenu.MoveUp();
 
-        Assert.True(defineInputsModel.IsPauseLine());
-        Assert.Equal(DefineInputsModel.PauseLine, defineInputsModel.Line);
+        Assert.True(defineInputsMenu.IsPauseLine());
+        Assert.Equal(DefineInputsMenu.PauseLine, defineInputsMenu.Line);
     }
 
     [Fact]
     public void TheWindowFollowsTheCursor_AndStaysOnScreen()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
 
-        for (var line = 1; line < DefineInputsModel.LineCount; line++)
+        for (var line = 1; line < DefineInputsMenu.LineCount; line++)
         {
-            defineInputsModel.MoveDown();
+            defineInputsMenu.MoveDown();
 
-            Assert.True(defineInputsModel.FirstVisibleLine <= defineInputsModel.Line);
-            Assert.True(defineInputsModel.Line < defineInputsModel.FirstVisibleLine + DefineInputsModel.VisibleLines);
-            Assert.True(defineInputsModel.FirstVisibleLine >= 0);
-            Assert.True(defineInputsModel.FirstVisibleLine + DefineInputsModel.VisibleLines <= DefineInputsModel.LineCount);
+            Assert.True(defineInputsMenu.FirstVisibleLine <= defineInputsMenu.Line);
+            Assert.True(defineInputsMenu.Line < defineInputsMenu.FirstVisibleLine + DefineInputsMenu.VisibleLines);
+            Assert.True(defineInputsMenu.FirstVisibleLine >= 0);
+            Assert.True(defineInputsMenu.FirstVisibleLine + DefineInputsMenu.VisibleLines <= DefineInputsMenu.LineCount);
         }
 
-        for (var line = DefineInputsModel.LineCount - 2; line >= 0; line--)
+        for (var line = DefineInputsMenu.LineCount - 2; line >= 0; line--)
         {
-            defineInputsModel.MoveUp();
+            defineInputsMenu.MoveUp();
 
-            Assert.True(defineInputsModel.FirstVisibleLine <= defineInputsModel.Line);
-            Assert.True(defineInputsModel.Line < defineInputsModel.FirstVisibleLine + DefineInputsModel.VisibleLines);
+            Assert.True(defineInputsMenu.FirstVisibleLine <= defineInputsMenu.Line);
+            Assert.True(defineInputsMenu.Line < defineInputsMenu.FirstVisibleLine + DefineInputsMenu.VisibleLines);
         }
     }
 
     [Fact]
     public void ScrollingToPlayerTwo_ScrollsTheWindowDown()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
 
-        for (var i = 0; i < DefineInputsModel.LinesPerPlayer; i++) defineInputsModel.MoveDown();
+        for (var i = 0; i < DefineInputsMenu.LinesPerPlayer; i++) defineInputsMenu.MoveDown();
 
-        Assert.Equal(DefineInputsModel.PlayerTwoLine, defineInputsModel.Line);
-        Assert.True(defineInputsModel.FirstVisibleLine > 0); // the P1 section has moved up
-        Assert.True(defineInputsModel.FirstVisibleLine <= DefineInputsModel.PlayerTwoLine); // and the cursor is in the window
+        Assert.Equal(DefineInputsMenu.PlayerTwoLine, defineInputsMenu.Line);
+        Assert.True(defineInputsMenu.FirstVisibleLine > 0); // the P1 section has moved up
+        Assert.True(defineInputsMenu.FirstVisibleLine <= DefineInputsMenu.PlayerTwoLine); // and the cursor is in the window
     }
 
     [Fact]
     public void NothingIsCapturedUntilEnterArmsTheLine()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
         var controlSettings = ControlSettings.CreateDefaults();
 
-        Assert.False(defineInputsModel.Assign(controlSettings, InputBinding.CreateKey(Keys.Z)));
+        Assert.False(defineInputsMenu.Assign(controlSettings, InputBinding.CreateKey(Keys.Z)));
         Assert.Equal("W", controlSettings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
     }
 
     [Fact]
     public void AssigningArmsThenTakesTheInput_AndMovesOn()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
         var controlSettings = ControlSettings.CreateDefaults();
 
-        defineInputsModel.Arm();
-        Assert.True(defineInputsModel.Assign(controlSettings, InputBinding.CreateKey(Keys.Z)));
+        defineInputsMenu.Arm();
+        Assert.True(defineInputsMenu.Assign(controlSettings, InputBinding.CreateKey(Keys.Z)));
 
         Assert.Equal("Z", controlSettings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
         Assert.Equal("P1 LEFT STICK UP",
             controlSettings[0][InputAction.MoveUp].PadBinding.GetDisplayName()); // the pad slot is untouched
-        Assert.Equal(1, defineInputsModel.Line); // straight on to MOVE DOWN
-        Assert.False(defineInputsModel.IsArmed);
+        Assert.Equal(1, defineInputsMenu.Line); // straight on to MOVE DOWN
+        Assert.False(defineInputsMenu.IsArmed);
     }
 
     [Fact]
     public void PlayerTwosLinesWritePlayerTwosControls()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
         var controlSettings = ControlSettings.CreateDefaults();
 
-        for (var i = 0; i < DefineInputsModel.LinesPerPlayer; i++) defineInputsModel.MoveDown();
+        for (var i = 0; i < DefineInputsMenu.LinesPerPlayer; i++) defineInputsMenu.MoveDown();
 
-        defineInputsModel.Arm();
-        defineInputsModel.Assign(controlSettings, InputBinding.CreateKey(Keys.Z));
+        defineInputsMenu.Arm();
+        defineInputsMenu.Assign(controlSettings, InputBinding.CreateKey(Keys.Z));
 
         Assert.Equal("Z", controlSettings[1][InputAction.MoveUp].KeyBinding.GetDisplayName());
         Assert.Equal("W", controlSettings[0][InputAction.MoveUp].KeyBinding.GetDisplayName()); // player 1 is untouched
@@ -184,49 +184,49 @@ public sealed class DefineInputsModelTests
     [Fact]
     public void ThePauseLine_TakesAGlobalBinding()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
         var controlSettings = ControlSettings.CreateDefaults();
 
-        defineInputsModel.MoveUp(); // onto PAUSE
-        defineInputsModel.Arm();
-        defineInputsModel.Assign(controlSettings, InputBinding.CreateKey(Keys.Escape));
+        defineInputsMenu.MoveUp(); // onto PAUSE
+        defineInputsMenu.Arm();
+        defineInputsMenu.Assign(controlSettings, InputBinding.CreateKey(Keys.Escape));
 
         Assert.Equal("ESCAPE", controlSettings.Pause.GetDisplayName());
-        Assert.Equal(DefineInputsModel.PauseLine, defineInputsModel.Line); // there is nowhere to advance to
+        Assert.Equal(DefineInputsMenu.PauseLine, defineInputsMenu.Line); // there is nowhere to advance to
     }
 
     [Fact]
     public void BackWhileArmed_DisarmsWithoutAssigning()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
         var controlSettings = ControlSettings.CreateDefaults();
 
-        defineInputsModel.Arm();
-        defineInputsModel.CancelArm();
+        defineInputsMenu.Arm();
+        defineInputsMenu.CancelArm();
 
-        Assert.False(defineInputsModel.IsArmed);
-        Assert.False(defineInputsModel.Assign(controlSettings, InputBinding.CreateKey(Keys.Z)));
+        Assert.False(defineInputsMenu.IsArmed);
+        Assert.False(defineInputsMenu.Assign(controlSettings, InputBinding.CreateKey(Keys.Z)));
     }
 
     [Fact]
     public void ScrollingIsDeadWhileArmed_SoThatEveryKeyIsCapturable()
     {
-        var defineInputsModel = new DefineInputsModel();
-        defineInputsModel.Arm();
+        var defineInputsMenu = new DefineInputsMenu();
+        defineInputsMenu.Arm();
 
-        defineInputsModel.MoveDown();
-        defineInputsModel.MoveUp();
+        defineInputsMenu.MoveDown();
+        defineInputsMenu.MoveUp();
 
-        Assert.Equal(0, defineInputsModel.Line);
+        Assert.Equal(0, defineInputsMenu.Line);
     }
 
     [Fact]
     public void ClearUnbindsBothSlotsOfTheHighlightedLine()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
         var controlSettings = ControlSettings.CreateDefaults();
 
-        defineInputsModel.ClearHighlighted(controlSettings);
+        defineInputsMenu.ClearHighlighted(controlSettings);
 
         Assert.Equal("NONE", controlSettings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
         Assert.Equal("NONE", controlSettings[0][InputAction.MoveUp].PadBinding.GetDisplayName());
@@ -237,16 +237,16 @@ public sealed class DefineInputsModelTests
     [Fact]
     public void ResetPutsEveryLineAndPauseBackToFactory()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
         var controlSettings = ControlSettings.CreateDefaults();
 
-        defineInputsModel.Arm();
-        defineInputsModel.Assign(controlSettings, InputBinding.CreateKey(Keys.Z));
-        defineInputsModel.MoveUp();
-        defineInputsModel.Arm();
-        defineInputsModel.Assign(controlSettings, InputBinding.CreateKey(Keys.Escape));
+        defineInputsMenu.Arm();
+        defineInputsMenu.Assign(controlSettings, InputBinding.CreateKey(Keys.Z));
+        defineInputsMenu.MoveUp();
+        defineInputsMenu.Arm();
+        defineInputsMenu.Assign(controlSettings, InputBinding.CreateKey(Keys.Escape));
 
-        defineInputsModel.ResetAll(controlSettings);
+        defineInputsMenu.ResetAll(controlSettings);
 
         Assert.Equal("W", controlSettings[0][InputAction.MoveUp].KeyBinding.GetDisplayName());
         Assert.Equal("NUMPAD8", controlSettings[1][InputAction.ShootUp].KeyBinding.GetDisplayName());
@@ -256,12 +256,12 @@ public sealed class DefineInputsModelTests
     [Fact]
     public void IsCursorOn_TracksTheLineAndSuppressesItselfWhileArmed()
     {
-        var defineInputsModel = new DefineInputsModel();
+        var defineInputsMenu = new DefineInputsMenu();
 
-        Assert.True(defineInputsModel.IsCursorOn(0));
-        Assert.False(defineInputsModel.IsCursorOn(1));
+        Assert.True(defineInputsMenu.IsCursorOn(0));
+        Assert.False(defineInputsMenu.IsCursorOn(1));
 
-        defineInputsModel.Arm();
-        Assert.False(defineInputsModel.IsCursorOn(0));
+        defineInputsMenu.Arm();
+        Assert.False(defineInputsMenu.IsCursorOn(0));
     }
 }
