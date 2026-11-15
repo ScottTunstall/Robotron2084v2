@@ -75,6 +75,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private readonly ArcadeFrameTimer _deathArcadeFrameTimer = new();
     private readonly Random _random;
     private readonly IGameEvents _gameEvents;
+    private readonly LivesCounter _livesCounter;
     private readonly TextureSet _textureSet;
 
     private int _autoFireTicksRemaining;
@@ -110,22 +111,23 @@ public sealed class Player : IEntity, IAnimationFrameSource
 
     private bool _wasFiring;
 
-    /// <summary>Makes the player at <paramref name="startPosition" />, with <paramref name="lives" /> lives.</summary>
+    /// <summary>Makes the player at <paramref name="startPosition" />.</summary>
     /// <param name="entityParams">
     ///     What the player shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: they pick the colours of the death animation.
     /// </param>
     /// <param name="startPosition">Where the player's top-left corner is.</param>
-    /// <param name="lives">How many lives the player starts with. Each death takes one off.</param>
+    /// <param name="livesCounter">The player's count of lives. Each death takes one off, and each spare life adds one.</param>
     public Player(
         EntityParams entityParams,
         IntVector2 startPosition,
-        int lives)
+        LivesCounter livesCounter)
     {
         _textureSet = entityParams.TextureSet;
         _gameEvents = entityParams.GameEvents;
         _position = startPosition;
         _random = entityParams.Random;
-        Lives = lives;
+        ArgumentNullException.ThrowIfNull(livesCounter);
+        _livesCounter = livesCounter;
     }
 
     /// <summary>The way the player faces. It is the last way the player moved, not the way the player is shooting.</summary>
@@ -154,7 +156,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
 
     /// <summary>How many lives the player has left, counting the one being played. Each death takes one off.</summary>
-    public int Lives { get; private set; }
+    public int Lives => _livesCounter.Lives;
 
     /// <summary>Where the player's top-left corner is.</summary>
     /// <remarks>
@@ -168,7 +170,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     /// <summary>Gives the player one more life. This is done when the score passes the number of points that earns one.</summary>
     public void AddLife()
     {
-        Lives += 1;
+        _livesCounter.AddLife();
         _gameEvents.Raise(new GameEvent(GameEventKind.ExtraLifeAwarded, Position));
     }
 
@@ -532,7 +534,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
     {
         LifeState = EntityLifeState.Dying;
         ResetDeathAnimation();
-        Lives -= 1;
+        _livesCounter.LoseLife();
         _gameEvents.Raise(new GameEvent(GameEventKind.PlayerKilled, Position));
     }
 

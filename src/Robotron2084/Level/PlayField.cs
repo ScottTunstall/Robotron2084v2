@@ -93,7 +93,7 @@ public sealed class PlayField : ICollisionScene
     /// <param name="innerBounds">The inside of the wall, in port pixels.</param>
     /// <param name="wallColourCycle">The wall's colours when no live palette is given.</param>
     /// <param name="random">The field's random source.</param>
-    /// <param name="startingLives">How many lives the player has.</param>
+    /// <param name="livesCounter">The player's count of lives, which the field's player changes.</param>
     /// <param name="scoreBoard">The player's score board, which the field adds to.</param>
     /// <param name="gamePalette">The live palette, or null in a test.</param>
     /// <param name="playerInvincibleForTesting">True for the playtest player, who cannot be killed.</param>
@@ -118,7 +118,7 @@ public sealed class PlayField : ICollisionScene
         Rectangle innerBounds,
         WallColourCycle wallColourCycle,
         Random random,
-        int startingLives,
+        LivesCounter livesCounter,
         ScoreBoard scoreBoard,
         GamePalette? gamePalette = null,
         bool playerInvincibleForTesting = true,
@@ -145,7 +145,7 @@ public sealed class PlayField : ICollisionScene
         PlayfieldWall = new PlayfieldWall(innerBounds, wallColourCycle);
 
         IntVector2 playerStart = new(innerBounds.X + innerBounds.Width / 2, innerBounds.Y + innerBounds.Height / 2);
-        Player = new Player(EntityParams, playerStart, startingLives) { InvincibleForTesting = playerInvincibleForTesting };
+        Player = new Player(EntityParams, playerStart, livesCounter) { InvincibleForTesting = playerInvincibleForTesting };
         PlayerLaserSlots = new LaserSlots(TextureSet, GameEvents);
 
         // Each kind's spawner is in its registry row, so a new kind needs no edit here (notes §119).
@@ -510,13 +510,6 @@ public sealed class PlayField : ICollisionScene
     public void SpawnTankShell(IntVector2 origin)
     {
         _midWaveSpawner.SpawnTankShell(origin);
-    }
-
-    /// <summary>Copies the live lives to the player's session slot, every tick, so the HUD never lags (notes §97).</summary>
-    /// <param name="playerSlot">The player's session slot.</param>
-    public void SyncInto(PlayerSlot playerSlot)
-    {
-        playerSlot.Lives = Player.Lives;
     }
 
     /// <summary>Says whether two entities are touching, by the field's contact test.</summary>

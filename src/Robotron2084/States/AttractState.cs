@@ -81,15 +81,12 @@ public sealed class AttractState : IGameState, IAttractState
         _demoPlayerInputSource.Bind(_playField);
         _playField.Update(gameTime);
 
-        // The demo's HUD is drawn from the session slot, so the live counters go
-        // over every tick (notes §97) — a rescue's 1000-5000 points showed up in
-        // the score only at the next wave clear / death before this.
-        SyncSlotFromField();
+        // The demo's HUD is drawn from the session slot, whose score board and lives counter the field changes
+        // directly (notes §97).
 
         if (_playField.IsWaveCleared())
         {
             var playerSlot = _gameSession.GetCurrent();
-            SyncSlotFromField();
             playerSlot.Wave = playerSlot.Wave % 255 + 1; // ROM GEXX: skip 0
             playerSlot.SavedWaveParams = null;
             gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession, _random, true));
@@ -98,7 +95,6 @@ public sealed class AttractState : IGameState, IAttractState
 
         if (_playField.IsPlayerDead())
         {
-            SyncSlotFromField();
             _gameSession.GetCurrent().SavedWaveParams = WaveSurvivors.GetFrom(_playField);
 
             if (!_gameSession.AnyPlayerSlotHasLives())
@@ -125,11 +121,6 @@ public sealed class AttractState : IGameState, IAttractState
             slot.GetSpareLives());
         WallColourCycle wallColourCycle = new();
         return new PlayField(_textureSet, waveParams, _demoPlayerInputSource, PlayfieldLayout.GetInnerBounds(), wallColourCycle, _random,
-            slot.Lives, slot.ScoreBoard, _textureSet.BlitterDraw.GamePalette, false, new PixelContactTest(new SpriteCollision()));
-    }
-
-    private void SyncSlotFromField()
-    {
-        _playField.SyncInto(_gameSession.GetCurrent());
+            slot.LivesCounter, slot.ScoreBoard, _textureSet.BlitterDraw.GamePalette, false, new PixelContactTest(new SpriteCollision()));
     }
 }

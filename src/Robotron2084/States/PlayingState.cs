@@ -185,10 +185,8 @@ public sealed class PlayingState : IGameState
         WaveStartSpeech.Say(_gameSession, _playField.WaveParams);
         _playField.Update(gameTime);
 
-        // The HUD is drawn from the session's slots, and the ROM reads the lives out of the player's own data block
-        // every time it draws, so hand them over EVERY tick (notes §97). The score needs no copy: the field adds to the
-        // slot's own score board.
-        SyncSlotFromField();
+        // The HUD is drawn from the session's slots. The field changes the slot's own score board and lives counter,
+        // so what is drawn is always up to date (notes §97).
 
         var playerInputState = _gameSession.GetCurrent().PlayerInputSource.Poll();
 
@@ -263,7 +261,7 @@ public sealed class PlayingState : IGameState
             PlayfieldLayout.GetInnerBounds(),
             wallColourCycle,
             _random,
-            playerSlot.Lives,
+            playerSlot.LivesCounter,
             playerSlot.ScoreBoard,
             _textureSet.BlitterDraw.GamePalette,
             contactTest: new PixelContactTest(new SpriteCollision()),
@@ -293,12 +291,11 @@ public sealed class PlayingState : IGameState
     /// <summary>
     ///     ROM PLEND → PLEND3 → PLE1B. <see cref="Player.Kill" /> has already taken the
     ///     life (the ROM's <c>PLSTRT</c> takes it when a life starts), so
-    ///     <see cref="PlayField.Player" /> already holds the remaining count.
+    ///     the player's slot already holds the remaining count.
     /// </summary>
     private void HandlePlayerDeath(GameStateManager gameStateManager)
     {
         var deadPlayerSlot = _gameSession.GetCurrent();
-        SyncSlotFromField();
         NoteFamilySlotsLeftOver();
         deadPlayerSlot.SavedWaveParams = WaveSurvivors.GetFrom(_playField);
         deadPlayerSlot.FamilyMembersLostThisWave += _playField.GetFamilyMembersLost();
@@ -350,7 +347,6 @@ public sealed class PlayingState : IGameState
     private void HandleWaveCleared(GameStateManager gameStateManager)
     {
         var playerSlot = _gameSession.GetCurrent();
-        SyncSlotFromField();
         NoteFamilySlotsLeftOver();
 
         // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
@@ -373,11 +369,5 @@ public sealed class PlayingState : IGameState
     private void NoteFamilySlotsLeftOver()
     {
         _gameSession.FamilySlotsLeftOver = _playField.GetOccupiedFamilySlots();
-    }
-
-    /// <summary>Copies the live field's counters back into the current player's slot.</summary>
-    private void SyncSlotFromField()
-    {
-        _playField.SyncInto(_gameSession.GetCurrent());
     }
 }

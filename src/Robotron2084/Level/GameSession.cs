@@ -138,7 +138,7 @@ public sealed class GameSession
             playerSlots[i] = new PlayerSlot(
                 i + 1,
                 i == 0 ? firstPlayerInputSource : secondPlayerInputSource ?? firstPlayerInputSource,
-                gameSettings?.TurnsPerPlayer ?? PlayerTuning.StartingLives,
+                new LivesCounter(gameSettings?.TurnsPerPlayer ?? PlayerTuning.StartingLives),
                 PlayerTuning.StartingWaveNumber,
                 new ScoreBoard(0, chosenGameSettings.GetExtraLifeEveryPoints()));
 

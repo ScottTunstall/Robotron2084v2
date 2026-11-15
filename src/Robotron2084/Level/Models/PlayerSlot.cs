@@ -28,13 +28,16 @@ namespace Robotron2084.Level.Models;
 ///     This player's controls. Each player has their own, so a second player need not share the first
 ///     player's.
 /// </param>
-/// <param name="Lives">The lives the player has, counting the one in play.</param>
+/// <param name="LivesCounter">
+///     The player's count of lives, kept for the whole game. Each field the player plays on changes it; none has a
+///     count of its own.
+/// </param>
 /// <param name="Wave">The wave the player is on. Only they move it on.</param>
 /// <param name="ScoreBoard">
 ///     The player's score, kept for the whole game. Each field the player plays on adds to it; none has a score of
 ///     its own.
 /// </param>
-public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource, int Lives, int Wave, ScoreBoard ScoreBoard)
+public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource, LivesCounter LivesCounter, int Wave, ScoreBoard ScoreBoard)
 {
     /// <summary>The wave the player is on. Only they move it on.</summary>
     /// <remarks>
@@ -55,7 +58,7 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource
     ///         <item>Disassembly: <c>p1_men</c> ($BDEC) and <c>p2_men</c> ($BE28).</item>
     ///     </list>
     /// </remarks>
-    public int Lives { get; set; } = Lives;
+    public int Lives => LivesCounter.Lives;
 
     /// <summary>
     ///     True when the player saved every family member in their last wave. It is true before their first wave, and is
