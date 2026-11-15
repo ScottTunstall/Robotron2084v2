@@ -64,7 +64,7 @@ public sealed class HulkWaveSpawner : IWaveSpawner
 
             Func<IntVector2> getTargetPosition = () => phantomTargetPosition;
             if (slot is { } stalkedSlot)
-                getTargetPosition = () => playField.GetFamilyMemberInSlot(stalkedSlot)?.Position ?? playField.GetPlayerPosition();
+                getTargetPosition = () => playField.FieldEntities.FamilyList.GetMemberInSlot(stalkedSlot)?.Position ?? playField.GetPlayerPosition();
 
             waveSpawnParams.FieldEntities.Hulks.Add(new Hulk(playField.EntityParams, position,
                 playField.WaveParams.HulkBeatIntervalArcadeFrames, getTargetPosition));

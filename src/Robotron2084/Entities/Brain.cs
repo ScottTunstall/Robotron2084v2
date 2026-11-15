@@ -707,7 +707,7 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// <param name="playField">The playfield, which keeps the family list.</param>
     private FamilyMember? GetTarget(PlayField playField)
     {
-        return playField.GetFamilyMemberInSlot(_targetSlot);
+        return playField.FieldEntities.FamilyList.GetMemberInSlot(_targetSlot);
     }
 
     /// <summary>
@@ -788,10 +788,10 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private void UpdateTargetSlot(PlayField playField)
     {
-        if (playField.GetFamilyMemberInSlot(_targetSlot) is not null) return;
+        if (playField.FieldEntities.FamilyList.GetMemberInSlot(_targetSlot) is not null) return;
 
         if (!playField.FieldEntities.FamilyList.AnyAvailable()) return;
 
-        _targetSlot = playField.GetNearestFamilySlot(_position);
+        _targetSlot = playField.FieldEntities.FamilyList.GetNearestSlot(_position);
     }
 }

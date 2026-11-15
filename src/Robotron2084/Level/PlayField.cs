@@ -203,12 +203,6 @@ public sealed class PlayField : ICollisionScene
         return _familyMembersAtStart - RescuesThisLife - FieldEntities.FamilyList.CountAlive();
     }
 
-    /// <summary>Says whether any family member is still on the field, neither rescued nor lost.</summary>
-    public bool HasFamilyMemberLeft()
-    {
-        return FieldEntities.FamilyList.CountAlive() > 0;
-    }
-
     /// <summary>The score board of the player on the field.</summary>
     public ScoreBoard ScoreBoard { get; }
 
@@ -324,28 +318,6 @@ public sealed class PlayField : ICollisionScene
     public IEnumerable<PlayerLaser> GetActiveLasers()
     {
         return PlayerLaserSlots.GetActiveLasers();
-    }
-
-    /// <summary>Counts the sparks in flight. There may never be more than twenty.</summary>
-    public int GetActiveSparkCount()
-    {
-        return FieldEntities.Sparks.CountAlive();
-    }
-
-    /// <summary>Finds where the nearest living robot to a point is, for the attract demo's player to steer by.</summary>
-    /// <param name="from">The point to measure from.</param>
-    public IntVector2? GetNearestLivingRobotPosition(IntVector2 from)
-    {
-        return FieldEntities.GetNearestLivingRobotPosition(from);
-    }
-
-    /// <summary>
-    ///     Lists the places in the family list that still hold a family member who is standing on the field and free,
-    ///     lowest place first. When this field ends, the next field's hulks pick what to stalk from them.
-    /// </summary>
-    public IReadOnlyList<int> GetOccupiedFamilySlots()
-    {
-        return FieldEntities.FamilyList.GetOccupiedSlots();
     }
 
     /// <summary>Where the player's top-left corner is.</summary>
@@ -685,19 +657,6 @@ public sealed class PlayField : ICollisionScene
         if (!IsMaterialising(entity)) entity.Draw(spriteBatch);
     }
 
-    /// <summary>Lists the electrodes.</summary>
-    internal IReadOnlyList<Electrode> GetElectrodes()
-    {
-        return FieldEntities.Electrodes;
-    }
-
-    /// <summary>Finds the family member in a place in the family list, if they are standing and free.</summary>
-    /// <param name="slot">The place to look in.</param>
-    internal FamilyMember? GetFamilyMemberInSlot(int slot)
-    {
-        return FieldEntities.FamilyList.GetMemberInSlot(slot);
-    }
-
     /// <summary>The shortest wait between moves that the grunts' speed-ups may bring a grunt to (test hook).</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -729,13 +688,6 @@ public sealed class PlayField : ICollisionScene
         return _waveStartSequence.LiveArcadeFrames;
     }
 
-    /// <summary>Finds the family list place of the member nearest a point.</summary>
-    /// <param name="from">The point to measure from.</param>
-    internal int GetNearestFamilySlot(IntVector2 from)
-    {
-        return FieldEntities.FamilyList.GetNearestSlot(from);
-    }
-
     /// <summary>How many robots are still waiting for their turn to appear at the start of the wave (test hook).</summary>
     internal int GetPendingAppearCount()
     {
@@ -756,13 +708,6 @@ public sealed class PlayField : ICollisionScene
     internal bool HasPlayerAppeared()
     {
         return _waveStartSequence.HasPlayerAppeared();
-    }
-
-    /// <summary>Says whether a box touches no electrode, so that something can be put there.</summary>
-    /// <param name="bounds">The box to test, in port pixels.</param>
-    public bool IsClearOfElectrodes(Rectangle bounds)
-    {
-        return FieldEntities.Electrodes.IsClearOf(bounds);
     }
 
     /// <summary>
@@ -935,7 +880,7 @@ public sealed class PlayField : ICollisionScene
         return RobotKinds.All
             .Where(kind => kind.IsOnRobotList())
             .OrderByDescending(kind => kind.RobotListSetUpOrder)
-            .SelectMany(kind => FieldEntities.GetEntities(kind.Kind).Reverse());
+            .SelectMany(kind => FieldEntities.GetList(kind.Kind).FieldEntities.Reverse());
     }
 
     /// <summary>

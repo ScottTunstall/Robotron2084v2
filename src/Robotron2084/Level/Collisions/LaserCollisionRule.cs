@@ -18,7 +18,7 @@ internal sealed class LaserCollisionRule : ICollisionRule
         foreach (var robot in RobotKinds.All)
             foreach (var laser in collisionScene.GetActiveLasers())
             {
-                var target = fieldEntities.GetEntities(robot.Kind)
+                var target = fieldEntities.GetList(robot.Kind).FieldEntities
                     .FirstOrDefault(entity => entity.IsAlive() && collisionScene.Touches(laser, entity));
                 if (target is not null) yield return new LaserHitResult(laser, target, robot);
             }

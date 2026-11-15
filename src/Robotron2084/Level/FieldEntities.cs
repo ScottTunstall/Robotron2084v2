@@ -151,13 +151,6 @@ public sealed class FieldEntities
         DrawAll(_drawOrderInFrontOfShots, spriteBatch, playField);
     }
 
-    /// <summary>Finds every entity of one kind of robot.</summary>
-    /// <param name="kind">The kind to look for.</param>
-    public IEnumerable<IEntity> GetEntities(RobotKind kind)
-    {
-        return GetList(kind).FieldEntities;
-    }
-
     /// <summary>Finds the list a kind of robot lives in. This is the one link from the kinds to the lists.</summary>
     /// <param name="kind">The kind to look up.</param>
     /// <exception cref="ArgumentOutOfRangeException">The kind has no list. A new kind needs one here.</exception>

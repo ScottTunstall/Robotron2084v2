@@ -240,7 +240,7 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
         if (--_fireBeatsRemaining <= 0)
         {
             _fireBeatsRemaining = GetRandomFireBeats(_random);
-            if (playField.GetActiveSparkCount() < SparkTuning.MaxActiveSparks)
+            if (playField.FieldEntities.Sparks.CountAlive() < SparkTuning.MaxActiveSparks)
                 // The spark is aimed at the place where the Player is now.
                 playField.SpawnSpark(_position, playField.Player.Position);
         }

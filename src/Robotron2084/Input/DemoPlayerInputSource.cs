@@ -64,7 +64,7 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
         if (_playField is not { } playField || !playField.IsPlayerAlive()) return new PlayerInputState(IntVector2.Zero, false);
 
         var position = playField.Player.Position;
-        var nearest = playField.GetNearestLivingRobotPosition(position);
+        var nearest = playField.FieldEntities.GetNearestLivingRobotPosition(position);
         var move = HoldDirection(ChooseDirection(playField, position, nearest));
 
         if (move != IntVector2.Zero && _random.Next(AttractTuning.DemoStutterChanceDenominator) == 0)

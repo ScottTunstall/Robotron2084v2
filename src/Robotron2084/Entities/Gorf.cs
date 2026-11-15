@@ -267,7 +267,7 @@ public sealed class Gorf : IExplodable, IRemovable
             if (_pendingDropCount == 0) _pendingDropCount = GetDropCount();
 
             // A drop never lands on an electrode: it waits until Gorf has moved on to somewhere clear.
-            if (!playField.IsClearOfElectrodes(GetDropColumn(_pendingDropCount))) break;
+            if (!playField.FieldEntities.Electrodes.IsClearOf(GetDropColumn(_pendingDropCount))) break;
 
             _dropSteps.Dequeue();
             var count = _pendingDropCount;

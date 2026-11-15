@@ -354,7 +354,7 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="playField">The playfield, which holds the electrodes.</param>
     private static bool IsOverlappingLivingElectrode(Rectangle next, PlayField playField)
     {
-        foreach (var electrode in playField.GetElectrodes())
+        foreach (var electrode in playField.FieldEntities.Electrodes)
             if (electrode.IsAlive() && electrode.GetBounds().Intersects(next))
                 return true;
 

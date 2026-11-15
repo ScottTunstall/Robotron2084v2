@@ -62,6 +62,13 @@ public abstract class EntityList<T> : IEntityList, IReadOnlyList<T>
         return _items.Count(entity => entity.IsAlive());
     }
 
+    /// <summary>Says whether any entity in the list is still alive.</summary>
+    /// <returns>True when at least one is alive.</returns>
+    public bool AnyAlive()
+    {
+        return _items.Any(entity => entity.IsAlive());
+    }
+
     /// <summary>Counts the entities still on the field: alive, or still playing their death.</summary>
     /// <returns>How many are not yet dead.</returns>
     public int CountOnField()

@@ -335,7 +335,7 @@ public sealed class PlayingState : IGameState
     private void RecordFamilySaved(PlayerSlot playerSlot)
     {
         var familyMembersLost = playerSlot.FamilyMembersLostThisWave + _playField.GetFamilyMembersLost();
-        playerSlot.SavedWholeFamilyLastWave = familyMembersLost == 0 && !_playField.HasFamilyMemberLeft();
+        playerSlot.SavedWholeFamilyLastWave = familyMembersLost == 0 && !_playField.FieldEntities.FamilyList.AnyAlive();
         playerSlot.FamilyMembersLostThisWave = 0;
     }
 
@@ -368,6 +368,6 @@ public sealed class PlayingState : IGameState
     /// </remarks>
     private void NoteFamilySlotsLeftOver()
     {
-        _gameSession.FamilySlotsLeftOver = _playField.GetOccupiedFamilySlots();
+        _gameSession.FamilySlotsLeftOver = _playField.FieldEntities.FamilyList.GetOccupiedSlots();
     }
 }

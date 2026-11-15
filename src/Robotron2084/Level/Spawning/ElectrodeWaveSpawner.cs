@@ -21,7 +21,7 @@ public sealed class ElectrodeWaveSpawner : IWaveSpawner
         for (var i = 0; i < playField.WaveParams.ElectrodeCount; i++)
         {
             var position = placement.FindSpawnPointAwayFrom(
-                waveSpawnParams.PlayerStart, SpawnTuning.ElectrodeMinDistanceFromPlayer, playField.IsClearOfElectrodes);
+                waveSpawnParams.PlayerStart, SpawnTuning.ElectrodeMinDistanceFromPlayer, playField.FieldEntities.Electrodes.IsClearOf);
             position = position with { X = Math.Min(position.X, furthestRight) };
             fieldEntities.Electrodes.Add(new Electrode(playField.TextureSet, playField.GameEvents, position, wave));
         }

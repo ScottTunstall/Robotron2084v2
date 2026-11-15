@@ -22,7 +22,7 @@ internal sealed class PlayerContactKillRule : ICollisionRule
 
         foreach (var robot in RobotKinds.All.Where(kind => kind.KillsPlayerOnContact))
         {
-            var touched = fieldEntities.GetEntities(robot.Kind)
+            var touched = fieldEntities.GetList(robot.Kind).FieldEntities
                 .FirstOrDefault(entity => entity.IsAlive() && collisionScene.TouchesPlayer(entity));
             if (touched is not null)
             {
