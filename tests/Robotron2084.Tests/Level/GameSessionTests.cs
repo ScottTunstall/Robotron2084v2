@@ -55,10 +55,10 @@ public class GameSessionTests
         Assert.Equal(3, gameSession.GetCurrent().Lives);
         Assert.Equal(2, gameSession.GetCurrent().GetSpareLives());
 
-        gameSession.GetCurrent().Lives = 1;
+        gameSession.GetCurrent().LivesCounter.SetLives(1);
         Assert.Equal(0, gameSession.GetCurrent().GetSpareLives());
 
-        gameSession.GetCurrent().Lives = 0;
+        gameSession.GetCurrent().LivesCounter.SetLives(0);
         Assert.Equal(0, gameSession.GetCurrent().GetSpareLives());
     }
 
@@ -68,11 +68,11 @@ public class GameSessionTests
         // ROM MANDSV: "DISPLAY MEN LEFT / MAX OF 7".
         var gameSession = GameSession.CreateNewGame(new FakeInputSource(), 1);
 
-        gameSession.GetCurrent().Lives = 9; // 8 spare
+        gameSession.GetCurrent().LivesCounter.SetLives(9); // 8 spare
         Assert.Equal(8, gameSession.GetCurrent().GetSpareLives());
         Assert.Equal(HudLayout.HudMaxSpareLives, gameSession.GetCurrent().GetDisplayedSpareLives());
 
-        gameSession.GetCurrent().Lives = 4;
+        gameSession.GetCurrent().LivesCounter.SetLives(4);
         Assert.Equal(3, gameSession.GetCurrent().GetDisplayedSpareLives());
     }
 
@@ -94,7 +94,7 @@ public class GameSessionTests
         // ROM PLE1: EORA #3 / PLDX / LDB PLAS,X / BEQ PLE1 — an out player is
         // skipped, and if nobody else has lives the turn does not move.
         var gameSession = NewTwoPlayerGame();
-        gameSession.PlayerSlots[1].Lives = 0;
+        gameSession.PlayerSlots[1].LivesCounter.SetLives(0);
 
         Assert.False(gameSession.SwitchToPlayerWithLives());
         Assert.Equal(1, gameSession.GetCurrent().Number);
@@ -116,10 +116,10 @@ public class GameSessionTests
 
         Assert.True(gameSession.AnyPlayerSlotHasLives());
 
-        gameSession.PlayerSlots[0].Lives = 0;
+        gameSession.PlayerSlots[0].LivesCounter.SetLives(0);
         Assert.True(gameSession.AnyPlayerSlotHasLives());
 
-        gameSession.PlayerSlots[1].Lives = 0;
+        gameSession.PlayerSlots[1].LivesCounter.SetLives(0);
         Assert.False(gameSession.AnyPlayerSlotHasLives());
     }
 

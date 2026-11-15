@@ -33,6 +33,7 @@ internal sealed class PlayFieldBuilder
     private IReadOnlyList<int> _familySlotsLeftOver = [];
     private IPlayerInputSource _playerInputSource = new FakeInputSource();
     private int _lives = DefaultLives;
+    private LivesCounter? _livesCounter;
     private GamePalette? _gamePalette;
 
     private WaveParams _waveParams = new(1);
@@ -99,6 +100,14 @@ internal sealed class PlayFieldBuilder
         return this;
     }
 
+
+    /// <summary>Changes this lives counter, such as a player slot's, instead of one of the field's own.</summary>
+    /// <param name="livesCounter">The lives counter.</param>
+    public PlayFieldBuilder WithLivesCounter(LivesCounter livesCounter)
+    {
+        _livesCounter = livesCounter;
+        return this;
+    }
 
     /// <summary>Adds to this score board, such as a player slot's, instead of one of the field's own.</summary>
     /// <param name="scoreBoard">The score board.</param>
@@ -174,7 +183,7 @@ internal sealed class PlayFieldBuilder
             _bounds,
             new WallColourCycle(),
             _random,
-            _lives,
+            _livesCounter ?? new LivesCounter(_lives),
             _scoreBoard ?? new ScoreBoard(_score),
             _gamePalette,
             _playerInvincible,

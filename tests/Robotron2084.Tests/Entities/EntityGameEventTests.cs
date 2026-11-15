@@ -73,7 +73,7 @@ public sealed class EntityGameEventTests
     public void AKilledPlayerAnnouncesTheDeath()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, 3) { InvincibleForTesting = false };
+        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, new LivesCounter(3)) { InvincibleForTesting = false };
 
         player.Kill();
         player.Kill();
@@ -85,7 +85,7 @@ public sealed class EntityGameEventTests
     public void AnInvinciblePlayerAnnouncesNothing()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, 3) { InvincibleForTesting = true };
+        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, new LivesCounter(3)) { InvincibleForTesting = true };
 
         player.Kill();
 
@@ -96,7 +96,7 @@ public sealed class EntityGameEventTests
     public void AnExtraLifeIsAnnounced()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, 3);
+        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, new LivesCounter(3));
 
         player.AddLife();
 

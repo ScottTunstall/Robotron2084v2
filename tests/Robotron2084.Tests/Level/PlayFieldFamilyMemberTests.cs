@@ -161,29 +161,27 @@ public sealed class PlayFieldFamilyMemberTests
     }
 
     [Fact]
-    public void TheFieldAddsToThePlayersOwnScore_AndSyncIntoHandsOverTheLives()
+    public void TheFieldChangesThePlayersOwnScoreAndLives()
     {
-        // The HUD draws the SESSION's slots. The score lives in the player's slot for the whole game and the field
-        // adds to that same score board, so a point shows the moment it is scored, with nothing copied. The lives are
-        // still handed over every tick (notes §97).
-        PlayerSlot playerSlot = new(1, new FakeInputSource(), 3, 1, new ScoreBoard(0));
+        // The HUD draws the SESSION's slots. The score and the lives live in the player's slot for the whole game, and
+        // the field changes those same counters, so a point or a spare life shows the moment it happens, with nothing
+        // copied (notes §97).
+        PlayerSlot playerSlot = new(1, new FakeInputSource(), new LivesCounter(3), 1, new ScoreBoard(0));
         var playField = new PlayFieldBuilder().WithParameters(FamilyMemberWave(0, 0, 1)).WithSeed(99)
-            .WithScoreBoard(playerSlot.ScoreBoard).Build();
+            .WithScoreBoard(playerSlot.ScoreBoard).WithLivesCounter(playerSlot.LivesCounter).Build();
         playField.SkipWaveStart();
 
         playField.Update(new GameTime());
-        playField.SyncInto(playerSlot);
         Assert.Equal(0, playerSlot.Score);
-        Assert.Equal(playField.Player.Lives, playerSlot.Lives);
+        Assert.Equal(3, playerSlot.Lives);
 
         var familyMember = playField.FieldEntities.FamilyList.Members[0];
         familyMember.MoveTo(playField.Player.Position);
         playField.Update(new GameTime());
         Assert.Equal(ScoreValues.RescueBonus(1), playerSlot.Score);
 
-        playField.Player.AddLife(); // an earned spare life must reach the HUD too
-        playField.SyncInto(playerSlot);
-        Assert.Equal(playField.Player.Lives, playerSlot.Lives);
+        playField.Player.AddLife();
+        Assert.Equal(4, playerSlot.Lives);
     }
 
     [Fact]
