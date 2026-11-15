@@ -78,7 +78,7 @@ public sealed class SettingsState : IGameState
     private readonly GameSettingsStore _gameSettingsStore;
     private readonly DefineInputsHighlight _defineInputsHighlight = new();
     private readonly HighScoreStore _highScoreStore;
-    private readonly SettingsModel _settingsModel = new();
+    private readonly SettingsMenu _settingsMenu = new();
     private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
     private InputSnapshot _previousSnapshot;
@@ -100,7 +100,7 @@ public sealed class SettingsState : IGameState
     {
         DrawHeading(spriteBatch, Title, TitleRow);
 
-        for (var line = 0; line < SettingsModel.LineCount; line++)
+        for (var line = 0; line < SettingsMenu.LineCount; line++)
             DrawLine(spriteBatch, line, FirstLineRow + line * LineStep);
 
         DrawInstruction(spriteBatch, ChooseLine, InstructionsRow);
@@ -114,9 +114,9 @@ public sealed class SettingsState : IGameState
 
         var now = InputSnapshot.Read();
 
-        if (WasPressed(now, Keys.Up, Buttons.DPadUp)) _settingsModel.MoveUp();
+        if (WasPressed(now, Keys.Up, Buttons.DPadUp)) _settingsMenu.MoveUp();
 
-        if (WasPressed(now, Keys.Down, Buttons.DPadDown)) _settingsModel.MoveDown();
+        if (WasPressed(now, Keys.Down, Buttons.DPadDown)) _settingsMenu.MoveDown();
 
         if (WasPressed(now, Keys.Left, Buttons.DPadLeft)) Change(-1);
 
@@ -136,7 +136,7 @@ public sealed class SettingsState : IGameState
     /// <summary>Performs the highlighted action row, if it reads YES.</summary>
     private void Activate()
     {
-        switch (_settingsModel.Activate(_gameSettings))
+        switch (_settingsMenu.Activate(_gameSettings))
         {
             case SettingsAction.RestoreFactorySettings:
                 _gameSettingsStore.Save(_gameSettings);
@@ -151,7 +151,7 @@ public sealed class SettingsState : IGameState
     /// <summary>Steps the highlighted row, writing the change straight to the file.</summary>
     private void Change(int direction)
     {
-        _settingsModel.Change(_gameSettings, direction);
+        _settingsMenu.Change(_gameSettings, direction);
         _gameSettingsStore.Save(_gameSettings);
     }
 
@@ -183,17 +183,17 @@ public sealed class SettingsState : IGameState
     /// </summary>
     private void DrawLine(SpriteBatch spriteBatch, int line, int y)
     {
-        if (_settingsModel.Line == line) DrawCursor(spriteBatch, y);
+        if (_settingsMenu.Line == line) DrawCursor(spriteBatch, y);
 
         var labelPaletteIndex = InputPaletteIndex;
-        if (_settingsModel.Line == line) labelPaletteIndex = DefineInputsHighlight.PaletteIndex;
+        if (_settingsMenu.Line == line) labelPaletteIndex = DefineInputsHighlight.PaletteIndex;
 
-        DrawText(spriteBatch, SettingsModel.GetLabel(line), LabelColumn, y, labelPaletteIndex);
-        DrawText(spriteBatch, _settingsModel.GetValue(_gameSettings, line), ValueColumn, y, InputPaletteIndex);
+        DrawText(spriteBatch, SettingsMenu.GetLabel(line), LabelColumn, y, labelPaletteIndex);
+        DrawText(spriteBatch, _settingsMenu.GetValue(_gameSettings, line), ValueColumn, y, InputPaletteIndex);
 
         string note;
-        if (SettingsModel.IsActionLine(line)) note = _settingsModel.GetActionHint(line);
-        else note = SettingsModel.GetNote(_gameSettings, line);
+        if (SettingsMenu.IsActionLine(line)) note = _settingsMenu.GetActionHint(line);
+        else note = SettingsMenu.GetNote(_gameSettings, line);
 
         if (note.Length > 0) DrawText(spriteBatch, note, NoteColumn, y, HeadingPaletteIndex);
     }

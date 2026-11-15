@@ -17,7 +17,7 @@ namespace Robotron2084.Hud;
 ///     the cursor keys could never be bound, since they are how the page is scrolled.
 ///     Scrolling is therefore only live while nothing is armed.
 /// </summary>
-public sealed class DefineInputsModel
+public sealed class DefineInputsMenu
 {
     /// <summary>Every line on the page, blank spacers included.</summary>
     public const int LineCount = PauseLine + 1;

@@ -96,7 +96,7 @@ public sealed class DefineInputsState : IGameState
 
     private readonly ControlSettingsStore _controlSettingsStore;
     private readonly DefineInputsHighlight _defineInputsHighlight = new();
-    private readonly DefineInputsModel _defineInputsModel = new();
+    private readonly DefineInputsMenu _defineInputsMenu = new();
     private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
     private InputSnapshot _previousSnapshot;
@@ -117,9 +117,9 @@ public sealed class DefineInputsState : IGameState
     {
         DrawHeading(spriteBatch, Title, TitleRow);
 
-        var last = Math.Min(_defineInputsModel.FirstVisibleLine + DefineInputsModel.VisibleLines, DefineInputsModel.LineCount);
+        var last = Math.Min(_defineInputsMenu.FirstVisibleLine + DefineInputsMenu.VisibleLines, DefineInputsMenu.LineCount);
         var row = 0;
-        for (var line = _defineInputsModel.FirstVisibleLine; line < last; line++, row++)
+        for (var line = _defineInputsMenu.FirstVisibleLine; line < last; line++, row++)
             DrawLine(spriteBatch, line, FirstLineRow + row * LineStep);
 
         DrawInstruction(spriteBatch, Instructions, InstructionsRow);
@@ -133,7 +133,7 @@ public sealed class DefineInputsState : IGameState
 
         var now = InputSnapshot.Read();
 
-        if (_defineInputsModel.IsArmed)
+        if (_defineInputsMenu.IsArmed)
             CaptureInput(now);
         else
             Navigate(now, gameStateManager);
@@ -147,9 +147,9 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private static string GetLabel(int line)
     {
-        if (line == DefineInputsModel.PauseLine) return "PAUSE";
+        if (line == DefineInputsMenu.PauseLine) return "PAUSE";
 
-        return $"P{DefineInputsModel.PlayerOf(line) + 1} {DefineInputsModel.GetAction(line)!.Value.GetLabel()}";
+        return $"P{DefineInputsMenu.PlayerOf(line) + 1} {DefineInputsMenu.GetAction(line)!.Value.GetLabel()}";
     }
 
     /// <summary>The armed half of the page: the next input pressed becomes the binding.</summary>
@@ -157,12 +157,12 @@ public sealed class DefineInputsState : IGameState
     {
         if (WasKeyboardPressed(now, Keys.Back) || WasPadPressed(now, Buttons.B))
         {
-            _defineInputsModel.CancelArm();
+            _defineInputsMenu.CancelArm();
             return;
         }
 
         var captured = ControlCapture.GetNewlyPressed(_previousSnapshot, now);
-        if (captured.Kind != InputBindingKind.None && _defineInputsModel.Assign(_controlSettings, captured))
+        if (captured.Kind != InputBindingKind.None && _defineInputsMenu.Assign(_controlSettings, captured))
             _controlSettingsStore.Save(_controlSettings);
     }
 
@@ -200,18 +200,18 @@ public sealed class DefineInputsState : IGameState
     /// </summary>
     private void DrawLine(SpriteBatch spriteBatch, int line, int y)
     {
-        if (DefineInputsModel.IsSpacer(line)) return;
+        if (DefineInputsMenu.IsSpacer(line)) return;
 
-        if (_defineInputsModel.IsCursorOn(line)) DrawCursor(spriteBatch, y);
+        if (_defineInputsMenu.IsCursorOn(line)) DrawCursor(spriteBatch, y);
 
         // The arrow hides itself while armed (IsCursorOn): the next input pressed becomes the
         // binding rather than moving the cursor, so the armed line is identified by its prompt.
-        var isArmed = _defineInputsModel.IsArmed && _defineInputsModel.Line == line;
+        var isArmed = _defineInputsMenu.IsArmed && _defineInputsMenu.Line == line;
 
         // The selected line's label is the page's one cycling thing (notes §115): it strobes in the
         // highlight's palette index — while armed as well — and the line's value stays on the page's green.
         var labelPaletteIndex = InputPaletteIndex;
-        if (_defineInputsModel.Line == line) labelPaletteIndex = DefineInputsHighlight.PaletteIndex;
+        if (_defineInputsMenu.Line == line) labelPaletteIndex = DefineInputsHighlight.PaletteIndex;
 
         DrawText(spriteBatch, GetLabel(line), LabelColumn, y, labelPaletteIndex);
         DrawValue(spriteBatch, line, isArmed, InputPaletteIndex, y);
@@ -254,9 +254,9 @@ public sealed class DefineInputsState : IGameState
 
     private ActionBinding GetBinding(int line)
     {
-        if (line == DefineInputsModel.PauseLine) return new ActionBinding(_controlSettings.Pause, InputBinding.None);
+        if (line == DefineInputsMenu.PauseLine) return new ActionBinding(_controlSettings.Pause, InputBinding.None);
 
-        return _controlSettings[DefineInputsModel.PlayerOf(line)][DefineInputsModel.GetAction(line)!.Value];
+        return _controlSettings[DefineInputsMenu.PlayerOf(line)][DefineInputsMenu.GetAction(line)!.Value];
     }
 
     /// <summary>The X that centres a line of the given font on the canvas.</summary>
@@ -276,13 +276,13 @@ public sealed class DefineInputsState : IGameState
 
         if (WasKeyboardPressed(now, Keys.Delete) || WasPadPressed(now, Buttons.X))
         {
-            _defineInputsModel.ClearHighlighted(_controlSettings);
+            _defineInputsMenu.ClearHighlighted(_controlSettings);
             _controlSettingsStore.Save(_controlSettings);
         }
 
         if (WasKeyboardPressed(now, Keys.R))
         {
-            _defineInputsModel.ResetAll(_controlSettings);
+            _defineInputsMenu.ResetAll(_controlSettings);
             _controlSettingsStore.Save(_controlSettings);
         }
 
@@ -308,11 +308,11 @@ public sealed class DefineInputsState : IGameState
     /// <summary>Moves the highlight up or down, or arms the highlighted row for a new binding.</summary>
     private void ScrollOrArm(InputSnapshot now)
     {
-        if (WasKeyboardPressed(now, Keys.Up) || WasPadPressed(now, Buttons.DPadUp)) _defineInputsModel.MoveUp();
+        if (WasKeyboardPressed(now, Keys.Up) || WasPadPressed(now, Buttons.DPadUp)) _defineInputsMenu.MoveUp();
 
-        if (WasKeyboardPressed(now, Keys.Down) || WasPadPressed(now, Buttons.DPadDown)) _defineInputsModel.MoveDown();
+        if (WasKeyboardPressed(now, Keys.Down) || WasPadPressed(now, Buttons.DPadDown)) _defineInputsMenu.MoveDown();
 
-        if (WasKeyboardPressed(now, Keys.Enter) || WasPadPressed(now, Buttons.A)) _defineInputsModel.Arm();
+        if (WasKeyboardPressed(now, Keys.Enter) || WasPadPressed(now, Buttons.A)) _defineInputsMenu.Arm();
     }
 
     private bool WasKeyboardPressed(InputSnapshot now, Keys key)

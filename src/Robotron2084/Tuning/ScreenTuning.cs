@@ -4,7 +4,7 @@ namespace Robotron2084.Tuning;
 /// <remarks>
 ///     The initials entry page (notes §116) comes from <c>RRTESTC.ASM</c> <c>ENDGAM</c> and <c>EGSUB</c>, the messages
 ///     95 (<c>CONG</c>) and 100 (<c>ONLY5P</c>) in <c>RRET.ASM</c>, and <c>RRTESTB.ASM</c> <c>GETLET</c>. The page's
-///     geometry belongs to <c>InitialsEntryLayout</c> and the input model's own clocks to <c>InitialsEntryModel</c>.
+///     geometry belongs to <c>InitialsEntryLayout</c> and the editor's own clocks to <c>InitialsEditor</c>.
 ///     The high score table (notes §98) comes from <c>RRTABLE.ASM</c> <c>TABLE</c>, the CMOS lists in
 ///     <c>RRTESTC.ASM</c> and the texts in <c>RRET.ASM</c>. Every value in the table section is a ROM constant.
 /// </remarks>

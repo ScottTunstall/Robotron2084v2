@@ -6,7 +6,7 @@ namespace Robotron2084.Hud;
 
 /// <summary>
 ///     The GAME ADJUSTMENT page's logic, with no MonoGame in it (notes §131) — the same split the
-///     DEFINITIONS page uses (<see cref="DefineInputsModel" />): the state draws and reads hardware, this
+///     DEFINITIONS page uses (<see cref="DefineInputsMenu" />): the state draws and reads hardware, this
 ///     decides what a keypress MEANS.
 ///     The page is the arcade's own gameplay rows, in the arcade's order, plus the port's own sound row
 ///     (its coin/pricing rows are not built):
@@ -33,7 +33,7 @@ namespace Robotron2084.Hud;
 ///     The descriptive words under each value are the ROM's own option lists (the metadata at $6FD5 and
 ///     the strings it points at): "RECOMMENDED" is the stop the arcade's factory settings use.
 /// </summary>
-public sealed class SettingsModel
+public sealed class SettingsMenu
 {
     /// <summary>ATTRACT MODE SOUND — port-only: whether the attract sequence makes its noises.</summary>
     public const int AttractSoundLine = 3;

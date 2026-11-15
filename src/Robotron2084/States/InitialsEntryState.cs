@@ -13,7 +13,7 @@ namespace Robotron2084.States;
 
 /// <summary>
 ///     The CONG screen — the arcade's "YOU ARE A ROBOTRON HERO / ENTER YOUR INITIALS:" page (notes §116).
-///     It collects one player's initials through <see cref="InitialsEntryModel" />, offers the score to the
+///     It collects one player's initials through <see cref="InitialsEditor" />, offers the score to the
 ///     table under them, and hands the ceremony on to its next screen.
 /// </summary>
 /// <remarks>
@@ -25,7 +25,7 @@ namespace Robotron2084.States;
 public sealed class InitialsEntryState : IGameState
 {
     private readonly ScoreEntryCeremony _scoreEntryCeremony;
-    private readonly InitialsEntryModel _initialsEntryModel = new();
+    private readonly InitialsEditor _initialsEditor = new();
     private readonly IPlayerInputSource _playerInputSource;
     private readonly FinalScore _score;
     private readonly GameStateParams _gameStateParams;
@@ -54,9 +54,9 @@ public sealed class InitialsEntryState : IGameState
     public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
         var playerInputState = _playerInputSource.Poll();
-        if (!_initialsEntryModel.Tick(playerInputState)) return;
+        if (!_initialsEditor.Tick(playerInputState)) return;
 
-        var result = _scoreEntryCeremony.Submit(_score, _initialsEntryModel.GetInitials());
+        var result = _scoreEntryCeremony.Submit(_score, _initialsEditor.GetInitials());
         if (result.ReachedEntriesMaximum)
         {
             gameStateManager.TransitionTo(new EntriesMaximumState(_gameStateParams, _scoreEntryCeremony));
@@ -68,14 +68,14 @@ public sealed class InitialsEntryState : IGameState
 
     private void DrawCell(SpriteBatch spriteBatch, int cell, int x)
     {
-        if (cell == _initialsEntryModel.LetterIndex && _initialsEntryModel.IsPreviewRub())
+        if (cell == _initialsEditor.LetterIndex && _initialsEditor.IsPreviewRub())
         {
             _textureSet.ArcadeText.DrawRubMarker(spriteBatch, x, InitialsEntryLayout.GetEchoY(),
                 InitialsEntryLayout.InkPaletteIndex);
             return;
         }
 
-        _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, _initialsEntryModel.GetInitials()[cell].ToString(), x,
+        _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, _initialsEditor.GetInitials()[cell].ToString(), x,
             InitialsEntryLayout.GetEchoY(), InitialsEntryLayout.InkPaletteIndex);
     }
 
@@ -85,7 +85,7 @@ public sealed class InitialsEntryState : IGameState
     /// </summary>
     private void DrawCells(SpriteBatch spriteBatch)
     {
-        for (var cell = 0; cell < InitialsEntryModel.LetterCount; cell++)
+        for (var cell = 0; cell < InitialsEditor.LetterCount; cell++)
         {
             var x = InitialsEntryLayout.GetCellX(cell);
             DrawCell(spriteBatch, cell, x);

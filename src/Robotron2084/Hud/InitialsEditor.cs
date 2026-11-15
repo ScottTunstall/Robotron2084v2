@@ -23,7 +23,7 @@ namespace Robotron2084.Hud;
 ///     TIMPRC ends the entry after 640 frames per remaining letter. Alphanumeric-only mode is the only
 ///     one the port uses, so the ROM's <c>$80</c> "all characters" paths are not modelled.
 /// </remarks>
-public sealed class InitialsEntryModel
+public sealed class InitialsEditor
 {
     /// <summary>
     ///     How many letters the entry asks for — the ROM's <c>LDD #$300</c>, and the width of a table entry. It is the
