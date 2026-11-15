@@ -2,6 +2,7 @@ using Robotron2084.Entities;
 using Robotron2084.Input;
 using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Score;
 using Xunit;
 
 namespace Robotron2084.Tests.Level;
@@ -64,7 +65,7 @@ public sealed class FamilySavedTests
     [Fact]
     public void APlayerStartsTheirFirstWaveHavingSavedTheWholeFamily()
     {
-        var playerSlot = new PlayerSlot(1, new FakeInputSource(), 3, 1);
+        var playerSlot = new PlayerSlot(1, new FakeInputSource(), 3, 1, new ScoreBoard(0));
 
         Assert.True(playerSlot.SavedWholeFamilyLastWave);
         Assert.Equal(0, playerSlot.FamilyMembersLostThisWave);

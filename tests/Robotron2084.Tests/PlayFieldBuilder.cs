@@ -7,6 +7,7 @@ using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Level.Collisions;
 using Robotron2084.Palette;
+using Robotron2084.Score;
 
 namespace Robotron2084.Tests;
 
@@ -39,6 +40,7 @@ internal sealed class PlayFieldBuilder
     private bool _playerInvincible = true;
     private Random _random = new(DefaultSeed);
     private int _score;
+    private ScoreBoard? _scoreBoard;
     private bool _tankShellBugEnabled = true;
 
     /// <summary>Uses these wave parameters.</summary>
@@ -97,6 +99,14 @@ internal sealed class PlayFieldBuilder
         return this;
     }
 
+
+    /// <summary>Adds to this score board, such as a player slot's, instead of one of the field's own.</summary>
+    /// <param name="scoreBoard">The score board.</param>
+    public PlayFieldBuilder WithScoreBoard(ScoreBoard scoreBoard)
+    {
+        _scoreBoard = scoreBoard;
+        return this;
+    }
 
     /// <summary>Wires in a live palette.</summary>
     /// <param name="gamePalette">The palette.</param>
@@ -165,7 +175,7 @@ internal sealed class PlayFieldBuilder
             new WallColourCycle(),
             _random,
             _lives,
-            _score,
+            _scoreBoard ?? new ScoreBoard(_score),
             _gamePalette,
             _playerInvincible,
             _pixelCollision is null ? null : new PixelContactTest(_pixelCollision),

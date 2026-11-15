@@ -39,7 +39,7 @@ public class GameSessionTests
         Assert.Equal(2, gameSession.PlayerSlots.Count);
         Assert.Equal(1, gameSession.GetCurrent().Number);
 
-        gameSession.PlayerSlots[1].Score = 4200;
+        gameSession.PlayerSlots[1].ScoreBoard.SetScore(4200);
         gameSession.PlayerSlots[1].Wave = 7;
         Assert.Equal(0, gameSession.PlayerSlots[0].Score);
         Assert.Equal(PlayerTuning.StartingWaveNumber, gameSession.PlayerSlots[0].Wave);
@@ -127,8 +127,8 @@ public class GameSessionTests
     public void ScoresHighestFirst_OrdersBothPlayers()
     {
         var gameSession = NewTwoPlayerGame();
-        gameSession.PlayerSlots[0].Score = 1500;
-        gameSession.PlayerSlots[1].Score = 9800;
+        gameSession.PlayerSlots[0].ScoreBoard.SetScore(1500);
+        gameSession.PlayerSlots[1].ScoreBoard.SetScore(9800);
 
         Assert.Equal([9800, 1500], gameSession.GetScoresHighestFirst());
     }
@@ -156,5 +156,17 @@ public class GameSessionTests
         var gameSession = GameSession.CreateNewGame(new FakeInputSource(), 1);
 
         Assert.Equal(GameSettings.FactoryTurnsPerPlayer, gameSession.GetCurrent().Lives);
+    }
+
+    [Fact]
+    public void EachPlayerHasAScoreBoardOfTheirOwn_StartingAtZero()
+    {
+        var gameSession = GameSession.CreateNewGame(GameMode.TwoPlayerAlternate, new FakeInputSource(), new FakeInputSource());
+
+        gameSession.PlayerSlots[0].ScoreBoard.Add(100);
+
+        Assert.NotSame(gameSession.PlayerSlots[0].ScoreBoard, gameSession.PlayerSlots[1].ScoreBoard);
+        Assert.Equal(100, gameSession.PlayerSlots[0].Score);
+        Assert.Equal(0, gameSession.PlayerSlots[1].Score);
     }
 }

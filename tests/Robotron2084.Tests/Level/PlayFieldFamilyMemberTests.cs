@@ -161,16 +161,15 @@ public sealed class PlayFieldFamilyMemberTests
     }
 
     [Fact]
-    public void SyncInto_HandsLiveScoreAndLivesToThePlayersSlot()
+    public void TheFieldAddsToThePlayersOwnScore_AndSyncIntoHandsOverTheLives()
     {
-        // The HUD draws the SESSION's slots, and the ROM reads the score, the lives
-        // out of the player's data block every time it draws — so the
-        // hand-over happens every tick (notes §97). Syncing only at a wave clear
-        // left the displayed score stale for the rest of the wave, which is what
-        // the attract demo's rescue bonus looked like.
-        var playField = CreateField(FamilyMemberWave(0, 0, 1));
+        // The HUD draws the SESSION's slots. The score lives in the player's slot for the whole game and the field
+        // adds to that same score board, so a point shows the moment it is scored, with nothing copied. The lives are
+        // still handed over every tick (notes §97).
+        PlayerSlot playerSlot = new(1, new FakeInputSource(), 3, 1, new ScoreBoard(0));
+        var playField = new PlayFieldBuilder().WithParameters(FamilyMemberWave(0, 0, 1)).WithSeed(99)
+            .WithScoreBoard(playerSlot.ScoreBoard).Build();
         playField.SkipWaveStart();
-        PlayerSlot playerSlot = new(1, new FakeInputSource(), 3, 1);
 
         playField.Update(new GameTime());
         playField.SyncInto(playerSlot);
@@ -180,10 +179,10 @@ public sealed class PlayFieldFamilyMemberTests
         var familyMember = playField.FieldEntities.FamilyList.Members[0];
         familyMember.MoveTo(playField.Player.Position);
         playField.Update(new GameTime());
+        Assert.Equal(ScoreValues.RescueBonus(1), playerSlot.Score);
+
         playField.Player.AddLife(); // an earned spare life must reach the HUD too
         playField.SyncInto(playerSlot);
-
-        Assert.Equal(ScoreValues.RescueBonus(1), playerSlot.Score);
         Assert.Equal(playField.Player.Lives, playerSlot.Lives);
     }
 
