@@ -115,6 +115,7 @@ public static class TexturePaths
 /// </summary>
 public static class SpeechLinePaths
 {{
+    /// <summary>The content path of every speech line, such as <c>Speech/Berzerk/alert</c>, in order.</summary>
     public static readonly string[] All =
     [
 {speech_entries},
