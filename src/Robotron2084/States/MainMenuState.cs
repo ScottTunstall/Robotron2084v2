@@ -1,6 +1,8 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Robotron2084.Audio.Models;
+using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Input.Models;
@@ -34,6 +36,11 @@ namespace Robotron2084.States;
 ///         <item>The game style is saved as soon as it changes. The game shown starts as one player each time the page opens.</item>
 ///         <item>Left alone for <see cref="IdleSeconds" />, the page goes back to the title, and the attract cycle runs.</item>
 ///         <item>
+///             In EXTENDED, left alone for <see cref="NoCoinsIdleSeconds" />, the Berzerk robot says "NO COINS DETECTED IN
+///             POCKET" (<see cref="NoCoinsSpeech" />), once for that spell of being left alone. Using the page lets it say it again the
+///             next time the page is left alone.
+///         </item>
+///         <item>
 ///             The picture of the robots fills the screen, in its own colours. Each block of words sits on a dark box
 ///             the picture shows through, so the words can be read. The row the cursor is on strobes, as on the
 ///             DEVELOPER TOOLS page.
@@ -44,6 +51,24 @@ public sealed class MainMenuState : IGameState
 {
     /// <summary>How long the page waits with no key or button pressed before going back to the title, in seconds.</summary>
     private const int IdleSeconds = 30;
+
+    /// <summary>How long the page waits with no key or button pressed before the Berzerk robot speaks, in seconds, in EXTENDED.</summary>
+    /// <remarks>Port only: the author's choice.</remarks>
+    private const int NoCoinsIdleSeconds = 10;
+
+    /// <summary>The words the Berzerk robot says when the page is left alone: "NO COINS DETECTED IN POCKET".</summary>
+    /// <remarks>
+    ///     Original source: the author's Berzerk disassembly, <c>berzerk.asm</c> <c>COINS_DETECTED_IN_POCKET</c>
+    ///     (<c>$1AD6</c>), which has no NO at the start; the author asked for it.
+    /// </remarks>
+    private static readonly BerzerkWord[] NoCoinsSpeech =
+        [BerzerkWord.No, BerzerkWord.Coins, BerzerkWord.Detected, BerzerkWord.In, BerzerkWord.Pocket];
+
+    /// <summary>
+    ///     The voice that speech is said in: Berzerk's own control byte for it, <c>$65</c> (pitch 5, volume 4), from the same
+    ///     routine.
+    /// </summary>
+    private static readonly BerzerkVoiceSetting NoCoinsVoiceSetting = BerzerkVoiceSetting.CreateFromControlByte(0x65);
 
     /// <summary>The gap between the words and the edge of the dark box behind them, in port pixels.</summary>
     private const int ShadePadding = 8;
@@ -56,6 +81,13 @@ public sealed class MainMenuState : IGameState
 
     /// <summary>The gap from one row of the menu to the next, in port pixels.</summary>
     private const int LineStep = 26;
+
+    /// <summary>
+    ///     The sound board's number for the sound played whenever an option on the page is selected: ED12 (see
+    ///     <see cref="BoardSounds" />).
+    /// </summary>
+    /// <remarks>Port only: the author's choice.</remarks>
+    private const int SelectSoundNumber = 0x0C;
 
     /// <summary>The gap between the cursor and the start of its row, in port pixels.</summary>
     private const int CursorGap = 18;
@@ -106,6 +138,9 @@ public sealed class MainMenuState : IGameState
     private readonly TextureSet _textureSet;
     private GameMode _gameMode = GameMode.OnePlayer;
     private TimeSpan _idleElapsed;
+
+    /// <summary>True once the robot has spoken for the spell of being left alone that is going on.</summary>
+    private bool _hasSpokenThisIdleSpell;
     private InputSnapshot _previousSnapshot;
 
     /// <summary>Opens the page with the cursor on its first row.</summary>
@@ -215,13 +250,34 @@ public sealed class MainMenuState : IGameState
 
         var now = InputSnapshot.Read();
         _idleElapsed += gameTime.ElapsedGameTime;
-        if (IsAnyKeyOrButtonPressed(now)) _idleElapsed = TimeSpan.Zero;
+        if (IsAnyKeyOrButtonPressed(now))
+        {
+            _idleElapsed = TimeSpan.Zero;
+            _hasSpokenThisIdleSpell = false;
+        }
+
+        SayNoCoinsIfLeftAlone();
 
         var isLeaving = HandleShortcuts(now, gameStateManager) || HandleCursorKeys(now, gameStateManager);
         _previousSnapshot = now;
         if (isLeaving) return;
 
         if (_idleElapsed >= _idleDuration) gameStateManager.TransitionTo(new TitleScreenState(_gameStateParams));
+    }
+
+    /// <summary>
+    ///     In EXTENDED, once the page has been left alone for <see cref="NoCoinsIdleSeconds" />, has the Berzerk robot say
+    ///     "NO COINS DETECTED IN POCKET". It says it once for each spell of being left alone, not again every
+    ///     <see cref="NoCoinsIdleSeconds" />.
+    /// </summary>
+    private void SayNoCoinsIfLeftAlone()
+    {
+        var isLeftAlone = _idleElapsed >= TimeSpan.FromSeconds(NoCoinsIdleSeconds);
+        var isExtended = _gameStateParams.GameSettings.GameStyle == GameStyle.Extended;
+        if (_hasSpokenThisIdleSpell || !isLeftAlone || !isExtended) return;
+
+        _hasSpokenThisIdleSpell = true;
+        Speech.SayBerzerk(NoCoinsVoiceSetting, NoCoinsSpeech);
     }
 
     /// <summary>
@@ -266,19 +322,25 @@ public sealed class MainMenuState : IGameState
         return false;
     }
 
-    /// <summary>Moves the cursor up (-1) or down (1) a row, wrapping at either end.</summary>
-    private void MoveCursor(int step)
+    /// <summary>Moves the cursor up (-1) or down (1) a row, wrapping at either end. It is silent.</summary>
+    internal void MoveCursor(int step)
     {
         Line = (Line + step + Lines.Length) % Lines.Length;
+    }
+
+    /// <summary>Plays the sound that tells the player an option has been selected (<see cref="SelectSoundNumber" />).</summary>
+    private static void PlaySelectSound()
+    {
+        Sound.SendDirect(SelectSoundNumber);
     }
 
     /// <summary>
     ///     Changes the value of the row the cursor is on, as LEFT (-1) and RIGHT (1) do on the GAME ADJUSTMENT page: the game
     ///     shown steps through its three, wrapping at either end, and the game style switches whichever way it is pushed.
-    ///     A row with no value does nothing.
+    ///     A row with no value does nothing. It is silent.
     /// </summary>
     /// <param name="step">-1 for LEFT, 1 for RIGHT.</param>
-    private void ChangeValue(int step)
+    internal void ChangeValue(int step)
     {
         if (Lines[Line] == MainMenuLine.StartGame)
         {
@@ -297,12 +359,16 @@ public sealed class MainMenuState : IGameState
         _gameSettingsStore.Save(_gameStateParams.GameSettings);
     }
 
-    /// <summary>Does what a row says: starts the game shown, switches the game style, or opens a page.</summary>
+    /// <summary>
+    ///     Does what a row says: starts the game shown, switches the game style, or opens a page. It plays the select sound
+    ///     first, for every row.
+    /// </summary>
     /// <param name="line">The row.</param>
     /// <param name="gameStateManager">The screens, for a row that opens another.</param>
     /// <returns>True when the page has been left for another.</returns>
-    private bool Choose(MainMenuLine line, GameStateManager gameStateManager)
+    internal bool Choose(MainMenuLine line, GameStateManager gameStateManager)
     {
+        PlaySelectSound();
         Line = Array.IndexOf(Lines, line);
         switch (line)
         {
