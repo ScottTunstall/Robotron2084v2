@@ -33,6 +33,9 @@ public sealed class RobotronGame : Game
 {
     private const ScaleMode CanvasScaleMode = ScaleMode.Integer;
 
+    /// <summary>The title of the game's window.</summary>
+    private const string WindowTitle = "ScottOTron 2084";
+
     /// <summary>The function keys that start a game on an attract screen, each with the game it starts.</summary>
     private static readonly (Keys Key, GameMode GameMode)[] StartGameKeys =
     [
@@ -103,7 +106,7 @@ public sealed class RobotronGame : Game
 
     protected override void Initialize()
     {
-        Window.Title = "ScottOTron 2084";
+        Window.Title = GetWindowTitle();
         Window.AllowUserResizing = true;
         Window.ClientSizeChanged += (_, _) => FitCanvas();
 
@@ -176,6 +179,7 @@ public sealed class RobotronGame : Game
         HandleAttractDeveloperKeys(keyboardState);
         HandleStartKeys(keyboardState);
         HandleDeveloperToolsKey(keyboardState);
+        HandleTemporaryInvincibilityKey(keyboardState);
 
         _previousKeyboardState = keyboardState;
         _previousPadOneState = GamePad.GetState(PlayerIndex.One);
@@ -297,6 +301,25 @@ public sealed class RobotronGame : Game
             return;
 
         _gameStateManager.TransitionTo(new DeveloperToolsState(_gameStateParams, _controlSettingsStore, _gameSettingsStore));
+    }
+
+    /// <summary>Gets the title of the window: the game's name, and a note while the player cannot be killed (TEMPORARY, with the Caps Lock key).</summary>
+    private static string GetWindowTitle()
+    {
+        return DeveloperKeys.PlayerInvincible ? WindowTitle + " - INVINCIBLE" : WindowTitle;
+    }
+
+    /// <summary>
+    ///     TEMPORARY: the Caps Lock key switches the player's invincibility on and off, and the window's title says when it is
+    ///     on. It will be removed when the author says so.
+    /// </summary>
+    /// <param name="keyboardState">This tick's keyboard.</param>
+    private void HandleTemporaryInvincibilityKey(KeyboardState keyboardState)
+    {
+        if (!WasPressed(keyboardState, Keys.CapsLock)) return;
+
+        DeveloperKeys.PlayerInvincible = !DeveloperKeys.PlayerInvincible;
+        Window.Title = GetWindowTitle();
     }
 
     /// <summary>The port-only presentation key: Alt+Enter toggles full screen.</summary>
