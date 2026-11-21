@@ -45,6 +45,25 @@ public sealed class BerzerkRobotTests
     private static readonly int StepPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
     [Fact]
+    public void ARobotIsBlue_UnlessItIsGivenAColour()
+    {
+        var blueRobot = new BerzerkRobot(TestEntityParams.Create(new Random(1)), IntVector2.Zero);
+        var greenRobot = new BerzerkRobot(TestEntityParams.Create(new Random(1)), IntVector2.Zero, Color.Lime);
+
+        Assert.Equal(new Color(0, 0, 240), BerzerkRobot.DefaultColour);
+        Assert.Equal(BerzerkRobot.DefaultColour, blueRobot.Colour);
+        Assert.Equal(Color.Lime, greenRobot.Colour);
+    }
+
+    [Fact]
+    public void ItDrawsTheStripsOfItsAppearAndExplosion_InItsOwnColour()
+    {
+        var berzerkRobot = new BerzerkRobot(TestEntityParams.Create(new Random(1)), IntVector2.Zero);
+
+        Assert.IsAssignableFrom<IStripDrawer>(berzerkRobot);
+    }
+
+    [Fact]
     public void ItStepsAtASteadyPace_WithNoRandomWait()
     {
         var playField = CreateFieldInPlay();

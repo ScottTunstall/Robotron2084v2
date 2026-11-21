@@ -127,6 +127,15 @@ public sealed class SpriteTestEntriesTests
         Assert.Equal([BerzerkRobot.StepPixels], GetEntry("BERZERK ROBOT").WalkOn!.StepPortPixels);
     }
 
+    [Fact]
+    public void TheBerzerkRobotIsDrawnInItsOwnColour_AsInTheGame()
+    {
+        var berzerkRobot = GetEntry("BERZERK ROBOT");
+
+        Assert.Equal(SpriteTestDrawStyle.Solid, berzerkRobot.DrawStyle);
+        Assert.Equal(BerzerkRobot.DefaultColour, berzerkRobot.ShapeColour);
+    }
+
     [Theory]
     [InlineData("ENFORCER GROWING", EnforcerTuning.GrowSteps, EnforcerTuning.GrowIntervalArcadeFrames)]
     [InlineData("TANK GROWING", TankTuning.GrowSteps, TankTuning.GrowIntervalArcadeFrames)]
