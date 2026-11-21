@@ -1,4 +1,5 @@
 using Robotron2084.Audio;
+using Robotron2084.Audio.Models;
 using Xunit;
 using static Robotron2084.Audio.Models.BerzerkWord;
 
@@ -30,20 +31,23 @@ public sealed class BerzerkSpeechTests : IDisposable
     }
 
     [Fact]
-    public void TheWordsAreSaidInOrder_AtTheSamplePitch()
+    public void TheWordsAreSaidInOrder_AtTheSamplePitchAndVolume()
     {
         var voice = SayAndListen(() => Speech.SayBerzerk(The, Humanoid, Must, Not, Escape));
 
         Assert.Equal(["THE", "HUMANOID", "MUST", "NOT", "ESCAPE"], voice.SpokenLineNames);
         Assert.All(voice.SpokenPitchOctaves, octaves => Assert.Equal(0f, octaves));
+        Assert.All(voice.SpokenVolumeShares, volumeShare => Assert.Equal(1f, volumeShare));
     }
 
     [Fact]
-    public void EveryWordIsSaidAtThePitchAskedFor()
+    public void EveryWordIsSaidAtThePitchAndVolumeAskedFor()
     {
-        var voice = SayAndListen(() => Speech.SayBerzerk(7, Intruder, Alert));
+        var voice = SayAndListen(() => Speech.SayBerzerk(new BerzerkVoiceSetting(7, 4), Intruder, Alert));
 
+        Assert.Equal(2, voice.SpokenLineNames.Count);
         Assert.All(voice.SpokenPitchOctaves, octaves => Assert.Equal(BerzerkVoice.GetPitchOctaves(7), octaves));
+        Assert.All(voice.SpokenVolumeShares, volumeShare => Assert.Equal(BerzerkVoice.GetVolumeShare(4), volumeShare));
     }
 
     [Fact]

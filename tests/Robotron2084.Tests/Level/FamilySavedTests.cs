@@ -62,12 +62,42 @@ public sealed class FamilySavedTests
         Assert.Equal(0, playField.GetFamilyMembersLost());
     }
 
-    [Fact]
-    public void APlayerStartsTheirFirstWaveHavingSavedTheWholeFamily()
+    private static PlayerSlot CreatePlayerSlot()
     {
-        var playerSlot = new PlayerSlot(1, new FakeInputSource(), new LivesCounter(3), 1, new ScoreBoard(0));
+        return new PlayerSlot(1, new FakeInputSource(), new LivesCounter(3), 1, new ScoreBoard(0));
+    }
 
-        Assert.True(playerSlot.SavedWholeFamilyLastWave);
+    [Fact]
+    public void APlayerStartsTheirFirstWaveNotAChicken()
+    {
+        var playerSlot = CreatePlayerSlot();
+
+        Assert.False(playerSlot.IsChicken);
         Assert.Equal(0, playerSlot.FamilyMembersLostThisWave);
+    }
+
+    [Fact]
+    public void APlayerWhoDoesNotRescueTheWholeFamily_IsAChicken_AndTheCountOfLostFamilyStartsAgain()
+    {
+        var playerSlot = CreatePlayerSlot();
+        playerSlot.FamilyMembersLostThisWave = 2;
+
+        playerSlot.RecordWaveCleared(false);
+
+        Assert.True(playerSlot.IsChicken);
+        Assert.Equal(0, playerSlot.FamilyMembersLostThisWave);
+    }
+
+    [Fact]
+    public void AChicken_StaysAChicken_UntilTheyRescueTheWholeFamily()
+    {
+        var playerSlot = CreatePlayerSlot();
+
+        playerSlot.RecordWaveCleared(false);
+        playerSlot.RecordWaveCleared(false);
+        Assert.True(playerSlot.IsChicken);
+
+        playerSlot.RecordWaveCleared(true);
+        Assert.False(playerSlot.IsChicken);
     }
 }
