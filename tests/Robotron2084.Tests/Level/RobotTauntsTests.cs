@@ -234,6 +234,69 @@ public sealed class RobotTauntsTests
         Assert.Equal(RobotTauntSentences.OnePlayerChicken.Count, sentences.Distinct().Count());
     }
 
+    [Theory]
+    [InlineData(GameMode.OnePlayer, 0)]
+    [InlineData(GameMode.OnePlayer, 1)]
+    [InlineData(GameMode.TwoPlayerSimultaneous, 0)]
+    [InlineData(GameMode.TwoPlayerSimultaneous, 1)]
+    public void AChicken_IsCalledAChicken_InAboutHalfTheTaunts(GameMode gameMode, int hulkCount)
+    {
+        var playField = CreateField(CreateBerzerkWave(hulkCount));
+        var robotTaunts = CreateRobotTaunts();
+        var gameSession = CreateGame(gameMode);
+        gameSession.GetCurrent().RecordWaveCleared(false);
+
+        var chickenCalls = Enumerable.Range(0, SentencesPicked)
+            .Count(_ => RobotTaunts.IsChickenCall(robotTaunts.GetRandomSentence(gameSession, playField)));
+
+        Assert.InRange(chickenCalls, SentencesPicked * 45 / 100, SentencesPicked * 55 / 100);
+    }
+
+    [Fact]
+    public void APlayerWhoIsNotAChicken_IsNeverCalledOne_EvenWithTheFamilyAndAHulk()
+    {
+        var playField = CreateField(CreateBerzerkWave(hulkCount: 1));
+        var robotTaunts = CreateRobotTaunts();
+        var gameSession = CreateGame();
+
+        var sentences = Enumerable.Range(0, SentencesPicked).Select(_ => robotTaunts.GetRandomSentence(gameSession, playField));
+
+        Assert.DoesNotContain(sentences, RobotTaunts.IsChickenCall);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void InATwoPlayerSimultaneousGame_WithOnePlayerLeft_TheRobotsTauntThatPlayerAlone(bool isChicken)
+    {
+        var playField = CreateField(CreateBerzerkWave());
+        var robotTaunts = CreateRobotTaunts();
+        var gameSession = CreateGame(GameMode.TwoPlayerSimultaneous);
+        gameSession.PlayerSlots[0].RecordWaveCleared(!isChicken);
+        gameSession.PlayerSlots[1].LivesCounter.SetLives(0);
+        var expectedSentences = isChicken ? RobotTauntSentences.OnePlayerChicken : RobotTauntSentences.OnePlayer;
+
+        var sentences = Enumerable.Range(0, SentencesPicked).Select(_ => robotTaunts.GetRandomSentence(gameSession, playField)).ToList();
+
+        Assert.All(sentences, sentence => Assert.Contains(sentence, expectedSentences));
+        Assert.DoesNotContain(sentences, sentence => sentence.Contains(Chickens) || sentence.Contains(Intruders));
+    }
+
+    [Fact]
+    public void InATwoPlayerSimultaneousGame_WithBothPlayersLeft_AChickenIsCalledTheChickens()
+    {
+        var playField = CreateField(CreateBerzerkWave());
+        var robotTaunts = CreateRobotTaunts();
+        var gameSession = CreateGame(GameMode.TwoPlayerSimultaneous);
+        gameSession.PlayerSlots[1].RecordWaveCleared(false);
+
+        var chickenCalls = Enumerable.Range(0, SentencesPicked).Select(_ => robotTaunts.GetRandomSentence(gameSession, playField))
+            .Where(RobotTaunts.IsChickenCall).ToList();
+
+        Assert.NotEmpty(chickenCalls);
+        Assert.All(chickenCalls, sentence => Assert.Contains(Chickens, sentence));
+    }
+
     [Fact]
     public void InATwoPlayerAlternateGame_OnlyTheCurrentPlayerBeingAChicken_Counts()
     {
