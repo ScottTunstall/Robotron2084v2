@@ -13,7 +13,7 @@ internal sealed class HighScoreColourProcess
     public int ColourIndex;
 
     /// <summary>The colours the process goes through.</summary>
-    public byte[] ColourTable = [];
+    public IReadOnlyList<byte> ColourTable = [];
 
     /// <summary>The palette entry the process writes, or <see cref="HighScorePalette.LoopPaletteIndex" /> for the wall's process.</summary>
     public int PaletteIndex;

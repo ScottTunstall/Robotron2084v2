@@ -68,7 +68,7 @@ public sealed class PaletteAnimator
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$DA2C</c>.</description></item>
     ///     </list>
     /// </remarks>
-    public static readonly byte[] LaserTab =
+    public static readonly IReadOnlyList<byte> LaserTab =
     [
         0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
         0x37, 0x2F, 0x27, 0x1F, 0x17, 0x47, 0x47, 0x87,
@@ -194,7 +194,7 @@ public sealed class PaletteAnimator
 
             process.ClockUnits -= ArcadeClock.ToClockUnits(process.ArcadeFramesPerCycle);
             _gamePalette.SetPaletteIndexValue(process.PaletteIndex, process.ColourTable[process.ColourIndex]);
-            process.ColourIndex = (process.ColourIndex + 1) % process.ColourTable.Length;
+            process.ColourIndex = (process.ColourIndex + 1) % process.ColourTable.Count;
         }
     }
 }

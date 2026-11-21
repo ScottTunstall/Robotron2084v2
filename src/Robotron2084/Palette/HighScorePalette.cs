@@ -80,7 +80,7 @@ public sealed class HighScorePalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E2D1</c>.</description></item>
     ///     </list>
     /// </remarks>
-    public static readonly byte[] AccentTable =
+    public static readonly IReadOnlyList<byte> AccentTable =
     [
         0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xE4,
         0xD2, 0xC0, 0xC0, 0xC0, 0xD2, 0xE4, 0x00
@@ -93,7 +93,7 @@ public sealed class HighScorePalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E2FE</c>.</description></item>
     ///     </list>
     /// </remarks>
-    public static readonly byte[] CycleTable =
+    public static readonly IReadOnlyList<byte> CycleTable =
     [
         0x37, 0x2F, 0x27, 0x1F, 0x17, 0x47, 0x47, 0x87,
         0x87, 0xC7, 0xC7, 0xC6, 0xC5, 0xCC, 0xCB, 0xCA,
@@ -101,7 +101,7 @@ public sealed class HighScorePalette
     ];
 
     /// <summary>The palette entries the page takes over from the in-game colour animator.</summary>
-    public static readonly int[] OwnedPaletteIndices = [10, 12, 13];
+    public static readonly IReadOnlyList<int> OwnedPaletteIndices = [10, 12, 13];
 
     /// <summary>The colours of the two lists: red, up to white, and back.</summary>
     /// <remarks>
@@ -110,7 +110,7 @@ public sealed class HighScorePalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E2C2</c>.</description></item>
     ///     </list>
     /// </remarks>
-    public static readonly byte[] RampTable =
+    public static readonly IReadOnlyList<byte> RampTable =
     [
         0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
         0x57, 0xA7, 0xFF, 0xFF, 0xA7, 0x57, 0x00
@@ -250,10 +250,10 @@ public sealed class HighScorePalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$E2AB</c>.</description></item>
     ///     </list>
     /// </remarks>
-    private static int Advance(byte[] table, int index)
+    private static int Advance(IReadOnlyList<byte> table, int index)
     {
-        var next = (index + 1) % table.Length;
-        for (var guard = 0; guard < table.Length && table[next] == 0; guard++) next = (next + 1) % table.Length;
+        var next = (index + 1) % table.Count;
+        for (var guard = 0; guard < table.Count && table[next] == 0; guard++) next = (next + 1) % table.Count;
 
         return next;
     }

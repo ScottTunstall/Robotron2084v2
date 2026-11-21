@@ -83,7 +83,7 @@ public sealed class PresentationPagePalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$8A70</c>.</description></item>
     ///     </list>
     /// </remarks>
-    public static readonly byte[] PageColours = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
+    public static readonly IReadOnlyList<byte> PageColours = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
 
     /// <summary>How many fiftieths of a second pass between one colour change of the border logos and the next.</summary>
     /// <remarks>

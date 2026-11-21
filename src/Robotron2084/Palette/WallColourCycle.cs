@@ -22,10 +22,13 @@ public sealed class WallColourCycle
     /// <summary>Makes a wall colour cycle that starts on the first colour.</summary>
     /// <param name="colours">The colours to go through. When it is not given, the default wall colours are used.</param>
     /// <param name="stepDuration">How long each colour lasts. When it is not given, the default wall time is used.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The list of colours is empty, or the step duration is not above 0.</exception>
     public WallColourCycle(IReadOnlyList<Color>? colours = null, TimeSpan? stepDuration = null)
     {
         _colours = colours ?? WavePaletteTables.DefaultWallPalette;
+        ArgumentOutOfRangeException.ThrowIfZero(_colours.Count);
         _stepDuration = stepDuration ?? TimeSpan.FromMilliseconds(WavePaletteTables.WallStepDurationMilliseconds);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(_stepDuration, TimeSpan.Zero);
         CurrentColour = _colours[0];
     }
 

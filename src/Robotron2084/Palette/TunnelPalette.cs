@@ -82,7 +82,7 @@ public sealed class TunnelPalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$5A00</c>, <c>STB A,X</c>.</description></item>
     ///     </list>
     /// </remarks>
-    internal static readonly int[] BlackPaletteIndices = [0, 5, 10];
+    internal static readonly IReadOnlyList<int> BlackPaletteIndices = [0, 5, 10];
 
     /// <summary>The ramps the tunnel can use, in the original's order. Each is a table of colours.</summary>
     /// <remarks>
@@ -91,7 +91,7 @@ public sealed class TunnelPalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$576D</c> (<c>TABTAB</c>); the comment on each ramp gives its address.</description></item>
     ///     </list>
     /// </remarks>
-    internal static readonly byte[][] Ramps =
+    internal static readonly IReadOnlyList<IReadOnlyList<byte>> Ramps =
     [
         // DECTAB ($5984 in the disassembly)
         [
@@ -172,7 +172,7 @@ public sealed class TunnelPalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$576D</c>.</description></item>
     ///     </list>
     /// </remarks>
-    internal static readonly int[] StartMasks =
+    internal static readonly IReadOnlyList<int> StartMasks =
         [0x1F, 0x3F, 0x3F, 0x0F, 0x0F, 0x0F, 0x0F, 0x1F, 0x1F, 0x0F, 0x1F, 0x1F];
 
     private readonly Random _random;
@@ -214,7 +214,7 @@ public sealed class TunnelPalette
     {
         _windowStartIndex += SlidePerPass;
         var ramp = Ramps[RampIndex];
-        while (_windowStartIndex >= ramp.Length) _windowStartIndex -= ramp.Length;
+        while (_windowStartIndex >= ramp.Count) _windowStartIndex -= ramp.Count;
 
         if (BlackOffset == 0) BlackOffset = 4;
         else BlackOffset--;
@@ -248,7 +248,7 @@ public sealed class TunnelPalette
         {
             gamePalette.SetPaletteIndexValue(FirstPaletteIndex + paletteIndex, ramp[index]);
             index++;
-            if (index >= ramp.Length) index = 0; // the end of the ramp wraps round to its start
+            if (index >= ramp.Count) index = 0; // the end of the ramp wraps round to its start
         }
 
         foreach (var offset in BlackPaletteIndices) gamePalette.SetPaletteIndexValue(FirstPaletteIndex + offset + BlackOffset, 0x00);
@@ -268,8 +268,8 @@ public sealed class TunnelPalette
     /// </remarks>
     public void Start()
     {
-        RampIndex = _random.Next(Ramps.Length);
-        _windowStartIndex = (_random.Next() & StartMasks[RampIndex]) % Ramps[RampIndex].Length;
+        RampIndex = _random.Next(Ramps.Count);
+        _windowStartIndex = (_random.Next() & StartMasks[RampIndex]) % Ramps[RampIndex].Count;
         BlackOffset = 4;
     }
 }

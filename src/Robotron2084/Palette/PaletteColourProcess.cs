@@ -13,7 +13,7 @@ internal sealed class PaletteColourProcess
     public int ColourIndex;
 
     /// <summary>The colours the process goes through.</summary>
-    public byte[] ColourTable = [];
+    public IReadOnlyList<byte> ColourTable = [];
 
     /// <summary>The palette entry the process writes.</summary>
     public int PaletteIndex;

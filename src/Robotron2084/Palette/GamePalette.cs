@@ -34,7 +34,7 @@ public sealed class GamePalette
     ///     The six marker colours the sprite images use in place of entries 10 to 15. Every marker is different from every
     ///     other colour in the palette, so the colour-cycle effect can tell which entry a pixel means.
     /// </summary>
-    public static readonly byte[] CyclingPaletteIndexMarkers =
+    public static readonly IReadOnlyList<byte> CyclingPaletteIndexMarkers =
     [
         0xC4, 0xF4, 0xCC, 0x81, 0x45, 0x2F
     ];
@@ -46,19 +46,24 @@ public sealed class GamePalette
     ///         <item><description>Disassembly: <c>asm/robomame.asm</c> <c>colorpalette2</c> (<c>$DA51</c>).</description></item>
     ///     </list>
     /// </remarks>
-    public static readonly byte[] DefaultPaletteValues =
+    public static readonly IReadOnlyList<byte> DefaultPaletteValues =
     [
         0x00, 0x07, 0x17, 0xC7, 0x1F, 0x3F, 0x38, 0xC0,
         0xA4, 0xFF, 0x38, 0x17, 0xCC, 0x81, 0x81, 0x07
     ];
 
-    private readonly byte[] _paletteValues = (byte[])DefaultPaletteValues.Clone();
-    private readonly bool[] _suspendedPaletteIndices = new bool[16];
+    /// <summary>How many entries the palette has: the entries are numbered from 0 to one less than this.</summary>
+    private const int PaletteIndexCount = 16;
+
+    private readonly byte[] _paletteValues = [.. DefaultPaletteValues];
+    private readonly bool[] _suspendedPaletteIndices = new bool[PaletteIndexCount];
 
     /// <summary>Gets the colour an entry shows on the screen.</summary>
     /// <param name="paletteIndex">Which entry, from 0 to 15.</param>
     public Color GetColour(int paletteIndex)
     {
+        ThrowIfNotAPaletteIndex(paletteIndex);
+
         return RobotronColour.CreateFromByte(_paletteValues[paletteIndex]);
     }
 
@@ -66,6 +71,8 @@ public sealed class GamePalette
     /// <param name="paletteIndex">Which entry, from 0 to 15.</param>
     public int GetPaletteIndexValue(int paletteIndex)
     {
+        ThrowIfNotAPaletteIndex(paletteIndex);
+
         return _paletteValues[paletteIndex];
     }
 
@@ -73,6 +80,8 @@ public sealed class GamePalette
     /// <param name="paletteIndex">Which entry, from 0 to 15.</param>
     public bool IsPaletteIndexSuspended(int paletteIndex)
     {
+        ThrowIfNotAPaletteIndex(paletteIndex);
+
         return _suspendedPaletteIndices[paletteIndex];
     }
 
@@ -91,6 +100,8 @@ public sealed class GamePalette
     /// </remarks>
     public void ResumePaletteIndex(int paletteIndex)
     {
+        ThrowIfNotAPaletteIndex(paletteIndex);
+
         _suspendedPaletteIndices[paletteIndex] = false;
     }
 
@@ -99,6 +110,8 @@ public sealed class GamePalette
     /// <param name="value">The colour code to give it.</param>
     public void SetPaletteIndexValue(int paletteIndex, byte value)
     {
+        ThrowIfNotAPaletteIndex(paletteIndex);
+
         _paletteValues[paletteIndex] = value;
     }
 
@@ -120,6 +133,8 @@ public sealed class GamePalette
     /// </remarks>
     public void SuspendPaletteIndex(int paletteIndex)
     {
+        ThrowIfNotAPaletteIndex(paletteIndex);
+
         _suspendedPaletteIndices[paletteIndex] = true;
     }
 
@@ -137,5 +152,14 @@ public sealed class GamePalette
             effect.Parameters[$"Live{paletteIndex}"]
                 .SetValue(new Vector4(colour.R / 255f, colour.G / 255f, colour.B / 255f, 1f));
         }
+    }
+
+    /// <summary>Refuses a number that is not one of the palette's entries.</summary>
+    /// <param name="paletteIndex">The number to check.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The number is not from 0 to 15.</exception>
+    private static void ThrowIfNotAPaletteIndex(int paletteIndex)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(paletteIndex);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(paletteIndex, PaletteIndexCount);
     }
 }
