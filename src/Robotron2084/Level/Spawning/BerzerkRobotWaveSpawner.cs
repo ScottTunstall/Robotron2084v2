@@ -10,8 +10,7 @@ namespace Robotron2084.Level.Spawning;
 ///     the grunts are.
 /// </summary>
 /// <remarks>
-///     A new robot of the author's own with no wave table row yet (notes §138). It waits as long as the wave's grunts
-///     do.
+///     A new robot of the author's own with no wave table row yet (notes §138).
 /// </remarks>
 public sealed class BerzerkRobotWaveSpawner : IWaveSpawner
 {
@@ -23,7 +22,7 @@ public sealed class BerzerkRobotWaveSpawner : IWaveSpawner
         {
             var position = waveSpawnParams.SpawnPlacement.FindSpawnPointAwayFrom(
                 waveSpawnParams.PlayerStart, SpawnTuning.GruntMinDistanceFromPlayer, playField.FieldEntities.Electrodes.IsClearOf);
-            var berzerkRobot = new BerzerkRobot(playField.EntityParams, position, playField.WaveParams.GruntMoveDelay);
+            var berzerkRobot = new BerzerkRobot(playField.EntityParams, position);
             waveSpawnParams.FieldEntities.BerzerkRobots.Add(berzerkRobot);
         }
     }
