@@ -3196,6 +3196,12 @@
 /processorParam:Quality=Best
 /build:Speech/Berzerk/chicken.ogg
 
+#begin Speech/Berzerk/chickens.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/chickens.ogg
+
 #begin Speech/Berzerk/coins.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
