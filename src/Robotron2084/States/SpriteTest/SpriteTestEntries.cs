@@ -217,12 +217,11 @@ public static class SpriteTestEntries
     }
 
     /// <summary>
-    ///     Makes the Berzerk robot: it plays its waiting animation until it walks, then walks the way held, stepping
-    ///     after a random number of beats as a grunt does.
+    ///     Makes the Berzerk robot: it plays its waiting animation until it walks, then walks the way held, one small step
+    ///     every <see cref="BerzerkRobot.StepIntervalBeats" /> beats, with no random wait.
     /// </summary>
     private static SpriteTestEntry CreateBerzerkRobot(TextureSet textureSet)
     {
-        var waveParams = GetFirstWaveWith(WaveTable.Grunts);
         var idle = SpriteTestCycle.CreateFromArcadeFrames(textureSet.BerzerkRobotIdleAnimationFrameTextures,
             BerzerkRobot.BeatIntervalArcadeFrames);
 
@@ -233,11 +232,11 @@ public static class SpriteTestEntries
             walkSequence => SpriteTestCycle.CreateFromArcadeFrames(
                 Enumerable.Range(0, stepsInAWholeWalk).Select(step =>
                     BerzerkRobot.GetWalkFrames(textureSet, walkSequence)[BerzerkRobot.GetWalkFrameIndex(walkSequence, step)]),
-                BerzerkRobot.BeatIntervalArcadeFrames, waveParams.GruntMoveDelay),
+                BerzerkRobot.StepIntervalBeats * BerzerkRobot.BeatIntervalArcadeFrames),
             idle) with
         {
-            // It takes a grunt's step (BerzerkRobot.Step).
-            WalkOn = new SpriteTestWalkOn([GruntChaseStep.StepXPixels])
+            // It takes the robot's own step (BerzerkRobot.GetNextPosition).
+            WalkOn = new SpriteTestWalkOn([BerzerkRobot.StepPixels])
         };
     }
 
