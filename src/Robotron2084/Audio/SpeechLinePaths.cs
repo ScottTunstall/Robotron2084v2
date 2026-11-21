@@ -28,6 +28,7 @@ public static class SpeechLinePaths
         "Speech/Berzerk/humans",
         "Speech/Berzerk/in",
         "Speech/Berzerk/intruder",
+        "Speech/Berzerk/intruders",
         "Speech/Berzerk/is",
         "Speech/Berzerk/it",
         "Speech/Berzerk/kill",
