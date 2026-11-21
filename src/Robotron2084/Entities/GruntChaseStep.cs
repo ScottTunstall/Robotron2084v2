@@ -4,7 +4,7 @@ using Robotron2084.Core;
 
 namespace Robotron2084.Entities;
 
-/// <summary>The step a grunt takes towards the player, which the BerzerkRobot takes too.</summary>
+/// <summary>The step a grunt takes towards the player.</summary>
 /// <remarks>
 ///     <list type="bullet">
 ///         <item>Original source: <c>RRP8.ASM</c> <c>ROB1B</c> to <c>ROB4A</c></item>
