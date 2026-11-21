@@ -8,8 +8,9 @@ namespace Robotron2084.Audio.Models;
 ///             disassembly's speech table). Its sample is the file of the same name in <c>Content/Speech/Berzerk/</c>.
 ///         </item>
 ///         <item>
-///             <see cref="Humanoids" /> and <see cref="Pause" /> are not on the chip. They are port additions: a sample
-///             of its own, and a short silence between two words (<see cref="BerzerkVoice.PauseTicks" />).
+///             <see cref="Humanoids" />, <see cref="Humans" />, <see cref="Family" /> and <see cref="Pause" /> are not on
+///             the chip. They are port additions: three samples of their own, and a short silence between two words
+///             (<see cref="BerzerkVoice.PauseTicks" />).
 ///         </item>
 ///         <item>"THERE" is also the robot's "THEIR": the chip has one word for both.</item>
 ///     </list>
@@ -105,6 +106,12 @@ public enum BerzerkWord
 
     /// <summary>"HUMANOIDS". Not on the chip: a port addition, a sample of its own, not the chip's "HUMANOID" made plural.</summary>
     Humanoids = 0x20,
+
+    /// <summary>"HUMANS". Not on the chip: a port addition, made from the chip's own "HUMAN" and "S".</summary>
+    Humans = 0x21,
+
+    /// <summary>"FAMILY". Not on the chip: a port addition, made in the same way as the chip's words.</summary>
+    Family = 0x22,
 
     /// <summary>A short silence between two words. Not on the chip: a port addition.</summary>
     Pause = 0x40
