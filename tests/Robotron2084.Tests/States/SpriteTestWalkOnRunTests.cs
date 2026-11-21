@@ -54,7 +54,7 @@ public sealed class SpriteTestWalkOnRunTests
     [Fact]
     public void ThePlayerWalksOnAtItsSpeedInTheGame_OneStepEveryTick()
     {
-        var player = SpriteTestEntries.Create(TestTextures.SharedTextureSet).Single(entry => entry.Name == "PLAYER");
+        var player = SpriteTestEntries.Create(TestTextures.SharedTextureSet).Single(entry => entry.Name == "PLAYER 1");
         var animator = new SpriteTestAnimator(player, new Random(1));
         var run = new SpriteTestWalkOnRun(player.WalkOn!, StartX, animator);
 
@@ -101,7 +101,7 @@ public sealed class SpriteTestWalkOnRunTests
     }
 
     [Theory]
-    [InlineData("PLAYER")]
+    [InlineData("PLAYER 1")]
     [InlineData("MOMMY")]
     [InlineData("DADDY")]
     [InlineData("MIKEY")]

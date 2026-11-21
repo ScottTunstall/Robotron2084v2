@@ -15,7 +15,7 @@ public sealed class SpriteTestEntriesTests
     private static readonly IReadOnlyList<SpriteTestEntry> Entries = SpriteTestEntries.Create(TestTextures.SharedTextureSet);
 
     [Theory]
-    [InlineData("PLAYER")]
+    [InlineData("PLAYER 1")]
     [InlineData("MOMMY")]
     [InlineData("DADDY")]
     [InlineData("MIKEY")]
@@ -64,14 +64,14 @@ public sealed class SpriteTestEntriesTests
     [Fact]
     public void ThePlayerWalksOnlyWhileAWayIsHeld_ChangingFrameAsOftenAsInTheGame()
     {
-        var animator = new SpriteTestAnimator(GetEntry("PLAYER"), new Random(1));
+        var animator = new SpriteTestAnimator(GetEntry("PLAYER 1"), new Random(1));
         for (var tick = 0; tick < 10; tick++) animator.Tick(null);
         Assert.Equal(0, animator.FrameIndex);
 
         animator.Tick(Direction8.Left); // turning to the left walk starts it
         Assert.Equal(0, animator.FrameIndex);
 
-        var walk = GetEntry("PLAYER").GetCycle(Direction8.Left)!;
+        var walk = GetEntry("PLAYER 1").GetCycle(Direction8.Left)!;
         Assert.Equal(Player.WalkCycleLength, walk.Frames.Count);
         Assert.All(walk.Frames,
             frame => Assert.Equal(ArcadeClock.ToClockUnits(Player.WalkAnimationIntervalArcadeFrames), frame.HoldClockUnits));
@@ -80,7 +80,7 @@ public sealed class SpriteTestEntriesTests
     [Fact]
     public void ThePlayerGoingDiagonally_ShowsTheSameWalkAsGoingSideways_SoTheWalkDoesNotStartAgain()
     {
-        var player = GetEntry("PLAYER");
+        var player = GetEntry("PLAYER 1");
 
         Assert.Same(player.GetCycle(Direction8.Left), player.GetCycle(Direction8.UpLeft));
         Assert.Same(player.GetCycle(Direction8.Right), player.GetCycle(Direction8.DownRight));
