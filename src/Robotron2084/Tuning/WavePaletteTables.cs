@@ -34,13 +34,13 @@ public static class WavePaletteTables
 
     /// <summary>The wall's cycle of four colours, from dim to bright, that is used when no wave palette applies.</summary>
     /// <remarks>The arcade spec's rule is that the wall is never fully dark.</remarks>
-    public static readonly Color[] DefaultWallPalette =
-    {
+    public static readonly IReadOnlyList<Color> DefaultWallPalette =
+    [
         new(0, 80, 80),
         new(0, 140, 140),
         new(0, 200, 200),
         new(0, 255, 255)
-    };
+    ];
 
     /// <summary>The electrode's colour for each wave, counting from wave 1 and repeating every ten waves.</summary>
     /// <remarks>
@@ -52,7 +52,7 @@ public static class WavePaletteTables
     ///     <c>MPCTON</c>, blitter op <c>$1A</c>), so palette indices 10 to 15, the colour-cycling ones, make that wave's
     ///     posts cycle (notes §47).
     /// </remarks>
-    public static readonly byte[] ElectrodePaletteIndexByWaveMod10 =
+    public static readonly IReadOnlyList<byte> ElectrodePaletteIndexByWaveMod10 =
     [
         0xFF, 0xEE, 0xBB, 0xDD, 0xEE, 0xFF, 0x11, 0xBB, 0xDD, 0xAA
     ];
@@ -66,7 +66,7 @@ public static class WavePaletteTables
     ///     are nine families of three: frame 0 is alive and frames 1 and 2 are the shrivel steps (<c>RRP8.ASM</c>
     ///     <c>PKPROC</c>).
     /// </remarks>
-    public static readonly int[] ElectrodeVariantByWaveMod10 = [0, 1, 2, 3, 4, 5, 7, 8, 0, 6];
+    public static readonly IReadOnlyList<int> ElectrodeVariantByWaveMod10 = [0, 1, 2, 3, 4, 5, 7, 8, 0, 6];
 
     /// <summary>The colour of the flash where a laser runs off the playfield, for each wave, counting from wave 1 and repeating every ten waves.</summary>
     /// <remarks>
@@ -79,7 +79,7 @@ public static class WavePaletteTables
     ///     <c>$11</c>, palette index 1, which is <c>$07</c> red; wave 9 is <c>$AA</c>, palette index 10, a colour-cycling
     ///     one.
     /// </remarks>
-    public static readonly byte[] LaserWallPaletteIndexByWaveMod10 =
+    public static readonly IReadOnlyList<byte> LaserWallPaletteIndexByWaveMod10 =
     [
         0x99, 0x00, 0x99, 0x66, 0x99, 0x99, 0x99, 0x11, 0xAA, 0x99
     ];
@@ -98,36 +98,48 @@ public static class WavePaletteTables
     ///     border is invisible, as the ROM means it; wave 10 is <c>$CC</c>, 12, a colour-cycling one. The ROM's colour
     ///     processes also write palette indices during play, so the border may change shade within a wave (notes §63).
     /// </remarks>
-    public static readonly byte[] WallPaletteIndexByWaveMod10 =
+    public static readonly IReadOnlyList<byte> WallPaletteIndexByWaveMod10 =
     [
         0x22, 0x55, 0x11, 0xEE, 0x77, 0x33, 0x44, 0x88, 0x00, 0xCC
     ];
 
     /// <summary>Gets the electrode's palette index for a wave. The table repeats every ten waves.</summary>
     /// <param name="wave">The wave number, counting from 1.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The wave is below 1.</exception>
     public static int GetElectrodePaletteIndex(int wave)
     {
-        return ElectrodePaletteIndexByWaveMod10[(wave - 1) % ElectrodePaletteIndexByWaveMod10.Length] & 0x0F;
+        ArgumentOutOfRangeException.ThrowIfLessThan(wave, 1);
+
+        return ElectrodePaletteIndexByWaveMod10[(wave - 1) % ElectrodePaletteIndexByWaveMod10.Count] & 0x0F;
     }
 
     /// <summary>Gets the electrode shape for a wave. The table repeats every ten waves.</summary>
     /// <param name="wave">The wave number, counting from 1.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The wave is below 1.</exception>
     public static int GetElectrodeVariant(int wave)
     {
-        return ElectrodeVariantByWaveMod10[(wave - 1) % ElectrodeVariantByWaveMod10.Length];
+        ArgumentOutOfRangeException.ThrowIfLessThan(wave, 1);
+
+        return ElectrodeVariantByWaveMod10[(wave - 1) % ElectrodeVariantByWaveMod10.Count];
     }
 
     /// <summary>Gets the palette index of the flash where a laser meets the wall, for a wave. The table repeats every ten waves.</summary>
     /// <param name="wave">The wave number, counting from 1.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The wave is below 1.</exception>
     public static int GetLaserWallPaletteIndex(int wave)
     {
-        return LaserWallPaletteIndexByWaveMod10[(wave - 1) % LaserWallPaletteIndexByWaveMod10.Length] & 0x0F;
+        ArgumentOutOfRangeException.ThrowIfLessThan(wave, 1);
+
+        return LaserWallPaletteIndexByWaveMod10[(wave - 1) % LaserWallPaletteIndexByWaveMod10.Count] & 0x0F;
     }
 
     /// <summary>Gets the wall's palette index for a wave. The table repeats every ten waves.</summary>
     /// <param name="wave">The wave number, counting from 1.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The wave is below 1.</exception>
     public static int GetWallPaletteIndex(int wave)
     {
-        return WallPaletteIndexByWaveMod10[(wave - 1) % WallPaletteIndexByWaveMod10.Length] & 0x0F;
+        ArgumentOutOfRangeException.ThrowIfLessThan(wave, 1);
+
+        return WallPaletteIndexByWaveMod10[(wave - 1) % WallPaletteIndexByWaveMod10.Count] & 0x0F;
     }
 }

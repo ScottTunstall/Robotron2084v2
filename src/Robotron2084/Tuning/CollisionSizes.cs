@@ -69,7 +69,7 @@ public static class CollisionSizes
     ///     in bytes (two arcade pixels each) and the height in rows: <c>05 09</c>, and <c>03 09</c> at <c>$3B45</c>,
     ///     <c>09 07</c> at <c>$3B65</c> and <c>05 0A</c> at <c>$3B85</c>.
     /// </remarks>
-    public static readonly (int Width, int Height)[] ElectrodeCollisionSizeByVariant =
+    public static readonly IReadOnlyList<(int Width, int Height)> ElectrodeCollisionSizeByVariant =
     [
         (10, 9), (10, 9), (10, 9), (10, 9), (6, 9), (10, 9), (18, 7), (10, 9), (10, 10)
     ];

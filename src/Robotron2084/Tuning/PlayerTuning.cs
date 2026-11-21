@@ -118,14 +118,14 @@ public static class PlayerTuning
     ///     fade.
     /// </summary>
     /// <remarks>Original source: <c>RRX7.ASM</c> <c>PD2TAB</c>: <c>FF F6 AD A4 5B 52 09 00</c>.</remarks>
-    public static readonly byte[] PlayerDeathFadeValues = [0xFF, 0xF6, 0xAD, 0xA4, 0x5B, 0x52, 0x09, 0x00];
+    public static readonly IReadOnlyList<byte> PlayerDeathFadeValues = [0xFF, 0xF6, 0xAD, 0xA4, 0x5B, 0x52, 0x09, 0x00];
 
     /// <summary>The palette indices the death flash picks its random colour from, one at random for each flash.</summary>
     /// <remarks>
     ///     Original source: <c>RRX7.ASM</c> <c>PDCTAB</c>, <c>FCB $00,$11,$33,$77</c>, which are doubled-nibble palette
     ///     indices 0, 1, 3 and 7.
     /// </remarks>
-    public static readonly int[] PlayerDeathFlashPaletteIndices = [0x00, 0x01, 0x03, 0x07];
+    public static readonly IReadOnlyList<int> PlayerDeathFlashPaletteIndices = [0x00, 0x01, 0x03, 0x07];
 
     /// <summary>
     ///     A playtest aid: when true the player cannot be killed at all, so that new robot types can be playtested across

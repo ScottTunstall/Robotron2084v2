@@ -41,7 +41,7 @@ public static class TransporterTuning
     ///     number times the picture's height, plus the row. A group's list is in order, and stops short for a picture with
     ///     fewer bytes.
     /// </summary>
-    public static readonly (int ByteIndex, int Half)[][] Groups =
+    public static readonly IReadOnlyList<IReadOnlyList<(int ByteIndex, int Half)>> Groups =
     [
         [
             (0, 0xF0), (6, 0x0F), (9, 0x0F), (12, 0xF0), (19, 0xF0), (23, 0x0F), (24, 0x0F), (29, 0xF0), (34, 0xF0),
@@ -98,7 +98,7 @@ public static class TransporterTuning
     ///     palette numbers, one for each
     ///     pixel of a pair. A set is read on past its end into the next, as the ROM does.
     /// </summary>
-    public static readonly byte[] SparkleColours =
+    public static readonly IReadOnlyList<byte> SparkleColours =
     [
         0x99, 0x22, 0x55, 0x11, 0x99, 0x22, 0x55, 0x11, 0x99, 0x22, 0x55, 0x11, 0x99, 0x22, 0x55, 0x11, 0x99, 0x22,
         0x55, 0x11,
@@ -120,13 +120,13 @@ public static class TransporterTuning
     ///     Which of the sparkle sets (in <see cref="SparkleColours" />, by 20) each of the eight random picks gives (
     ///     <c>GLITAB</c>).
     /// </summary>
-    public static readonly int[] SparkleSetByPick = [0, 1, 2, 3, 4, 5, 6, 4];
+    public static readonly IReadOnlyList<int> SparkleSetByPick = [0, 1, 2, 3, 4, 5, 6, 4];
 
     /// <summary>
     ///     The steps of the sequence: a group number from 1 to 8, with <see cref="OffBit" /> or <see cref="SparkleBit" />
     ///     or neither.
     /// </summary>
-    public static readonly byte[] Steps =
+    public static readonly IReadOnlyList<byte> Steps =
     [
         0x43, 0x83, 0x46, 0x86, 0x44, 0x84, 0x42, 0x82, 0x41, 0x81, 0x47, 0x87, 0x44, 0x46, 0x84, 0x42,
         0x86, 0x43, 0x82, 0x41, 0x83, 0x45, 0x81, 0x48, 0x85, 0x47, 0x88, 0x44, 0x87, 0x45, 0x42, 0x84,

@@ -83,7 +83,7 @@ public static class TankTuning
     ///     the current animation frame's pair to the object's address and only then moves on to the next animation frame,
     ///     so the little tank walks up and to the left as it grows. The full-size tank lands centred on the drop point.
     /// </remarks>
-    public static readonly (int Columns, int Rows)[] GrowDeltas =
+    public static readonly IReadOnlyList<(int Columns, int Rows)> GrowDeltas =
     [
         (-1, -1),
         (0, -1),
@@ -98,7 +98,7 @@ public static class TankTuning
     ///     A byte is two arcade pixels. The ROM bounds the tank and tests collisions against the current animation
     ///     frame, so a growing tank is a smaller target than a full one.
     /// </remarks>
-    public static readonly (int Width, int Height)[] GrowSizes =
+    public static readonly IReadOnlyList<(int Width, int Height)> GrowSizes =
     [
         (4, 4), (8, 7), (8, 8), (12, 12)
     ];
