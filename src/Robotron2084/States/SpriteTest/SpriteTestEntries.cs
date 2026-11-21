@@ -235,8 +235,10 @@ public static class SpriteTestEntries
                 BerzerkRobot.StepIntervalBeats * BerzerkRobot.BeatIntervalArcadeFrames),
             idle) with
         {
-            // It takes the robot's own step (BerzerkRobot.GetNextPosition).
-            WalkOn = new SpriteTestWalkOn([BerzerkRobot.StepPixels])
+            // It takes the robot's own step (BerzerkRobot.GetNextPosition), and is drawn in its own colour, as in the game.
+            WalkOn = new SpriteTestWalkOn([BerzerkRobot.StepPixels]),
+            DrawStyle = SpriteTestDrawStyle.Solid,
+            ShapeColour = BerzerkRobot.DefaultColour
         };
     }
 

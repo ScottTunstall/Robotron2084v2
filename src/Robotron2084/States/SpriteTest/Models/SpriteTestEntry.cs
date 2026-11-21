@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework;
 using Robotron2084.Core;
 using Robotron2084.Core.Models;
 
@@ -21,6 +22,12 @@ public sealed record SpriteTestEntry(string Name, Func<Direction8?, SpriteTestCy
     ///     <see cref="SpriteTestDrawStyle.SolidWithBackground" />.
     /// </summary>
     public int ShapePaletteIndex { get; init; }
+
+    /// <summary>
+    ///     The colour of the shape, for <see cref="SpriteTestDrawStyle.Solid" />, when it is a colour of its own rather than
+    ///     one of the palette's; null to use <see cref="ShapePaletteIndex" />.
+    /// </summary>
+    public Color? ShapeColour { get; init; }
 
     /// <summary>The palette index of the box behind the shape, for <see cref="SpriteTestDrawStyle.SolidWithBackground" />.</summary>
     public int BackgroundPaletteIndex { get; init; }
