@@ -37,7 +37,7 @@ public sealed class ElectrodeSizeTests
     {
         Assert.Equal(
             WavePaletteTables.ElectrodeVariantByWaveMod10.Max() + 1,
-            CollisionSizes.ElectrodeCollisionSizeByVariant.Length);
+            CollisionSizes.ElectrodeCollisionSizeByVariant.Count);
     }
 
     [Fact]

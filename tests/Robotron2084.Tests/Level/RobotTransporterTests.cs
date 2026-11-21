@@ -90,11 +90,11 @@ public sealed class RobotTransporterTests
     [Fact]
     public void TheTablesAreTheRomsOwn_EightGroupsOfTwentyNinePixelsAndOneHundredAndThirtySteps()
     {
-        Assert.Equal(130, TransporterTuning.Steps.Length);
-        Assert.Equal(TransporterTuning.StepCount, TransporterTuning.Steps.Length);
-        Assert.Equal(8, TransporterTuning.Groups.Length);
-        Assert.All(TransporterTuning.Groups, group => Assert.Equal(29, group.Length));
-        Assert.Equal(140, TransporterTuning.SparkleColours.Length);
+        Assert.Equal(130, TransporterTuning.Steps.Count);
+        Assert.Equal(TransporterTuning.StepCount, TransporterTuning.Steps.Count);
+        Assert.Equal(8, TransporterTuning.Groups.Count);
+        Assert.All(TransporterTuning.Groups, group => Assert.Equal(29, group.Count));
+        Assert.Equal(140, TransporterTuning.SparkleColours.Count);
     }
 
     [Fact]

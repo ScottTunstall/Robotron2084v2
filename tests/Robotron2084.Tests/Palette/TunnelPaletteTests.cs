@@ -67,14 +67,14 @@ public sealed class TunnelPaletteTests
     {
         // $576D: twelve 4-byte descriptors (address, mask, 0) — `$59B9`'s `CMPA #$0C` retries
         // until the random index is under twelve.
-        Assert.Equal(12, TunnelPalette.Ramps.Length);
-        Assert.Equal(12, TunnelPalette.StartMasks.Length);
+        Assert.Equal(12, TunnelPalette.Ramps.Count);
+        Assert.Equal(12, TunnelPalette.StartMasks.Count);
 
         foreach (var ramp in TunnelPalette.Ramps)
         {
             // A ramp runs to its zero terminator ($59E2 skips a zero and wraps), so a ramp the
             // port stores never CONTAINS one, and the fifteen-value window always fits.
-            Assert.True(ramp.Length >= TunnelPalette.PaletteIndexCount, $"ramp of {ramp.Length} is too short");
+            Assert.True(ramp.Count >= TunnelPalette.PaletteIndexCount, $"ramp of {ramp.Count} is too short");
             Assert.DoesNotContain((byte)0x00, ramp);
         }
 
@@ -99,7 +99,7 @@ public sealed class TunnelPaletteTests
 
         for (var paletteIndex = 0; paletteIndex < TunnelPalette.PaletteIndexCount; paletteIndex++)
         {
-            var expected = ramp[index % ramp.Length];
+            var expected = ramp[index % ramp.Count];
             index++;
 
             if (BlackedPaletteIndices(tunnelPalette).Contains(TunnelPalette.FirstPaletteIndex + paletteIndex)) continue;
@@ -120,7 +120,7 @@ public sealed class TunnelPaletteTests
 
         for (var pass = 0; pass < 1000; pass++)
         {
-            Assert.InRange(tunnelPalette.WindowStartIndex, 0, ramp.Length - 1);
+            Assert.InRange(tunnelPalette.WindowStartIndex, 0, ramp.Count - 1);
             tunnelPalette.Advance();
         }
     }
