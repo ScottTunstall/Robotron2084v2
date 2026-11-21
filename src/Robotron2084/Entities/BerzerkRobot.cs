@@ -25,14 +25,15 @@ namespace Robotron2084.Entities;
 ///     time between steps: every <see cref="StepIntervalBeats" /> beats it takes one small step towards the player
 ///     (<see cref="GetNextPosition" />), so it glides along at the same pace all the time. It is meant to be a little
 ///     cleverer than a grunt; how is still to be decided. It dies as a grunt does, to a laser or by walking onto an
-///     electrode, and it kills the player by touching them. It has its own look. Until it first moves, it stands still and
+///     electrode, and it kills the player by touching them. It has its own look, drawn all in one <see cref="Colour" />
+///     that each robot can have its own of, blue unless it is given another. Until it first moves, it stands still and
 ///     plays its standing animation. After that it shows the walk for the way it is facing
 ///     (<see cref="GetWalkSequenceTowards" />). It cannot shoot yet. Shooting is planned.
 ///     <para>
 ///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.BerzerkRobot" />) to the <see cref="IGameEvents" /> it is given.
 ///     </para>
 /// </remarks>
-public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
+public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, IStripDrawer
 {
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts. It is the same as a grunt's.</summary>
     internal const int BeatIntervalArcadeFrames = 4;
@@ -86,6 +87,12 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>How far one step goes, in port pixels.</summary>
     internal static readonly int StepPixels = ScreenSize.ToPortPixelsFromArcadePixels(StepArcadePixels);
 
+    /// <summary>
+    ///     The robot's colour when it is not given one: blue, the arcade's colour byte <c>$C0</c> (0, 0, 240).
+    /// </summary>
+    /// <remarks>Not from the arcade: the author's choice.</remarks>
+    public static readonly Color DefaultColour = RobotronColour.CreateFromByte(0xC0);
+
     private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private int _animationStep;
@@ -102,12 +109,20 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
     ///     What the robot shares with the rest of the game: its sprites and where it announces what happens to it.
     /// </param>
     /// <param name="position">Where the robot's top-left corner is.</param>
-    public BerzerkRobot(EntityParams entityParams, IntVector2 position)
+    /// <param name="colour">The robot's colour, or null for <see cref="DefaultColour" />.</param>
+    public BerzerkRobot(EntityParams entityParams, IntVector2 position, Color? colour = null)
     {
         _textureSet = entityParams.TextureSet;
         _gameEvents = entityParams.GameEvents;
         _position = position;
+        Colour = colour ?? DefaultColour;
     }
+
+    /// <summary>
+    ///     The robot's colour. Every pixel of its sprite is drawn in it, whatever colour the sprite's own pixels are, and
+    ///     so are the strips of its appear and its explosion.
+    /// </summary>
+    public Color Colour { get; }
 
     /// <summary>Alive until it is killed. It is never Dying, because it has no death animation (see <see cref="Kill" />).</summary>
     public EntityLifeState LifeState { get; private set; } = EntityLifeState.Alive;
@@ -131,13 +146,23 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot
         _beatArcadeFrameTimer = playField.CreateFirstBeatTimer(LivePollArcadeFrames, FirstBeatNapArcadeFrames, BeatIntervalArcadeFrames);
     }
 
-    /// <summary>Draws the current animation frame in its own colours.</summary>
+    /// <summary>
+    ///     Draws the current animation frame in the robot's <see cref="Colour" />, through the one-colour pixel shader
+    ///     (<see cref="BlitterDraw.DrawSpriteSolid" />).
+    /// </summary>
     /// <param name="spriteBatch">What the robot is drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
         if (!this.IsAlive()) return;
 
-        _textureSet.BlitterDraw.DrawSprite(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(), Color.White);
+        _textureSet.BlitterDraw.DrawSpriteSolid(spriteBatch, GetCurrentAnimationFrameTexture(), GetBounds(), Colour);
+    }
+
+    /// <inheritdoc />
+    /// <remarks>The strip is drawn in the robot's <see cref="Colour" />, as the robot is (<see cref="BlitterDraw.DrawSpriteSolidPiece" />).</remarks>
+    public void DrawStrip(SpriteBatch spriteBatch, Texture2D animationFrameTexture, Rectangle source, Rectangle destination)
+    {
+        _textureSet.BlitterDraw.DrawSpriteSolidPiece(spriteBatch, animationFrameTexture, source, destination, Colour);
     }
 
     /// <summary>The box the robot takes up on the screen.</summary>

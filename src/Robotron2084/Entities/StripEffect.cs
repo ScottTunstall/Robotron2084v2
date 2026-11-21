@@ -39,6 +39,13 @@ public sealed class StripEffect : IEntity
     private readonly int _appearSizerStep;
 
     private readonly StripClip _clip;
+
+    /// <summary>
+    ///     Draws a strip the way the thing that is exploding or appearing draws itself, or null to draw the strip in the
+    ///     animation frame's own colours.
+    /// </summary>
+    private readonly IStripDrawer? _stripDrawer;
+
     private readonly Func<Texture2D> _getAnimationFrame;
 
     /// <summary>
@@ -102,6 +109,10 @@ public sealed class StripEffect : IEntity
     ///     Gets the box of the thing that is appearing, so that the appear can stay with it. It is
     ///     null when the effect stays where it started.
     /// </param>
+    /// <param name="stripDrawer">
+    ///     Draws a strip the way the thing that is exploding or appearing draws itself, or null to draw the strip in the
+    ///     animation frame's own colours.
+    /// </param>
     private StripEffect(
         Func<Texture2D> getAnimationFrame,
         Rectangle bounds,
@@ -112,9 +123,11 @@ public sealed class StripEffect : IEntity
         Func<int, int>? getCentreStripIndex = null,
         int startClockUnits = 0,
         bool isClosedUpAtTheEnd = false,
-        Func<Rectangle>? getFollowedBounds = null)
+        Func<Rectangle>? getFollowedBounds = null,
+        IStripDrawer? stripDrawer = null)
     {
         _getAnimationFrame = getAnimationFrame;
+        _stripDrawer = stripDrawer;
         _bounds = bounds;
         Kind = kind;
         Axis = axis;
@@ -194,7 +207,7 @@ public sealed class StripEffect : IEntity
     {
         return new StripEffect(() => animationFrameSource.GetCurrentAnimationFrameTexture(), bounds, StripEffectKind.Appear, axis, slope,
             clip,
-            getCentreStripIndex, startClockUnits);
+            getCentreStripIndex, startClockUnits, stripDrawer: animationFrameSource as IStripDrawer);
     }
 
     /// <summary>
@@ -214,7 +227,7 @@ public sealed class StripEffect : IEntity
     {
         var (axis, slope) = GetFanForShot(direction);
         return new StripEffect(() => deadExplodable.GetExplosionAnimationFrameTexture(), deadExplodable.GetExplosionBounds(),
-            StripEffectKind.Explode, axis, slope, clip);
+            StripEffectKind.Explode, axis, slope, clip, stripDrawer: deadExplodable as IStripDrawer);
     }
 
     /// <summary>
@@ -248,10 +261,14 @@ public sealed class StripEffect : IEntity
     {
         return new StripEffect(() => source.GetCurrentAnimationFrameTexture(), source.GetBounds(), StripEffectKind.Appear,
             axis, slope,
-            clip, _ => centreStripIndex, startClockUnits, getFollowedBounds: () => source.GetBounds());
+            clip, _ => centreStripIndex, startClockUnits, getFollowedBounds: () => source.GetBounds(),
+            stripDrawer: source as IStripDrawer);
     }
 
-    /// <summary>Draws the strips. Each strip is one row or one column of the sprite.</summary>
+    /// <summary>
+    ///     Draws the strips. Each strip is one row or one column of the sprite. When the thing that is exploding or
+    ///     appearing draws its own strips (<see cref="IStripDrawer" />), it draws them, so they are in its colours.
+    /// </summary>
     /// <param name="spriteBatch">What the strips are drawn with.</param>
     public void Draw(SpriteBatch spriteBatch)
     {
@@ -278,7 +295,10 @@ public sealed class StripEffect : IEntity
                 destination = new Rectangle(left, top, spriteWidth * scale, scale);
             }
 
-            spriteBatch.Draw(animationFrameTexture, destination, source, Color.White);
+            if (_stripDrawer is { } stripDrawer)
+                stripDrawer.DrawStrip(spriteBatch, animationFrameTexture, source, destination);
+            else
+                spriteBatch.Draw(animationFrameTexture, destination, source, Color.White);
         }
     }
 
