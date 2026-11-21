@@ -2518,7 +2518,7 @@
 /processorParam:TextureFormat=Color
 /build:Sprites/PlayerBig.png
 
-#begin Sprites/Player_1.png
+#begin Sprites/Player_1_1.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2528,9 +2528,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_1.png
+/build:Sprites/Player_1_1.png
 
-#begin Sprites/Player_10.png
+#begin Sprites/Player_1_10.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2540,9 +2540,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_10.png
+/build:Sprites/Player_1_10.png
 
-#begin Sprites/Player_11.png
+#begin Sprites/Player_1_11.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2552,9 +2552,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_11.png
+/build:Sprites/Player_1_11.png
 
-#begin Sprites/Player_12.png
+#begin Sprites/Player_1_12.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2564,9 +2564,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_12.png
+/build:Sprites/Player_1_12.png
 
-#begin Sprites/Player_2.png
+#begin Sprites/Player_1_2.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2576,9 +2576,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_2.png
+/build:Sprites/Player_1_2.png
 
-#begin Sprites/Player_3.png
+#begin Sprites/Player_1_3.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2588,9 +2588,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_3.png
+/build:Sprites/Player_1_3.png
 
-#begin Sprites/Player_4.png
+#begin Sprites/Player_1_4.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2600,9 +2600,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_4.png
+/build:Sprites/Player_1_4.png
 
-#begin Sprites/Player_5.png
+#begin Sprites/Player_1_5.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2612,9 +2612,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_5.png
+/build:Sprites/Player_1_5.png
 
-#begin Sprites/Player_6.png
+#begin Sprites/Player_1_6.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2624,9 +2624,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_6.png
+/build:Sprites/Player_1_6.png
 
-#begin Sprites/Player_7.png
+#begin Sprites/Player_1_7.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2636,9 +2636,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_7.png
+/build:Sprites/Player_1_7.png
 
-#begin Sprites/Player_8.png
+#begin Sprites/Player_1_8.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2648,9 +2648,9 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_8.png
+/build:Sprites/Player_1_8.png
 
-#begin Sprites/Player_9.png
+#begin Sprites/Player_1_9.png
 /importer:TextureImporter
 /processor:TextureProcessor
 /processorParam:ColorKeyColor=255,0,255,255
@@ -2660,7 +2660,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:Sprites/Player_9.png
+/build:Sprites/Player_1_9.png
 
 #begin Sprites/ProgBurst.png
 /importer:TextureImporter
