@@ -24,6 +24,12 @@ public sealed class BlitterDraw
     private const string GlyphPaletteIndexParameter = "SlotId";
 
     /// <summary>
+    ///     The colour-cycle shader's technique for a plain sprite: the pass-through that every draw that is not a remap
+    ///     goes back to; must match <c>Content/Effects/ColourCycle.fx</c>.
+    /// </summary>
+    private const string PassThroughTechnique = "MainTech";
+
+    /// <summary>
     ///     The colour-cycle shader's solid technique's colour parameter; must match
     ///     <c>Content/Effects/ColourCycle.fx</c>.
     /// </summary>
@@ -257,7 +263,7 @@ public sealed class BlitterDraw
         if (ColourCycleEffect is { } effect)
         {
             GamePalette?.UpdateEffectColours(effect);
-            effect.CurrentTechnique.Passes[0].Apply();
+            effect.Techniques[PassThroughTechnique].Passes[0].Apply();
         }
     }
 }
