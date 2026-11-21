@@ -41,7 +41,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE63</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] BrainBeatWaitArcadeFrames =
+    public static readonly IReadOnlyList<int> BrainBeatWaitArcadeFrames =
     [
         8, 8, 8, 8, 8, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
         6, 6, 6
@@ -54,7 +54,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE62</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] BrainFireDelay =
+    public static readonly IReadOnlyList<int> BrainFireDelay =
     [
         64, 64, 64, 64, 64, 40, 40, 38, 38, 38, 38, 38, 38, 38, 38, 38, 36, 36, 36, 36, 32, 32, 32, 32, 32, 32, 32, 30,
         30, 30, 30, 30, 25, 25, 25, 25, 25, 25, 25, 25
@@ -62,7 +62,7 @@ public static class WaveTable
 
     /// <summary>How many brains each wave has.</summary>
     /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Brains =
+    public static readonly IReadOnlyList<int> Brains =
     [
         0, 0, 0, 0, 15, 0, 0, 0, 0, 20, 0, 0, 0, 0, 20, 0, 0, 0, 0, 20, 0, 0, 0, 0, 21, 0, 0, 0, 0, 22, 0, 0, 0, 0, 23,
         0, 0, 0, 0, 25
@@ -70,7 +70,7 @@ public static class WaveTable
 
     /// <summary>How many Daddies each wave has.</summary>
     /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Daddies =
+    public static readonly IReadOnlyList<int> Daddies =
     [
         1, 1, 2, 2, 0, 3, 4, 3, 3, 22, 3, 3, 3, 5, 0, 3, 3, 3, 3, 8, 3, 3, 3, 3, 0, 3, 3, 3, 3, 25, 3, 3, 3, 3, 0, 3, 3,
         3, 3, 10
@@ -78,7 +78,7 @@ public static class WaveTable
 
     /// <summary>How many electrodes each wave has.</summary>
     /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Electrodes =
+    public static readonly IReadOnlyList<int> Electrodes =
     [
         5, 15, 25, 25, 20, 25, 0, 25, 0, 20, 25, 0, 25, 5, 20, 25, 0, 25, 0, 20, 25, 0, 25, 0, 20, 25, 0, 25, 0, 20, 25,
         0, 25, 0, 15, 25, 0, 25, 0, 15
@@ -91,7 +91,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE5F</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] EnforcerFireDelay =
+    public static readonly IReadOnlyList<int> EnforcerFireDelay =
     [
         30, 28, 26, 24, 22, 20, 18, 18, 16, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 15, 15, 15, 15, 15, 15, 15, 15,
         15, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14
@@ -107,7 +107,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE5C</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] GruntMoveDelay =
+    public static readonly IReadOnlyList<int> GruntMoveDelay =
     [
         20, 15, 15, 15, 15, 15, 15, 15, 15, 15, 14, 14, 14, 14, 14, 13, 13, 13, 13, 13, 14, 14, 14, 14, 14, 14, 13, 13,
         13, 13, 13, 13, 12, 12, 12, 12, 12, 12, 15, 12
@@ -115,7 +115,7 @@ public static class WaveTable
 
     /// <summary>How many grunts each wave has.</summary>
     /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Grunts =
+    public static readonly IReadOnlyList<int> Grunts =
     [
         15, 17, 22, 34, 20, 32, 0, 35, 60, 25, 35, 0, 35, 27, 25, 35, 0, 35, 70, 25, 35, 0, 35, 0, 25, 35, 0, 35, 75,
         25, 35, 0, 35, 30, 27, 35, 0, 35, 80, 30
@@ -128,7 +128,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE5D</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] GruntSpeedFloor =
+    public static readonly IReadOnlyList<int> GruntSpeedFloor =
     [
         9, 7, 6, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3,
         3, 4, 3
@@ -141,7 +141,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE61</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] HulkBeatIntervalArcadeFrames =
+    public static readonly IReadOnlyList<int> HulkBeatIntervalArcadeFrames =
     [
         8, 8, 7, 7, 7, 7, 7, 6, 6, 6, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
         5, 5, 5
@@ -149,7 +149,7 @@ public static class WaveTable
 
     /// <summary>How many hulks each wave has.</summary>
     /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Hulks =
+    public static readonly IReadOnlyList<int> Hulks =
     [
         0, 5, 6, 7, 0, 7, 12, 8, 4, 0, 8, 13, 8, 20, 2, 3, 14, 8, 3, 2, 8, 15, 8, 13, 1, 8, 16, 8, 4, 1, 8, 16, 8, 25,
         2, 8, 16, 8, 6, 2
@@ -165,7 +165,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE5E</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] MaxDropsX2 =
+    public static readonly IReadOnlyList<int> MaxDropsX2 =
     [
         10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 11, 11, 11, 11, 11, 11, 11, 11,
         11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11
@@ -173,7 +173,7 @@ public static class WaveTable
 
     /// <summary>How many Mikeys each wave has.</summary>
     /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Mikeys =
+    public static readonly IReadOnlyList<int> Mikeys =
     [
         0, 1, 2, 2, 1, 3, 4, 3, 3, 0, 3, 3, 3, 5, 22, 3, 3, 3, 3, 8, 3, 3, 3, 3, 1, 3, 3, 3, 3, 0, 3, 3, 3, 3, 25, 3, 3,
         3, 3, 10
@@ -181,7 +181,7 @@ public static class WaveTable
 
     /// <summary>How many Mommies each wave has.</summary>
     /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Mommies =
+    public static readonly IReadOnlyList<int> Mommies =
     [
         1, 1, 2, 2, 15, 3, 4, 3, 3, 0, 3, 3, 3, 5, 0, 3, 3, 3, 3, 8, 3, 3, 3, 3, 25, 3, 3, 3, 3, 0, 3, 3, 3, 3, 0, 3, 3,
         3, 3, 10
@@ -197,7 +197,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE66</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] QuarkDropDelay =
+    public static readonly IReadOnlyList<int> QuarkDropDelay =
     [
         16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 15, 15, 15, 15, 15, 15, 14, 14, 14, 14, 14, 14, 14, 14,
         14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14
@@ -210,7 +210,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE67</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] QuarkMaxSpeed =
+    public static readonly IReadOnlyList<int> QuarkMaxSpeed =
     [
         50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56,
         60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60
@@ -218,7 +218,7 @@ public static class WaveTable
 
     /// <summary>How many quarks each wave has.</summary>
     /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Quarks =
+    public static readonly IReadOnlyList<int> Quarks =
     [
         0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 12, 0, 0, 0, 0, 12, 0, 0, 0, 0, 12, 0, 7, 0, 0, 12, 1, 1, 1, 1, 13, 1, 2, 2,
         2, 14, 2, 1, 1
@@ -234,7 +234,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE65</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] ShellSpeed =
+    public static readonly IReadOnlyList<int> ShellSpeed =
     [
         176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 176, 184, 184,
         184, 184, 184, 184, 184, 184, 184, 184, 192, 192, 192, 192, 192, 192, 192, 192, 192, 192
@@ -250,7 +250,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE60</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] SpheroidDropDelay =
+    public static readonly IReadOnlyList<int> SpheroidDropDelay =
     [
         30, 28, 26, 24, 30, 20, 18, 16, 18, 25, 12, 12, 12, 25, 25, 12, 12, 12, 18, 20, 14, 14, 14, 14, 14, 25, 14, 14,
         18, 25, 12, 12, 12, 12, 25, 12, 12, 12, 18, 20
@@ -258,7 +258,7 @@ public static class WaveTable
 
     /// <summary>How many spheroids each wave has.</summary>
     /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Spheroids =
+    public static readonly IReadOnlyList<int> Spheroids =
     [
         0, 1, 3, 4, 1, 4, 0, 5, 5, 1, 5, 0, 5, 2, 1, 5, 0, 5, 5, 2, 5, 0, 5, 6, 1, 5, 0, 5, 5, 1, 5, 0, 5, 2, 1, 5, 0,
         5, 5, 1
@@ -274,7 +274,7 @@ public static class WaveTable
     ///         <item>Disassembly: <c>$BE64</c>.</item>
     ///     </list>
     /// </remarks>
-    public static readonly int[] TankFireDelay =
+    public static readonly IReadOnlyList<int> TankFireDelay =
     [
         32, 32, 32, 32, 32, 32, 32, 30, 30, 30, 30, 30, 30, 28, 28, 28, 28, 28, 28, 28, 30, 30, 30, 30, 30, 30, 28, 28,
         28, 28, 28, 26, 26, 26, 26, 26, 24, 24, 24, 24
@@ -287,7 +287,7 @@ public static class WaveTable
     private const int WaveCount = 40;
 
     /// <summary>Every array in the table, so they can be checked together.</summary>
-    private static readonly int[][] AllTables =
+    private static readonly IReadOnlyList<IReadOnlyList<int>> AllTables =
     [
         Grunts, Electrodes, Mommies, Daddies, Mikeys, Hulks, Brains, Spheroids, Quarks,
         GruntMoveDelay, GruntSpeedFloor, MaxDropsX2, EnforcerFireDelay, SpheroidDropDelay,
@@ -300,9 +300,9 @@ public static class WaveTable
     {
         // Every table must hold exactly one value per wave 1-40.
         foreach (var table in AllTables)
-            if (table.Length != WaveCount)
+            if (table.Count != WaveCount)
                 throw new InvalidOperationException(
-                    $"wave table must have exactly {WaveCount} entries, got {table.Length}");
+                    $"wave table must have exactly {WaveCount} entries, got {table.Count}");
     }
 
     /// <summary>

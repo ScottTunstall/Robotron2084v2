@@ -114,13 +114,21 @@ public sealed class SpawnPlacement
             ScreenSize.ToPortPixelsFromArcadePixels(minDistanceArcadePixels));
     }
 
+    /// <summary>Picks a random number from a start up to, but not including, an end. When there is no room (the end is before the start), it is the start.</summary>
+    /// <param name="start">The first number there can be.</param>
+    /// <param name="end">The number the pick stays below.</param>
+    private int NextInRange(int start, int end)
+    {
+        return end >= start ? _random.Next(start, end) : start;
+    }
+
     /// <summary>Picks a random spot where a square of the given size fits inside the play area.</summary>
     /// <param name="size">The side of the square, in port pixels.</param>
     private IntVector2 PickRandomPointInside(int size)
     {
         return new IntVector2(
-            _random.Next(_playfieldBounds.X, _playfieldBounds.Right - size),
-            _random.Next(_playfieldBounds.Y, _playfieldBounds.Bottom - size));
+            NextInRange(_playfieldBounds.X, _playfieldBounds.Right - size),
+            NextInRange(_playfieldBounds.Y, _playfieldBounds.Bottom - size));
     }
 
     /// <summary>Picks a spot to try for a spheroid. Usually it is near a wall.</summary>
@@ -130,8 +138,8 @@ public sealed class SpawnPlacement
 
         var bias = ScreenSize.ToPortPixelsFromArcadePixels(SpheroidTuning.NearWallBiasDistance);
         var inner = _playfieldBounds;
-        var x = _random.Next(inner.X, inner.Right - EntitySize);
-        var y = _random.Next(inner.Y, inner.Bottom - EntitySize);
+        var x = NextInRange(inner.X, inner.Right - EntitySize);
+        var y = NextInRange(inner.Y, inner.Bottom - EntitySize);
         switch ((PlayfieldEdge)_random.Next(Enum.GetValues<PlayfieldEdge>().Length))
         {
             case PlayfieldEdge.Top:

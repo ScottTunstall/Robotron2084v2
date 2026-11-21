@@ -37,12 +37,15 @@ internal sealed class CollisionResponder
 
     /// <summary>Does what the field does when a collision rule reports a result.</summary>
     /// <param name="collisionResult">What the rule found.</param>
+    /// <exception cref="ArgumentNullException">The result is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">
     ///     The result is one the field has no response for. A new result needs a
     ///     response in the constructor.
     /// </exception>
     public void Respond(CollisionResult collisionResult)
     {
+        ArgumentNullException.ThrowIfNull(collisionResult);
+
         if (!_responses.TryGetValue(collisionResult.GetType(), out var respond))
             throw new ArgumentOutOfRangeException(nameof(collisionResult), collisionResult, "The field has no response for this result.");
 

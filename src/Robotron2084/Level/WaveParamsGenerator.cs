@@ -111,7 +111,7 @@ public sealed class WaveParamsGenerator
     /// <summary>Reads one line of the replacement table.</summary>
     /// <param name="line">The trimmed line.</param>
     /// <param name="customWaveTableRow">The parsed row, or null for a line to skip (blank, the header, or no usable wave number).</param>
-    /// <returns>False when the line is a data row with a malformed count.</returns>
+    /// <returns>False when the line is a data row with a malformed or impossible number: a count below 0, or a drop limit below 1.</returns>
     private static bool TryParseRow(string line, out CustomWaveTableRow? customWaveTableRow)
     {
         customWaveTableRow = null;
@@ -124,8 +124,24 @@ public sealed class WaveParamsGenerator
             if (!int.TryParse(fields[i + 1], out counts[i]))
                 return false;
 
+        if (!AreValidCounts(counts)) return false;
+
         customWaveTableRow = new CustomWaveTableRow(counts[0], counts[1], counts[2], counts[3], counts[4], counts[5], counts[6]);
         return true;
+    }
+
+    /// <summary>
+    ///     Says whether the numbers of a row of the replacement table make a wave that can be played: no count below 0, and
+    ///     each drop limit at least 1 (a limit is what a random drop is picked up to).
+    /// </summary>
+    /// <param name="counts">The seven numbers of the row, in the order of <see cref="CustomWaveTableRow" />.</param>
+    /// <returns>True when every number is allowed.</returns>
+    private static bool AreValidCounts(int[] counts)
+    {
+        const int CountsBeforeTheDropLimits = 5;
+        var areCountsValid = counts.Take(CountsBeforeTheDropLimits).All(count => count >= 0);
+        var areDropLimitsValid = counts.Skip(CountsBeforeTheDropLimits).All(limit => limit >= 1);
+        return areCountsValid && areDropLimitsValid;
     }
 
     /// <summary>Works out what a wave contains in the arcade's game.</summary>

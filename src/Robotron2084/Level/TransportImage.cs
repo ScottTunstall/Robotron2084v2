@@ -135,7 +135,7 @@ public sealed class TransportImage
 
     /// <summary>Turns a group of pixels off.</summary>
     /// <param name="group">The pixels, each named by its byte and which half of the byte it is.</param>
-    private void TurnOff((int ByteIndex, int Half)[] group)
+    private void TurnOff(IReadOnlyList<(int ByteIndex, int Half)> group)
     {
         foreach (var (byteIndex, half) in group)
         {
@@ -147,7 +147,7 @@ public sealed class TransportImage
 
     /// <summary>Turns a group of pixels on, each in its own colour.</summary>
     /// <param name="group">The pixels, each named by its byte and which half of the byte it is.</param>
-    private void TurnOnOwnColour((int ByteIndex, int Half)[] group)
+    private void TurnOnOwnColour(IReadOnlyList<(int ByteIndex, int Half)> group)
     {
         foreach (var (byteIndex, half) in group)
         {
@@ -160,7 +160,7 @@ public sealed class TransportImage
     /// <summary>Turns a group of pixels on, each sparkling in a colour from this image's set.</summary>
     /// <param name="group">The pixels, each named by its byte and which half of the byte it is.</param>
     /// <param name="random">Where the sparkle's starting point comes from.</param>
-    private void TurnOnSparkling((int ByteIndex, int Half)[] group, Random random)
+    private void TurnOnSparkling(IReadOnlyList<(int ByteIndex, int Half)> group, Random random)
     {
         var sparkle = _sparkleSetStart + random.Next(8);
         foreach (var (byteIndex, half) in group)
@@ -169,7 +169,7 @@ public sealed class TransportImage
 
             if (!_drawnInTemplate[pixel]) continue;
 
-            var colourPair = TransporterTuning.SparkleColours[sparkle++ % TransporterTuning.SparkleColours.Length];
+            var colourPair = TransporterTuning.SparkleColours[sparkle++ % TransporterTuning.SparkleColours.Count];
             var isLeftPixel = half == 0xF0;
             _pixelStates[pixel] = colourPair & 0x0F;
             if (isLeftPixel) _pixelStates[pixel] = colourPair >> 4;
