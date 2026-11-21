@@ -89,13 +89,13 @@ public sealed class RobotTaunts
     /// </summary>
     private const int TauntControlByteRandomRange = 0x20;
 
-    /// <summary>"GOT THE HUMANOID": what the robots say when a player is killed (one of two sentences).</summary>
+    /// <summary>"GOT THE HUMANOID": the first of the two sentences the robots say when a player is killed.</summary>
     private static readonly BerzerkWord[] GotTheHumanoid = [BerzerkWord.Got, BerzerkWord.The, BerzerkWord.Humanoid];
 
     /// <summary>"GOT THE HUMANOIDS": said when every player is killed.</summary>
     private static readonly BerzerkWord[] GotTheHumanoids = [BerzerkWord.Got, BerzerkWord.The, BerzerkWord.Humanoids];
 
-    /// <summary>"GOT THE INTRUDER": what the robots say when a player is killed (the other of two sentences).</summary>
+    /// <summary>"GOT THE INTRUDER": the second of the two sentences the robots say when a player is killed.</summary>
     private static readonly BerzerkWord[] GotTheIntruder = [BerzerkWord.Got, BerzerkWord.The, BerzerkWord.Intruder];
 
     /// <summary>"GOT THE INTRUDERS": said when every player is killed.</summary>
@@ -235,9 +235,9 @@ public sealed class RobotTaunts
     }
 
     /// <summary>
-    ///     In EXTENDED, has the robots say they have got the player they have just killed: "GOT THE HUMANOID" or "GOT THE
-    ///     INTRUDER", picked at random. When every player of a two player game has been killed, they say both, in the plural:
-    ///     "GOT THE HUMANOIDS" and "GOT THE INTRUDERS".
+    ///     In EXTENDED, has the robots say they have got the player they have just killed: "GOT THE HUMANOID", then "GOT THE
+    ///     INTRUDER", as Berzerk does. When every player of a two player game has been killed, they say the same in the plural:
+    ///     "GOT THE HUMANOIDS", then "GOT THE INTRUDERS".
     /// </summary>
     /// <param name="gameSession">The game, which says which game style it is and whether any player has lives left.</param>
     /// <remarks>
@@ -257,15 +257,9 @@ public sealed class RobotTaunts
         ArgumentNullException.ThrowIfNull(gameSession);
         if (gameSession.GameSettings.GameStyle != GameStyle.Extended) return;
 
-        if (gameSession.IsTwoPlayer() && !gameSession.AnyPlayerSlotHasLives())
-        {
-            _sayBerzerkWords(HumanoidVoiceSetting, SpeechPriority.Important, GotTheHumanoids);
-            _sayBerzerkWords(IntruderVoiceSetting, SpeechPriority.Important, GotTheIntruders);
-            return;
-        }
-
-        if (_random.Next(2) == 0) _sayBerzerkWords(HumanoidVoiceSetting, SpeechPriority.Important, GotTheHumanoid);
-        else _sayBerzerkWords(IntruderVoiceSetting, SpeechPriority.Important, GotTheIntruder);
+        var isEveryPlayerOut = gameSession.IsTwoPlayer() && !gameSession.AnyPlayerSlotHasLives();
+        _sayBerzerkWords(HumanoidVoiceSetting, SpeechPriority.Important, isEveryPlayerOut ? GotTheHumanoids : GotTheHumanoid);
+        _sayBerzerkWords(IntruderVoiceSetting, SpeechPriority.Important, isEveryPlayerOut ? GotTheIntruders : GotTheIntruder);
     }
 
     /// <summary>
