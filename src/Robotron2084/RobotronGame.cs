@@ -158,6 +158,14 @@ public sealed class RobotronGame : Game
         StartSpeech();
     }
 
+    /// <summary>Frees what the sound and the speech hold, as the game closes.</summary>
+    protected override void OnExiting(object sender, ExitingEventArgs args)
+    {
+        Sound.Shutdown();
+        Speech.Shutdown();
+        base.OnExiting(sender, args);
+    }
+
     protected override void Update(GameTime gameTime)
     {
         var keyboardState = Keyboard.GetState();
