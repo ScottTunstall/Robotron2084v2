@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -74,8 +74,8 @@ public sealed class CruiseMissile : IEntity, IRemovable
     private static readonly int StepYPortPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
-    private readonly Random _random;
     private readonly IGameEvents _gameEvents;
+    private readonly Random _random;
     private readonly TextureSet _textureSet;
 
     /// <summary>

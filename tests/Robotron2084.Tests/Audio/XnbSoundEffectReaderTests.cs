@@ -9,11 +9,78 @@ namespace Robotron2084.Tests.Audio;
 /// <summary>Reading the samples out of a sound effect the content pipeline built.</summary>
 public sealed class XnbSoundEffectReaderTests
 {
+    /// <summary>The <c>WAVEFORMATEX</c> format tag of plain samples (PCM).</summary>
+    private const ushort PcmFormatTag = 1;
+
     /// <summary>The sample rate of the made-up files.</summary>
     private const int SampleRate = 22050;
 
-    /// <summary>The <c>WAVEFORMATEX</c> format tag of plain samples (PCM).</summary>
-    private const ushort PcmFormatTag = 1;
+    [Fact]
+    public void EveryBuiltBerzerkWordReadsAndLosesItsSilence()
+    {
+        var wordNames = SpeechFolders.GetLineNames(SpeechFolders.Berzerk);
+        Assert.NotEmpty(wordNames);
+
+        foreach (var wordName in wordNames)
+        {
+            var path = Path.Combine(AppContext.BaseDirectory, "Content", "Speech", SpeechFolders.Berzerk,
+                wordName.ToLowerInvariant() + ".xnb");
+            using var stream = File.OpenRead(path);
+
+            var pcmSound = XnbSoundEffectReader.Read(stream);
+            var trimmed = pcmSound.GetTrimmed(SoundTuning.BerzerkWordSilenceLevel, SoundTuning.BerzerkWordSilenceMarginMilliseconds);
+
+            Assert.True(trimmed.Samples.Length < pcmSound.Samples.Length, wordName);
+            Assert.True(trimmed.Samples.Length > 0, wordName);
+        }
+    }
+
+    [Fact]
+    public void ReadsTheSamplesTheirRateAndTheirChannels()
+    {
+        byte[] samples = [1, 2, 3, 4, 5, 6, 7, 8];
+
+        var pcmSound = XnbSoundEffectReader.Read(CreateBuiltFile(samples, 2));
+
+        Assert.Equal(samples, pcmSound.Samples);
+        Assert.Equal(SampleRate, pcmSound.SampleRate);
+        Assert.Equal(AudioChannels.Stereo, pcmSound.Channels);
+    }
+
+    [Fact]
+    public void RejectsACompressedFile()
+    {
+        Assert.Throws<InvalidDataException>(() => XnbSoundEffectReader.Read(CreateBuiltFile([0, 0], flags: 0x80)));
+    }
+
+    [Fact]
+    public void RejectsAFileThatEndsTooSoon()
+    {
+        var whole = CreateBuiltFile([1, 2, 3, 4, 5, 6]).ToArray();
+        using MemoryStream cut = new(whole[..^16]);
+
+        Assert.Throws<InvalidDataException>(() => XnbSoundEffectReader.Read(cut));
+    }
+
+    [Fact]
+    public void RejectsAFileThatIsNotABuiltContentFile()
+    {
+        using MemoryStream stream = new("RIFF0000WAVE"u8.ToArray());
+
+        Assert.Throws<InvalidDataException>(() => XnbSoundEffectReader.Read(stream));
+    }
+
+    [Fact]
+    public void RejectsSamplesThatAreNotPcm()
+    {
+        Assert.Throws<InvalidDataException>(() => XnbSoundEffectReader.Read(CreateBuiltFile([0, 0], formatTag: 2)));
+    }
+
+    [Fact]
+    public void RejectsSamplesThatAreNotSixteenBits()
+    {
+        Assert.Throws<InvalidDataException>(() => XnbSoundEffectReader.Read(CreateBuiltFile([0, 0], bitsPerSample: 8)));
+    }
 
     /// <summary>Makes a built sound effect file the way the content pipeline writes one.</summary>
     private static MemoryStream CreateBuiltFile(byte[] samples, ushort channels = 1, ushort formatTag = PcmFormatTag,
@@ -49,72 +116,5 @@ public sealed class XnbSoundEffectReaderTests
 
         stream.Position = 0;
         return stream;
-    }
-
-    [Fact]
-    public void ReadsTheSamplesTheirRateAndTheirChannels()
-    {
-        byte[] samples = [1, 2, 3, 4, 5, 6, 7, 8];
-
-        var pcmSound = XnbSoundEffectReader.Read(CreateBuiltFile(samples, 2));
-
-        Assert.Equal(samples, pcmSound.Samples);
-        Assert.Equal(SampleRate, pcmSound.SampleRate);
-        Assert.Equal(AudioChannels.Stereo, pcmSound.Channels);
-    }
-
-    [Fact]
-    public void RejectsAFileThatIsNotABuiltContentFile()
-    {
-        using MemoryStream stream = new("RIFF0000WAVE"u8.ToArray());
-
-        Assert.Throws<InvalidDataException>(() => XnbSoundEffectReader.Read(stream));
-    }
-
-    [Fact]
-    public void RejectsACompressedFile()
-    {
-        Assert.Throws<InvalidDataException>(() => XnbSoundEffectReader.Read(CreateBuiltFile([0, 0], flags: 0x80)));
-    }
-
-    [Fact]
-    public void RejectsSamplesThatAreNotPcm()
-    {
-        Assert.Throws<InvalidDataException>(() => XnbSoundEffectReader.Read(CreateBuiltFile([0, 0], formatTag: 2)));
-    }
-
-    [Fact]
-    public void RejectsSamplesThatAreNotSixteenBits()
-    {
-        Assert.Throws<InvalidDataException>(() => XnbSoundEffectReader.Read(CreateBuiltFile([0, 0], bitsPerSample: 8)));
-    }
-
-    [Fact]
-    public void RejectsAFileThatEndsTooSoon()
-    {
-        var whole = CreateBuiltFile([1, 2, 3, 4, 5, 6]).ToArray();
-        using MemoryStream cut = new(whole[..^16]);
-
-        Assert.Throws<InvalidDataException>(() => XnbSoundEffectReader.Read(cut));
-    }
-
-    [Fact]
-    public void EveryBuiltBerzerkWordReadsAndLosesItsSilence()
-    {
-        var wordNames = SpeechFolders.GetLineNames(SpeechFolders.Berzerk);
-        Assert.NotEmpty(wordNames);
-
-        foreach (var wordName in wordNames)
-        {
-            var path = Path.Combine(AppContext.BaseDirectory, "Content", "Speech", SpeechFolders.Berzerk,
-                wordName.ToLowerInvariant() + ".xnb");
-            using var stream = File.OpenRead(path);
-
-            var pcmSound = XnbSoundEffectReader.Read(stream);
-            var trimmed = pcmSound.GetTrimmed(SoundTuning.BerzerkWordSilenceLevel, SoundTuning.BerzerkWordSilenceMarginMilliseconds);
-
-            Assert.True(trimmed.Samples.Length < pcmSound.Samples.Length, wordName);
-            Assert.True(trimmed.Samples.Length > 0, wordName);
-        }
     }
 }

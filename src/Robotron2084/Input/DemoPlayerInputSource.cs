@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Input.Models;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -42,9 +42,9 @@ public sealed class DemoPlayerInputSource : IPlayerInputSource
 {
     private readonly Random _random;
     private int _directionVotes;
-    private PlayField? _playField;
     private IntVector2 _heldMove;
     private int _holdTicks;
+    private PlayField? _playField;
 
     /// <summary>Creates the phony player.</summary>
     /// <param name="random">Where its random numbers come from.</param>

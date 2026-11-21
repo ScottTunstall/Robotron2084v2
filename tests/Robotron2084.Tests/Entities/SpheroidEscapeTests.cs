@@ -1,9 +1,9 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core;
-using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities;
-using Robotron2084.Level.Models;
+using Robotron2084.Entities.Extensions;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -23,20 +23,6 @@ namespace Robotron2084.Tests.Entities;
 public sealed class SpheroidEscapeTests
 {
     private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
-
-    private static GameTime OneTick()
-    {
-        return new GameTime(TimeSpan.Zero, OneTickSpan);
-    }
-
-    private static PlayField CreateField(int seed)
-    {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(
-            1,
-            SpheroidCount: 1,
-            MaxDropsX2: 2,
-            SpheroidDropDelay: 3)).WithRandom(new Random(seed)).Build();
-    }
 
     [Fact]
     public void TheRightEscapeExitIsMeasuredFromTheScreenOrigin()
@@ -70,15 +56,13 @@ public sealed class SpheroidEscapeTests
         Assert.Fail("no seed escaped to the right");
     }
 
-    /// <summary>Runs through the start of the wave, then runs the spheroid until it starts escaping.</summary>
-    /// <returns>True when the spheroid is escaping.</returns>
-    private static bool StartEscape(PlayField playField, Spheroid spheroid)
+    private static PlayField CreateField(int seed)
     {
-        for (var tick = 0; tick < WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
-
-        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(OneTick(), playField);
-
-        return spheroid.IsEscaping;
+        return new PlayFieldBuilder().WithParameters(new WaveParams(
+            1,
+            SpheroidCount: 1,
+            MaxDropsX2: 2,
+            SpheroidDropDelay: 3)).WithRandom(new Random(seed)).Build();
     }
 
     /// <summary>Follows an escape to its end, recording the last animation-frame wrap beat and where the spheroid left.</summary>
@@ -103,5 +87,21 @@ public sealed class SpheroidEscapeTests
         }
 
         return null;
+    }
+
+    private static GameTime OneTick()
+    {
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
+    }
+
+    /// <summary>Runs through the start of the wave, then runs the spheroid until it starts escaping.</summary>
+    /// <returns>True when the spheroid is escaping.</returns>
+    private static bool StartEscape(PlayField playField, Spheroid spheroid)
+    {
+        for (var tick = 0; tick < WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
+
+        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(OneTick(), playField);
+
+        return spheroid.IsEscaping;
     }
 }

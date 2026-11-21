@@ -1,13 +1,33 @@
-using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
-using Robotron2084.Level.Models;
+using Robotron2084.Audio.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Audio;
 
 public class SoundTablesTests
 {
+    [Theory]
+    [InlineData(RobotKind.Electrode, "PostKill")]
+    [InlineData(RobotKind.Grunt, "RobotHit")]
+    [InlineData(RobotKind.Hulk, "HulkHit")]
+    [InlineData(RobotKind.Spheroid, "CircleKill")]
+    [InlineData(RobotKind.Enforcer, "EnforcerKill")]
+    [InlineData(RobotKind.Quark, "SquareKill")]
+    [InlineData(RobotKind.Tank, "TankKill")]
+    [InlineData(RobotKind.Brain, "BrainKill")]
+    [InlineData(RobotKind.Prog, "ProgKill")]
+    [InlineData(RobotKind.Spark, "SparkKill")]
+    [InlineData(RobotKind.TankShell, "ShellKill")]
+    [InlineData(RobotKind.CruiseMissile, "CruiseMissileKill")]
+    public void EachKind_PlaysItsOwnKillSound(RobotKind kind, string table)
+    {
+        var expected = typeof(SoundTables).GetField(table)!.GetValue(null);
+
+        Assert.Same(expected, RobotKinds.GetInfo(kind).LaserHitSound);
+    }
+
     [Fact]
     public void EveryTable_MatchesTheMainROMsOwnBytes()
     {
@@ -33,25 +53,5 @@ public class SoundTablesTests
         Assert.Equal(0xD0, SoundTables.PlayerLaser.Priority);
         Assert.Equal([new SoundTableRow(1, 8, 0x01)], SoundTables.PlayerLaser.Entries);
         Assert.Equal([new SoundTableRow(1, 16, 0x25)], SoundTables.StartTwoPlayers.Entries);
-    }
-
-    [Theory]
-    [InlineData(RobotKind.Electrode, "PostKill")]
-    [InlineData(RobotKind.Grunt, "RobotHit")]
-    [InlineData(RobotKind.Hulk, "HulkHit")]
-    [InlineData(RobotKind.Spheroid, "CircleKill")]
-    [InlineData(RobotKind.Enforcer, "EnforcerKill")]
-    [InlineData(RobotKind.Quark, "SquareKill")]
-    [InlineData(RobotKind.Tank, "TankKill")]
-    [InlineData(RobotKind.Brain, "BrainKill")]
-    [InlineData(RobotKind.Prog, "ProgKill")]
-    [InlineData(RobotKind.Spark, "SparkKill")]
-    [InlineData(RobotKind.TankShell, "ShellKill")]
-    [InlineData(RobotKind.CruiseMissile, "CruiseMissileKill")]
-    public void EachKind_PlaysItsOwnKillSound(RobotKind kind, string table)
-    {
-        var expected = typeof(SoundTables).GetField(table)!.GetValue(null);
-
-        Assert.Same(expected, RobotKinds.GetInfo(kind).LaserHitSound);
     }
 }

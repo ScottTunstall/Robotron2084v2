@@ -44,12 +44,6 @@ public sealed class SoundEngine
     /// <summary>The priority of the sound holding the voice, or 0 when the voice is free (<c>SNDPRI</c>).</summary>
     public int CurrentPriority { get; private set; }
 
-    /// <summary>True while the board is still playing the last number sent to it.</summary>
-    public bool IsBoardPlaying() => _audioSink.IsPlaying();
-
-    /// <summary>True while the voice is kept for a sound that outlives its table (<see cref="HoldVoice" />).</summary>
-    public bool IsVoiceHeld() => _holdTicksLeft > 0;
-
     /// <summary>
     ///     Keeps the voice for <paramref name="ticks" /> more port ticks. A table's end normally frees the
     ///     voice, but some sounds outlive their table on the BOARD — the wave-end music is a looping sound
@@ -61,6 +55,12 @@ public sealed class SoundEngine
     {
         _holdTicksLeft = Math.Max(_holdTicksLeft, ticks);
     }
+
+    /// <summary>True while the board is still playing the last number sent to it.</summary>
+    public bool IsBoardPlaying() => _audioSink.IsPlaying();
+
+    /// <summary>True while the voice is kept for a sound that outlives its table (<see cref="HoldVoice" />).</summary>
+    public bool IsVoiceHeld() => _holdTicksLeft > 0;
 
     /// <summary>
     ///     Asks for a sound. It takes the voice only if it is more important than the one playing; its first

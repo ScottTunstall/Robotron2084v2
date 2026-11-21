@@ -3,9 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Graphics;
 using Robotron2084.Hud;
 using Robotron2084.Input;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Level.Collisions;
+using Robotron2084.Level.Models;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
 using Robotron2084.States.Models;
@@ -36,13 +36,13 @@ public sealed class AttractState : IGameState, IAttractState
 {
     private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
     private readonly DemoPlayerInputSource _demoPlayerInputSource;
-    private readonly WaveParamsGenerator _waveParamsGenerator = new();
+    private readonly GameSession _gameSession;
+    private readonly GameStateParams _gameStateParams;
     private readonly HighScoreStore _highScoreStore;
     private readonly IPlayerInputSource _humanPlayerInputSource;
     private readonly Random _random;
-    private readonly GameStateParams _gameStateParams;
-    private readonly GameSession _gameSession;
     private readonly TextureSet _textureSet;
+    private readonly WaveParamsGenerator _waveParamsGenerator = new();
     private PlayField _playField;
 
     public AttractState(GameStateParams gameStateParams)

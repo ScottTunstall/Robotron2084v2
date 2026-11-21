@@ -1,11 +1,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -31,9 +31,6 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
 {
-    /// <summary>How many animation frames are in each of a family member's walk sets.</summary>
-    private const int AnimationFramesPerSet = 3;
-
     /// <summary>
     ///     How long a family member waits between steps. This number is different from the arcade's on purpose. Do not
     ///     change it back.
@@ -46,6 +43,12 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     internal const int BeatIntervalArcadeFrames = 16;
 
+    /// <summary>How many steps each direction block of the walk table has.</summary>
+    internal const int SubStepsPerDirection = 4;
+
+    /// <summary>How many animation frames are in each of a family member's walk sets.</summary>
+    private const int AnimationFramesPerSet = 3;
+
     /// <summary>
     ///     The most <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> a family member waits before
     ///     its first step, so that a group of family members does not all start together.
@@ -57,9 +60,6 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
 
     /// <summary>How many direction blocks the walk table has, one for each way a family member can walk.</summary>
     private const int PossibleDirections = 8;
-
-    /// <summary>How many steps each direction block of the walk table has.</summary>
-    internal const int SubStepsPerDirection = 4;
 
     /// <summary>
     ///     Which set of three animation frames each direction block uses. Walking diagonally uses the left set or the
@@ -103,9 +103,8 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Times the family member's <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see>.</summary>
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
-    private readonly Random _random;
-
     private readonly IGameEvents _gameEvents;
+    private readonly Random _random;
     private readonly TextureSet _textureSet;
 
     /// <summary>Which walk animation frame is showing, counted through this family member's own animation frames.</summary>
@@ -287,6 +286,33 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
         ActOnBeat(playField);
     }
 
+    /// <summary>Works out which block of the walk table is the walk in a direction.</summary>
+    /// <param name="direction">The way the family member walks.</param>
+    /// <returns>The block, from 0 to 7, in the walk table's order: left, right, down, up, then the four diagonals.</returns>
+    internal static int GetDirectionBlock(Direction8 direction)
+    {
+        return direction switch
+        {
+            Direction8.Left => 0,
+            Direction8.Right => 1,
+            Direction8.Down => 2,
+            Direction8.Up => 3,
+            Direction8.UpLeft => 4,
+            Direction8.UpRight => 5,
+            Direction8.DownRight => 6,
+            _ => 7
+        };
+    }
+
+    /// <summary>Gets how far a step of a family member's walk goes sideways.</summary>
+    /// <param name="directionBlock">The walk table's block for the way it is walking (<see cref="GetDirectionBlock" />).</param>
+    /// <param name="subStep">The step of the block, from 0 to <see cref="SubStepsPerDirection" /> less 1.</param>
+    /// <returns>How far it goes, in arcade pixels: less than 0 to the left, more than 0 to the right.</returns>
+    internal static int GetSidewaysStepArcadePixels(int directionBlock, int subStep)
+    {
+        return Steps[(directionBlock * SubStepsPerDirection) + subStep].Dx;
+    }
+
     /// <summary>
     ///     The longer side of the family member's box, in port pixels. When a family member is put on the field, a square
     ///     this big is kept clear for it.
@@ -297,6 +323,19 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
     {
         var (width, height) = kind.GetArcadeCollisionSize();
         return ScreenSize.ToPortPixelsFromArcadePixels(Math.Max(width, height));
+    }
+
+    /// <summary>
+    ///     Works out which animation frame a family member shows on a step of its walk, as a place in its own animation
+    ///     frames.
+    /// </summary>
+    /// <param name="directionBlock">The walk table's block for the way it is walking (<see cref="GetDirectionBlock" />).</param>
+    /// <param name="subStep">The step of the block, from 0 to <see cref="SubStepsPerDirection" /> less 1.</param>
+    /// <returns>The place of the animation frame, counting from 0.</returns>
+    internal static int GetWalkAnimationFrameIndex(int directionBlock, int subStep)
+    {
+        var frame = Steps[(directionBlock * SubStepsPerDirection) + subStep].Frame;
+        return AnimationFramesPerSet * AnimationFrameGroupByDirection[directionBlock] + frame;
     }
 
     /// <summary>Starts the reprogramming. The family member stops walking and starts flashing.</summary>
@@ -389,46 +428,6 @@ public sealed class FamilyMember : IEntity, IAnimationFrameSource, IRemovable
         _position = possibleNextPosition;
         _subStep = (_subStep + 1) % SubStepsPerDirection;
         if (--_newDirectionStepsRemaining <= 0) PickNewDirection();
-    }
-
-    /// <summary>
-    ///     Works out which animation frame a family member shows on a step of its walk, as a place in its own animation
-    ///     frames.
-    /// </summary>
-    /// <param name="directionBlock">The walk table's block for the way it is walking (<see cref="GetDirectionBlock" />).</param>
-    /// <param name="subStep">The step of the block, from 0 to <see cref="SubStepsPerDirection" /> less 1.</param>
-    /// <returns>The place of the animation frame, counting from 0.</returns>
-    internal static int GetWalkAnimationFrameIndex(int directionBlock, int subStep)
-    {
-        var frame = Steps[(directionBlock * SubStepsPerDirection) + subStep].Frame;
-        return AnimationFramesPerSet * AnimationFrameGroupByDirection[directionBlock] + frame;
-    }
-
-    /// <summary>Gets how far a step of a family member's walk goes sideways.</summary>
-    /// <param name="directionBlock">The walk table's block for the way it is walking (<see cref="GetDirectionBlock" />).</param>
-    /// <param name="subStep">The step of the block, from 0 to <see cref="SubStepsPerDirection" /> less 1.</param>
-    /// <returns>How far it goes, in arcade pixels: less than 0 to the left, more than 0 to the right.</returns>
-    internal static int GetSidewaysStepArcadePixels(int directionBlock, int subStep)
-    {
-        return Steps[(directionBlock * SubStepsPerDirection) + subStep].Dx;
-    }
-
-    /// <summary>Works out which block of the walk table is the walk in a direction.</summary>
-    /// <param name="direction">The way the family member walks.</param>
-    /// <returns>The block, from 0 to 7, in the walk table's order: left, right, down, up, then the four diagonals.</returns>
-    internal static int GetDirectionBlock(Direction8 direction)
-    {
-        return direction switch
-        {
-            Direction8.Left => 0,
-            Direction8.Right => 1,
-            Direction8.Down => 2,
-            Direction8.Up => 3,
-            Direction8.UpLeft => 4,
-            Direction8.UpRight => 5,
-            Direction8.DownRight => 6,
-            _ => 7
-        };
     }
 
     /// <summary>Picks a new direction at random, and picks at random how many steps to take before the next change.</summary>

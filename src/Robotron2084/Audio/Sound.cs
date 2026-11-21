@@ -37,15 +37,6 @@ public static class Sound
     /// </summary>
     public static bool Enabled { get; set; } = true;
 
-    /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying" />).</summary>
-    public static bool IsPlaying() => _soundEngine?.IsBoardPlaying() ?? false;
-
-    /// <summary>
-    ///     True while the wave-end music is still playing: from <see cref="PlayWaveEnd" /> until it has played out, which is
-    ///     into the start of the next wave, or until a more important sound cuts it off.
-    /// </summary>
-    public static bool IsWaveEndMusicPlaying() => _soundEngine?.IsVoiceHeld() ?? false;
-
     /// <summary>Sets up the sound service with the sink that will play the sound numbers.</summary>
     /// <param name="audioSink">Where the sound numbers go.</param>
     public static void Initialise(IAudioSink audioSink)
@@ -54,12 +45,21 @@ public static class Sound
         _transporterSound = new TransporterSound();
     }
 
+    /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying" />).</summary>
+    public static bool IsPlaying() => _soundEngine?.IsBoardPlaying() ?? false;
+
     /// <summary>True while the transporter is still sending its sound to the board.</summary>
     /// <returns>True from <see cref="PlayTransporter" /> until its last send, or until <see cref="StopTransporter" />.</returns>
     public static bool IsTransporterRunning()
     {
         return _transporterSound.IsRunning();
     }
+
+    /// <summary>
+    ///     True while the wave-end music is still playing: from <see cref="PlayWaveEnd" /> until it has played out, which is
+    ///     into the start of the next wave, or until a more important sound cuts it off.
+    /// </summary>
+    public static bool IsWaveEndMusicPlaying() => _soundEngine?.IsVoiceHeld() ?? false;
 
     /// <summary>Asks for a sound that is heard in the middle, between both speakers.</summary>
     /// <param name="sequence">The sound's table.</param>

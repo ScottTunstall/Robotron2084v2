@@ -1,12 +1,11 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
-using Robotron2084.Input.Models;
 using Robotron2084.Input;
-using Robotron2084.Level.Models;
+using Robotron2084.Input.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -33,85 +32,16 @@ public sealed class PlayerAppearTests
 
     private const int PlayerSpriteRows = 12;
 
-    private static GameTime OneTick()
-    {
-        return new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
-    }
-
-    private static PlayField CreateEmptyField(IPlayerInputSource? playerInputSource = null)
-    {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithInput(playerInputSource ?? new FakeInputSource())
-            .WithSeed(7).Build();
-    }
-
-    private static int TickToArcadeFrame(PlayField playField, int ticks, int arcadeFrame)
-    {
-        while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
-        {
-            playField.Update(OneTick());
-            ticks++;
-        }
-
-        return ticks;
-    }
-
-    private static int Count(PlayField playField, StripEngine engine)
-    {
-        return playField.FieldEntities.Explosions.Count(effect => effect.GetEngine() == engine);
-    }
-
     [Fact]
-    public void WhenThePlayerAppears_ARowFanIsMadeForEveryRow_AndAColumnFanForAsManyColumnsAsThereAreRecords()
+    public void ATestThatSkipsTheStartOfTheWave_GetsNoAppearEffect()
     {
         var playField = CreateEmptyField();
-        var ticks = 0;
+        playField.SkipWaveStart();
 
-        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame - 1);
+        playField.Update(OneTick());
+
         Assert.Empty(playField.FieldEntities.Explosions);
-
-        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame);
-
-        // The vertical routine takes its records from the object list, so all 12 are made. The sprite is 4 columns
-        // wide, but the horizontal routine has 2 records, so only the first 2 asked for are made.
-        Assert.Equal(PlayerSpriteRows, Count(playField, StripEngine.Vertical));
-        Assert.Equal(StripEffectTuning.HorizontalPoolSize, Count(playField, StripEngine.Horizontal));
-        Assert.Equal(0, Count(playField, StripEngine.Diagonal));
-        Assert.All(playField.FieldEntities.Explosions, effect => Assert.Equal(StripEffectKind.Appear, effect.Kind));
-        Assert.All(playField.FieldEntities.Explosions, effect => Assert.Equal(playField.Player.GetBounds(), effect.GetBounds()));
-    }
-
-    [Fact]
-    public void SixArcadeFramesLater_APairOfLeaningFansIsMadeForEveryThirdRow()
-    {
-        var playField = CreateEmptyField();
-        var ticks = 0;
-
-        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 5);
-        Assert.Equal(0, Count(playField, StripEngine.Diagonal));
-
-        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 6);
-
-        // The count runs 12, 9, 6, 3, 0 (`SUBA #3 / BPL DPAPP1`), and each one makes two fans (`CLRA`, then `COMA`):
-        // ten, which is every record the diagonal routine has.
-        Assert.Equal(StripEffectTuning.DiagonalPoolSize, Count(playField, StripEngine.Diagonal));
-        Assert.Equal(5, playField.FieldEntities.Explosions.Count(effect => effect.Slope == 1));
-        Assert.Equal(5, playField.FieldEntities.Explosions.Count(effect => effect.Slope == -1));
-    }
-
-    [Fact]
-    public void ThePlayersOwnSprite_IsNotDrawn_UntilTheGameIsLive()
-    {
-        var playField = CreateEmptyField();
-        var ticks = 0;
-
-        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 9);
-        Assert.True(playField.HasPlayerAppeared());
-        Assert.False(playField.IsPlayerVisible());
-
-        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 10); // PLS2: CLR STATUS
-        Assert.True(playField.IsLive());
         Assert.True(playField.IsPlayerVisible());
-        Assert.NotEmpty(playField.FieldEntities.Explosions); // the appear is still running
     }
 
     [Fact]
@@ -139,6 +69,24 @@ public sealed class PlayerAppearTests
     }
 
     [Fact]
+    public void SixArcadeFramesLater_APairOfLeaningFansIsMadeForEveryThirdRow()
+    {
+        var playField = CreateEmptyField();
+        var ticks = 0;
+
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 5);
+        Assert.Equal(0, Count(playField, StripEngine.Diagonal));
+
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 6);
+
+        // The count runs 12, 9, 6, 3, 0 (`SUBA #3 / BPL DPAPP1`), and each one makes two fans (`CLRA`, then `COMA`):
+        // ten, which is every record the diagonal routine has.
+        Assert.Equal(StripEffectTuning.DiagonalPoolSize, Count(playField, StripEngine.Diagonal));
+        Assert.Equal(5, playField.FieldEntities.Explosions.Count(effect => effect.Slope == 1));
+        Assert.Equal(5, playField.FieldEntities.Explosions.Count(effect => effect.Slope == -1));
+    }
+
+    [Fact]
     public void TheAppearIsOver_WhenTheLastColumnFanHasClosedUp()
     {
         // The leaning fans last 15 fiftieths of a second from frame 50, the row fans 29 from frame 44, and the column fans 31.
@@ -157,14 +105,64 @@ public sealed class PlayerAppearTests
     }
 
     [Fact]
-    public void ATestThatSkipsTheStartOfTheWave_GetsNoAppearEffect()
+    public void ThePlayersOwnSprite_IsNotDrawn_UntilTheGameIsLive()
     {
         var playField = CreateEmptyField();
-        playField.SkipWaveStart();
+        var ticks = 0;
 
-        playField.Update(OneTick());
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 9);
+        Assert.True(playField.HasPlayerAppeared());
+        Assert.False(playField.IsPlayerVisible());
 
-        Assert.Empty(playField.FieldEntities.Explosions);
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame + 10); // PLS2: CLR STATUS
+        Assert.True(playField.IsLive());
         Assert.True(playField.IsPlayerVisible());
+        Assert.NotEmpty(playField.FieldEntities.Explosions); // the appear is still running
+    }
+
+    [Fact]
+    public void WhenThePlayerAppears_ARowFanIsMadeForEveryRow_AndAColumnFanForAsManyColumnsAsThereAreRecords()
+    {
+        var playField = CreateEmptyField();
+        var ticks = 0;
+
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame - 1);
+        Assert.Empty(playField.FieldEntities.Explosions);
+
+        ticks = TickToArcadeFrame(playField, ticks, PlayerAppearArcadeFrame);
+
+        // The vertical routine takes its records from the object list, so all 12 are made. The sprite is 4 columns
+        // wide, but the horizontal routine has 2 records, so only the first 2 asked for are made.
+        Assert.Equal(PlayerSpriteRows, Count(playField, StripEngine.Vertical));
+        Assert.Equal(StripEffectTuning.HorizontalPoolSize, Count(playField, StripEngine.Horizontal));
+        Assert.Equal(0, Count(playField, StripEngine.Diagonal));
+        Assert.All(playField.FieldEntities.Explosions, effect => Assert.Equal(StripEffectKind.Appear, effect.Kind));
+        Assert.All(playField.FieldEntities.Explosions, effect => Assert.Equal(playField.Player.GetBounds(), effect.GetBounds()));
+    }
+
+    private static int Count(PlayField playField, StripEngine engine)
+    {
+        return playField.FieldEntities.Explosions.Count(effect => effect.GetEngine() == engine);
+    }
+
+    private static PlayField CreateEmptyField(IPlayerInputSource? playerInputSource = null)
+    {
+        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithInput(playerInputSource ?? new FakeInputSource())
+            .WithSeed(7).Build();
+    }
+
+    private static GameTime OneTick()
+    {
+        return new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
+    }
+    private static int TickToArcadeFrame(PlayField playField, int ticks, int arcadeFrame)
+    {
+        while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
+        {
+            playField.Update(OneTick());
+            ticks++;
+        }
+
+        return ticks;
     }
 }

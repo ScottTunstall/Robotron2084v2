@@ -1,10 +1,10 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
-using Robotron2084.Entities.Models;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
-using Robotron2084.Level.Models;
+using Robotron2084.Entities.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Score;
 using Xunit;
 
@@ -18,31 +18,6 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public sealed class PlayFieldFamilyMemberTests
 {
-    private static WaveParams FamilyMemberWave(int mom, int daddy, int mikey, int hulks = 0)
-    {
-        return new WaveParams(
-            1,
-            0,
-            0,
-            mom,
-            daddy,
-            mikey,
-            hulks);
-    }
-
-    private static PlayField CreateField(WaveParams waveParams)
-    {
-        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(99).Build();
-    }
-
-    /// <summary>
-    ///     One port tick.
-    /// </summary>
-    private static GameTime OneTick()
-    {
-        return new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
-    }
-
     [Fact]
     public void Constructor_SpawnsTheWaveFamilyMemberCounts()
     {
@@ -58,39 +33,23 @@ public sealed class PlayFieldFamilyMemberTests
     }
 
     [Fact]
-    public void FamilyMembers_StayInsideTheField_OverManyTicks()
+    public void EveryWaveStartsWithNoRescues_SoTheFirstFamilyMemberSavedPaysTheFirstBonus()
     {
-        var playField = CreateField(FamilyMemberWave(2, 2, 2));
-        var inner = playField.PlayfieldWall.PlayfieldBounds;
+        var first = CreateField(FamilyMemberWave(0, 0, 1));
+        first.SkipWaveStart();
+        first.FieldEntities.FamilyList[0].MoveTo(first.Player.Position);
+        first.Update(new GameTime());
+        Assert.Equal(1, first.RescuesThisLife);
 
-        for (var tick = 0; tick < 600; tick++)
-        {
-            playField.Update(OneTick());
-            foreach (var familyMember in playField.FieldEntities.FamilyList)
-            {
-                Assert.InRange(familyMember.GetBounds().X, inner.X, inner.Right - familyMember.GetBounds().Width);
-                Assert.InRange(familyMember.GetBounds().Y, inner.Y, inner.Bottom - familyMember.GetBounds().Height);
-                Assert.True(familyMember.GetBounds().Right <= inner.Right && familyMember.GetBounds().Bottom <= inner.Bottom,
-                    $"tick {tick}: family member {familyMember.GetBounds()} escapes {inner}");
-            }
-        }
-    }
+        // ROM PLINIT clears SAVCNT as each wave starts, so the next wave pays 1000 again, not 2000.
+        var next = CreateField(FamilyMemberWave(0, 0, 1));
+        next.SkipWaveStart();
+        Assert.Equal(0, next.RescuesThisLife);
+        next.FieldEntities.FamilyList[0].MoveTo(next.Player.Position);
+        next.Update(new GameTime());
 
-    [Fact]
-    public void FamilyMembers_MoveOverTime()
-    {
-        var playField = CreateField(FamilyMemberWave(0, 0, 4));
-        var first = playField.FieldEntities.FamilyList[0];
-        var firstPosition = first.Position;
-        var anyMoved = false;
-
-        for (var tick = 0; tick < 300 && !anyMoved; tick++)
-        {
-            playField.Update(OneTick());
-            anyMoved = first.Position != firstPosition;
-        }
-
-        Assert.True(anyMoved, "no family member moved in 300 ticks");
+        Assert.Equal(1, next.RescuesThisLife);
+        Assert.Equal(ScoreValues.RescueBonus(1), next.ScoreBoard.Score);
     }
 
     [Fact]
@@ -127,61 +86,39 @@ public sealed class PlayFieldFamilyMemberTests
     }
 
     [Fact]
-    public void Player_TouchingFamilyMember_RescuesWithFirstBonus()
+    public void FamilyMembers_MoveOverTime()
     {
-        var playField = CreateField(FamilyMemberWave(0, 0, 1));
-        playField.SkipWaveStart();
-        var familyMember = playField.FieldEntities.FamilyList[0];
-        var scoreBefore = playField.ScoreBoard.Score;
-        familyMember.MoveTo(playField.Player.Position);
+        var playField = CreateField(FamilyMemberWave(0, 0, 4));
+        var first = playField.FieldEntities.FamilyList[0];
+        var firstPosition = first.Position;
+        var anyMoved = false;
 
-        playField.Update(new GameTime());
+        for (var tick = 0; tick < 300 && !anyMoved; tick++)
+        {
+            playField.Update(OneTick());
+            anyMoved = first.Position != firstPosition;
+        }
 
-        Assert.Equal(EntityLifeState.Dead, familyMember.LifeState);
-        Assert.Equal(1, playField.RescuesThisLife);
-        Assert.Equal(scoreBefore + ScoreValues.RescueBonus(1), playField.ScoreBoard.Score);
-        Assert.Empty(playField.FieldEntities.Skulls); // a rescue leaves no skull (ROM: PCFLG path)
+        Assert.True(anyMoved, "no family member moved in 300 ticks");
     }
 
     [Fact]
-    public void Rescues_KeepRunningCountUntilTheCap()
+    public void FamilyMembers_StayInsideTheField_OverManyTicks()
     {
-        var playField = CreateField(FamilyMemberWave(0, 0, 9));
-        playField.SkipWaveStart();
-        foreach (var familyMember in playField.FieldEntities.FamilyList) familyMember.MoveTo(playField.Player.Position);
+        var playField = CreateField(FamilyMemberWave(2, 2, 2));
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
 
-        var scoreBefore = playField.ScoreBoard.Score;
-        playField.Update(new GameTime());
-
-        // ROM: SAVCNT itself is uncapped (INC SAVCNT); only the score lookup
-        // caps at 5 (CMPA #5 / BLS → SVITAB index). Nine rescues in one tick pay
-        // 1000, 2000, 3000, 4000, then the 5000 cap five times.
-        Assert.Equal(9, playField.RescuesThisLife);
-        Assert.Equal(scoreBefore + 10000 + 5 * ScoreValues.RescueBonus(5), playField.ScoreBoard.Score);
-    }
-
-    [Fact]
-    public void TheFieldChangesThePlayersOwnScoreAndLives()
-    {
-        // The HUD draws the SESSION's slots. The score and the lives live in the player's slot for the whole game, and
-        // the field changes those same counters, so a point or a spare life shows the moment it happens, with nothing
-        // copied (notes §97).
-        PlayerSlot playerSlot = new(1, new FakeInputSource(), new LivesCounter(3), 1, new ScoreBoard(0));
-        var playField = new PlayFieldBuilder().WithParameters(FamilyMemberWave(0, 0, 1)).WithSeed(99)
-            .WithScoreBoard(playerSlot.ScoreBoard).WithLivesCounter(playerSlot.LivesCounter).Build();
-        playField.SkipWaveStart();
-
-        playField.Update(new GameTime());
-        Assert.Equal(0, playerSlot.Score);
-        Assert.Equal(3, playerSlot.Lives);
-
-        var familyMember = playField.FieldEntities.FamilyList[0];
-        familyMember.MoveTo(playField.Player.Position);
-        playField.Update(new GameTime());
-        Assert.Equal(ScoreValues.RescueBonus(1), playerSlot.Score);
-
-        playField.Player.AddLife();
-        Assert.Equal(4, playerSlot.Lives);
+        for (var tick = 0; tick < 600; tick++)
+        {
+            playField.Update(OneTick());
+            foreach (var familyMember in playField.FieldEntities.FamilyList)
+            {
+                Assert.InRange(familyMember.GetBounds().X, inner.X, inner.Right - familyMember.GetBounds().Width);
+                Assert.InRange(familyMember.GetBounds().Y, inner.Y, inner.Bottom - familyMember.GetBounds().Height);
+                Assert.True(familyMember.GetBounds().Right <= inner.Right && familyMember.GetBounds().Bottom <= inner.Bottom,
+                    $"tick {tick}: family member {familyMember.GetBounds()} escapes {inner}");
+            }
+        }
     }
 
     [Fact]
@@ -210,25 +147,20 @@ public sealed class PlayFieldFamilyMemberTests
     }
 
     [Fact]
-    public void SkullMarker_ExpiresAfterItsLinger()
+    public void Player_TouchingFamilyMember_RescuesWithFirstBonus()
     {
-        var playField = CreateField(FamilyMemberWave(0, 0, 1, 1));
-
-        for (var tick = 0;
-             tick < WaveStartTicks.UntilLive(playField);
-             tick++) playField.Update(OneTick()); // the hulk cannot act until the game is live (notes §88)
-
+        var playField = CreateField(FamilyMemberWave(0, 0, 1));
+        playField.SkipWaveStart();
         var familyMember = playField.FieldEntities.FamilyList[0];
-        familyMember.MoveTo(playField.FieldEntities.Hulks[0].Position);
-        playField.Update(OneTick());
-        Assert.Single(playField.FieldEntities.Skulls);
+        var scoreBefore = playField.ScoreBoard.Score;
+        familyMember.MoveTo(playField.Player.Position);
 
-        for (var tick = 0; tick < ArcadeClock.ToPortTicks(90) - 1; tick++) playField.Update(OneTick());
+        playField.Update(new GameTime());
 
-        Assert.Single(playField.FieldEntities.Skulls); // still up just before the linger ends
-
-        playField.Update(OneTick());
-        Assert.Empty(playField.FieldEntities.Skulls); // pruned once expired
+        Assert.Equal(EntityLifeState.Dead, familyMember.LifeState);
+        Assert.Equal(1, playField.RescuesThisLife);
+        Assert.Equal(scoreBefore + ScoreValues.RescueBonus(1), playField.ScoreBoard.Score);
+        Assert.Empty(playField.FieldEntities.Skulls); // a rescue leaves no skull (ROM: PCFLG path)
     }
 
     [Fact]
@@ -253,6 +185,69 @@ public sealed class PlayFieldFamilyMemberTests
     }
 
     [Fact]
+    public void Rescues_KeepRunningCountUntilTheCap()
+    {
+        var playField = CreateField(FamilyMemberWave(0, 0, 9));
+        playField.SkipWaveStart();
+        foreach (var familyMember in playField.FieldEntities.FamilyList) familyMember.MoveTo(playField.Player.Position);
+
+        var scoreBefore = playField.ScoreBoard.Score;
+        playField.Update(new GameTime());
+
+        // ROM: SAVCNT itself is uncapped (INC SAVCNT); only the score lookup
+        // caps at 5 (CMPA #5 / BLS → SVITAB index). Nine rescues in one tick pay
+        // 1000, 2000, 3000, 4000, then the 5000 cap five times.
+        Assert.Equal(9, playField.RescuesThisLife);
+        Assert.Equal(scoreBefore + 10000 + 5 * ScoreValues.RescueBonus(5), playField.ScoreBoard.Score);
+    }
+
+    [Fact]
+    public void SkullMarker_ExpiresAfterItsLinger()
+    {
+        var playField = CreateField(FamilyMemberWave(0, 0, 1, 1));
+
+        for (var tick = 0;
+             tick < WaveStartTicks.UntilLive(playField);
+             tick++) playField.Update(OneTick()); // the hulk cannot act until the game is live (notes §88)
+
+        var familyMember = playField.FieldEntities.FamilyList[0];
+        familyMember.MoveTo(playField.FieldEntities.Hulks[0].Position);
+        playField.Update(OneTick());
+        Assert.Single(playField.FieldEntities.Skulls);
+
+        for (var tick = 0; tick < ArcadeClock.ToPortTicks(90) - 1; tick++) playField.Update(OneTick());
+
+        Assert.Single(playField.FieldEntities.Skulls); // still up just before the linger ends
+
+        playField.Update(OneTick());
+        Assert.Empty(playField.FieldEntities.Skulls); // pruned once expired
+    }
+
+    [Fact]
+    public void TheFieldChangesThePlayersOwnScoreAndLives()
+    {
+        // The HUD draws the SESSION's slots. The score and the lives live in the player's slot for the whole game, and
+        // the field changes those same counters, so a point or a spare life shows the moment it happens, with nothing
+        // copied (notes §97).
+        PlayerSlot playerSlot = new(1, new FakeInputSource(), new LivesCounter(3), 1, new ScoreBoard(0));
+        var playField = new PlayFieldBuilder().WithParameters(FamilyMemberWave(0, 0, 1)).WithSeed(99)
+            .WithScoreBoard(playerSlot.ScoreBoard).WithLivesCounter(playerSlot.LivesCounter).Build();
+        playField.SkipWaveStart();
+
+        playField.Update(new GameTime());
+        Assert.Equal(0, playerSlot.Score);
+        Assert.Equal(3, playerSlot.Lives);
+
+        var familyMember = playField.FieldEntities.FamilyList[0];
+        familyMember.MoveTo(playField.Player.Position);
+        playField.Update(new GameTime());
+        Assert.Equal(ScoreValues.RescueBonus(1), playerSlot.Score);
+
+        playField.Player.AddLife();
+        Assert.Equal(4, playerSlot.Lives);
+    }
+
+    [Fact]
     public void WaveClear_DoesNotRequireFamilyMembersGone()
     {
         var playField = CreateField(FamilyMemberWave(1, 1, 1));
@@ -260,23 +255,28 @@ public sealed class PlayFieldFamilyMemberTests
         Assert.True(playField.IsWaveCleared()); // no robots → cleared even with family members alive (ROM WVCHEK)
     }
 
-    [Fact]
-    public void EveryWaveStartsWithNoRescues_SoTheFirstFamilyMemberSavedPaysTheFirstBonus()
+    private static PlayField CreateField(WaveParams waveParams)
     {
-        var first = CreateField(FamilyMemberWave(0, 0, 1));
-        first.SkipWaveStart();
-        first.FieldEntities.FamilyList[0].MoveTo(first.Player.Position);
-        first.Update(new GameTime());
-        Assert.Equal(1, first.RescuesThisLife);
+        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(99).Build();
+    }
 
-        // ROM PLINIT clears SAVCNT as each wave starts, so the next wave pays 1000 again, not 2000.
-        var next = CreateField(FamilyMemberWave(0, 0, 1));
-        next.SkipWaveStart();
-        Assert.Equal(0, next.RescuesThisLife);
-        next.FieldEntities.FamilyList[0].MoveTo(next.Player.Position);
-        next.Update(new GameTime());
+    private static WaveParams FamilyMemberWave(int mom, int daddy, int mikey, int hulks = 0)
+    {
+        return new WaveParams(
+            1,
+            0,
+            0,
+            mom,
+            daddy,
+            mikey,
+            hulks);
+    }
 
-        Assert.Equal(1, next.RescuesThisLife);
-        Assert.Equal(ScoreValues.RescueBonus(1), next.ScoreBoard.Score);
+    /// <summary>
+    ///     One port tick.
+    /// </summary>
+    private static GameTime OneTick()
+    {
+        return new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
     }
 }

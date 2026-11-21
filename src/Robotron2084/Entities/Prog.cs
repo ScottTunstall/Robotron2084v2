@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -34,12 +34,6 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Prog : IExplodable, IRemovable
 {
-    /// <summary>
-    ///     The range of the random number that decides whether a prog goes sideways or up and down. Each is picked half the
-    ///     time.
-    /// </summary>
-    private const int AxisFlipSides = 2;
-
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -49,6 +43,27 @@ public sealed class Prog : IExplodable, IRemovable
     ///     The arcade runs the prog's routine this often.
     /// </remarks>
     internal const int BeatIntervalArcadeFrames = 3;
+
+    /// <summary>
+    ///     How far a prog goes on a step to the left or right, in columns. It is the same distance on the screen as a
+    ///     step up or down.
+    /// </summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRB10.ASM</c> <c>GPOFF</c>. The table of sideways steps moves 2 columns at a time,
+    ///             and a column is 2 arcade pixels wide.
+    ///         </item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
+    ///     </list>
+    /// </remarks>
+    internal const int StepXColumns = 2;
+
+    /// <summary>
+    ///     The range of the random number that decides whether a prog goes sideways or up and down. Each is picked half the
+    ///     time.
+    /// </summary>
+    private const int AxisFlipSides = 2;
 
     /// <summary>The nearest to the right wall, in columns, that the top-left corner of a prog's explosion may be.</summary>
     /// <remarks>
@@ -125,21 +140,6 @@ public sealed class Prog : IExplodable, IRemovable
     /// </summary>
     private const int ReOffsetThreshold256 = 0xF8;
 
-    /// <summary>
-    ///     How far a prog goes on a step to the left or right, in columns. It is the same distance on the screen as a
-    ///     step up or down.
-    /// </summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRB10.ASM</c> <c>GPOFF</c>. The table of sideways steps moves 2 columns at a time,
-    ///             and a column is 2 arcade pixels wide.
-    ///         </item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_PROG</c> (<c>$1EAB</c>).</item>
-    ///     </list>
-    /// </remarks>
-    internal const int StepXColumns = 2;
-
     /// <summary>How far a prog goes on a step up or down, in rows.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -180,12 +180,12 @@ public sealed class Prog : IExplodable, IRemovable
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly (int Width, int Height) _collisionSize;
 
+    private readonly IGameEvents _gameEvents;
+
     /// <summary>The ghosts the prog has left behind it, newest first (see <see cref="ProgGhost" />).</summary>
     private readonly List<ProgGhost> _ghosts = new();
 
     private readonly Random _random;
-
-    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     // The way the prog is walking: up, down, left or right. A new prog walks down until it picks a direction.
@@ -244,6 +244,9 @@ public sealed class Prog : IExplodable, IRemovable
     ///     </list>
     /// </remarks>
     public IntVector2 Position => _position;
+
+    /// <summary>How many steps a walk's cycle has before it starts again.</summary>
+    internal static int WalkCycleLength => WalkCycle.Length;
 
     /// <summary>Draws the ghosts, oldest first, and then the prog. Each is drawn as a one-colour shape on a one-colour box.</summary>
     /// <param name="spriteBatch">What the prog is drawn with.</param>
@@ -387,6 +390,32 @@ public sealed class Prog : IExplodable, IRemovable
         if (_beatArcadeFrameTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
+    /// <summary>
+    ///     Works out which animation frame a walk shows at a step of its cycle, as a place in the prog's family member's
+    ///     animation frames.
+    /// </summary>
+    /// <param name="walkSequence">The walk.</param>
+    /// <param name="walkCycleIndex">The step of the walk's cycle, from 0 to <see cref="WalkCycleLength" /> less 1.</param>
+    /// <returns>The place of the animation frame, counting from 0.</returns>
+    internal static int GetWalkAnimationFrameIndex(WalkSequence walkSequence, int walkCycleIndex)
+    {
+        return (int)walkSequence * 3 + WalkCycle[walkCycleIndex];
+    }
+
+    /// <summary>Works out which walk a prog shows for the way it is going.</summary>
+    /// <param name="direction">The way the prog is going.</param>
+    /// <returns>The walk to show. A prog only goes left, right, up or down, so any other way shows the up walk.</returns>
+    internal static WalkSequence GetWalkSequence(Direction8 direction)
+    {
+        return direction switch
+        {
+            Direction8.Left => WalkSequence.Left,
+            Direction8.Right => WalkSequence.Right,
+            Direction8.Down => WalkSequence.Down,
+            _ => WalkSequence.Up
+        };
+    }
+
     /// <summary>The animation frame each ghost shows, newest first.</summary>
     internal IReadOnlyList<int> GetGhostFrames()
     {
@@ -413,35 +442,6 @@ public sealed class Prog : IExplodable, IRemovable
     {
         return GetWalkAnimationFrameIndex(GetWalkSequence(_direction), _walkCycleIndex);
     }
-
-    /// <summary>Works out which walk a prog shows for the way it is going.</summary>
-    /// <param name="direction">The way the prog is going.</param>
-    /// <returns>The walk to show. A prog only goes left, right, up or down, so any other way shows the up walk.</returns>
-    internal static WalkSequence GetWalkSequence(Direction8 direction)
-    {
-        return direction switch
-        {
-            Direction8.Left => WalkSequence.Left,
-            Direction8.Right => WalkSequence.Right,
-            Direction8.Down => WalkSequence.Down,
-            _ => WalkSequence.Up
-        };
-    }
-
-    /// <summary>
-    ///     Works out which animation frame a walk shows at a step of its cycle, as a place in the prog's family member's
-    ///     animation frames.
-    /// </summary>
-    /// <param name="walkSequence">The walk.</param>
-    /// <param name="walkCycleIndex">The step of the walk's cycle, from 0 to <see cref="WalkCycleLength" /> less 1.</param>
-    /// <returns>The place of the animation frame, counting from 0.</returns>
-    internal static int GetWalkAnimationFrameIndex(WalkSequence walkSequence, int walkCycleIndex)
-    {
-        return (int)walkSequence * 3 + WalkCycle[walkCycleIndex];
-    }
-
-    /// <summary>How many steps a walk's cycle has before it starts again.</summary>
-    internal static int WalkCycleLength => WalkCycle.Length;
 
     /// <summary>
     ///     Says whether a box is wholly inside the playfield. If the prog's next step would not be, the prog does not

@@ -1,9 +1,8 @@
 using Robotron2084.Audio;
 using Robotron2084.Input;
-using Robotron2084.Level;
 using Robotron2084.Persistence;
-using Robotron2084.States.Models;
 using Robotron2084.States;
+using Robotron2084.States.Models;
 using Robotron2084.Tests.Audio;
 using Xunit;
 
@@ -28,33 +27,23 @@ public sealed class MainMenuStateSoundTests : IDisposable
         Sound.Initialise(_recordingSink);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(-1)]
+    public void ChangingTheGameShownIsQuiet(int step)
+    {
+        var menu = CreateMenu();
+
+        menu.ChangeValue(step);
+
+        Assert.Empty(GetSoundsPlayed());
+    }
+
     /// <summary>Leaves the shared sound service as it was before each test.</summary>
     public void Dispose()
     {
         Sound.Enabled = _wasEnabled;
         Sound.AttractMuted = _wasAttractMuted;
-    }
-
-    private static MainMenuState CreateMenu()
-    {
-        var gameStateParams = new GameStateParams(TestTextures.SharedTextureSet, new HighScoreStore(), ControlSettings.CreateDefaults(),
-            new FakeInputSource(), GameSettings.CreateFactoryDefaults(), new Random(1));
-        return new MainMenuState(gameStateParams);
-    }
-
-    private List<int> GetSoundsPlayed()
-    {
-        for (var tick = 0; tick < 5; tick++) Sound.Tick();
-
-        return _recordingSink.SoundNumbers();
-    }
-
-    [Fact]
-    public void OpeningThePageIsQuiet()
-    {
-        CreateMenu();
-
-        Assert.Empty(GetSoundsPlayed());
     }
 
     [Theory]
@@ -69,14 +58,10 @@ public sealed class MainMenuStateSoundTests : IDisposable
         Assert.Empty(GetSoundsPlayed());
     }
 
-    [Theory]
-    [InlineData(1)]
-    [InlineData(-1)]
-    public void ChangingTheGameShownIsQuiet(int step)
+    [Fact]
+    public void OpeningThePageIsQuiet()
     {
-        var menu = CreateMenu();
-
-        menu.ChangeValue(step);
+        CreateMenu();
 
         Assert.Empty(GetSoundsPlayed());
     }
@@ -91,5 +76,19 @@ public sealed class MainMenuStateSoundTests : IDisposable
         menu.Choose(line, new GameStateManager(menu));
 
         Assert.Equal(Ed12SoundNumber, GetSoundsPlayed().First());
+    }
+
+    private static MainMenuState CreateMenu()
+    {
+        var gameStateParams = new GameStateParams(TestTextures.SharedTextureSet, new HighScoreStore(), ControlSettings.CreateDefaults(),
+            new FakeInputSource(), GameSettings.CreateFactoryDefaults(), new Random(1));
+        return new MainMenuState(gameStateParams);
+    }
+
+    private List<int> GetSoundsPlayed()
+    {
+        for (var tick = 0; tick < 5; tick++) Sound.Tick();
+
+        return _recordingSink.SoundNumbers();
     }
 }

@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
@@ -27,13 +27,13 @@ namespace Robotron2084.Level;
 public sealed class WallDoors
 {
     private readonly List<WallDoor> _doors = [];
-    private readonly Action<IntVector2> _spawnGrunt;
     private readonly Rectangle _playfieldBounds;
     private readonly Random _random;
+    private readonly Action<IntVector2> _spawnGrunt;
     private int _gruntsLeftForThisDoor;
-    private int _rowsLetThroughThisDoor;
     private int _gruntTimerTicks;
     private int _openingsMade;
+    private int _rowsLetThroughThisDoor;
     private int _ticksUntilNextOpening;
 
     /// <summary>Makes the doors for a playfield, with the first opening still to come.</summary>
@@ -69,12 +69,6 @@ public sealed class WallDoors
         LetGruntsThrough();
         _doors.RemoveAll(door => door.IsFinished());
         OpenTheNextDoorWhenDue();
-    }
-
-    /// <summary>Gets a random wait before the next opening, in ticks.</summary>
-    private int GetRandomWaitTicks()
-    {
-        return WallDoorTuning.MinTicksBetweenOpenings + _random.Next(WallDoorTuning.ExtraTicksBetweenOpeningsRange);
     }
 
     /// <summary>Gets how many grunts stand side by side in a door's opening: a row.</summary>
@@ -123,6 +117,32 @@ public sealed class WallDoors
         };
     }
 
+    /// <summary>Gets a random place for the middle of an opening along a wall, keeping the whole opening out of the corners.</summary>
+    /// <param name="side">The wall.</param>
+    /// <param name="gapLength">How long the opening is, in port pixels.</param>
+    private int GetRandomCentre(WallDoorSide side, int gapLength)
+    {
+        var margin = ScreenSize.ToPortPixelsFromArcadePixels(WallDoorTuning.CornerMarginArcadePixels);
+        var isInTopOrBottomWall = side is WallDoorSide.North or WallDoorSide.South;
+        var wallStart = _playfieldBounds.Y;
+        var wallLength = _playfieldBounds.Height;
+        if (isInTopOrBottomWall)
+        {
+            wallStart = _playfieldBounds.X;
+            wallLength = _playfieldBounds.Width;
+        }
+
+        var firstCentre = wallStart + margin + gapLength / 2;
+        var centreRange = wallLength - 2 * margin - gapLength + 1;
+        return firstCentre + _random.Next(centreRange);
+    }
+
+    /// <summary>Gets a random wait before the next opening, in ticks.</summary>
+    private int GetRandomWaitTicks()
+    {
+        return WallDoorTuning.MinTicksBetweenOpenings + _random.Next(WallDoorTuning.ExtraTicksBetweenOpeningsRange);
+    }
+
     /// <summary>While a door is wide open, lets its next row of grunts through each time the grunt timer runs out.</summary>
     private void LetGruntsThrough()
     {
@@ -159,25 +179,5 @@ public sealed class WallDoors
         _rowsLetThroughThisDoor = 0;
         _gruntTimerTicks = WallDoorTuning.GruntIntervalTicks;
         _ticksUntilNextOpening = GetRandomWaitTicks();
-    }
-
-    /// <summary>Gets a random place for the middle of an opening along a wall, keeping the whole opening out of the corners.</summary>
-    /// <param name="side">The wall.</param>
-    /// <param name="gapLength">How long the opening is, in port pixels.</param>
-    private int GetRandomCentre(WallDoorSide side, int gapLength)
-    {
-        var margin = ScreenSize.ToPortPixelsFromArcadePixels(WallDoorTuning.CornerMarginArcadePixels);
-        var isInTopOrBottomWall = side is WallDoorSide.North or WallDoorSide.South;
-        var wallStart = _playfieldBounds.Y;
-        var wallLength = _playfieldBounds.Height;
-        if (isInTopOrBottomWall)
-        {
-            wallStart = _playfieldBounds.X;
-            wallLength = _playfieldBounds.Width;
-        }
-
-        var firstCentre = wallStart + margin + gapLength / 2;
-        var centreRange = wallLength - 2 * margin - gapLength + 1;
-        return firstCentre + _random.Next(centreRange);
     }
 }

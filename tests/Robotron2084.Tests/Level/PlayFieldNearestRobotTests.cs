@@ -1,8 +1,8 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
-using Robotron2084.Level.Models;
+using Robotron2084.Core.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Level;
@@ -19,18 +19,19 @@ public sealed class PlayFieldNearestRobotTests
             ScreenSize.Width - ScreenSize.ToPortPixelsFromArcadePixels(40),
             ScreenSize.Height - ScreenSize.ToPortPixelsFromArcadePixels(40));
 
-    private static PlayField EmptyField()
-    {
-        var waveParams = new WaveParams(1);
-        return new PlayFieldBuilder().WithParameters(waveParams).WithBounds(Bounds).WithSeed(42).Build();
-    }
-
     [Fact]
-    public void NearestLivingRobotPositionTo_WithNoRobots_IsNull()
+    public void NearestLivingRobotPositionTo_IgnoresDeadRobots()
     {
         var playField = EmptyField();
+        var player = playField.Player.Position;
+        var far = player + new IntVector2(0, 300);
+        var near = player + new IntVector2(0, 100);
 
-        Assert.Null(playField.FieldEntities.GetNearestLivingRobotPosition(playField.Player.Position));
+        playField.SpawnEnforcer(far);
+        var tank = playField.SpawnTank(near);
+        tank.Kill();
+
+        Assert.Equal(far, playField.FieldEntities.GetNearestLivingRobotPosition(player));
     }
 
     [Fact]
@@ -48,17 +49,16 @@ public sealed class PlayFieldNearestRobotTests
     }
 
     [Fact]
-    public void NearestLivingRobotPositionTo_IgnoresDeadRobots()
+    public void NearestLivingRobotPositionTo_WithNoRobots_IsNull()
     {
         var playField = EmptyField();
-        var player = playField.Player.Position;
-        var far = player + new IntVector2(0, 300);
-        var near = player + new IntVector2(0, 100);
 
-        playField.SpawnEnforcer(far);
-        var tank = playField.SpawnTank(near);
-        tank.Kill();
+        Assert.Null(playField.FieldEntities.GetNearestLivingRobotPosition(playField.Player.Position));
+    }
 
-        Assert.Equal(far, playField.FieldEntities.GetNearestLivingRobotPosition(player));
+    private static PlayField EmptyField()
+    {
+        var waveParams = new WaveParams(1);
+        return new PlayFieldBuilder().WithParameters(waveParams).WithBounds(Bounds).WithSeed(42).Build();
     }
 }

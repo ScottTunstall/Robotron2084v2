@@ -11,25 +11,20 @@ namespace Robotron2084.Tests.Palette;
 /// </summary>
 public sealed class PresentationPagePaletteTests
 {
-    /// <summary>A fiftieth of a second is 6/5 of a port tick (notes §52): n frames land on ceil(n × 6/5).</summary>
-    private static int Ticks(int arcadeFrames)
+    [Fact]
+    public void EveryOtherEntryIsBackOnTheTableOnEachCycle()
     {
-        return (int)Math.Ceiling(arcadeFrames * 6.0 / 5.0);
-    }
+        var (gamePalette, presentationPagePalette) = Started();
 
-    private static (GamePalette GamePalette, PresentationPagePalette PresentationPagePalette) Started()
-    {
-        var gamePalette = new GamePalette();
-        var presentationPagePalette = new PresentationPagePalette();
-        presentationPagePalette.Start(gamePalette);
-        return (gamePalette, presentationPagePalette);
-    }
+        for (var cycle = 0; cycle < 15; cycle++)
+        {
+            for (var tick = 0; tick < 4; tick++) presentationPagePalette.Update(gamePalette);
 
-    /// <summary>The single entry the white flash is whitening, or 0 when no entry is white.</summary>
-    private static int WhitePaletteIndex(GamePalette gamePalette)
-    {
-        return Enumerable.Range(PresentationPagePalette.FirstPaletteIndex, 7)
-            .SingleOrDefault(paletteIndex => gamePalette.GetPaletteIndexValue(paletteIndex) == 0xFF);
+            var white = WhitePaletteIndex(gamePalette);
+            for (var paletteIndex = PresentationPagePalette.FirstPaletteIndex; paletteIndex <= PresentationPagePalette.LastPaletteIndex; paletteIndex++)
+                if (paletteIndex != white)
+                    Assert.Equal(PresentationPagePalette.PageColours[paletteIndex - 1], gamePalette.GetPaletteIndexValue(paletteIndex));
+        }
     }
 
     [Fact]
@@ -50,6 +45,64 @@ public sealed class PresentationPagePaletteTests
         // CSET ($8A3A) runs before the white flash task COL1 exists, and COLL ($8A4F) advances BEFORE it whitens: the page
         // comes up with no white on it at all.
         Assert.Equal(0, WhitePaletteIndex(gamePalette));
+    }
+
+    [Fact]
+    public void Stop_StandsCrtabBackUpOverThePagesSevenEntries()
+    {
+        var (gamePalette, presentationPagePalette) = Started();
+        presentationPagePalette.Stop(gamePalette);
+
+        for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++)
+            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], gamePalette.GetPaletteIndexValue(paletteIndex));
+    }
+
+    [Fact]
+    public void TheLargeTitleLettersColourCyclesDownTheSevenEntriesOnceEveryTwentyEightFrames()
+    {
+        var (gamePalette, presentationPagePalette) = Started();
+
+        // FORMX's SUBA #$11 ($89DA) walks the operand $77 → $66 → … → $11 and then resets to $77, so the
+        // palette index walks 7 → 6 → … → 1 → 7, and the rim is the entry one place behind it.
+        (int PaletteIndex, int Rim)[] expected =
+        [
+            (7, 6), (6, 5), (5, 4), (4, 3), (3, 2), (2, 1), (1, 7)
+        ];
+
+        Assert.Equal(expected[0].PaletteIndex, presentationPagePalette.GetLargeTitleLettersPaletteIndex());
+        Assert.Equal(expected[0].Rim, presentationPagePalette.GetLargeTitleLettersRimPaletteIndex());
+
+        for (var cycle = 1; cycle < expected.Length; cycle++)
+        {
+            for (var tick = 0; tick < Ticks(28); tick++) presentationPagePalette.Update(gamePalette);
+
+            Assert.Equal(expected[cycle].PaletteIndex, presentationPagePalette.GetLargeTitleLettersPaletteIndex());
+            Assert.Equal(expected[cycle].Rim, presentationPagePalette.GetLargeTitleLettersRimPaletteIndex());
+        }
+
+        // At the wrap the pair is the reference screenshot's own: a red body (palette index 1, $07) on a
+        // yellow rim (palette index 7, $3F).
+        Assert.Equal(0x07, PresentationPagePalette.PageColours[presentationPagePalette.GetLargeTitleLettersPaletteIndex() - 1]);
+        Assert.Equal(0x3F, PresentationPagePalette.PageColours[presentationPagePalette.GetLargeTitleLettersRimPaletteIndex() - 1]);
+    }
+
+    [Fact]
+    public void TheTextPaletteIndexIsWhiteForOneFrameInEverySeven()
+    {
+        var (gamePalette, presentationPagePalette) = Started();
+        const int Ticks = 7 * 100; // a hundred white flash laps' worth
+        var white = 0;
+
+        for (var tick = 0; tick < Ticks; tick++)
+        {
+            if (gamePalette.GetPaletteIndexValue(PresentationPagePalette.TextPaletteIndex) == 0xFF) white++;
+
+            presentationPagePalette.Update(gamePalette);
+        }
+
+        // One cycle in seven whitens entry 6, so the text flashes for a seventh of the time — the
+        // orange/white alternation the author reported.
+        Assert.InRange((double)white / Ticks, 1.0 / 7.0 - 0.02, 1.0 / 7.0 + 0.02);
     }
 
     [Fact]
@@ -84,77 +137,24 @@ public sealed class PresentationPagePaletteTests
         Assert.All(gaps, gap => Assert.InRange(gap, 3, 4));
     }
 
-    [Fact]
-    public void EveryOtherEntryIsBackOnTheTableOnEachCycle()
+    private static (GamePalette GamePalette, PresentationPagePalette PresentationPagePalette) Started()
     {
-        var (gamePalette, presentationPagePalette) = Started();
-
-        for (var cycle = 0; cycle < 15; cycle++)
-        {
-            for (var tick = 0; tick < 4; tick++) presentationPagePalette.Update(gamePalette);
-
-            var white = WhitePaletteIndex(gamePalette);
-            for (var paletteIndex = PresentationPagePalette.FirstPaletteIndex; paletteIndex <= PresentationPagePalette.LastPaletteIndex; paletteIndex++)
-                if (paletteIndex != white)
-                    Assert.Equal(PresentationPagePalette.PageColours[paletteIndex - 1], gamePalette.GetPaletteIndexValue(paletteIndex));
-        }
+        var gamePalette = new GamePalette();
+        var presentationPagePalette = new PresentationPagePalette();
+        presentationPagePalette.Start(gamePalette);
+        return (gamePalette, presentationPagePalette);
     }
 
-    [Fact]
-    public void TheTextPaletteIndexIsWhiteForOneFrameInEverySeven()
+    /// <summary>A fiftieth of a second is 6/5 of a port tick (notes §52): n frames land on ceil(n × 6/5).</summary>
+    private static int Ticks(int arcadeFrames)
     {
-        var (gamePalette, presentationPagePalette) = Started();
-        const int Ticks = 7 * 100; // a hundred white flash laps' worth
-        var white = 0;
-
-        for (var tick = 0; tick < Ticks; tick++)
-        {
-            if (gamePalette.GetPaletteIndexValue(PresentationPagePalette.TextPaletteIndex) == 0xFF) white++;
-
-            presentationPagePalette.Update(gamePalette);
-        }
-
-        // One cycle in seven whitens entry 6, so the text flashes for a seventh of the time — the
-        // orange/white alternation the author reported.
-        Assert.InRange((double)white / Ticks, 1.0 / 7.0 - 0.02, 1.0 / 7.0 + 0.02);
+        return (int)Math.Ceiling(arcadeFrames * 6.0 / 5.0);
     }
 
-    [Fact]
-    public void TheLargeTitleLettersColourCyclesDownTheSevenEntriesOnceEveryTwentyEightFrames()
+    /// <summary>The single entry the white flash is whitening, or 0 when no entry is white.</summary>
+    private static int WhitePaletteIndex(GamePalette gamePalette)
     {
-        var (gamePalette, presentationPagePalette) = Started();
-
-        // FORMX's SUBA #$11 ($89DA) walks the operand $77 → $66 → … → $11 and then resets to $77, so the
-        // palette index walks 7 → 6 → … → 1 → 7, and the rim is the entry one place behind it.
-        (int PaletteIndex, int Rim)[] expected =
-        [
-            (7, 6), (6, 5), (5, 4), (4, 3), (3, 2), (2, 1), (1, 7)
-        ];
-
-        Assert.Equal(expected[0].PaletteIndex, presentationPagePalette.GetLargeTitleLettersPaletteIndex());
-        Assert.Equal(expected[0].Rim, presentationPagePalette.GetLargeTitleLettersRimPaletteIndex());
-
-        for (var cycle = 1; cycle < expected.Length; cycle++)
-        {
-            for (var tick = 0; tick < Ticks(28); tick++) presentationPagePalette.Update(gamePalette);
-
-            Assert.Equal(expected[cycle].PaletteIndex, presentationPagePalette.GetLargeTitleLettersPaletteIndex());
-            Assert.Equal(expected[cycle].Rim, presentationPagePalette.GetLargeTitleLettersRimPaletteIndex());
-        }
-
-        // At the wrap the pair is the reference screenshot's own: a red body (palette index 1, $07) on a
-        // yellow rim (palette index 7, $3F).
-        Assert.Equal(0x07, PresentationPagePalette.PageColours[presentationPagePalette.GetLargeTitleLettersPaletteIndex() - 1]);
-        Assert.Equal(0x3F, PresentationPagePalette.PageColours[presentationPagePalette.GetLargeTitleLettersRimPaletteIndex() - 1]);
-    }
-
-    [Fact]
-    public void Stop_StandsCrtabBackUpOverThePagesSevenEntries()
-    {
-        var (gamePalette, presentationPagePalette) = Started();
-        presentationPagePalette.Stop(gamePalette);
-
-        for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++)
-            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], gamePalette.GetPaletteIndexValue(paletteIndex));
+        return Enumerable.Range(PresentationPagePalette.FirstPaletteIndex, 7)
+            .SingleOrDefault(paletteIndex => gamePalette.GetPaletteIndexValue(paletteIndex) == 0xFF);
     }
 }

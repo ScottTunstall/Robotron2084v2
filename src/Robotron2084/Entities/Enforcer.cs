@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -71,13 +71,13 @@ public sealed class Enforcer : IEntity, IExplodable, IRemovable
 
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly int _fireIntervalBeats;
+    private readonly IGameEvents _gameEvents;
     private readonly ArcadeFrameTimer _growArcadeFrameTimer = new();
 
     /// <summary>Times the enforcer's moves.</summary>
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
-    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private int _fireBeatsRemaining;
 

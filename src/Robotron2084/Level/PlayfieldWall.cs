@@ -27,8 +27,8 @@ public sealed class PlayfieldWall
     /// <summary>How much lighter than the wall a door's panels are, from 0 (the wall's own colour) to 1 (white).</summary>
     private const float PanelBrightening = 0.35f;
 
-    private readonly WallColourCycle _wallColourCycle;
     private readonly Rectangle _playfieldBounds;
+    private readonly WallColourCycle _wallColourCycle;
 
     /// <summary>Makes the wall for a play area.</summary>
     /// <param name="playfieldBounds">The play area inside the wall, in port pixels.</param>
@@ -62,6 +62,38 @@ public sealed class PlayfieldWall
         foreach (var panel in GetDoorPanels(doorList)) spriteBatch.Draw(wallPixelTexture, panel, panelColour);
     }
 
+    /// <summary>Gets the rectangles of the two panels of each door: what is left of the shut door after it has slid open.</summary>
+    /// <param name="doors">The doors in the wall.</param>
+    /// <returns>The rectangles, in port pixels. A door that is wide open has none.</returns>
+    /// <remarks>
+    ///     The panels slide apart from the middle of the opening, each into the wall at its own end of the opening, so
+    ///     they shorten as the door opens and grow as it shuts.
+    /// </remarks>
+    public IReadOnlyList<Rectangle> GetDoorPanels(IReadOnlyList<WallDoor> doors)
+    {
+        var panels = new List<Rectangle>();
+        foreach (var door in doors)
+        {
+            var strip = GetStrip(door.Side);
+            var isAlongX = IsAlongX(door.Side);
+            var panelLength = (door.GapLength - door.GetOpenLength()) / 2;
+            AddPiece(panels, strip, isAlongX, door.GetStart(), door.GetStart() + panelLength);
+            AddPiece(panels, strip, isAlongX, door.GetEnd() - panelLength, door.GetEnd());
+        }
+
+        return panels;
+    }
+
+    /// <summary>The play area and the wall around it, in port pixels.</summary>
+    public Rectangle GetOuterBounds()
+    {
+        return new Rectangle(
+            _playfieldBounds.X - Thickness,
+            _playfieldBounds.Y - Thickness,
+            _playfieldBounds.Width + 2 * Thickness,
+            _playfieldBounds.Height + 2 * Thickness);
+    }
+
     /// <summary>Gets the rectangles of the wall itself: each of the four strips, cut where a door is.</summary>
     /// <param name="doors">The doors in the wall.</param>
     /// <returns>The rectangles, in port pixels.</returns>
@@ -90,81 +122,6 @@ public sealed class PlayfieldWall
         return pieces;
     }
 
-    /// <summary>Gets the rectangles of the two panels of each door: what is left of the shut door after it has slid open.</summary>
-    /// <param name="doors">The doors in the wall.</param>
-    /// <returns>The rectangles, in port pixels. A door that is wide open has none.</returns>
-    /// <remarks>
-    ///     The panels slide apart from the middle of the opening, each into the wall at its own end of the opening, so
-    ///     they shorten as the door opens and grow as it shuts.
-    /// </remarks>
-    public IReadOnlyList<Rectangle> GetDoorPanels(IReadOnlyList<WallDoor> doors)
-    {
-        var panels = new List<Rectangle>();
-        foreach (var door in doors)
-        {
-            var strip = GetStrip(door.Side);
-            var isAlongX = IsAlongX(door.Side);
-            var panelLength = (door.GapLength - door.GetOpenLength()) / 2;
-            AddPiece(panels, strip, isAlongX, door.GetStart(), door.GetStart() + panelLength);
-            AddPiece(panels, strip, isAlongX, door.GetEnd() - panelLength, door.GetEnd());
-        }
-
-        return panels;
-    }
-
-    /// <summary>Gets the strip of wall on one side, in port pixels.</summary>
-    /// <param name="side">The side.</param>
-    private Rectangle GetStrip(WallDoorSide side)
-    {
-        var outer = GetOuterBounds();
-        return side switch
-        {
-            WallDoorSide.North => new Rectangle(outer.X, outer.Y, outer.Width, Thickness),
-            WallDoorSide.South => new Rectangle(outer.X, outer.Bottom - Thickness, outer.Width, Thickness),
-            WallDoorSide.West => new Rectangle(outer.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height),
-            _ => new Rectangle(outer.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height)
-        };
-    }
-
-    /// <summary>Gets whether a side's strip runs along the X axis (the top and bottom walls) rather than the Y axis.</summary>
-    private static bool IsAlongX(WallDoorSide side)
-    {
-        return side is WallDoorSide.North or WallDoorSide.South;
-    }
-
-    private static int GetStart(Rectangle strip, bool isAlongX)
-    {
-        if (isAlongX) return strip.X;
-
-        return strip.Y;
-    }
-
-    private static int GetEnd(Rectangle strip, bool isAlongX)
-    {
-        if (isAlongX) return strip.Right;
-
-        return strip.Bottom;
-    }
-
-    /// <summary>Adds the part of a strip between two places along it, if it is not empty.</summary>
-    private static void AddPiece(List<Rectangle> pieces, Rectangle strip, bool isAlongX, int from, int to)
-    {
-        if (to <= from) return;
-
-        if (isAlongX) pieces.Add(new Rectangle(from, strip.Y, to - from, strip.Height));
-        else pieces.Add(new Rectangle(strip.X, from, strip.Width, to - from));
-    }
-
-    /// <summary>The play area and the wall around it, in port pixels.</summary>
-    public Rectangle GetOuterBounds()
-    {
-        return new Rectangle(
-            _playfieldBounds.X - Thickness,
-            _playfieldBounds.Y - Thickness,
-            _playfieldBounds.Width + 2 * Thickness,
-            _playfieldBounds.Height + 2 * Thickness);
-    }
-
     /// <summary>Says whether a box overlaps any part of the wall.</summary>
     /// <param name="bounds">The box to test, in port pixels.</param>
     public bool Intersects(Rectangle bounds)
@@ -184,5 +141,48 @@ public sealed class PlayfieldWall
     public void Update(GameTime gameTime)
     {
         _wallColourCycle.Update(gameTime);
+    }
+
+    /// <summary>Adds the part of a strip between two places along it, if it is not empty.</summary>
+    private static void AddPiece(List<Rectangle> pieces, Rectangle strip, bool isAlongX, int from, int to)
+    {
+        if (to <= from) return;
+
+        if (isAlongX) pieces.Add(new Rectangle(from, strip.Y, to - from, strip.Height));
+        else pieces.Add(new Rectangle(strip.X, from, strip.Width, to - from));
+    }
+
+    private static int GetEnd(Rectangle strip, bool isAlongX)
+    {
+        if (isAlongX) return strip.Right;
+
+        return strip.Bottom;
+    }
+
+    private static int GetStart(Rectangle strip, bool isAlongX)
+    {
+        if (isAlongX) return strip.X;
+
+        return strip.Y;
+    }
+
+    /// <summary>Gets whether a side's strip runs along the X axis (the top and bottom walls) rather than the Y axis.</summary>
+    private static bool IsAlongX(WallDoorSide side)
+    {
+        return side is WallDoorSide.North or WallDoorSide.South;
+    }
+
+    /// <summary>Gets the strip of wall on one side, in port pixels.</summary>
+    /// <param name="side">The side.</param>
+    private Rectangle GetStrip(WallDoorSide side)
+    {
+        var outer = GetOuterBounds();
+        return side switch
+        {
+            WallDoorSide.North => new Rectangle(outer.X, outer.Y, outer.Width, Thickness),
+            WallDoorSide.South => new Rectangle(outer.X, outer.Bottom - Thickness, outer.Width, Thickness),
+            WallDoorSide.West => new Rectangle(outer.X, _playfieldBounds.Y, Thickness, _playfieldBounds.Height),
+            _ => new Rectangle(outer.Right - Thickness, _playfieldBounds.Y, Thickness, _playfieldBounds.Height)
+        };
     }
 }

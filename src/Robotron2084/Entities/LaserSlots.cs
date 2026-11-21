@@ -1,7 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Events;
 using Robotron2084.Graphics;
@@ -27,8 +26,8 @@ public sealed class LaserSlots
     /// <summary>How many lasers the player can have in flight at once.</summary>
     public const int Capacity = 3;
 
-    private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
     private readonly IGameEvents _gameEvents;
+    private readonly PlayerLaser?[] _slots = new PlayerLaser?[Capacity];
     private readonly TextureSet _textureSet;
 
     /// <summary>Makes the empty slots, and keeps the sprites that new lasers are drawn with.</summary>

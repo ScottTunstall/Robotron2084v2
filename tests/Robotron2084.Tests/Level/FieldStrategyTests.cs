@@ -1,15 +1,14 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Collections;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
 using Robotron2084.Events;
-using Robotron2084.Level.Collisions.Models;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Level.Collisions;
+using Robotron2084.Level.Collisions.Models;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Level;
@@ -21,6 +20,27 @@ namespace Robotron2084.Tests.Level;
 public sealed class FieldStrategyTests
 {
     [Fact]
+    public void ACollisionRule_OnlyReports_AndTheFieldResponds()
+    {
+        var playField = new PlayFieldBuilder().Build();
+        var familyMember = new FamilyMember(TestEntityParams.Create(new Random(1)), playField.Player.Position, FamilyMemberKind.Mommy);
+        playField.FieldEntities.FamilyList.Add(familyMember);
+
+        var results = new PlayerRescueRule().Detect(playField, playField.FieldEntities).ToArray();
+
+        // The rule found the rescue and changed nothing.
+        var rescued = Assert.IsType<PlayerRescuedFamilyMemberResult>(Assert.Single(results));
+        Assert.Same(familyMember, rescued.FamilyMember);
+        Assert.True(familyMember.IsGraspable());
+        Assert.Equal(0, playField.RescuesThisLife);
+
+        // The field's response is what rescues them.
+        new CollisionResponder(playField).Respond(rescued);
+        Assert.False(familyMember.IsGraspable());
+        Assert.Equal(1, playField.RescuesThisLife);
+    }
+
+    [Fact]
     public void EveryKindTheWaveBrings_HasItsOwnSpawner_AndEveryOtherKindHasNone()
     {
         foreach (var robot in RobotKinds.All) Assert.Equal(robot.WaveCount is not null, robot.Spawn is not null);
@@ -28,6 +48,18 @@ public sealed class FieldStrategyTests
         var spawners = RobotKinds.All.Where(robot => robot.Spawn is not null).Select(robot => robot.Spawn!.GetType())
             .ToArray();
         Assert.Equal(spawners.Length, spawners.Distinct().Count());
+    }
+
+    [Fact]
+    public void TheBoxContactTest_SaysTwoThingsTouch_OnlyWhenTheirBoxesOverlap()
+    {
+        var boxContactTest = new BoxContactTest();
+        var firstElectrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100));
+        var overlappingElectrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100 + firstElectrode.GetBounds().Width / 2, 100));
+        var apartElectrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100 + firstElectrode.GetBounds().Width, 100));
+
+        Assert.True(boxContactTest.Touches(firstElectrode, overlappingElectrode));
+        Assert.False(boxContactTest.Touches(firstElectrode, apartElectrode));
     }
 
     [Fact]
@@ -50,15 +82,13 @@ public sealed class FieldStrategyTests
     }
 
     [Fact]
-    public void TheBoxContactTest_SaysTwoThingsTouch_OnlyWhenTheirBoxesOverlap()
+    public void TheFamilyList_GivesATieToTheLaterPlace()
     {
-        var boxContactTest = new BoxContactTest();
-        var firstElectrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100, 100));
-        var overlappingElectrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100 + firstElectrode.GetBounds().Width / 2, 100));
-        var apartElectrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(100 + firstElectrode.GetBounds().Width, 100));
+        var familyList = new FamilyList();
+        familyList.Add(new FamilyMember(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), FamilyMemberKind.Mikey));
+        familyList.Add(new FamilyMember(TestEntityParams.Create(new Random(2)), new IntVector2(100, 100), FamilyMemberKind.Daddy));
 
-        Assert.True(boxContactTest.Touches(firstElectrode, overlappingElectrode));
-        Assert.False(boxContactTest.Touches(firstElectrode, apartElectrode));
+        Assert.Equal(FamilyList.FirstSlot + 1, familyList.GetNearestSlot(new IntVector2(100, 100)));
     }
 
     [Fact]
@@ -90,31 +120,6 @@ public sealed class FieldStrategyTests
     }
 
     [Fact]
-    public void TheFamilyList_GivesATieToTheLaterPlace()
-    {
-        var familyList = new FamilyList();
-        familyList.Add(new FamilyMember(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), FamilyMemberKind.Mikey));
-        familyList.Add(new FamilyMember(TestEntityParams.Create(new Random(2)), new IntVector2(100, 100), FamilyMemberKind.Daddy));
-
-        Assert.Equal(FamilyList.FirstSlot + 1, familyList.GetNearestSlot(new IntVector2(100, 100)));
-    }
-
-    [Fact]
-    public void TheFieldsEntities_HaveAListForEveryKind_AndIgnoreHulksAndElectrodesWhenTheWaveIsWon()
-    {
-        var fieldEntities = new FieldEntities();
-        foreach (var kind in Enum.GetValues<RobotKind>()) Assert.NotNull(fieldEntities.GetList(kind));
-
-        fieldEntities.Electrodes.Add(new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)));
-        fieldEntities.Hulks.Add(
-            new Hulk(TestEntityParams.Create(new Random(1)), new IntVector2(50, 50), 8, () => IntVector2.Zero));
-        Assert.True(fieldEntities.AreEnemiesGone());
-
-        fieldEntities.Grunts.Add(new Grunt(TestEntityParams.Create(new Random(1)), new IntVector2(90, 90), 15));
-        Assert.False(fieldEntities.AreEnemiesGone());
-    }
-
-    [Fact]
     public void TheField_AnswersWithoutLettingCallersReachThroughIt()
     {
         var playField = new PlayFieldBuilder().Build();
@@ -132,24 +137,18 @@ public sealed class FieldStrategyTests
     }
 
     [Fact]
-    public void ACollisionRule_OnlyReports_AndTheFieldResponds()
+    public void TheFieldsEntities_HaveAListForEveryKind_AndIgnoreHulksAndElectrodesWhenTheWaveIsWon()
     {
-        var playField = new PlayFieldBuilder().Build();
-        var familyMember = new FamilyMember(TestEntityParams.Create(new Random(1)), playField.Player.Position, FamilyMemberKind.Mommy);
-        playField.FieldEntities.FamilyList.Add(familyMember);
+        var fieldEntities = new FieldEntities();
+        foreach (var kind in Enum.GetValues<RobotKind>()) Assert.NotNull(fieldEntities.GetList(kind));
 
-        var results = new PlayerRescueRule().Detect(playField, playField.FieldEntities).ToArray();
+        fieldEntities.Electrodes.Add(new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)));
+        fieldEntities.Hulks.Add(
+            new Hulk(TestEntityParams.Create(new Random(1)), new IntVector2(50, 50), 8, () => IntVector2.Zero));
+        Assert.True(fieldEntities.AreEnemiesGone());
 
-        // The rule found the rescue and changed nothing.
-        var rescued = Assert.IsType<PlayerRescuedFamilyMemberResult>(Assert.Single(results));
-        Assert.Same(familyMember, rescued.FamilyMember);
-        Assert.True(familyMember.IsGraspable());
-        Assert.Equal(0, playField.RescuesThisLife);
-
-        // The field's response is what rescues them.
-        new CollisionResponder(playField).Respond(rescued);
-        Assert.False(familyMember.IsGraspable());
-        Assert.Equal(1, playField.RescuesThisLife);
+        fieldEntities.Grunts.Add(new Grunt(TestEntityParams.Create(new Random(1)), new IntVector2(90, 90), 15));
+        Assert.False(fieldEntities.AreEnemiesGone());
     }
 
     [Fact]

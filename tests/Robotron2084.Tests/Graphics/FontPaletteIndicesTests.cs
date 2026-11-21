@@ -7,16 +7,6 @@ namespace Robotron2084.Tests.Graphics;
 public class FontPaletteIndicesTests
 {
     [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(5)]
-    [InlineData(9)]
-    public void StaticPaletteIndices_DoNotCycle(int paletteIndex)
-    {
-        Assert.False(FontPaletteIndices.IsCycling(paletteIndex));
-    }
-
-    [Theory]
     [InlineData(10)]
     [InlineData(11)]
     [InlineData(12)]
@@ -34,5 +24,15 @@ public class FontPaletteIndicesTests
         Assert.Equal(10, FontPaletteIndices.FirstCyclingPaletteIndex);
         Assert.Equal(15, FontPaletteIndices.LastCyclingPaletteIndex);
         Assert.Equal(6, FontPaletteIndices.LastCyclingPaletteIndex - FontPaletteIndices.FirstCyclingPaletteIndex + 1);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(5)]
+    [InlineData(9)]
+    public void StaticPaletteIndices_DoNotCycle(int paletteIndex)
+    {
+        Assert.False(FontPaletteIndices.IsCycling(paletteIndex));
     }
 }

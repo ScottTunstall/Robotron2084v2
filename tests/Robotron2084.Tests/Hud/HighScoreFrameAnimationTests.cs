@@ -25,23 +25,18 @@ public sealed class HighScoreFrameAnimationTests
     }
 
     [Fact]
-    public void TwoStrokesAreDrawnPerArcadeFrame()
+    public void TheErasePass_StopsLeavingTheEightStrokeBandAndStaysThere()
     {
         var frame = new HighScoreFrameAnimation();
+        while (!frame.IsFinished()) frame.Tick();
 
-        // A fiftieth of a second is 6/5 of a port tick, so the first pair lands on tick 2 — and
-        // never more than two strokes a tick, which is what the ROM's `LDA #2` counter
-        // and its one-frame `NAP` add up to.
-        frame.Tick();
-        Assert.Equal(1, frame.GetDrawnStroke()); // 5 clock units — not a frame yet
+        Assert.Equal(HighScoreTableLayout.FrameLastStroke, frame.GetDrawnStroke());
+        Assert.Equal(HighScoreTableLayout.FrameEraseLastStroke, frame.GetErasedStroke());
 
-        frame.Tick();
-        Assert.Equal(3, frame.GetDrawnStroke()); // two strokes
+        for (var tick = 0; tick < 100; tick++) frame.Tick();
 
-        frame.Tick();
-        frame.Tick();
-        frame.Tick();
-        Assert.Equal(9, frame.GetDrawnStroke()); // six strokes
+        Assert.Equal(HighScoreTableLayout.FrameLastStroke, frame.GetDrawnStroke());
+        Assert.Equal(HighScoreTableLayout.FrameEraseLastStroke, frame.GetErasedStroke());
     }
 
     [Fact]
@@ -63,21 +58,6 @@ public sealed class HighScoreFrameAnimationTests
     }
 
     [Fact]
-    public void TheErasePass_StopsLeavingTheEightStrokeBandAndStaysThere()
-    {
-        var frame = new HighScoreFrameAnimation();
-        while (!frame.IsFinished()) frame.Tick();
-
-        Assert.Equal(HighScoreTableLayout.FrameLastStroke, frame.GetDrawnStroke());
-        Assert.Equal(HighScoreTableLayout.FrameEraseLastStroke, frame.GetErasedStroke());
-
-        for (var tick = 0; tick < 100; tick++) frame.Tick();
-
-        Assert.Equal(HighScoreTableLayout.FrameLastStroke, frame.GetDrawnStroke());
-        Assert.Equal(HighScoreTableLayout.FrameEraseLastStroke, frame.GetErasedStroke());
-    }
-
-    [Fact]
     public void TheVisibleBand_IsEightStrokesOfEightDifferentPaletteIndices()
     {
         // MARQ's flavour walks down by $11 a stroke, so the eight strokes the erase pass
@@ -95,5 +75,25 @@ public sealed class HighScoreFrameAnimationTests
         // …and the walk repeats, so the whole page's outer edge came back to $11's palette index.
         Assert.Equal(1, HighScoreTableLayout.GetFrameStrokePaletteIndex(HighScoreTableLayout.FrameLastStroke));
         Assert.Equal(8, HighScoreTableLayout.GetFrameStrokePaletteIndex(HighScoreTableLayout.FrameLastStroke - 7));
+    }
+
+    [Fact]
+    public void TwoStrokesAreDrawnPerArcadeFrame()
+    {
+        var frame = new HighScoreFrameAnimation();
+
+        // A fiftieth of a second is 6/5 of a port tick, so the first pair lands on tick 2 — and
+        // never more than two strokes a tick, which is what the ROM's `LDA #2` counter
+        // and its one-frame `NAP` add up to.
+        frame.Tick();
+        Assert.Equal(1, frame.GetDrawnStroke()); // 5 clock units — not a frame yet
+
+        frame.Tick();
+        Assert.Equal(3, frame.GetDrawnStroke()); // two strokes
+
+        frame.Tick();
+        frame.Tick();
+        frame.Tick();
+        Assert.Equal(9, frame.GetDrawnStroke()); // six strokes
     }
 }

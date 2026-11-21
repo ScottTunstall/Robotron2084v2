@@ -1,5 +1,5 @@
-using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
+using Robotron2084.Audio.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Audio;
@@ -8,22 +8,6 @@ namespace Robotron2084.Tests.Audio;
 [Collection("SoundFacade")]
 public sealed class GorfVoiceTests : IDisposable
 {
-    /// <summary>Leaves the shared speech service as it was before each test.</summary>
-    public void Dispose()
-    {
-        Speech.ResetForTesting();
-    }
-
-    [Fact]
-    public void EveryLineHasItsSampleInTheGorfFolder_AndEverySampleHasALine()
-    {
-        var lineNames = SpeechFolders.GetLineNames(SpeechFolders.Gorf);
-        var gorfLines = Enum.GetValues<GorfLine>();
-
-        Assert.All(gorfLines, gorfLine => Assert.Contains(GorfVoice.GetLineName(gorfLine), lineNames));
-        Assert.Equal(lineNames.Count, gorfLines.Length);
-    }
-
     [Fact]
     public void ALineIsSaidAtThePitchAskedFor_OrAsRecordedIfNoneIs()
     {
@@ -48,5 +32,21 @@ public sealed class GorfVoiceTests : IDisposable
     public void APitchOfMoreThanAnOctaveEitherWayIsRefused(float pitchOctaves)
     {
         Assert.Throws<ArgumentOutOfRangeException>(() => Speech.SayGorf(GorfLine.GotYou, pitchOctaves));
+    }
+
+    /// <summary>Leaves the shared speech service as it was before each test.</summary>
+    public void Dispose()
+    {
+        Speech.ResetForTesting();
+    }
+
+    [Fact]
+    public void EveryLineHasItsSampleInTheGorfFolder_AndEverySampleHasALine()
+    {
+        var lineNames = SpeechFolders.GetLineNames(SpeechFolders.Gorf);
+        var gorfLines = Enum.GetValues<GorfLine>();
+
+        Assert.All(gorfLines, gorfLine => Assert.Contains(GorfVoice.GetLineName(gorfLine), lineNames));
+        Assert.Equal(lineNames.Count, gorfLines.Length);
     }
 }

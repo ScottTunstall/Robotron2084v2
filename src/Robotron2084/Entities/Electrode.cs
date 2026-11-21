@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -38,9 +38,9 @@ public sealed class Electrode : IEntity, IAnimationFrameSource, IRemovable
     /// </summary>
     private readonly (int Width, int Height) _collisionSize;
 
+    private readonly IGameEvents _gameEvents;
     private readonly IntVector2 _position;
     private readonly ArcadeFrameTimer _shrivelArcadeFrameTimer = new();
-    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private readonly int _wave;
     private int _shrivelStep;

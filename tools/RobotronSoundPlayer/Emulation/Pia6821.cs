@@ -22,20 +22,8 @@ namespace RobotronSoundPlayer.Emulation;
 /// </remarks>
 public sealed class Pia6821
 {
-    /// <summary>Register 0: port A's data (or its direction register).</summary>
-    private const int PortARegister = 0;
-
     /// <summary>Register 1: port A's control register.</summary>
     private const int ControlARegister = 1;
-
-    /// <summary>Register 2: port B's data (or its direction register).</summary>
-    private const int PortBRegister = 2;
-
-    /// <summary>Control bit 0: let the first interrupt input through to the processor.</summary>
-    private const byte InterruptEnableBit = 0x01;
-
-    /// <summary>Control bit 1: the first interrupt input fires on a rise (set) or a fall (clear).</summary>
-    private const byte RisingEdgeBit = 0x02;
 
     /// <summary>Control bit 2: register 0 or 2 reaches the port's data (set) or its direction register (clear).</summary>
     private const byte DataSelectBit = 0x04;
@@ -43,8 +31,20 @@ public sealed class Pia6821
     /// <summary>Control bit 7: the first interrupt input has fired.</summary>
     private const byte FirstInterruptFlag = 0x80;
 
+    /// <summary>Control bit 0: let the first interrupt input through to the processor.</summary>
+    private const byte InterruptEnableBit = 0x01;
+
     /// <summary>Control bits 6 and 7: the interrupt flags, which the processor can read but not write.</summary>
     private const byte InterruptFlags = 0xC0;
+
+    /// <summary>Register 0: port A's data (or its direction register).</summary>
+    private const int PortARegister = 0;
+
+    /// <summary>Register 2: port B's data (or its direction register).</summary>
+    private const int PortBRegister = 2;
+
+    /// <summary>Control bit 1: the first interrupt input fires on a rise (set) or a fall (clear).</summary>
+    private const byte RisingEdgeBit = 0x02;
 
     private byte _controlA;
     private byte _controlB;
@@ -103,12 +103,15 @@ public sealed class Pia6821
             case PortARegister:
                 WritePortA(value);
                 return;
+
             case ControlARegister:
                 _controlA = KeepInterruptFlags(_controlA, value);
                 return;
+
             case PortBRegister:
                 WritePortB(value);
                 return;
+
             default:
                 _controlB = KeepInterruptFlags(_controlB, value);
                 return;

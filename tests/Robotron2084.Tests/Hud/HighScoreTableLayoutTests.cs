@@ -13,16 +13,6 @@ namespace Robotron2084.Tests.Hud;
 public sealed class HighScoreTableLayoutTests
 {
     [Fact]
-    public void TodayList_MatchesTheRomsCursorAndSpacing()
-    {
-        Assert.Equal(10, HighScoreTableLayout.TodayRows);
-        Assert.Equal((26, 53), HighScoreTableLayout.TodayPosition(1));
-        Assert.Equal((26, 89), HighScoreTableLayout.TodayPosition(5)); // 4 rows down: +4 x 9
-        Assert.Equal((78, 53), HighScoreTableLayout.TodayPosition(6)); // second column: +52
-        Assert.Equal((78, 89), HighScoreTableLayout.TodayPosition(10));
-    }
-
-    [Fact]
     public void AllTimeList_MatchesTheRomsCursorAndSpacing()
     {
         Assert.Equal(36, HighScoreTableLayout.AllTimeRows);
@@ -31,38 +21,6 @@ public sealed class HighScoreTableLayoutTests
         Assert.Equal((60, 136), HighScoreTableLayout.GetAllTimePosition(14)); // second column: +40
         Assert.Equal((100, 136), HighScoreTableLayout.GetAllTimePosition(26)); // third column
         Assert.Equal((100, 213), HighScoreTableLayout.GetAllTimePosition(37));
-    }
-
-    [Fact]
-    public void TheTablesRows_StayInsideTheFrame()
-    {
-        // The ROM's frame runs (col 6, row 13) to (col 145, row 239); every row the
-        // screen prints must sit inside it, which is what these cursors are chosen for.
-        var (column, row) = HighScoreTableLayout.GetAllTimePosition(37);
-        Assert.True(column > 6 && column < 145, $"last row at column {column}");
-        Assert.True(row < 239, $"last row at row {row}");
-        Assert.Equal((21, 122), (HighScoreTableLayout.TopColumn, HighScoreTableLayout.TopRow));
-        Assert.True(HighScoreTableLayout.TodayHeaderRow < HighScoreTableLayout.TodayRow);
-        Assert.True(HighScoreTableLayout.AllTimeHeaderRow < HighScoreTableLayout.AllTimeRow);
-    }
-
-    /// <summary>
-    ///     FRAMER's strokes, in arcade pixels: stroke 0 is (col 62, row 125)-(col 89, row 127)
-    ///     and every step takes the upper-left up-left a column and two rows while the
-    ///     lower-right goes the same way out, so a stroke is always 28 columns wide and 3
-    ///     rows tall. The two terminal points are the ROM's own: $060D = (6, 13) for the
-    ///     growing pass and $0E1D = (14, 29) for the erase one.
-    /// </summary>
-    [Fact]
-    public void TheFramesStrokes_MatchTheRomsTerminalPoints()
-    {
-        Assert.Equal((124, 125, 179, 127), HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameFirstStroke));
-        Assert.Equal((12, 13, 291, 239), HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameLastStroke));
-        Assert.Equal((28, 29, 275, 223),
-            HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameEraseLastStroke));
-
-        Assert.Equal(57, HighScoreTableLayout.FrameStrokeCount);
-        Assert.Equal(49, HighScoreTableLayout.FrameEraseStrokeCount);
     }
 
     /// <summary>
@@ -96,5 +54,47 @@ public sealed class HighScoreTableLayoutTests
         Assert.True(HighScoreTableLayout.IsFramePixelLit(0, 1));
         Assert.False(HighScoreTableLayout.IsFramePixelLit(1, 1));
         Assert.Equal(HighScoreTableLayout.IsFramePixelLit(200, 200), !HighScoreTableLayout.IsFramePixelLit(200, 201));
+    }
+
+    /// <summary>
+    ///     FRAMER's strokes, in arcade pixels: stroke 0 is (col 62, row 125)-(col 89, row 127)
+    ///     and every step takes the upper-left up-left a column and two rows while the
+    ///     lower-right goes the same way out, so a stroke is always 28 columns wide and 3
+    ///     rows tall. The two terminal points are the ROM's own: $060D = (6, 13) for the
+    ///     growing pass and $0E1D = (14, 29) for the erase one.
+    /// </summary>
+    [Fact]
+    public void TheFramesStrokes_MatchTheRomsTerminalPoints()
+    {
+        Assert.Equal((124, 125, 179, 127), HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameFirstStroke));
+        Assert.Equal((12, 13, 291, 239), HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameLastStroke));
+        Assert.Equal((28, 29, 275, 223),
+            HighScoreTableLayout.GetFrameStroke(HighScoreTableLayout.FrameEraseLastStroke));
+
+        Assert.Equal(57, HighScoreTableLayout.FrameStrokeCount);
+        Assert.Equal(49, HighScoreTableLayout.FrameEraseStrokeCount);
+    }
+
+    [Fact]
+    public void TheTablesRows_StayInsideTheFrame()
+    {
+        // The ROM's frame runs (col 6, row 13) to (col 145, row 239); every row the
+        // screen prints must sit inside it, which is what these cursors are chosen for.
+        var (column, row) = HighScoreTableLayout.GetAllTimePosition(37);
+        Assert.True(column > 6 && column < 145, $"last row at column {column}");
+        Assert.True(row < 239, $"last row at row {row}");
+        Assert.Equal((21, 122), (HighScoreTableLayout.TopColumn, HighScoreTableLayout.TopRow));
+        Assert.True(HighScoreTableLayout.TodayHeaderRow < HighScoreTableLayout.TodayRow);
+        Assert.True(HighScoreTableLayout.AllTimeHeaderRow < HighScoreTableLayout.AllTimeRow);
+    }
+
+    [Fact]
+    public void TodayList_MatchesTheRomsCursorAndSpacing()
+    {
+        Assert.Equal(10, HighScoreTableLayout.TodayRows);
+        Assert.Equal((26, 53), HighScoreTableLayout.TodayPosition(1));
+        Assert.Equal((26, 89), HighScoreTableLayout.TodayPosition(5)); // 4 rows down: +4 x 9
+        Assert.Equal((78, 53), HighScoreTableLayout.TodayPosition(6)); // second column: +52
+        Assert.Equal((78, 89), HighScoreTableLayout.TodayPosition(10));
     }
 }

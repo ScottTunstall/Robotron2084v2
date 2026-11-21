@@ -1,5 +1,5 @@
-using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
+using Robotron2084.Audio.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Audio;
@@ -7,21 +7,12 @@ namespace Robotron2084.Tests.Audio;
 /// <summary>The Berzerk robot's words and pitch.</summary>
 public sealed class BerzerkVoiceTests
 {
-    [Fact]
-    public void EveryWordHasItsSampleInTheBerzerkFolder_AndThePauseHasNone()
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(8)]
+    public void APitchOutsideZeroToSevenIsRefused(int pitch)
     {
-        var lineNames = SpeechFolders.GetLineNames(SpeechFolders.Berzerk);
-        var words = Enum.GetValues<BerzerkWord>().Where(word => word != BerzerkWord.Pause).ToList();
-
-        Assert.All(words, word => Assert.Contains(BerzerkVoice.GetLineName(word), lineNames));
-        Assert.Equal(lineNames.Count, words.Count); // and every sample has a word
-        Assert.Throws<ArgumentOutOfRangeException>(() => BerzerkVoice.GetLineName(BerzerkWord.Pause));
-    }
-
-    [Fact]
-    public void TheSamplePitchPlaysTheSamplesAsRecorded()
-    {
-        Assert.Equal(0f, BerzerkVoice.GetPitchOctaves(BerzerkVoice.SamplePitch));
+        Assert.Throws<ArgumentOutOfRangeException>(() => BerzerkVoice.GetPitchOctaves(pitch));
     }
 
     [Theory]
@@ -40,11 +31,20 @@ public sealed class BerzerkVoiceTests
             Assert.InRange(BerzerkVoice.GetPitchOctaves(pitch), -1f, 1f);
     }
 
-    [Theory]
-    [InlineData(-1)]
-    [InlineData(8)]
-    public void APitchOutsideZeroToSevenIsRefused(int pitch)
+    [Fact]
+    public void EveryWordHasItsSampleInTheBerzerkFolder_AndThePauseHasNone()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => BerzerkVoice.GetPitchOctaves(pitch));
+        var lineNames = SpeechFolders.GetLineNames(SpeechFolders.Berzerk);
+        var words = Enum.GetValues<BerzerkWord>().Where(word => word != BerzerkWord.Pause).ToList();
+
+        Assert.All(words, word => Assert.Contains(BerzerkVoice.GetLineName(word), lineNames));
+        Assert.Equal(lineNames.Count, words.Count); // and every sample has a word
+        Assert.Throws<ArgumentOutOfRangeException>(() => BerzerkVoice.GetLineName(BerzerkWord.Pause));
+    }
+
+    [Fact]
+    public void TheSamplePitchPlaysTheSamplesAsRecorded()
+    {
+        Assert.Equal(0f, BerzerkVoice.GetPitchOctaves(BerzerkVoice.SamplePitch));
     }
 }

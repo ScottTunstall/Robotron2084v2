@@ -59,6 +59,25 @@ public sealed class SoundEffectSpeechVoice : ISpeechVoice, IDisposable
         foreach (var soundEffect in _ownSoundEffects) soundEffect.Dispose();
     }
 
+    /// <inheritdoc />
+    public bool IsSpeaking()
+    {
+        return _soundEffectInstance?.State == SoundState.Playing;
+    }
+
+    /// <inheritdoc />
+    public void Speak(string lineName, float pitchOctaves, float volumeShare)
+    {
+        var hasLine = _soundEffectsByLineName.TryGetValue(lineName.ToUpperInvariant(), out var soundEffect);
+        if (!hasLine || soundEffect is null) return;
+
+        _soundEffectInstance?.Dispose();
+        _soundEffectInstance = soundEffect.CreateInstance();
+        _soundEffectInstance.Volume = SoundTuning.SpeechVolume * volumeShare;
+        _soundEffectInstance.Pitch = pitchOctaves;
+        _soundEffectInstance.Play();
+    }
+
     /// <summary>Makes a line from its built file, with the silence around it cut off.</summary>
     /// <param name="contentManager">The content manager, whose folder holds the built files.</param>
     /// <param name="linePath">The line's path in that folder, without the extension.</param>
@@ -77,22 +96,4 @@ public sealed class SoundEffectSpeechVoice : ISpeechVoice, IDisposable
         _ownSoundEffects.Add(soundEffect);
         return soundEffect;
     }
-
-    /// <inheritdoc />
-    public bool IsSpeaking()
-    {
-        return _soundEffectInstance?.State == SoundState.Playing;
-    }
-
-    /// <inheritdoc />
-    public void Speak(string lineName, float pitchOctaves, float volumeShare)
-    {
-        var hasLine = _soundEffectsByLineName.TryGetValue(lineName.ToUpperInvariant(), out var soundEffect);
-        if (!hasLine || soundEffect is null) return;
-
-        _soundEffectInstance?.Dispose();
-        _soundEffectInstance = soundEffect.CreateInstance();
-        _soundEffectInstance.Volume = SoundTuning.SpeechVolume * volumeShare;
-        _soundEffectInstance.Pitch = pitchOctaves;
-        _soundEffectInstance.Play();    }
 }

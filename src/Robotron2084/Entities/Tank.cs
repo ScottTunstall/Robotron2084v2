@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -118,9 +118,9 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         ScreenSize.ToPortPixelsFromArcadePixels(VerticalMoveThresholdArcadePixels);
 
     private readonly int _fireIntervalBeats;
+    private readonly IGameEvents _gameEvents;
     private readonly ArcadeFrameTimer _growArcadeFrameTimer = new();
     private readonly Random _random;
-    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
@@ -216,17 +216,6 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     internal int TreadFrameIndex =>
         GetTreadFrameIndex(_treadAnimationFrameCounter, _textureSet.TankAnimationFrameTextures.Length, _stepDirection.X < 0);
-
-    /// <summary>Works out which tread animation frame a tank shows, as a place in <see cref="TextureSet.TankAnimationFrameTextures" />.</summary>
-    /// <param name="treadAnimationFrameCounter">How many beats the treads have moved on, counting from 0.</param>
-    /// <param name="animationFrameCount">How many tread animation frames there are.</param>
-    /// <param name="isGoingLeft">True when the tank is going left, which plays the treads backwards.</param>
-    /// <returns>The place of the animation frame, counting from 0.</returns>
-    internal static int GetTreadFrameIndex(int treadAnimationFrameCounter, int animationFrameCount, bool isGoingLeft)
-    {
-        var forward = treadAnimationFrameCounter % animationFrameCount;
-        return isGoingLeft ? animationFrameCount - 1 - forward : forward;
-    }
 
     /// <summary>
     ///     Sets the time of the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> of a tank that was on the field when the wave started, on the <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see> the game
@@ -355,6 +344,17 @@ public sealed class Tank : IExplodable, IRemovable, IWaveStartRobot
         return new IntVector2(
             Math.Clamp(position.X, playfieldBounds.X, playfieldBounds.Right - CollisionSize.Width),
             Math.Clamp(position.Y, playfieldBounds.Y, playfieldBounds.Bottom - CollisionSize.Height));
+    }
+
+    /// <summary>Works out which tread animation frame a tank shows, as a place in <see cref="TextureSet.TankAnimationFrameTextures" />.</summary>
+    /// <param name="treadAnimationFrameCounter">How many beats the treads have moved on, counting from 0.</param>
+    /// <param name="animationFrameCount">How many tread animation frames there are.</param>
+    /// <param name="isGoingLeft">True when the tank is going left, which plays the treads backwards.</param>
+    /// <returns>The place of the animation frame, counting from 0.</returns>
+    internal static int GetTreadFrameIndex(int treadAnimationFrameCounter, int animationFrameCount, bool isGoingLeft)
+    {
+        var forward = treadAnimationFrameCounter % animationFrameCount;
+        return isGoingLeft ? animationFrameCount - 1 - forward : forward;
     }
 
     /// <summary>True while the tank is still growing, when it must not move or fire.</summary>

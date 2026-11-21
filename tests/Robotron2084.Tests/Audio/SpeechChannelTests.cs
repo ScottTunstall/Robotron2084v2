@@ -42,6 +42,39 @@ public sealed class SpeechChannelTests
     }
 
     [Fact]
+    public void ALineIsGivenToTheVoiceWithItsPitch()
+    {
+        var voice = new FakeSpeechVoice();
+        var channel = new SpeechChannel(voice);
+        channel.Say("HIGH", 0.5f);
+        channel.Tick();
+
+        Assert.Equal([0.5f], voice.SpokenPitchOctaves);
+    }
+
+    [Fact]
+    public void ASilence_HoldsTheNextLineBackForItsTicks_AfterTheLineBeforeIt()
+    {
+        var voice = new FakeSpeechVoice { TicksPerLine = 2 };
+        var channel = new SpeechChannel(voice);
+        channel.Say("ONE");
+        channel.Wait(5);
+        channel.Say("TWO");
+
+        var ticksUntilTwo = 0;
+        while (voice.SpokenLineNames.Count < 2 && ticksUntilTwo < 100)
+        {
+            channel.Tick();
+            voice.Tick();
+            ticksUntilTwo++;
+        }
+
+        // ONE is spoken on the first tick and lasts 2; the silence starts when it ends and lasts 5.
+        Assert.Equal(["ONE", "TWO"], voice.SpokenLineNames);
+        Assert.Equal(1 + 2 + 5, ticksUntilTwo);
+    }
+
+    [Fact]
     public void LinesAreSpokenInTheOrderTheyWereAskedFor()
     {
         var voice = new FakeSpeechVoice();
@@ -76,45 +109,6 @@ public sealed class SpeechChannelTests
     }
 
     [Fact]
-    public void TheSpeechService_DoesNothingUntilItIsSetUp_ThenQueuesLikeTheChannel()
-    {
-        var voice = new FakeSpeechVoice();
-        Speech.ResetForTesting();
-
-        Speech.Say("IGNORED");
-        Speech.Tick();
-        Assert.False(Speech.IsBusy());
-
-        Speech.Initialise(voice);
-        Speech.Say("HELLO");
-        Assert.True(Speech.IsBusy());
-        Speech.Tick();
-        Assert.Equal(["HELLO"], voice.SpokenLineNames);
-    }
-
-    [Fact]
-    public void ASilence_HoldsTheNextLineBackForItsTicks_AfterTheLineBeforeIt()
-    {
-        var voice = new FakeSpeechVoice { TicksPerLine = 2 };
-        var channel = new SpeechChannel(voice);
-        channel.Say("ONE");
-        channel.Wait(5);
-        channel.Say("TWO");
-
-        var ticksUntilTwo = 0;
-        while (voice.SpokenLineNames.Count < 2 && ticksUntilTwo < 100)
-        {
-            channel.Tick();
-            voice.Tick();
-            ticksUntilTwo++;
-        }
-
-        // ONE is spoken on the first tick and lasts 2; the silence starts when it ends and lasts 5.
-        Assert.Equal(["ONE", "TWO"], voice.SpokenLineNames);
-        Assert.Equal(1 + 2 + 5, ticksUntilTwo);
-    }
-
-    [Fact]
     public void TheChannelIsBusyWhileASilenceIsWaitedOut()
     {
         var voice = new FakeSpeechVoice();
@@ -131,13 +125,19 @@ public sealed class SpeechChannelTests
     }
 
     [Fact]
-    public void ALineIsGivenToTheVoiceWithItsPitch()
+    public void TheSpeechService_DoesNothingUntilItIsSetUp_ThenQueuesLikeTheChannel()
     {
         var voice = new FakeSpeechVoice();
-        var channel = new SpeechChannel(voice);
-        channel.Say("HIGH", 0.5f);
-        channel.Tick();
+        Speech.ResetForTesting();
 
-        Assert.Equal([0.5f], voice.SpokenPitchOctaves);
+        Speech.Say("IGNORED");
+        Speech.Tick();
+        Assert.False(Speech.IsBusy());
+
+        Speech.Initialise(voice);
+        Speech.Say("HELLO");
+        Assert.True(Speech.IsBusy());
+        Speech.Tick();
+        Assert.Equal(["HELLO"], voice.SpokenLineNames);
     }
 }

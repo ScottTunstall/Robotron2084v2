@@ -28,14 +28,11 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     /// <summary>The sound ROM's size in bytes.</summary>
     public const int RomLength = 0x1000;
 
-    /// <summary>Where the sound ROM starts in the board's memory.</summary>
-    private const int RomStart = 0xF000;
+    /// <summary>Every line high: what the board sees when the main board sends "get ready".</summary>
+    private const int AllLinesHigh = 0xFF;
 
-    /// <summary>The address bits the RAM uses: 128 bytes.</summary>
-    private const int RamAddressBits = 0x007F;
-
-    /// <summary>Address bits that must be clear to reach the RAM (the RAM repeats every 256 bytes up to <c>$0F7F</c>).</summary>
-    private const int RamDecodeBits = 0xF080;
+    /// <summary>The two top lines, which the board's wiring holds high.</summary>
+    private const int HeldHighLines = 0xC0;
 
     /// <summary>The input-output chip's address, once its register bits and the ignored top bit are removed.</summary>
     private const int PiaAddress = 0x0400;
@@ -46,14 +43,17 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     /// <summary>The two register-select bits of an input-output chip address.</summary>
     private const int PiaRegisterBits = 0x0003;
 
+    /// <summary>The address bits the RAM uses: 128 bytes.</summary>
+    private const int RamAddressBits = 0x007F;
+
+    /// <summary>Address bits that must be clear to reach the RAM (the RAM repeats every 256 bytes up to <c>$0F7F</c>).</summary>
+    private const int RamDecodeBits = 0xF080;
+
+    /// <summary>Where the sound ROM starts in the board's memory.</summary>
+    private const int RomStart = 0xF000;
+
     /// <summary>The six sound lines (<c>RRF.ASM</c>: "B0-B5 SOUND").</summary>
     private const int SoundLines = 0x3F;
-
-    /// <summary>The two top lines, which the board's wiring holds high.</summary>
-    private const int HeldHighLines = 0xC0;
-
-    /// <summary>Every line high: what the board sees when the main board sends "get ready".</summary>
-    private const int AllLinesHigh = 0xFF;
 
     private readonly Mc6800Cpu _mc6800Cpu;
     private readonly Pia6821 _pia6821 = new();
@@ -74,6 +74,12 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
         _mc6800Cpu.Reset();
     }
 
+    /// <summary>The level the board is sending to the loudspeaker circuit right now, 0 to 255.</summary>
+    public byte OutputLevel => _pia6821.PortAPins;
+
+    /// <summary>Always false: the emulated board cannot tell when a sound has ended.</summary>
+    public bool IsPlaying() => false;
+
     /// <summary>Reads the byte at an address in the board's memory.</summary>
     /// <param name="address">The address.</param>
     /// <returns>The byte there; an address with nothing wired to it reads as zero.</returns>
@@ -85,26 +91,6 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
 
         return address >= RomStart ? _rom[address - RomStart] : (byte)0;
     }
-
-    /// <summary>Writes a byte to an address in the board's memory; the ROM and unwired addresses ignore it.</summary>
-    /// <param name="address">The address.</param>
-    /// <param name="value">The byte.</param>
-    public void WriteByte(ushort address, byte value)
-    {
-        if (IsPiaAddress(address))
-        {
-            _pia6821.WriteRegister(address & PiaRegisterBits, value);
-            return;
-        }
-
-        if (IsRamAddress(address)) _ram[address & RamAddressBits] = value;
-    }
-
-    /// <summary>The level the board is sending to the loudspeaker circuit right now, 0 to 255.</summary>
-    public byte OutputLevel => _pia6821.PortAPins;
-
-    /// <summary>Always false: the emulated board cannot tell when a sound has ended.</summary>
-    public bool IsPlaying() => false;
 
     /// <summary>Runs the board's processor for one instruction, however many cycles were asked for.</summary>
     /// <param name="maxCycles">Not used: an instruction cannot be split.</param>
@@ -125,6 +111,20 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
     {
         SetSoundLines(SoundLines);
         SetSoundLines(~soundNumber & SoundLines);
+    }
+
+    /// <summary>Writes a byte to an address in the board's memory; the ROM and unwired addresses ignore it.</summary>
+    /// <param name="address">The address.</param>
+    /// <param name="value">The byte.</param>
+    public void WriteByte(ushort address, byte value)
+    {
+        if (IsPiaAddress(address))
+        {
+            _pia6821.WriteRegister(address & PiaRegisterBits, value);
+            return;
+        }
+
+        if (IsRamAddress(address)) _ram[address & RamAddressBits] = value;
     }
 
     /// <summary>True when an address reaches the input-output chip.</summary>

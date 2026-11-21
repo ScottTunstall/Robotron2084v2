@@ -18,9 +18,10 @@ internal sealed class RecordingSink : IAudioSink
         Sends.Add((soundNumber, pan, _tick));
     }
 
-    public void Tick()
+    /// <summary>The ticks the sound numbers went out on, in order.</summary>
+    public List<int> SendTicks()
     {
-        _tick++;
+        return [.. Sends.Select(send => send.Tick)];
     }
 
     /// <summary>The sound numbers sent, in order.</summary>
@@ -29,9 +30,8 @@ internal sealed class RecordingSink : IAudioSink
         return [.. Sends.Select(send => send.SoundNumber)];
     }
 
-    /// <summary>The ticks the sound numbers went out on, in order.</summary>
-    public List<int> SendTicks()
+    public void Tick()
     {
-        return [.. Sends.Select(send => send.Tick)];
+        _tick++;
     }
 }

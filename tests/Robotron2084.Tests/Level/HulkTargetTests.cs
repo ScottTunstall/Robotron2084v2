@@ -1,10 +1,10 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
-using Robotron2084.Entities.Models;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
-using Robotron2084.Level.Models;
+using Robotron2084.Entities.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Level;
@@ -20,31 +20,18 @@ public sealed class HulkTargetTests
     private const int ManyHulks = 200;
 
     [Fact]
-    public void ThePhantomTarget_IsOffTheTopRightCornerOfThePlayfield()
+    public void AHulkAimsUpToSixteenColumnsWideOfItsTarget_SoItSometimesTurnsAwayFromATargetTenColumnsOff()
     {
-        var bounds = new Rectangle(40, 60, 500, 300);
+        var lefts = CountFirstDirections(Direction8.Left, 10);
 
-        var phantom = Hulk.GetPhantomTargetPosition(bounds);
-
-        // Disassembly: the bytes $C8 and $13 at $7E05/$7E06, against the right wall at column $8F and the top wall at row $18.
-        Assert.Equal(bounds.Right + ScreenSize.ToPortPixelsFromColumns(0xC8 - 0x8F), phantom.X);
-        Assert.Equal(bounds.Y - ScreenSize.ToPortPixelsFromArcadePixels(0x18 - 0x13), phantom.Y);
+        // The aim is the target plus -16 to +15 columns. Seven of those 32 land at or left of the hulk.
+        Assert.InRange(lefts, 20, 70);
     }
 
     [Fact]
-    public void WithNobodyLeftOver_AboutThreeHulksInFourHeadForThePhantom_AndTheRestHuntThePlayer()
+    public void AHulkNeverTurnsAwayFromATargetMoreThanSixteenColumnsOff()
     {
-        var playField = CreateField(1, 1, 1);
-        var phantom = Hulk.GetPhantomTargetPosition(playField.GetPlayfieldBounds());
-        var player = playField.GetPlayerPosition();
-
-        var phantoms = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == phantom);
-        var hunters = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == player);
-
-        // Nobody stalks a family member, even though there is a family on the field.
-        Assert.Equal(ManyHulks, phantoms + hunters);
-        // 193 in 256 search the list and find nothing: about 151 of 200.
-        Assert.InRange(phantoms, 130, 170);
+        Assert.Equal(0, CountFirstDirections(Direction8.Left, 17));
     }
 
     [Fact]
@@ -63,60 +50,6 @@ public sealed class HulkTargetTests
         // Once she is gone her place is empty, and every hulk hunts the player. None picks another family member.
         mommy.Kill();
         Assert.All(playField.FieldEntities.Hulks, hulk => Assert.Equal(player, hulk.GetTargetPosition()));
-    }
-
-    [Fact]
-    public void TheHulksTakeTheLeftOverPlacesInTurn()
-    {
-        var playField = CreateField(1, 1, 1, 0, 2);
-        var mikey = playField.FieldEntities.FamilyList.GetMemberInSlot(0)!.Position;
-        var daddy = playField.FieldEntities.FamilyList.GetMemberInSlot(2)!.Position;
-
-        var mikeyStalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == mikey);
-        var daddyStalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == daddy);
-
-        // The search goes round the list, so the two places are handed out alternately.
-        Assert.InRange(mikeyStalkers - daddyStalkers, 0, 1);
-        Assert.InRange(mikeyStalkers + daddyStalkers, 130, 170);
-    }
-
-    [Fact]
-    public void ALeftOverPlaceThatIsEmptyThisTime_SendsTheHulkAfterThePlayer()
-    {
-        // Place 5 held someone last time, but this wave's three family members only fill places 0 to 2.
-        var playField = CreateField(1, 1, 1, 5);
-        var player = playField.GetPlayerPosition();
-
-        Assert.All(playField.FieldEntities.Hulks, hulk => Assert.Equal(player, hulk.GetTargetPosition()));
-    }
-
-    [Fact]
-    public void TheField_ReportsThePlacesThatStillHoldAFamilyMember()
-    {
-        var playField = new PlayFieldBuilder()
-            .WithParameters(new WaveParams(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1))
-            .Build();
-        Assert.Equal([0, 1, 2], playField.FieldEntities.FamilyList.GetOccupiedSlots());
-
-        playField.FieldEntities.FamilyList.GetMemberInSlot(0)!.Rescue();
-        playField.FieldEntities.FamilyList.GetMemberInSlot(2)!.BeginReprogramming();
-
-        Assert.Equal([1], playField.FieldEntities.FamilyList.GetOccupiedSlots());
-    }
-
-    [Fact]
-    public void AHulkAimsUpToSixteenColumnsWideOfItsTarget_SoItSometimesTurnsAwayFromATargetTenColumnsOff()
-    {
-        var lefts = CountFirstDirections(Direction8.Left, 10);
-
-        // The aim is the target plus -16 to +15 columns. Seven of those 32 land at or left of the hulk.
-        Assert.InRange(lefts, 20, 70);
-    }
-
-    [Fact]
-    public void AHulkNeverTurnsAwayFromATargetMoreThanSixteenColumnsOff()
-    {
-        Assert.Equal(0, CountFirstDirections(Direction8.Left, 17));
     }
 
     [Fact]
@@ -148,14 +81,71 @@ public sealed class HulkTargetTests
         Assert.True(sumY / Samples < bounds.Y + bounds.Height / 2, $"average y {sumY / Samples}");
     }
 
-    /// <summary>Makes a field with many hulks and a small family, with the given places left over from the last field.</summary>
-    private static PlayField CreateField(int mikeys, int mommies, int daddies, params int[] familySlotsLeftOver)
+    [Fact]
+    public void ALeftOverPlaceThatIsEmptyThisTime_SendsTheHulkAfterThePlayer()
     {
-        return new PlayFieldBuilder()
-            .WithParameters(new WaveParams(1, MikeyCount: mikeys, MommyCount: mommies, DaddyCount: daddies,
-                HulkCount: ManyHulks))
-            .WithFamilySlotsLeftOver(familySlotsLeftOver)
+        // Place 5 held someone last time, but this wave's three family members only fill places 0 to 2.
+        var playField = CreateField(1, 1, 1, 5);
+        var player = playField.GetPlayerPosition();
+
+        Assert.All(playField.FieldEntities.Hulks, hulk => Assert.Equal(player, hulk.GetTargetPosition()));
+    }
+
+    [Fact]
+    public void TheField_ReportsThePlacesThatStillHoldAFamilyMember()
+    {
+        var playField = new PlayFieldBuilder()
+            .WithParameters(new WaveParams(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1))
             .Build();
+        Assert.Equal([0, 1, 2], playField.FieldEntities.FamilyList.GetOccupiedSlots());
+
+        playField.FieldEntities.FamilyList.GetMemberInSlot(0)!.Rescue();
+        playField.FieldEntities.FamilyList.GetMemberInSlot(2)!.BeginReprogramming();
+
+        Assert.Equal([1], playField.FieldEntities.FamilyList.GetOccupiedSlots());
+    }
+
+    [Fact]
+    public void TheHulksTakeTheLeftOverPlacesInTurn()
+    {
+        var playField = CreateField(1, 1, 1, 0, 2);
+        var mikey = playField.FieldEntities.FamilyList.GetMemberInSlot(0)!.Position;
+        var daddy = playField.FieldEntities.FamilyList.GetMemberInSlot(2)!.Position;
+
+        var mikeyStalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == mikey);
+        var daddyStalkers = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == daddy);
+
+        // The search goes round the list, so the two places are handed out alternately.
+        Assert.InRange(mikeyStalkers - daddyStalkers, 0, 1);
+        Assert.InRange(mikeyStalkers + daddyStalkers, 130, 170);
+    }
+
+    [Fact]
+    public void ThePhantomTarget_IsOffTheTopRightCornerOfThePlayfield()
+    {
+        var bounds = new Rectangle(40, 60, 500, 300);
+
+        var phantom = Hulk.GetPhantomTargetPosition(bounds);
+
+        // Disassembly: the bytes $C8 and $13 at $7E05/$7E06, against the right wall at column $8F and the top wall at row $18.
+        Assert.Equal(bounds.Right + ScreenSize.ToPortPixelsFromColumns(0xC8 - 0x8F), phantom.X);
+        Assert.Equal(bounds.Y - ScreenSize.ToPortPixelsFromArcadePixels(0x18 - 0x13), phantom.Y);
+    }
+
+    [Fact]
+    public void WithNobodyLeftOver_AboutThreeHulksInFourHeadForThePhantom_AndTheRestHuntThePlayer()
+    {
+        var playField = CreateField(1, 1, 1);
+        var phantom = Hulk.GetPhantomTargetPosition(playField.GetPlayfieldBounds());
+        var player = playField.GetPlayerPosition();
+
+        var phantoms = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == phantom);
+        var hunters = playField.FieldEntities.Hulks.Count(hulk => hulk.GetTargetPosition() == player);
+
+        // Nobody stalks a family member, even though there is a family on the field.
+        Assert.Equal(ManyHulks, phantoms + hunters);
+        // 193 in 256 search the list and find nothing: about 151 of 200.
+        Assert.InRange(phantoms, 130, 170);
     }
 
     /// <summary>
@@ -181,5 +171,15 @@ public sealed class HulkTargetTests
         playField.Update(new GameTime());
 
         return hulks.Count(hulk => hulk.Direction == direction);
+    }
+
+    /// <summary>Makes a field with many hulks and a small family, with the given places left over from the last field.</summary>
+    private static PlayField CreateField(int mikeys, int mommies, int daddies, params int[] familySlotsLeftOver)
+    {
+        return new PlayFieldBuilder()
+            .WithParameters(new WaveParams(1, MikeyCount: mikeys, MommyCount: mommies, DaddyCount: daddies,
+                HulkCount: ManyHulks))
+            .WithFamilySlotsLeftOver(familySlotsLeftOver)
+            .Build();
     }
 }

@@ -1,8 +1,8 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
-using Robotron2084.Level.Models;
+using Robotron2084.Core.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Level;
@@ -22,49 +22,57 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public sealed class RobotFirstMoveTests
 {
-    private static GameTime OneTick()
+    [Fact]
+    public void ABrain_TakesItsFirstBeat_TwelveFramesAfterItsFirstLook()
     {
-        return new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
+        // A brain wave is live on fiftieth of a second 160, which is a frame the brains look on, so the first beat is on 172.
+        // A brain has no target until its first beat (BRNL0 resolves it).
+        var playField = CreateField(new WaveParams(5, BrainCount: 1, MikeyCount: 1));
+        var brain = playField.FieldEntities.Brains[0];
+        var ticks = 0;
+
+        ticks = TickToArcadeFrame(playField, ticks, 171);
+        Assert.True(playField.IsLive());
+        Assert.Null(brain.TargetFamilyMember);
+
+        ticks = TickToArcadeFrame(playField, ticks, 172);
+        Assert.NotNull(brain.TargetFamilyMember);
     }
 
-    private static PlayField CreateField(WaveParams waveParams)
+    [Fact]
+    public void AHulk_TakesItsFirstStep_OnItsFirstLookAfterTheGameGoesLive()
     {
-        return new PlayFieldBuilder().WithParameters(waveParams).WithInput(new FakeInputSource()).WithSeed(7).Build();
+        // One hulk: the player appears on fiftieth of a second 44 and the game is live on 54. The hulk looks on frames 0, 8, 16
+        // and so on, so its first look after that is on frame 56, and it steps on that look.
+        var playField = CreateField(new WaveParams(1, HulkCount: 1));
+        var hulk = playField.FieldEntities.Hulks[0];
+        var start = hulk.Position;
+        var ticks = 0;
+
+        ticks = TickToArcadeFrame(playField, ticks, 55);
+        Assert.True(playField.IsLive());
+        Assert.Equal(start, hulk.Position);
+
+        ticks = TickToArcadeFrame(playField, ticks, 56);
+        Assert.NotEqual(start, hulk.Position);
     }
 
-    private static int TickToArcadeFrame(PlayField playField, int ticks, int arcadeFrame)
+    [Fact]
+    public void ATankLeftFromTheLastMan_TakesItsFirstBeat_OnItsFirstLookAfterTheGameGoesLive()
     {
-        while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
-        {
-            playField.Update(OneTick());
-            ticks++;
-        }
+        // One tank: the game is live on fiftieth of a second 54. The tank looks on frames 0, 15, 30 and so on, so its first
+        // look after that is on frame 60. Its tread moves on by one picture each beat (TANK3).
+        var playField = CreateField(new WaveParams(1, TankCount: 1));
+        var tank = playField.FieldEntities.Tanks[0];
+        var treadAtStart = tank.TreadFrameIndex;
+        var ticks = 0;
 
-        return ticks;
-    }
+        ticks = TickToArcadeFrame(playField, ticks, 59);
+        Assert.True(playField.IsLive());
+        Assert.Equal(treadAtStart, tank.TreadFrameIndex);
 
-    [Theory]
-    [InlineData(2, 10, 78)] // a grunt: the look on arcade frame 68, then 10
-    [InlineData(8, 0, 72)] // a hulk: the look on frame 72
-    [InlineData(4, 12, 80)] // a brain: the look on arcade frame 68, then 12
-    [InlineData(15, 0, 75)] // a tank: the look on frame 75
-    public void TheWaitToTheFirstBeat_RunsFromTheFirstLookThatFindsTheGameLive(int pollArcadeFrames, int napArcadeFrames,
-        int firstBeatArcadeFrame)
-    {
-        // Fifteen robots: the game goes live on fiftieth of a second 68, which is tick 82, and that tick starts at 405 clock units.
-        var waveStartSequence = new WaveStartSequence(15, false);
-        for (var tick = 1; tick <= 82; tick++)
-        {
-            Assert.False(waveStartSequence.HasJustGoneLive());
-            waveStartSequence.Update();
-        }
-
-        Assert.True(waveStartSequence.HasJustGoneLive());
-        Assert.Equal(ArcadeClock.ToClockUnits(firstBeatArcadeFrame) - 405,
-            waveStartSequence.GetClockUnitsToFirstBeat(pollArcadeFrames, napArcadeFrames));
-
-        waveStartSequence.Update();
-        Assert.False(waveStartSequence.HasJustGoneLive());
+        ticks = TickToArcadeFrame(playField, ticks, 60);
+        Assert.NotEqual(treadAtStart, tank.TreadFrameIndex);
     }
 
     [Theory]
@@ -91,56 +99,48 @@ public sealed class RobotFirstMoveTests
         Assert.All(playField.FieldEntities.Grunts, grunt => Assert.True(grunt.SteppedThisUpdate));
     }
 
-    [Fact]
-    public void AHulk_TakesItsFirstStep_OnItsFirstLookAfterTheGameGoesLive()
+    [Theory]
+    [InlineData(2, 10, 78)] // a grunt: the look on arcade frame 68, then 10
+    [InlineData(8, 0, 72)] // a hulk: the look on frame 72
+    [InlineData(4, 12, 80)] // a brain: the look on arcade frame 68, then 12
+    [InlineData(15, 0, 75)] // a tank: the look on frame 75
+    public void TheWaitToTheFirstBeat_RunsFromTheFirstLookThatFindsTheGameLive(int pollArcadeFrames, int napArcadeFrames,
+        int firstBeatArcadeFrame)
     {
-        // One hulk: the player appears on fiftieth of a second 44 and the game is live on 54. The hulk looks on frames 0, 8, 16
-        // and so on, so its first look after that is on frame 56, and it steps on that look.
-        var playField = CreateField(new WaveParams(1, HulkCount: 1));
-        var hulk = playField.FieldEntities.Hulks[0];
-        var start = hulk.Position;
-        var ticks = 0;
+        // Fifteen robots: the game goes live on fiftieth of a second 68, which is tick 82, and that tick starts at 405 clock units.
+        var waveStartSequence = new WaveStartSequence(15, false);
+        for (var tick = 1; tick <= 82; tick++)
+        {
+            Assert.False(waveStartSequence.HasJustGoneLive());
+            waveStartSequence.Update();
+        }
 
-        ticks = TickToArcadeFrame(playField, ticks, 55);
-        Assert.True(playField.IsLive());
-        Assert.Equal(start, hulk.Position);
+        Assert.True(waveStartSequence.HasJustGoneLive());
+        Assert.Equal(ArcadeClock.ToClockUnits(firstBeatArcadeFrame) - 405,
+            waveStartSequence.GetClockUnitsToFirstBeat(pollArcadeFrames, napArcadeFrames));
 
-        ticks = TickToArcadeFrame(playField, ticks, 56);
-        Assert.NotEqual(start, hulk.Position);
+        waveStartSequence.Update();
+        Assert.False(waveStartSequence.HasJustGoneLive());
     }
 
-    [Fact]
-    public void ABrain_TakesItsFirstBeat_TwelveFramesAfterItsFirstLook()
+    private static PlayField CreateField(WaveParams waveParams)
     {
-        // A brain wave is live on fiftieth of a second 160, which is a frame the brains look on, so the first beat is on 172.
-        // A brain has no target until its first beat (BRNL0 resolves it).
-        var playField = CreateField(new WaveParams(5, BrainCount: 1, MikeyCount: 1));
-        var brain = playField.FieldEntities.Brains[0];
-        var ticks = 0;
-
-        ticks = TickToArcadeFrame(playField, ticks, 171);
-        Assert.True(playField.IsLive());
-        Assert.Null(brain.TargetFamilyMember);
-
-        ticks = TickToArcadeFrame(playField, ticks, 172);
-        Assert.NotNull(brain.TargetFamilyMember);
+        return new PlayFieldBuilder().WithParameters(waveParams).WithInput(new FakeInputSource()).WithSeed(7).Build();
     }
 
-    [Fact]
-    public void ATankLeftFromTheLastMan_TakesItsFirstBeat_OnItsFirstLookAfterTheGameGoesLive()
+    private static GameTime OneTick()
     {
-        // One tank: the game is live on fiftieth of a second 54. The tank looks on frames 0, 15, 30 and so on, so its first
-        // look after that is on frame 60. Its tread moves on by one picture each beat (TANK3).
-        var playField = CreateField(new WaveParams(1, TankCount: 1));
-        var tank = playField.FieldEntities.Tanks[0];
-        var treadAtStart = tank.TreadFrameIndex;
-        var ticks = 0;
+        return new GameTime(TimeSpan.Zero, TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60));
+    }
 
-        ticks = TickToArcadeFrame(playField, ticks, 59);
-        Assert.True(playField.IsLive());
-        Assert.Equal(treadAtStart, tank.TreadFrameIndex);
+    private static int TickToArcadeFrame(PlayField playField, int ticks, int arcadeFrame)
+    {
+        while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
+        {
+            playField.Update(OneTick());
+            ticks++;
+        }
 
-        ticks = TickToArcadeFrame(playField, ticks, 60);
-        Assert.NotEqual(treadAtStart, tank.TreadFrameIndex);
+        return ticks;
     }
 }

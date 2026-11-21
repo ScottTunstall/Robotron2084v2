@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.States.SpriteTest.Models;
 
 namespace Robotron2084.States.SpriteTest;
@@ -14,8 +14,8 @@ public sealed class SpriteTestAnimator
 {
     private readonly SpriteTestEntry _entry;
     private readonly Random _random;
-    private SpriteTestCycle _cycle;
     private int _clockUnitsLeft;
+    private SpriteTestCycle _cycle;
 
     /// <summary>Starts an entry on the first frame of the cycle it shows when no way is held, or of its down walk.</summary>
     /// <param name="entry">The entry.</param>
@@ -29,14 +29,14 @@ public sealed class SpriteTestAnimator
         StartCycle(_cycle);
     }
 
-    /// <summary>The place of the frame showing in its cycle, counting from 0.</summary>
-    public int FrameIndex { get; private set; }
+    /// <summary>How many times the frame has moved on to the next in its cycle. Starting a new cycle does not count.</summary>
+    public int FrameChangeCount { get; private set; }
 
     /// <summary>How many frames the cycle showing has.</summary>
     public int FrameCount => _cycle.Frames.Count;
 
-    /// <summary>How many times the frame has moved on to the next in its cycle. Starting a new cycle does not count.</summary>
-    public int FrameChangeCount { get; private set; }
+    /// <summary>The place of the frame showing in its cycle, counting from 0.</summary>
+    public int FrameIndex { get; private set; }
 
     /// <summary>Gets the animation frame showing.</summary>
     public Texture2D GetCurrentAnimationFrameTexture()

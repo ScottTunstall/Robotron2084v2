@@ -54,10 +54,6 @@ public static class HudLayout
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLEND</c>, string 40 (<c>GOMP</c>), cursor <c>$3E80</c>.</remarks>
     public const int GameOverMessageRow = 128;
 
-    /// <summary>The most spare lives the HUD shows.</summary>
-    /// <remarks>Original source: <c>MANDSV</c>, "MAX OF 7".</remarks>
-    public const int HudMaxSpareLives = 7;
-
     /// <summary>The arcade byte column of the first spare life of player 1.</summary>
     /// <remarks>
     ///     The arcade's column is 46, right behind a seven-digit score. An eight-digit score is 7 pixels longer, so the
@@ -73,13 +69,9 @@ public static class HudLayout
     /// <remarks>Disassembly: <c>DRAW_LIVES_REMAINING</c> (<c>$34E0</c>), <c>ADDA #$04</c> at <c>$3506</c>, which is 4 byte columns.</remarks>
     public const int HudLivesPitchPixels = 8;
 
-    /// <summary>How tall a spare life icon is, in rows.</summary>
-    /// <remarks>Disassembly: the spare-life sprite metadata at <c>$3592</c>, which gives 8 rows.</remarks>
-    public const int HudSpareLifeHeightPixels = 8;
-
-    /// <summary>How wide a spare life icon is, in arcade pixels.</summary>
-    /// <remarks>Disassembly: the spare-life sprite metadata at <c>$3592</c>, which gives 3 bytes.</remarks>
-    public const int HudSpareLifeWidthPixels = 6;
+    /// <summary>The most spare lives the HUD shows.</summary>
+    /// <remarks>Original source: <c>MANDSV</c>, "MAX OF 7".</remarks>
+    public const int HudMaxSpareLives = 7;
 
     /// <summary>How far above the top of the wall the HUD is drawn, in arcade pixels.</summary>
     /// <remarks>
@@ -126,6 +118,14 @@ public static class HudLayout
     /// <remarks>A space is the ROM's 1-pixel colon glyph, so it advances 2 pixels.</remarks>
     public const int HudSmallFontSpaceAdvancePixels = 2;
 
+    /// <summary>How tall a spare life icon is, in rows.</summary>
+    /// <remarks>Disassembly: the spare-life sprite metadata at <c>$3592</c>, which gives 8 rows.</remarks>
+    public const int HudSpareLifeHeightPixels = 8;
+
+    /// <summary>How wide a spare life icon is, in arcade pixels.</summary>
+    /// <remarks>Disassembly: the spare-life sprite metadata at <c>$3592</c>, which gives 3 bytes.</remarks>
+    public const int HudSpareLifeWidthPixels = 6;
+
     /// <summary>The gap between the wave number and the word WAVE, in arcade pixels.</summary>
     /// <remarks>Original source: string 104, <c>MOVE_CURSOR_REL +$03</c>, which is 3 bytes.</remarks>
     public const int HudWaveNumberGapPixels = 6;
@@ -134,13 +134,13 @@ public static class HudLayout
     /// <remarks>Original source: string 104, cursor <c>$3EEE</c>.</remarks>
     public const int HudWaveTextColumn = 62;
 
-    /// <summary>The row of the wave message, in arcade pixels.</summary>
-    /// <remarks>Original source: string 104, cursor <c>$3EEE</c>.</remarks>
-    public const int HudWaveTextRow = 238;
-
     /// <summary>The palette index of the wave message.</summary>
     /// <remarks>Original source: string 104, colour <c>$BB</c>.</remarks>
     public const int HudWaveTextPaletteIndex = 0x0B;
+
+    /// <summary>The row of the wave message, in arcade pixels.</summary>
+    /// <remarks>Original source: string 104, cursor <c>$3EEE</c>.</remarks>
+    public const int HudWaveTextRow = 238;
 
     /// <summary>The column of the PAUSE banner, in arcade pixels.</summary>
     /// <remarks>

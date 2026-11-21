@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 
 namespace Robotron2084.Entities;
 
@@ -17,6 +17,9 @@ namespace Robotron2084.Entities;
 /// </remarks>
 internal static class GruntChaseStep
 {
+    /// <summary>How far one step moves a robot sideways, in port pixels.</summary>
+    internal static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(StepColumns);
+
     /// <summary>How many rows above or below the player a robot is when it makes no step up or down.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -52,9 +55,6 @@ internal static class GruntChaseStep
 
     /// <summary>One row, in port pixels.</summary>
     private static readonly int RowPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
-
-    /// <summary>How far one step moves a robot sideways, in port pixels.</summary>
-    internal static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(StepColumns);
 
     /// <summary>How far one step moves a robot up or down, in port pixels.</summary>
     private static readonly int StepYPixels = ScreenSize.ToPortPixelsFromArcadePixels(StepRows);

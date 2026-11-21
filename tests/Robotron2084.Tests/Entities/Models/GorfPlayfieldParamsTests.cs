@@ -10,6 +10,12 @@ public sealed class GorfPlayfieldParamsTests
     private static readonly Rectangle Bounds = new(20, 30, 600, 400);
 
     [Fact]
+    public void HasNoBoxToAvoidUnlessOneIsGiven()
+    {
+        Assert.Null(new GorfPlayfieldParams(Bounds).PlayerBoxToAvoid);
+    }
+
+    [Fact]
     public void KeepsTheBoundsAndTheBoxToAvoid()
     {
         var box = new Rectangle(100, 100, 20, 30);
@@ -21,9 +27,11 @@ public sealed class GorfPlayfieldParamsTests
     }
 
     [Fact]
-    public void HasNoBoxToAvoidUnlessOneIsGiven()
+    public void RefusesABoxToAvoidWithNoArea()
     {
-        Assert.Null(new GorfPlayfieldParams(Bounds).PlayerBoxToAvoid);
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new GorfPlayfieldParams(Bounds, new Rectangle(5, 5, 0, 10)));
+
+        Assert.Equal("playerBoxToAvoid", exception.ParamName);
     }
 
     [Theory]
@@ -33,13 +41,5 @@ public sealed class GorfPlayfieldParamsTests
     public void RefusesBoundsWithNoArea(int width, int height)
     {
         _ = Assert.Throws<ArgumentOutOfRangeException>(() => new GorfPlayfieldParams(new Rectangle(0, 0, width, height)));
-    }
-
-    [Fact]
-    public void RefusesABoxToAvoidWithNoArea()
-    {
-        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => new GorfPlayfieldParams(Bounds, new Rectangle(5, 5, 0, 10)));
-
-        Assert.Equal("playerBoxToAvoid", exception.ParamName);
     }
 }

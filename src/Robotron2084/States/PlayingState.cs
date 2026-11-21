@@ -1,19 +1,19 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
-using Robotron2084.Core.Models;
+using Robotron2084.Audio.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
 using Robotron2084.Hud;
-using Robotron2084.Input.Models;
 using Robotron2084.Input;
-using Robotron2084.Level.Models;
+using Robotron2084.Input.Models;
 using Robotron2084.Level;
 using Robotron2084.Level.Collisions;
+using Robotron2084.Level.Models;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
 using Robotron2084.Tuning;
@@ -43,20 +43,20 @@ public sealed class PlayingState : IGameState
     private const int WaveCounterWrap = 255;
 
     private readonly GameEventHub _gameEventHub = new();
+    private readonly GameSession _gameSession;
     private readonly GameSettings _gameSettings;
 
-    private readonly WaveParamsGenerator _waveParamsGenerator = new();
     private readonly HighScoreStore _highScoreStore;
     private readonly PauseToggle _pauseToggle = new();
     private readonly Random _random;
-    private readonly GameSession _gameSession;
     private readonly TextureSet _textureSet;
-    private PlayField _playField;
+    private readonly WaveParamsGenerator _waveParamsGenerator = new();
     private int _playerOutMessageTicks;
 
     // "PLAYER n GAME OVER" (ROM NAP $60)
     private int _playerOutNumber;
 
+    private PlayField _playField;
     private bool _restartHandled; // one-shot so the death branch fires exactly once
     private int _turnMessageTicks; // "PLAYER n" at a 2-player turn start (ROM NAP 115)
 
@@ -329,18 +329,6 @@ public sealed class PlayingState : IGameState
     }
 
     /// <summary>
-    ///     Records the wave just cleared on the player's slot, with whether they rescued every family member in it: none lost
-    ///     on any of their lives in it, and none left on the field.
-    /// </summary>
-    /// <param name="playerSlot">The player who cleared the wave.</param>
-    private void RecordWaveCleared(PlayerSlot playerSlot)
-    {
-        var familyMembersLost = playerSlot.FamilyMembersLostThisWave + _playField.GetFamilyMembersLost();
-        var hasRescuedWholeFamily = familyMembersLost == 0 && !_playField.FieldEntities.FamilyList.AnyAlive();
-        playerSlot.RecordWaveCleared(hasRescuedWholeFamily);
-    }
-
-    /// <summary>
     ///     ROM GEXEC0: the wave is cleared for whoever is playing — only THEIR wave
     ///     counter advances (<c>INC PWAV,X</c>, skipping 0) and only their state
     ///     carries over.
@@ -370,5 +358,17 @@ public sealed class PlayingState : IGameState
     private void NoteFamilySlotsLeftOver()
     {
         _gameSession.FamilySlotsLeftOver = _playField.FieldEntities.FamilyList.GetOccupiedSlots();
+    }
+
+    /// <summary>
+    ///     Records the wave just cleared on the player's slot, with whether they rescued every family member in it: none lost
+    ///     on any of their lives in it, and none left on the field.
+    /// </summary>
+    /// <param name="playerSlot">The player who cleared the wave.</param>
+    private void RecordWaveCleared(PlayerSlot playerSlot)
+    {
+        var familyMembersLost = playerSlot.FamilyMembersLostThisWave + _playField.GetFamilyMembersLost();
+        var hasRescuedWholeFamily = familyMembersLost == 0 && !_playField.FieldEntities.FamilyList.AnyAlive();
+        playerSlot.RecordWaveCleared(hasRescuedWholeFamily);
     }
 }

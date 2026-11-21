@@ -20,12 +20,6 @@ public sealed class EntityParamsTests
     }
 
     [Fact]
-    public void RefusesANullTextureSet()
-    {
-        _ = Assert.Throws<ArgumentNullException>(() => new EntityParams(null!, NullGameEvents.Instance, new Random(1)));
-    }
-
-    [Fact]
     public void RefusesANullPlaceToAnnounceTo()
     {
         _ = Assert.Throws<ArgumentNullException>(() => new EntityParams(TestTextures.SharedTextureSet, null!, new Random(1)));
@@ -35,5 +29,11 @@ public sealed class EntityParamsTests
     public void RefusesANullRandomSource()
     {
         _ = Assert.Throws<ArgumentNullException>(() => new EntityParams(TestTextures.SharedTextureSet, NullGameEvents.Instance, null!));
+    }
+
+    [Fact]
+    public void RefusesANullTextureSet()
+    {
+        _ = Assert.Throws<ArgumentNullException>(() => new EntityParams(null!, NullGameEvents.Instance, new Random(1)));
     }
 }

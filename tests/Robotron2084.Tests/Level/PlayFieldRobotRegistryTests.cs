@@ -1,7 +1,7 @@
-using Robotron2084.Entities.Collections;
 using Robotron2084.Entities;
-using Robotron2084.Level.Models;
+using Robotron2084.Entities.Collections;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Score;
 using Xunit;
 
@@ -23,19 +23,24 @@ public sealed class PlayFieldRobotRegistryTests
     private const int NonRobotLists = 6;
 
     /// <summary>
-    ///     The kinds the wave table brings, and the count each row must read.
-    ///     Every other kind is made by another robot, so it has no wave count.
+    ///     The entity class each kind's list holds — the hand-written half of the registry, so wiring a
+    ///     kind to the wrong list cannot pass unnoticed.
     /// </summary>
-    private static readonly (RobotKind Kind, Func<WaveParams, int> Count)[] WaveBrought =
+    private static readonly (RobotKind Kind, Type EntityType)[] ExpectedEntityTypes =
     [
-        (RobotKind.Electrode, static waveParams => waveParams.ElectrodeCount),
-        (RobotKind.Grunt, static waveParams => waveParams.GruntCount),
-        (RobotKind.Hulk, static waveParams => waveParams.HulkCount),
-        (RobotKind.Spheroid, static waveParams => waveParams.SpheroidCount),
-        (RobotKind.Quark, static waveParams => waveParams.QuarkCount),
-        (RobotKind.Tank, static waveParams => waveParams.TankCount),
-        (RobotKind.Brain, static waveParams => waveParams.BrainCount),
-        (RobotKind.BerzerkRobot, static waveParams => waveParams.BerzerkRobotCount)
+        (RobotKind.Electrode, typeof(Electrode)),
+        (RobotKind.Grunt, typeof(Grunt)),
+        (RobotKind.Hulk, typeof(Hulk)),
+        (RobotKind.Spheroid, typeof(Spheroid)),
+        (RobotKind.Enforcer, typeof(Enforcer)),
+        (RobotKind.Quark, typeof(Quark)),
+        (RobotKind.Tank, typeof(Tank)),
+        (RobotKind.Brain, typeof(Brain)),
+        (RobotKind.Prog, typeof(Prog)),
+        (RobotKind.Spark, typeof(Spark)),
+        (RobotKind.TankShell, typeof(TankShell)),
+        (RobotKind.CruiseMissile, typeof(CruiseMissile)),
+        (RobotKind.BerzerkRobot, typeof(BerzerkRobot))
     ];
 
     /// <summary>
@@ -76,43 +81,27 @@ public sealed class PlayFieldRobotRegistryTests
     ];
 
     /// <summary>
-    ///     The entity class each kind's list holds — the hand-written half of the registry, so wiring a
-    ///     kind to the wrong list cannot pass unnoticed.
+    ///     The kinds the wave table brings, and the count each row must read.
+    ///     Every other kind is made by another robot, so it has no wave count.
     /// </summary>
-    private static readonly (RobotKind Kind, Type EntityType)[] ExpectedEntityTypes =
+    private static readonly (RobotKind Kind, Func<WaveParams, int> Count)[] WaveBrought =
     [
-        (RobotKind.Electrode, typeof(Electrode)),
-        (RobotKind.Grunt, typeof(Grunt)),
-        (RobotKind.Hulk, typeof(Hulk)),
-        (RobotKind.Spheroid, typeof(Spheroid)),
-        (RobotKind.Enforcer, typeof(Enforcer)),
-        (RobotKind.Quark, typeof(Quark)),
-        (RobotKind.Tank, typeof(Tank)),
-        (RobotKind.Brain, typeof(Brain)),
-        (RobotKind.Prog, typeof(Prog)),
-        (RobotKind.Spark, typeof(Spark)),
-        (RobotKind.TankShell, typeof(TankShell)),
-        (RobotKind.CruiseMissile, typeof(CruiseMissile)),
-        (RobotKind.BerzerkRobot, typeof(BerzerkRobot))
+        (RobotKind.Electrode, static waveParams => waveParams.ElectrodeCount),
+        (RobotKind.Grunt, static waveParams => waveParams.GruntCount),
+        (RobotKind.Hulk, static waveParams => waveParams.HulkCount),
+        (RobotKind.Spheroid, static waveParams => waveParams.SpheroidCount),
+        (RobotKind.Quark, static waveParams => waveParams.QuarkCount),
+        (RobotKind.Tank, static waveParams => waveParams.TankCount),
+        (RobotKind.Brain, static waveParams => waveParams.BrainCount),
+        (RobotKind.BerzerkRobot, static waveParams => waveParams.BerzerkRobotCount)
     ];
 
-    private static WaveParams OneOfEverything()
+    [Fact]
+    public void AKindsListRefusesToGuessWhenTheKindHasNoList()
     {
-        return new WaveParams(
-            1,
-            2,
-            3,
-            HulkCount: 5,
-            BrainCount: 7,
-            SpheroidCount: 11,
-            QuarkCount: 13,
-            TankCount: 17,
-            BerzerkRobotCount: 19);
-    }
+        var playField = CreateField();
 
-    private static PlayField CreateField()
-    {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithSeed(99).Build();
+        Assert.Throws<ArgumentOutOfRangeException>(() => playField.FieldEntities.GetList((RobotKind)999));
     }
 
     [Fact]
@@ -126,6 +115,22 @@ public sealed class PlayFieldRobotRegistryTests
             // The order of `All` is behaviour: it is the order the laser phases resolve in.
             Assert.Equal(kinds[index], RobotKinds.All[index].Kind);
             Assert.Equal(kinds[index], RobotKinds.GetInfo(kinds[index]).Kind);
+        }
+    }
+
+    [Fact]
+    public void EveryKindsListHoldsThatKindsEntityType()
+    {
+        var playField = CreateField();
+
+        Assert.Equal(Enum.GetValues<RobotKind>().Length, ExpectedEntityTypes.Length);
+        foreach (var (kind, entityType) in ExpectedEntityTypes)
+        {
+            // Each kind has its own list type (GruntList, TankList, ...), built on EntityList<T> of that kind's entity.
+            var listType = playField.FieldEntities.GetList(kind).GetType();
+            var baseListType = listType.BaseType!;
+            Assert.Equal(typeof(EntityList<>), baseListType.GetGenericTypeDefinition());
+            Assert.Equal(entityType, Assert.Single(baseListType.GetGenericArguments()));
         }
     }
 
@@ -151,6 +156,21 @@ public sealed class PlayFieldRobotRegistryTests
     }
 
     [Fact]
+    public void EveryRowsScoreIsTheKindsScoreValue()
+    {
+        Assert.Equal(Enum.GetValues<RobotKind>().Length, ExpectedScores.Length);
+
+        foreach (var (kind, score) in ExpectedScores) Assert.Equal(score, RobotKinds.GetInfo(kind).Score);
+    }
+
+    [Fact]
+    public void OnlyTheKindsThatBumpIntoThePlayerAreFatalToTouch()
+    {
+        foreach (var kind in Enum.GetValues<RobotKind>())
+            Assert.Equal(FatalOnContact.Contains(kind), RobotKinds.GetInfo(kind).KillsPlayerOnContact);
+    }
+
+    [Fact]
     public void OnlyTheWaveBroughtKindsHaveAWaveCount_AndEachReadsItsOwnCount()
     {
         var waveParams = OneOfEverything();
@@ -173,42 +193,22 @@ public sealed class PlayFieldRobotRegistryTests
         }
     }
 
-    [Fact]
-    public void EveryRowsScoreIsTheKindsScoreValue()
+    private static PlayField CreateField()
     {
-        Assert.Equal(Enum.GetValues<RobotKind>().Length, ExpectedScores.Length);
-
-        foreach (var (kind, score) in ExpectedScores) Assert.Equal(score, RobotKinds.GetInfo(kind).Score);
+        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithSeed(99).Build();
     }
 
-    [Fact]
-    public void OnlyTheKindsThatBumpIntoThePlayerAreFatalToTouch()
+    private static WaveParams OneOfEverything()
     {
-        foreach (var kind in Enum.GetValues<RobotKind>())
-            Assert.Equal(FatalOnContact.Contains(kind), RobotKinds.GetInfo(kind).KillsPlayerOnContact);
-    }
-
-    [Fact]
-    public void AKindsListRefusesToGuessWhenTheKindHasNoList()
-    {
-        var playField = CreateField();
-
-        Assert.Throws<ArgumentOutOfRangeException>(() => playField.FieldEntities.GetList((RobotKind)999));
-    }
-
-    [Fact]
-    public void EveryKindsListHoldsThatKindsEntityType()
-    {
-        var playField = CreateField();
-
-        Assert.Equal(Enum.GetValues<RobotKind>().Length, ExpectedEntityTypes.Length);
-        foreach (var (kind, entityType) in ExpectedEntityTypes)
-        {
-            // Each kind has its own list type (GruntList, TankList, ...), built on EntityList<T> of that kind's entity.
-            var listType = playField.FieldEntities.GetList(kind).GetType();
-            var baseListType = listType.BaseType!;
-            Assert.Equal(typeof(EntityList<>), baseListType.GetGenericTypeDefinition());
-            Assert.Equal(entityType, Assert.Single(baseListType.GetGenericArguments()));
-        }
+        return new WaveParams(
+            1,
+            2,
+            3,
+            HulkCount: 5,
+            BrainCount: 7,
+            SpheroidCount: 11,
+            QuarkCount: 13,
+            TankCount: 17,
+            BerzerkRobotCount: 19);
     }
 }

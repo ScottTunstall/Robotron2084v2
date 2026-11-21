@@ -1,8 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Palette;
 using Robotron2084.Tuning;
 using Xunit;
@@ -26,53 +25,23 @@ public sealed class PlayerDeathTests
 {
     private static readonly GameTime TickGameTime = new(TimeSpan.FromMilliseconds(16), TimeSpan.FromMilliseconds(16));
 
-    private static (PlayField PlayField, GamePalette GamePalette) CreateField()
-    {
-        var waveParams = new WaveParams(
-            1,
-            0,
-            HulkCount: 0,
-            SpheroidCount: 0,
-            QuarkCount: 0,
-            ElectrodeCount: 0,
-            MaxEnforcersPerSpheroid: 0,
-            MaxTanksPerQuark: 0,
-            EnemySpeedBonus: 0);
-
-        var gamePalette = new GamePalette();
-        var playField = new PlayFieldBuilder().WithParameters(waveParams).WithSeed(5).WithPalette(gamePalette).Build();
-        return (playField, gamePalette);
-    }
-
     [Fact]
-    public void TheFlashStartsInPaletteIndexNine_AndThenUsesOnlyPdctabColours()
+    public void TheDyingPlayer_StaysVisibleUntilTheFadeEnds()
     {
+        // The death is on the TICK clock now, not a TimeSpan: an Update with a
+        // huge elapsed time must not shorten it.
         var (playField, _) = CreateField();
         var player = playField.Player;
         player.StartDeathForTesting();
 
-        // PDTH0: `LDA #$99 / JSR OPON` — the first thing on screen is the player
-        // as a WHITE silhouette.
-        Assert.Equal(EntityLifeState.Dying, player.LifeState);
-        Assert.Equal(PlayerTuning.PlayerDeathWhitePaletteIndex, player.GetDeathSolidPaletteIndex());
-
-        // The flash is 80 fiftieths of a second (48 clock units each iteration): every palette index seen
-        // through it is either $99's palette index 9 or a PDCTAB entry. Tick to 95 — the
-        // 96th tick is where the fade takes over.
-        int[] allowed = [.. PlayerTuning.PlayerDeathFlashPaletteIndices, PlayerTuning.PlayerDeathWhitePaletteIndex];
-        var sawWhite = false;
-        var sawColour = false;
-        for (var tick = 0; tick < 95; tick++)
+        for (var tick = 0; tick < 129; tick++)
         {
-            playField.Update(TickGameTime);
-            var paletteIndex = player.GetDeathSolidPaletteIndex();
-            Assert.Contains(paletteIndex, allowed);
-            sawWhite |= paletteIndex == PlayerTuning.PlayerDeathWhitePaletteIndex;
-            sawColour |= paletteIndex != PlayerTuning.PlayerDeathWhitePaletteIndex;
+            playField.Update(new GameTime(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1)));
+            Assert.Equal(EntityLifeState.Dying, player.LifeState);
         }
 
-        Assert.True(sawWhite && sawColour, "the flash should alternate white and a PDCTAB colour");
-        Assert.Equal(EntityLifeState.Dying, player.LifeState);
+        playField.Update(TickGameTime);
+        Assert.Equal(EntityLifeState.Dead, player.LifeState);
     }
 
     [Fact]
@@ -107,21 +76,51 @@ public sealed class PlayerDeathTests
     }
 
     [Fact]
-    public void TheDyingPlayer_StaysVisibleUntilTheFadeEnds()
+    public void TheFlashStartsInPaletteIndexNine_AndThenUsesOnlyPdctabColours()
     {
-        // The death is on the TICK clock now, not a TimeSpan: an Update with a
-        // huge elapsed time must not shorten it.
         var (playField, _) = CreateField();
         var player = playField.Player;
         player.StartDeathForTesting();
 
-        for (var tick = 0; tick < 129; tick++)
+        // PDTH0: `LDA #$99 / JSR OPON` — the first thing on screen is the player
+        // as a WHITE silhouette.
+        Assert.Equal(EntityLifeState.Dying, player.LifeState);
+        Assert.Equal(PlayerTuning.PlayerDeathWhitePaletteIndex, player.GetDeathSolidPaletteIndex());
+
+        // The flash is 80 fiftieths of a second (48 clock units each iteration): every palette index seen
+        // through it is either $99's palette index 9 or a PDCTAB entry. Tick to 95 — the
+        // 96th tick is where the fade takes over.
+        int[] allowed = [.. PlayerTuning.PlayerDeathFlashPaletteIndices, PlayerTuning.PlayerDeathWhitePaletteIndex];
+        var sawWhite = false;
+        var sawColour = false;
+        for (var tick = 0; tick < 95; tick++)
         {
-            playField.Update(new GameTime(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(1)));
-            Assert.Equal(EntityLifeState.Dying, player.LifeState);
+            playField.Update(TickGameTime);
+            var paletteIndex = player.GetDeathSolidPaletteIndex();
+            Assert.Contains(paletteIndex, allowed);
+            sawWhite |= paletteIndex == PlayerTuning.PlayerDeathWhitePaletteIndex;
+            sawColour |= paletteIndex != PlayerTuning.PlayerDeathWhitePaletteIndex;
         }
 
-        playField.Update(TickGameTime);
-        Assert.Equal(EntityLifeState.Dead, player.LifeState);
+        Assert.True(sawWhite && sawColour, "the flash should alternate white and a PDCTAB colour");
+        Assert.Equal(EntityLifeState.Dying, player.LifeState);
+    }
+
+    private static (PlayField PlayField, GamePalette GamePalette) CreateField()
+    {
+        var waveParams = new WaveParams(
+            1,
+            0,
+            HulkCount: 0,
+            SpheroidCount: 0,
+            QuarkCount: 0,
+            ElectrodeCount: 0,
+            MaxEnforcersPerSpheroid: 0,
+            MaxTanksPerQuark: 0,
+            EnemySpeedBonus: 0);
+
+        var gamePalette = new GamePalette();
+        var playField = new PlayFieldBuilder().WithParameters(waveParams).WithSeed(5).WithPalette(gamePalette).Build();
+        return (playField, gamePalette);
     }
 }

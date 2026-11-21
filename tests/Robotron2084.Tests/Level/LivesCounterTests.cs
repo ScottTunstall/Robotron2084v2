@@ -7,9 +7,20 @@ namespace Robotron2084.Tests.Level;
 public sealed class LivesCounterTests
 {
     [Fact]
-    public void StartsWithTheLivesItIsGiven()
+    public void ACountBelowZeroIsRefused()
     {
-        Assert.Equal(3, new LivesCounter(3).Lives);
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new LivesCounter(-1));
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new LivesCounter(3).SetLives(-1));
+    }
+
+    [Fact]
+    public void ACountOfNoLivesStaysAtNone()
+    {
+        var livesCounter = new LivesCounter(0);
+
+        livesCounter.LoseLife();
+
+        Assert.Equal(0, livesCounter.Lives);
     }
 
     [Fact]
@@ -26,16 +37,6 @@ public sealed class LivesCounterTests
     }
 
     [Fact]
-    public void ACountOfNoLivesStaysAtNone()
-    {
-        var livesCounter = new LivesCounter(0);
-
-        livesCounter.LoseLife();
-
-        Assert.Equal(0, livesCounter.Lives);
-    }
-
-    [Fact]
     public void SetLivesPutsTheCountAtANewValue()
     {
         var livesCounter = new LivesCounter(3);
@@ -46,10 +47,9 @@ public sealed class LivesCounterTests
     }
 
     [Fact]
-    public void ACountBelowZeroIsRefused()
+    public void StartsWithTheLivesItIsGiven()
     {
-        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new LivesCounter(-1));
-        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new LivesCounter(3).SetLives(-1));
+        Assert.Equal(3, new LivesCounter(3).Lives);
     }
 
     [Fact]

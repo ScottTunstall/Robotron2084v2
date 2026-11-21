@@ -25,6 +25,18 @@ namespace Robotron2084.States;
 /// </remarks>
 internal static class AttractNavigation
 {
+    /// <summary>The step of the demo game.</summary>
+    public const int DemoStep = FirstStoryPageStep + StoryPageCount;
+
+    /// <summary>The step of the first page of the story.</summary>
+    public const int FirstStoryPageStep = 2;
+
+    /// <summary>The step of the high score table.</summary>
+    public const int HighScoresStep = DemoStep + 1;
+
+    /// <summary>How many steps the sequence has.</summary>
+    public const int StepCount = HighScoresStep + 1;
+
     /// <summary>How many pages the story has.</summary>
     public const int StoryPageCount = 7;
 
@@ -34,17 +46,19 @@ internal static class AttractNavigation
     /// <summary>The step of the title page on the port's text pane.</summary>
     public const int TitlePortPaneStep = 1;
 
-    /// <summary>The step of the first page of the story.</summary>
-    public const int FirstStoryPageStep = 2;
+    /// <summary>Makes the screen for a step.</summary>
+    /// <param name="step">The step.</param>
+    /// <param name="gameStateParams">The shared services the screens are made with.</param>
+    public static IGameState CreateState(int step, GameStateParams gameStateParams)
+    {
+        if (step == TitleArcadePaneStep) return new TitleScreenState(gameStateParams, TitleTextPane.Arcade);
+        if (step == TitlePortPaneStep) return new TitleScreenState(gameStateParams, TitleTextPane.Port);
+        if (step == DemoStep) return new AttractState(gameStateParams);
+        if (step == HighScoresStep) return new HighScoreTableState(gameStateParams);
 
-    /// <summary>The step of the demo game.</summary>
-    public const int DemoStep = FirstStoryPageStep + StoryPageCount;
-
-    /// <summary>The step of the high score table.</summary>
-    public const int HighScoresStep = DemoStep + 1;
-
-    /// <summary>How many steps the sequence has.</summary>
-    public const int StepCount = HighScoresStep + 1;
+        var storyPage = step - FirstStoryPageStep + 1;
+        return new StorylineState(gameStateParams, storyPage);
+    }
 
     /// <summary>Gets the step after or before a step, wrapping round at either end.</summary>
     /// <param name="step">The step.</param>
@@ -67,20 +81,6 @@ internal static class AttractNavigation
             HighScoreTableState => HighScoresStep,
             _ => null
         };
-    }
-
-    /// <summary>Makes the screen for a step.</summary>
-    /// <param name="step">The step.</param>
-    /// <param name="gameStateParams">The shared services the screens are made with.</param>
-    public static IGameState CreateState(int step, GameStateParams gameStateParams)
-    {
-        if (step == TitleArcadePaneStep) return new TitleScreenState(gameStateParams, TitleTextPane.Arcade);
-        if (step == TitlePortPaneStep) return new TitleScreenState(gameStateParams, TitleTextPane.Port);
-        if (step == DemoStep) return new AttractState(gameStateParams);
-        if (step == HighScoresStep) return new HighScoreTableState(gameStateParams);
-
-        var storyPage = step - FirstStoryPageStep + 1;
-        return new StorylineState(gameStateParams, storyPage);
     }
 
     private static int GetTitleStep(TitleScreenState titleScreenState)

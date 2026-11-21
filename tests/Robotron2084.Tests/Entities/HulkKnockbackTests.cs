@@ -1,10 +1,10 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core;
 using Robotron2084.Core.Extensions;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
 using Robotron2084.Entities;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -20,27 +20,29 @@ namespace Robotron2084.Tests.Entities;
 /// </summary>
 public sealed class HulkKnockbackTests
 {
-    /// <summary>The field centre — far enough from every wall that clamping never interferes.</summary>
-    private static IntVector2 Center(PlayField playField)
+    [Fact]
+    public void Hulk_Knockback_IsClampedAtTheWall()
     {
+        var playField = CreateField();
         var b = playField.PlayfieldWall.PlayfieldBounds;
         var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width);
         var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height);
-        return new IntVector2(b.X + b.Width / 2 - width / 2, b.Y + b.Height / 2 - height / 2);
-    }
 
-    private static PlayField CreateField()
-    {
-        var waveParams = new WaveParams(
-            1,
-            HulkCount: 0,
-            SpheroidCount: 0,
-            QuarkCount: 0,
-            ElectrodeCount: 0,
-            MaxEnforcersPerSpheroid: 1,
-            MaxTanksPerQuark: 1,
-            EnemySpeedBonus: 0);
-        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(1).Build();
+        // Top-left corner, pushed outward (up-left): the hulk may sit on the
+        // wall (spec: "pushed back into the WALL") but never leave the field.
+        var hulk = new Hulk(TestEntityParams.Create(new Random(7)), new IntVector2(b.X, b.Y), 2, () => new IntVector2(b.X, b.Y));
+        playField.FieldEntities.Hulks.Add(hulk);
+        playField.SkipWaveStart();
+        playField.Update(new GameTime());
+
+        for (var i = 0; i < 50; i++)
+        {
+            hulk.ApplyKnockback(Direction8.UpLeft);
+            Assert.InRange(hulk.Position.X, b.X, b.Right - width);
+            Assert.InRange(hulk.Position.Y, b.Y, b.Bottom - height);
+        }
+
+        Assert.Equal(new IntVector2(b.X, b.Y), hulk.Position);
     }
 
     [Fact]
@@ -103,28 +105,26 @@ public sealed class HulkKnockbackTests
         }
     }
 
-    [Fact]
-    public void Hulk_Knockback_IsClampedAtTheWall()
+    /// <summary>The field centre — far enough from every wall that clamping never interferes.</summary>
+    private static IntVector2 Center(PlayField playField)
     {
-        var playField = CreateField();
         var b = playField.PlayfieldWall.PlayfieldBounds;
         var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Width);
         var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.HulkCollisionSize.Height);
+        return new IntVector2(b.X + b.Width / 2 - width / 2, b.Y + b.Height / 2 - height / 2);
+    }
 
-        // Top-left corner, pushed outward (up-left): the hulk may sit on the
-        // wall (spec: "pushed back into the WALL") but never leave the field.
-        var hulk = new Hulk(TestEntityParams.Create(new Random(7)), new IntVector2(b.X, b.Y), 2, () => new IntVector2(b.X, b.Y));
-        playField.FieldEntities.Hulks.Add(hulk);
-        playField.SkipWaveStart();
-        playField.Update(new GameTime());
-
-        for (var i = 0; i < 50; i++)
-        {
-            hulk.ApplyKnockback(Direction8.UpLeft);
-            Assert.InRange(hulk.Position.X, b.X, b.Right - width);
-            Assert.InRange(hulk.Position.Y, b.Y, b.Bottom - height);
-        }
-
-        Assert.Equal(new IntVector2(b.X, b.Y), hulk.Position);
+    private static PlayField CreateField()
+    {
+        var waveParams = new WaveParams(
+            1,
+            HulkCount: 0,
+            SpheroidCount: 0,
+            QuarkCount: 0,
+            ElectrodeCount: 0,
+            MaxEnforcersPerSpheroid: 1,
+            MaxTanksPerQuark: 1,
+            EnemySpeedBonus: 0);
+        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(1).Build();
     }
 }

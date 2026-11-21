@@ -1,10 +1,10 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
-using Robotron2084.Entities.Models;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
-using Robotron2084.Level.Models;
+using Robotron2084.Entities.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Level;
@@ -15,6 +15,30 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public sealed class PlayFieldMovementTests
 {
+    [Fact]
+    public void Hulk_PressingTheLeftWall_TurnsAndNeverLeavesPlayfield()
+    {
+        var playField = CreateEmptyField();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
+        // Right up against the left wall, hunting a point that keeps it aimed left.
+        IntVector2 spot = new(bounds.X + 4, bounds.Y + bounds.Height / 2 - 16);
+        var hulk = new Hulk(TestEntityParams.Create(new Random(11)), spot, 5, () => spot);
+        playField.FieldEntities.Hulks.Add(hulk);
+
+        playField.SkipWaveStart();
+        playField.Update(new GameTime());
+
+        var positionBefore = hulk.Position;
+        for (var i = 0; i < 300; i++)
+        {
+            playField.Update(new GameTime());
+            Assert.True(IsFullyInside(hulk.GetBounds(), bounds));
+        }
+
+        Assert.Equal(EntityLifeState.Alive, hulk.LifeState);
+        Assert.NotEqual(positionBefore, hulk.Position);
+    }
+
     [Fact]
     public void Hulk_StaysPutForOneBeatIntervalThenSteps_PortTicksOfHulkSpeed()
     {
@@ -45,36 +69,6 @@ public sealed class PlayFieldMovementTests
         Assert.True(IsFullyInside(hulk.GetBounds(), bounds));
     }
 
-    [Fact]
-    public void Hulk_PressingTheLeftWall_TurnsAndNeverLeavesPlayfield()
-    {
-        var playField = CreateEmptyField();
-        var bounds = playField.PlayfieldWall.PlayfieldBounds;
-        // Right up against the left wall, hunting a point that keeps it aimed left.
-        IntVector2 spot = new(bounds.X + 4, bounds.Y + bounds.Height / 2 - 16);
-        var hulk = new Hulk(TestEntityParams.Create(new Random(11)), spot, 5, () => spot);
-        playField.FieldEntities.Hulks.Add(hulk);
-
-        playField.SkipWaveStart();
-        playField.Update(new GameTime());
-
-        var positionBefore = hulk.Position;
-        for (var i = 0; i < 300; i++)
-        {
-            playField.Update(new GameTime());
-            Assert.True(IsFullyInside(hulk.GetBounds(), bounds));
-        }
-
-        Assert.Equal(EntityLifeState.Alive, hulk.LifeState);
-        Assert.NotEqual(positionBefore, hulk.Position);
-    }
-
-    private static bool IsFullyInside(Rectangle innerBounds, Rectangle outerBounds)
-    {
-        return innerBounds.Left >= outerBounds.Left && innerBounds.Right <= outerBounds.Right && innerBounds.Top >= outerBounds.Top &&
-               innerBounds.Bottom <= outerBounds.Bottom;
-    }
-
     private static PlayField CreateEmptyField()
     {
         var waveParams = new WaveParams(
@@ -88,5 +82,11 @@ public sealed class PlayFieldMovementTests
             EnemySpeedBonus: 0);
 
         return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(99).Build();
+    }
+
+    private static bool IsFullyInside(Rectangle innerBounds, Rectangle outerBounds)
+    {
+        return innerBounds.Left >= outerBounds.Left && innerBounds.Right <= outerBounds.Right && innerBounds.Top >= outerBounds.Top &&
+               innerBounds.Bottom <= outerBounds.Bottom;
     }
 }

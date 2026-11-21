@@ -54,20 +54,6 @@ public sealed class AttractScreenTests
     ];
 
     [Fact]
-    public void TheStartKeysAreLiveOnExactlyTheFourAttractScreens()
-    {
-        var marked = Screens()
-            .Where(typeof(IAttractState).IsAssignableFrom)
-            .Select(screen => screen.Name)
-            .OrderBy(name => name)
-            .ToArray();
-
-        Assert.Equal(
-            AttractScreens.Select(screen => screen.Name).OrderBy(name => name),
-            marked);
-    }
-
-    [Fact]
     public void EveryScreenIsEitherAnAttractScreenOrDeliberatelyNotOne()
     {
         var unexplained = Screens()
@@ -80,6 +66,20 @@ public sealed class AttractScreenTests
             $"new screen(s) {string.Join(", ", unexplained.Select(screen => screen.Name))} — add them to "
             + $"{nameof(AttractScreens)} (they take the attract keys, so they also need IAttractState) or to "
             + $"{nameof(NotAttractScreens)} (they do not)");
+    }
+
+    [Fact]
+    public void TheStartKeysAreLiveOnExactlyTheFourAttractScreens()
+    {
+        var marked = Screens()
+            .Where(typeof(IAttractState).IsAssignableFrom)
+            .Select(screen => screen.Name)
+            .OrderBy(name => name)
+            .ToArray();
+
+        Assert.Equal(
+            AttractScreens.Select(screen => screen.Name).OrderBy(name => name),
+            marked);
     }
 
     /// <summary>Every concrete <see cref="IGameState" /> in the game assembly.</summary>

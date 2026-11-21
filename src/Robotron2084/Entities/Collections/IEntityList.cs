@@ -13,14 +13,14 @@ public interface IEntityList
     /// <summary>Every entity in the list, whatever kind it is.</summary>
     IEnumerable<IEntity> FieldEntities { get; }
 
+    /// <summary>Says whether every entity in the list is dead. An empty list counts as all dead.</summary>
+    /// <returns>True when none is alive or still dying.</returns>
+    bool AreAllDead();
+
     /// <summary>Draws the entities, in the order they are in the list.</summary>
     /// <param name="spriteBatch">What the entities are drawn with.</param>
     /// <param name="playField">The playfield the entities are on.</param>
     void DrawAll(SpriteBatch spriteBatch, PlayField playField);
-
-    /// <summary>Says whether every entity in the list is dead. An empty list counts as all dead.</summary>
-    /// <returns>True when none is alive or still dying.</returns>
-    bool AreAllDead();
 
     /// <summary>Takes the dead entities out of the list.</summary>
     void PruneDead();

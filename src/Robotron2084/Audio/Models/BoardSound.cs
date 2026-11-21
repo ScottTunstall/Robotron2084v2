@@ -5,4 +5,3 @@ namespace Robotron2084.Audio.Models;
 /// <param name="Name">The label the source gives the sound's routine or vector (<c>HBDV</c>, <c>CANNON</c>, ...).</param>
 /// <param name="Description">The words the source puts beside the label or the sound's data, or empty when it has none.</param>
 public sealed record BoardSound(int Number, string Name, string Description);
-

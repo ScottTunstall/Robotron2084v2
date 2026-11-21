@@ -19,6 +19,7 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class WaveClearState : IClosableGameState
 {
+    private readonly GameSession _gameSession;
     private readonly HighScoreStore _highScoreStore;
 
     /// <summary>
@@ -29,7 +30,7 @@ public sealed class WaveClearState : IClosableGameState
     /// </summary>
     private readonly bool _isAttractMode;
 
-    private readonly GameSession _gameSession;
+    private readonly Random _random;
     private readonly TextureSet _textureSet;
 
     /// <summary>
@@ -46,8 +47,6 @@ public sealed class WaveClearState : IClosableGameState
     ///     group of five, and slides the whole window on every pass.
     /// </summary>
     private readonly TunnelPalette _tunnelPalette;
-
-    private readonly Random _random;
 
     private bool _hasAskedForWaveEndSound;
     private bool _paletteStarted;
@@ -80,6 +79,19 @@ public sealed class WaveClearState : IClosableGameState
     ///     wave-end music it asks for obeys ATTRACT MODE SOUND like every other attract sound.
     /// </summary>
     public bool IsAttractMode => _isAttractMode;
+
+    /// <summary>
+    ///     Puts the game palette back the way the next wave wants it — the ROM's per-wave
+    ///     `LOAD_DA51_PALETTE` (notes §86) — and lets the colour processes run again, however the screen is left.
+    /// </summary>
+    public void Close()
+    {
+        if (_textureSet.BlitterDraw.GamePalette is not { } palette) return;
+
+        for (var paletteIndex = 1; paletteIndex <= 15; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
+
+        for (var paletteIndex = FontPaletteIndices.FirstCyclingPaletteIndex; paletteIndex <= 15; paletteIndex++) palette.ResumePaletteIndex(paletteIndex);
+    }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
@@ -141,18 +153,5 @@ public sealed class WaveClearState : IClosableGameState
         }
 
         if (_textureSet.BlitterDraw.GamePalette is { } palette) _tunnelPalette.Apply(palette);
-    }
-
-    /// <summary>
-    ///     Puts the game palette back the way the next wave wants it — the ROM's per-wave
-    ///     `LOAD_DA51_PALETTE` (notes §86) — and lets the colour processes run again, however the screen is left.
-    /// </summary>
-    public void Close()
-    {
-        if (_textureSet.BlitterDraw.GamePalette is not { } palette) return;
-
-        for (var paletteIndex = 1; paletteIndex <= 15; paletteIndex++) palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
-
-        for (var paletteIndex = FontPaletteIndices.FirstCyclingPaletteIndex; paletteIndex <= 15; paletteIndex++) palette.ResumePaletteIndex(paletteIndex);
     }
 }

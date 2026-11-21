@@ -1,31 +1,11 @@
 using Robotron2084.Core.Extensions;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
 using Xunit;
 
 namespace Robotron2084.Tests.Core.Models;
 
 public sealed class Direction8Tests
 {
-    [Fact]
-    public void Opposite_ReturnsAllFourOppositePairs()
-    {
-        Assert.Equal(Direction8.Down, Direction8.Up.GetOpposite());
-        Assert.Equal(Direction8.Up, Direction8.Down.GetOpposite());
-        Assert.Equal(Direction8.Left, Direction8.Right.GetOpposite());
-        Assert.Equal(Direction8.Right, Direction8.Left.GetOpposite());
-        Assert.Equal(Direction8.DownLeft, Direction8.UpRight.GetOpposite());
-        Assert.Equal(Direction8.UpRight, Direction8.DownLeft.GetOpposite());
-        Assert.Equal(Direction8.UpLeft, Direction8.DownRight.GetOpposite());
-        Assert.Equal(Direction8.DownRight, Direction8.UpLeft.GetOpposite());
-    }
-
-    [Fact]
-    public void FromDelta_Zero_ReturnsNull()
-    {
-        Assert.Null(Direction8Extensions.CreateFromDelta(IntVector2.Zero));
-    }
-
     [Theory]
     [InlineData(5, 0, Direction8.Right)]
     [InlineData(0, 5, Direction8.Down)]
@@ -44,6 +24,25 @@ public sealed class Direction8Tests
     public void FromDelta_DiagonalDelta_MapsToDiagonalDirection(int x, int y, Direction8 expected)
     {
         Assert.Equal(expected, Direction8Extensions.CreateFromDelta(new IntVector2(x, y)));
+    }
+
+    [Fact]
+    public void FromDelta_Zero_ReturnsNull()
+    {
+        Assert.Null(Direction8Extensions.CreateFromDelta(IntVector2.Zero));
+    }
+
+    [Fact]
+    public void Opposite_ReturnsAllFourOppositePairs()
+    {
+        Assert.Equal(Direction8.Down, Direction8.Up.GetOpposite());
+        Assert.Equal(Direction8.Up, Direction8.Down.GetOpposite());
+        Assert.Equal(Direction8.Left, Direction8.Right.GetOpposite());
+        Assert.Equal(Direction8.Right, Direction8.Left.GetOpposite());
+        Assert.Equal(Direction8.DownLeft, Direction8.UpRight.GetOpposite());
+        Assert.Equal(Direction8.UpRight, Direction8.DownLeft.GetOpposite());
+        Assert.Equal(Direction8.UpLeft, Direction8.DownRight.GetOpposite());
+        Assert.Equal(Direction8.DownRight, Direction8.UpLeft.GetOpposite());
     }
 
     [Theory]

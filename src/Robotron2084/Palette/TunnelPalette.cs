@@ -53,6 +53,15 @@ public sealed class TunnelPalette
     /// </remarks>
     internal const int FirstPaletteIndex = 1;
 
+    /// <summary>How many palette entries a ramp fills.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRM1.ASM</c> <c>RCS2</c>, <c>CMPY #PCRAM+16</c>.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c>, <c>CMPY #$9810</c>.</description></item>
+    ///     </list>
+    /// </remarks>
+    internal const int PaletteIndexCount = 15;
+
     /// <summary>How many colours the window of fifteen slides along the ramp on each pass.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -65,15 +74,6 @@ public sealed class TunnelPalette
     ///     </list>
     /// </remarks>
     internal const int SlidePerPass = 1;
-
-    /// <summary>How many palette entries a ramp fills.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item><description>Original source: <c>RRM1.ASM</c> <c>RCS2</c>, <c>CMPY #PCRAM+16</c>.</description></item>
-    ///         <item><description>Disassembly: <c>asm/robomame.asm</c>, <c>CMPY #$9810</c>.</description></item>
-    ///     </list>
-    /// </remarks>
-    internal const int PaletteIndexCount = 15;
 
     /// <summary>The entries painted black on each pass, counted from the first entry. They are five entries apart.</summary>
     /// <remarks>

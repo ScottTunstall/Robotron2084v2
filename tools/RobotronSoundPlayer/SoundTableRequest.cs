@@ -1,5 +1,5 @@
-using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
+using Robotron2084.Audio.Models;
 
 namespace RobotronSoundPlayer;
 
@@ -11,9 +11,6 @@ namespace RobotronSoundPlayer;
 /// <param name="sequence">The table.</param>
 internal sealed class SoundTableRequest(string name, SoundSequence sequence) : ISoundRequest
 {
-    /// <summary>The table's name in <see cref="SoundTables" />.</summary>
-    public string Name => name;
-
     /// <summary>The sound numbers the table sends, and its priority.</summary>
     public string Description
     {
@@ -23,6 +20,9 @@ internal sealed class SoundTableRequest(string name, SoundSequence sequence) : I
             return $"sends {string.Join(" ", sends)}, priority ${sequence.Priority:X2}";
         }
     }
+
+    /// <summary>The table's name in <see cref="SoundTables" />.</summary>
+    public string Name => name;
 
     /// <summary>Asks the sequencer for the table, heard in the middle.</summary>
     /// <param name="soundEngine">The sequencer that sends sound numbers to the board.</param>

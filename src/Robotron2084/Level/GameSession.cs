@@ -39,15 +39,6 @@ public sealed class GameSession
     /// </summary>
     public ControlSettings ControlSettings { get; private init; } = ControlSettings.CreateDefaults();
 
-    /// <summary>How many people are playing, and whether two of them play together or take turns.</summary>
-    public GameMode GameMode { get; private init; }
-
-    /// <summary>
-    ///     The Berzerk robot's taunts. They belong to the game, not to a wave, so the talk timer carries from one wave to
-    ///     the next, as Berzerk's carries from room to room.
-    /// </summary>
-    public RobotTaunts RobotTaunts { get; } = RobotTaunts.CreateWithGameSpeech();
-
     /// <summary>The place in <see cref="PlayerSlots" /> of the player whose turn it is.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -56,12 +47,6 @@ public sealed class GameSession
     ///     </list>
     /// </remarks>
     public int CurrentIndex { get; private set; }
-
-    /// <summary>
-    ///     True once the game has said "INTRUDER ALERT INTRUDER ALERT", which it says once at most. A new game starts with it
-    ///     false. Port only, for the <see cref="Level.Models.GameStyle.Extended" /> game.
-    /// </summary>
-    public bool HasSaidIntruderAlert { get; set; }
 
     /// <summary>
     ///     The places in the family list that still held a family member when the last wave or life ended, lowest place
@@ -79,11 +64,20 @@ public sealed class GameSession
     /// </remarks>
     public IReadOnlyList<int> FamilySlotsLeftOver { get; set; } = [];
 
+    /// <summary>How many people are playing, and whether two of them play together or take turns.</summary>
+    public GameMode GameMode { get; private init; }
+
     /// <summary>
     ///     The game adjustment settings the game was started with. They go with the game, as <see cref="ControlSettings" /> do,
     ///     because the screens after a game over need them (notes §131).
     /// </summary>
     public GameSettings GameSettings { get; private init; } = GameSettings.CreateFactoryDefaults();
+
+    /// <summary>
+    ///     True once the game has said "INTRUDER ALERT INTRUDER ALERT", which it says once at most. A new game starts with it
+    ///     false. Port only, for the <see cref="Level.Models.GameStyle.Extended" /> game.
+    /// </summary>
+    public bool HasSaidIntruderAlert { get; set; }
 
     /// <summary>The players, with player 1 first. There are one or two.</summary>
     /// <remarks>
@@ -93,6 +87,12 @@ public sealed class GameSession
     ///     </list>
     /// </remarks>
     public IReadOnlyList<PlayerSlot> PlayerSlots { get; }
+
+    /// <summary>
+    ///     The Berzerk robot's taunts. They belong to the game, not to a wave, so the talk timer carries from one wave to
+    ///     the next, as Berzerk's carries from room to room.
+    /// </summary>
+    public RobotTaunts RobotTaunts { get; } = RobotTaunts.CreateWithGameSpeech();
 
     /// <summary>Starts a new game for one or two players, as the arcade's two start buttons do.</summary>
     /// <param name="playerInputSource">The first player's controls.</param>
@@ -216,7 +216,7 @@ public sealed class GameSession
 
         var otherIndex = (CurrentIndex + 1) % PlayerSlots.Count;
         if (!PlayerSlots[otherIndex]
-                .HasLives()) return false; 
+                .HasLives()) return false;
 
         CurrentIndex = otherIndex;
         return true;

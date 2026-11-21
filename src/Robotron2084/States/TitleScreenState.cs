@@ -3,9 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
-using Robotron2084.Level;
 using Robotron2084.Palette;
-using Robotron2084.Persistence;
 using Robotron2084.States.Models;
 using Robotron2084.Tuning;
 
@@ -43,10 +41,6 @@ namespace Robotron2084.States;
 public sealed class TitleScreenState : IClosableGameState, IAttractState
 {
     private const string CopyrightLine = "COPYRIGHT 1982 WILLIAMS ELECTRONICS INC.";
-    private const int CopyrightRow = 308;
-
-    /// <summary>The prompt that takes the copyright line's place now and then (port only).</summary>
-    private const string MenuPromptLine = "PRESS ENTER FOR GAME MENU";
 
     /// <summary>
     ///     The copyright line's OWN colour. Palette index 2 is the page's own BLUE (`$C0`) — the
@@ -56,6 +50,8 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
     ///     sweeps through it, exactly as it sweeps through the orange above (notes §106).
     /// </summary>
     private const int CopyrightPaletteIndex = 2;
+
+    private const int CopyrightRow = 308;
 
     /// <summary>
     ///     The port's own credit, which sits among these (notes §102.1). The
@@ -81,9 +77,24 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
     private const string DesignedByLine = "ORIGINALLY DESIGNED BY VID KIDZ";
 
     private const int DesignedByRow = 268;
+
     private const string ForWilliamsLine = "FOR WILLIAMS ELECTRONICS INC.";
+
     private const int ForWilliamsRow = 284;
+
+    // Layout of the presentation page (notes §103/§107). It sits inside the border of moving W logos, between
+    // the top row's bottom edge (canvas row 66) and the bottom row's top edge (row 323). The large title letters is drawn at the port's 2x sprite
+    // scale, which is why the large title letters is 58 canvas px tall. The page's TEXT alternates between two
+    // panes, swapping after TitleArcadeTextSeconds and TitlePortTextSeconds: there is no room for both at
+    // once — and that is exactly what lets the arcade's two message lines have an EMPTY ROW between
+    // them (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
+    // an 8-row line grid, i.e. one blank line).
+    private const int LargeTitleLettersRow = 72;
+
     private const int Logo2084Row = 138;
+
+    /// <summary>The prompt that takes the copyright line's place now and then (port only).</summary>
+    private const string MenuPromptLine = "PRESS ENTER FOR GAME MENU";
 
     /// <summary>
     ///     The palette entry the page's text is drawn in: the ROM's text colour operand (notes §106) —
@@ -104,40 +115,28 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
     private const int WelcomeRowOne = 214;
 
     private const int WelcomeRowTwo = 244;
-
-    // Layout of the presentation page (notes §103/§107). It sits inside the border of moving W logos, between
-    // the top row's bottom edge (canvas row 66) and the bottom row's top edge (row 323). The large title letters is drawn at the port's 2x sprite
-    // scale, which is why the large title letters is 58 canvas px tall. The page's TEXT alternates between two
-    // panes, swapping after TitleArcadeTextSeconds and TitlePortTextSeconds: there is no room for both at
-    // once — and that is exactly what lets the arcade's two message lines have an EMPTY ROW between
-    // them (the ROM prints them from cursors `$86` and `$96`, 16 rows apart on
-    // an 8-row line grid, i.e. one blank line).
-    private const int LargeTitleLettersRow = 72;
-
     private readonly TimeSpan _arcadeTextDuration = TimeSpan.FromSeconds(AttractTuning.TitleArcadeTextSeconds);
     private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
+    private readonly GameStateParams _gameStateParams;
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(AttractTuning.TitleIdleSeconds);
-    private readonly IPlayerInputSource _playerInputSource;
-
-    private readonly WilliamsLogoBorder _williamsLogoBorder;
-    private readonly PresentationPagePalette _presentationPagePalette = new();
+    private readonly LargeTitleLetterAppear _largeTitleLetterAppear;
 
     /// <summary>
     ///     The pane the page HOLDS, or null to alternate the two as the attract cycle does (notes §107).
     /// </summary>
     private readonly TitleTextPane? _pinnedPane;
 
-    private readonly TimeSpan _portTextDuration = TimeSpan.FromSeconds(AttractTuning.TitlePortTextSeconds);
-    private readonly GameStateParams _gameStateParams;
-    private readonly TextureSet _textureSet;
-    private readonly LargeTitleLetterAppear _largeTitleLetterAppear;
+    private readonly IPlayerInputSource _playerInputSource;
 
+    private readonly TimeSpan _portTextDuration = TimeSpan.FromSeconds(AttractTuning.TitlePortTextSeconds);
+    private readonly PresentationPagePalette _presentationPagePalette = new();
+    private readonly TextureSet _textureSet;
+    private readonly WilliamsLogoBorder _williamsLogoBorder;
+    private TimeSpan _footerElapsed;
     private TimeSpan _idleElapsed;
 
     /// <summary>True while the ARCADE's text pane is up; it alternates with the port's (notes §107).</summary>
     private bool _isShowingArcadeText = true;
-
-    private TimeSpan _footerElapsed;
 
     /// <summary>True while the prompt, not the copyright line, is on the page's bottom row.</summary>
     private bool _isShowingMenuPrompt;
@@ -174,12 +173,15 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
         if (_textureSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Start(palette);
     }
 
-    /// <summary>Gets which of the two text panes is up now.</summary>
-    internal TitleTextPane GetShownPane()
+    /// <summary>Draws an arcade-small-font line centred on the canvas.</summary>
+    /// <summary>
+    ///     The page's colour set dies with the page (notes §103.3/§106): both ways off this screen
+    ///     stand the ROM's CRTAB values back up over the seven entries the page had taken.
+    /// </summary>
+    /// <summary>Puts the palette entries the page's own colours took over back on the game's usual colours.</summary>
+    public void Close()
     {
-        if (_isShowingArcadeText) return TitleTextPane.Arcade;
-
-        return TitleTextPane.Port;
+        if (_textureSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Stop(palette);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -272,6 +274,24 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
         }
     }
 
+    /// <summary>Gets which of the two text panes is up now.</summary>
+    internal TitleTextPane GetShownPane()
+    {
+        if (_isShowingArcadeText) return TitleTextPane.Arcade;
+
+        return TitleTextPane.Port;
+    }
+
+    /// <summary>Counts the bottom row's time, and swaps the copyright line and the prompt when it is up.</summary>
+    private void AdvanceFooter(GameTime gameTime)
+    {
+        _footerElapsed += gameTime.ElapsedGameTime;
+        if (_footerElapsed < TimeSpan.FromSeconds(AttractTuning.TitleFooterSeconds)) return;
+
+        _footerElapsed = TimeSpan.Zero;
+        _isShowingMenuPrompt = !_isShowingMenuPrompt;
+    }
+
     /// <summary>
     ///     Pane 1 — the arcade's own lines: the operator's welcome message and the credit strings, all
     ///     in the page's text colour (the ROM's `$66` — notes §106) except the copyright, which gets an
@@ -292,14 +312,18 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
         _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, text, GetCentredX(text, true), y, paletteIndex);
     }
 
-    /// <summary>Counts the bottom row's time, and swaps the copyright line and the prompt when it is up.</summary>
-    private void AdvanceFooter(GameTime gameTime)
+    /// <summary>Centres one traced logo horizontally, at the port's 2x sprite scale.</summary>
+    private void DrawCentredLogo(SpriteBatch spriteBatch, Texture2D texture, int y)
     {
-        _footerElapsed += gameTime.ElapsedGameTime;
-        if (_footerElapsed < TimeSpan.FromSeconds(AttractTuning.TitleFooterSeconds)) return;
+        var width = texture.Width * ScreenSize.PortPixelsPerArcadePixel;
+        var height = texture.Height * ScreenSize.PortPixelsPerArcadePixel;
+        var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
+        _textureSet.BlitterDraw.DrawSprite(spriteBatch, texture, bounds, Color.White);
+    }
 
-        _footerElapsed = TimeSpan.Zero;
-        _isShowingMenuPrompt = !_isShowingMenuPrompt;
+    private void DrawCentredSmallText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
+    {
+        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, GetCentredX(text, false), y, paletteIndex);
     }
 
     /// <summary>
@@ -316,20 +340,6 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
         }
 
         DrawCentredSmallText(spriteBatch, CopyrightLine, CopyrightRow, CopyrightPaletteIndex);
-    }
-
-    private void DrawCentredSmallText(SpriteBatch spriteBatch, string text, int y, int paletteIndex)
-    {
-        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, GetCentredX(text, false), y, paletteIndex);
-    }
-
-    /// <summary>Centres one traced logo horizontally, at the port's 2x sprite scale.</summary>
-    private void DrawCentredLogo(SpriteBatch spriteBatch, Texture2D texture, int y)
-    {
-        var width = texture.Width * ScreenSize.PortPixelsPerArcadePixel;
-        var height = texture.Height * ScreenSize.PortPixelsPerArcadePixel;
-        var bounds = new Rectangle((ScreenSize.Width - width) / 2, y, width, height);
-        _textureSet.BlitterDraw.DrawSprite(spriteBatch, texture, bounds, Color.White);
     }
 
     /// <summary>
@@ -356,16 +366,5 @@ public sealed class TitleScreenState : IClosableGameState, IAttractState
 
         var width = ScreenSize.ToPortPixelsFromArcadePixels(textWidth);
         return (ScreenSize.Width - width) / 2;
-    }
-
-    /// <summary>Draws an arcade-small-font line centred on the canvas.</summary>
-    /// <summary>
-    ///     The page's colour set dies with the page (notes §103.3/§106): both ways off this screen
-    ///     stand the ROM's CRTAB values back up over the seven entries the page had taken.
-    /// </summary>
-    /// <summary>Puts the palette entries the page's own colours took over back on the game's usual colours.</summary>
-    public void Close()
-    {
-        if (_textureSet.BlitterDraw.GamePalette is { } palette) _presentationPagePalette.Stop(palette);
     }
 }

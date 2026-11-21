@@ -10,56 +10,13 @@ public sealed class AttractMovieSkipTests
     /// <summary>How many pages the story has: each starts by clearing the text of the one before.</summary>
     private const int PageCount = 7;
 
-    private static AttractMovie CreateMovie()
-    {
-        return new AttractMovie(AttractMovieData.Rom, AttractStoryline.Create(AttractMovieData.Rom.Histo), new Random(3));
-    }
-
     [Fact]
-    public void EachSkip_StartsExactlyTheNextPage()
-    {
-        var attractMovie = CreateMovie();
-        Assert.Equal(0, attractMovie.AttractPageMachine.PagesStarted);
-
-        for (var page = 1; page <= PageCount; page++)
-        {
-            attractMovie.SkipToNextPage();
-
-            Assert.Equal(page, attractMovie.AttractPageMachine.PagesStarted);
-        }
-    }
-
-    [Fact]
-    public void CreateAtPage_StartsExactlyThatPage()
-    {
-        var script = AttractStoryline.Create(AttractMovieData.Rom.Histo);
-
-        for (var page = 1; page <= PageCount; page++)
-            Assert.Equal(page, AttractMovie.CreateAtPage(AttractMovieData.Rom, script, new Random(3), page).AttractPageMachine.PagesStarted);
-    }
-
-    [Fact]
-    public void CreateAtPage_GivesTheSameTextAsSkippingToThatPageStepByStep()
-    {
-        var script = AttractStoryline.Create(AttractMovieData.Rom.Histo);
-        var stepByStep = new AttractMovie(AttractMovieData.Rom, script, new Random(3));
-        for (var page = 1; page <= 4; page++) stepByStep.SkipToNextPage();
-
-        var atPage = AttractMovie.CreateAtPage(AttractMovieData.Rom, script, new Random(3), 4);
-
-        Assert.Equal(stepByStep.AttractPageMachine.TextCells, atPage.AttractPageMachine.TextCells);
-        Assert.Equal(stepByStep.ArcadeFrames, atPage.ArcadeFrames);
-    }
-
-    [Fact]
-    public void SkippingFromTheLastPage_RunsTheMovieToItsEnd()
+    public void ASkip_ThrowsAwayTheExplosionsOfThePagesItPassed()
     {
         var attractMovie = CreateMovie();
         for (var page = 1; page <= PageCount; page++) attractMovie.SkipToNextPage();
 
-        attractMovie.SkipToNextPage();
-
-        Assert.True(attractMovie.IsFinished());
+        Assert.Empty(attractMovie.AttractObjectMachine.DrainExplosions());
     }
 
     [Fact]
@@ -77,11 +34,54 @@ public sealed class AttractMovieSkipTests
     }
 
     [Fact]
-    public void ASkip_ThrowsAwayTheExplosionsOfThePagesItPassed()
+    public void CreateAtPage_GivesTheSameTextAsSkippingToThatPageStepByStep()
+    {
+        var script = AttractStoryline.Create(AttractMovieData.Rom.Histo);
+        var stepByStep = new AttractMovie(AttractMovieData.Rom, script, new Random(3));
+        for (var page = 1; page <= 4; page++) stepByStep.SkipToNextPage();
+
+        var atPage = AttractMovie.CreateAtPage(AttractMovieData.Rom, script, new Random(3), 4);
+
+        Assert.Equal(stepByStep.AttractPageMachine.TextCells, atPage.AttractPageMachine.TextCells);
+        Assert.Equal(stepByStep.ArcadeFrames, atPage.ArcadeFrames);
+    }
+
+    [Fact]
+    public void CreateAtPage_StartsExactlyThatPage()
+    {
+        var script = AttractStoryline.Create(AttractMovieData.Rom.Histo);
+
+        for (var page = 1; page <= PageCount; page++)
+            Assert.Equal(page, AttractMovie.CreateAtPage(AttractMovieData.Rom, script, new Random(3), page).AttractPageMachine.PagesStarted);
+    }
+
+    [Fact]
+    public void EachSkip_StartsExactlyTheNextPage()
+    {
+        var attractMovie = CreateMovie();
+        Assert.Equal(0, attractMovie.AttractPageMachine.PagesStarted);
+
+        for (var page = 1; page <= PageCount; page++)
+        {
+            attractMovie.SkipToNextPage();
+
+            Assert.Equal(page, attractMovie.AttractPageMachine.PagesStarted);
+        }
+    }
+
+    [Fact]
+    public void SkippingFromTheLastPage_RunsTheMovieToItsEnd()
     {
         var attractMovie = CreateMovie();
         for (var page = 1; page <= PageCount; page++) attractMovie.SkipToNextPage();
 
-        Assert.Empty(attractMovie.AttractObjectMachine.DrainExplosions());
+        attractMovie.SkipToNextPage();
+
+        Assert.True(attractMovie.IsFinished());
+    }
+
+    private static AttractMovie CreateMovie()
+    {
+        return new AttractMovie(AttractMovieData.Rom, AttractStoryline.Create(AttractMovieData.Rom.Histo), new Random(3));
     }
 }

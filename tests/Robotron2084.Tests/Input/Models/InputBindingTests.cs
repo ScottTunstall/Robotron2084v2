@@ -1,7 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Robotron2084.Input.Models;
-using Robotron2084.Input;
 using Xunit;
 
 namespace Robotron2084.Tests.Input.Models;
@@ -31,62 +30,6 @@ public sealed class InputBindingTests
         return data;
     }
 
-    [Theory]
-    [MemberData(nameof(Bindings))]
-    public void DisplayName_AndTryParse_AreTheSameLanguage(InputBinding binding, string text)
-    {
-        Assert.Equal(text, binding.GetDisplayName());
-        Assert.True(InputBinding.TryParse(text, out var parsed));
-        Assert.Equal(binding, parsed);
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    [InlineData("-")]
-    [InlineData("NONE")]
-    public void AnEmptyValueIsTheUnboundBinding(string text)
-    {
-        Assert.True(InputBinding.TryParse(text, out var parsed));
-        Assert.Equal(InputBindingKind.None, parsed.Kind);
-    }
-
-    [Fact]
-    public void TheAbbreviatedStyleStillParses()
-    {
-        // A file hand-written before the sticks were spelled out should still load.
-        Assert.True(InputBinding.TryParse("P1-LS-UP", out var stick));
-        Assert.Equal(InputBinding.CreateStick(0, false, 0, -1), stick);
-
-        Assert.True(InputBinding.TryParse("p2-rs-dn-lt", out var diagonal));
-        Assert.Equal(InputBinding.CreateStick(1, true, -1, 1), diagonal);
-    }
-
-    [Theory]
-    [InlineData("NOTAKEY")]
-    [InlineData("P3 A")]
-    [InlineData("P1 LS SIDEWAYS")]
-    [InlineData("P1 NotAButton")]
-    public void GarbageIsRejectedRatherThanGuessed(string text)
-    {
-        Assert.False(InputBinding.TryParse(text, out _));
-    }
-
-    [Fact]
-    public void AStickBindingNeedsADirection()
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() => InputBinding.CreateStick(0, false, 0, 0));
-    }
-
-    [Fact]
-    public void StickDirections_AreStoredScreenSpace()
-    {
-        var down = InputBinding.CreateStick(0, false, 0, 1);
-
-        Assert.Equal(0, down.GetDirectionX());
-        Assert.Equal(1, down.GetDirectionY()); // Y down, like every other coordinate in the port
-    }
-
     [Fact]
     public void AKeyIsHeld_OnlyWhenItsKeyIsDown()
     {
@@ -95,26 +38,6 @@ public sealed class InputBindingTests
 
         Assert.True(binding.IsHeld(new KeyboardState(Keys.W), empty, empty));
         Assert.False(binding.IsHeld(new KeyboardState(Keys.A), empty, empty));
-    }
-
-    [Fact]
-    public void AStickBinding_RespondsToThatStickAndNoOther()
-    {
-        var binding = InputBinding.CreateStick(0, true, 1, 0); // pad 1 right stick, right
-        var pad = TestPads.Pad(new Vector2(0f, 1f), new Vector2(1f, 0f));
-        var empty = new KeyboardState();
-
-        Assert.True(binding.IsHeld(empty, pad, new GamePadState()));
-        Assert.False(binding.IsHeld(empty, new GamePadState(), pad)); // it said pad 1, not pad 2
-    }
-
-    [Fact]
-    public void TheLeftStickBinding_IgnoresTheRightStick()
-    {
-        var binding = InputBinding.CreateStick(0, false, 1, 0);
-        var rightStickOnly = TestPads.Pad(isRightStick: new Vector2(1f, 0f));
-
-        Assert.False(binding.IsHeld(new KeyboardState(), rightStickOnly, new GamePadState()));
     }
 
     [Fact]
@@ -130,5 +53,81 @@ public sealed class InputBindingTests
         Assert.Equal("W", new ActionBinding(InputBinding.CreateKey(Keys.W), InputBinding.None).DisplayName);
         Assert.Equal("P1 LEFT STICK UP", padOnly.DisplayName);
         Assert.Equal("NONE", ActionBinding.None.DisplayName); // not "-": that glyph is not in the small font
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("-")]
+    [InlineData("NONE")]
+    public void AnEmptyValueIsTheUnboundBinding(string text)
+    {
+        Assert.True(InputBinding.TryParse(text, out var parsed));
+        Assert.Equal(InputBindingKind.None, parsed.Kind);
+    }
+
+    [Fact]
+    public void AStickBinding_RespondsToThatStickAndNoOther()
+    {
+        var binding = InputBinding.CreateStick(0, true, 1, 0); // pad 1 right stick, right
+        var pad = TestPads.Pad(new Vector2(0f, 1f), new Vector2(1f, 0f));
+        var empty = new KeyboardState();
+
+        Assert.True(binding.IsHeld(empty, pad, new GamePadState()));
+        Assert.False(binding.IsHeld(empty, new GamePadState(), pad)); // it said pad 1, not pad 2
+    }
+
+    [Fact]
+    public void AStickBindingNeedsADirection()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => InputBinding.CreateStick(0, false, 0, 0));
+    }
+
+    [Theory]
+    [MemberData(nameof(Bindings))]
+    public void DisplayName_AndTryParse_AreTheSameLanguage(InputBinding binding, string text)
+    {
+        Assert.Equal(text, binding.GetDisplayName());
+        Assert.True(InputBinding.TryParse(text, out var parsed));
+        Assert.Equal(binding, parsed);
+    }
+
+    [Theory]
+    [InlineData("NOTAKEY")]
+    [InlineData("P3 A")]
+    [InlineData("P1 LS SIDEWAYS")]
+    [InlineData("P1 NotAButton")]
+    public void GarbageIsRejectedRatherThanGuessed(string text)
+    {
+        Assert.False(InputBinding.TryParse(text, out _));
+    }
+
+    [Fact]
+    public void StickDirections_AreStoredScreenSpace()
+    {
+        var down = InputBinding.CreateStick(0, false, 0, 1);
+
+        Assert.Equal(0, down.GetDirectionX());
+        Assert.Equal(1, down.GetDirectionY()); // Y down, like every other coordinate in the port
+    }
+
+    [Fact]
+    public void TheAbbreviatedStyleStillParses()
+    {
+        // A file hand-written before the sticks were spelled out should still load.
+        Assert.True(InputBinding.TryParse("P1-LS-UP", out var stick));
+        Assert.Equal(InputBinding.CreateStick(0, false, 0, -1), stick);
+
+        Assert.True(InputBinding.TryParse("p2-rs-dn-lt", out var diagonal));
+        Assert.Equal(InputBinding.CreateStick(1, true, -1, 1), diagonal);
+    }
+
+    [Fact]
+    public void TheLeftStickBinding_IgnoresTheRightStick()
+    {
+        var binding = InputBinding.CreateStick(0, false, 1, 0);
+        var rightStickOnly = TestPads.Pad(isRightStick: new Vector2(1f, 0f));
+
+        Assert.False(binding.IsHeld(new KeyboardState(), rightStickOnly, new GamePadState()));
     }
 }

@@ -1,5 +1,5 @@
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Level;
@@ -7,6 +7,14 @@ namespace Robotron2084.Tests.Level;
 /// <summary>The arcade's "BOZO MODE" mercy (RRG23 <c>PLRES</c>, R5 $2B26).</summary>
 public sealed class BozoModeTests
 {
+    [Fact]
+    public void ParametersAreUntouchedWhenTheMercyDoesNotApply()
+    {
+        var waveParams = new WaveParams(3);
+
+        Assert.Same(waveParams, BozoMode.Apply(waveParams, 2));
+    }
+
     [Theory]
     [InlineData(1, 2, false)] // a fresh game: two spare lives, doing fine
     [InlineData(1, 1, true)] // down a life on wave 1
@@ -29,13 +37,5 @@ public sealed class BozoModeTests
         Assert.Equal(96, eased.EnforcerFireDelay);
         Assert.Equal(30, eased.GruntMoveDelay);
         Assert.Equal(15, eased.GruntSpeedFloor);
-    }
-
-    [Fact]
-    public void ParametersAreUntouchedWhenTheMercyDoesNotApply()
-    {
-        var waveParams = new WaveParams(3);
-
-        Assert.Same(waveParams, BozoMode.Apply(waveParams, 2));
     }
 }

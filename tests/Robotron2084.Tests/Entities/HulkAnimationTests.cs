@@ -1,9 +1,9 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Entities;
@@ -20,17 +20,6 @@ namespace Robotron2084.Tests.Entities;
 /// </summary>
 public sealed class HulkAnimationTests
 {
-    /// <summary>Expected frame (0-based index into HulkAnimationFrames = repo hulk N+1) per direction and entry.</summary>
-    private static int ExpectedFrame(Direction8 direction, int entry)
-    {
-        return direction switch
-        {
-            Direction8.Left => new[] { 0, 1, 0, 2 }[entry],
-            Direction8.Right => new[] { 6, 7, 6, 8 }[entry],
-            _ => new[] { 3, 4, 3, 5 }[entry] // Down and Up share the ROM's block
-        };
-    }
-
     [Fact]
     public void Hulk_WalksTheArcadeFrameSequence_AndRestartsOnEveryDirectionChange()
     {
@@ -107,12 +96,6 @@ public sealed class HulkAnimationTests
         }
     }
 
-    private static bool IsFullyInside(Rectangle innerBounds, Rectangle outerBounds)
-    {
-        return innerBounds.Left >= outerBounds.Left && innerBounds.Right <= outerBounds.Right && innerBounds.Top >= outerBounds.Top &&
-               innerBounds.Bottom <= outerBounds.Bottom;
-    }
-
     private static PlayField CreateField()
     {
         var waveParams = new WaveParams(
@@ -125,5 +108,22 @@ public sealed class HulkAnimationTests
             MaxTanksPerQuark: 1,
             EnemySpeedBonus: 0);
         return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(1).Build();
+    }
+
+    /// <summary>Expected frame (0-based index into HulkAnimationFrames = repo hulk N+1) per direction and entry.</summary>
+    private static int ExpectedFrame(Direction8 direction, int entry)
+    {
+        return direction switch
+        {
+            Direction8.Left => new[] { 0, 1, 0, 2 }[entry],
+            Direction8.Right => new[] { 6, 7, 6, 8 }[entry],
+            _ => new[] { 3, 4, 3, 5 }[entry] // Down and Up share the ROM's block
+        };
+    }
+
+    private static bool IsFullyInside(Rectangle innerBounds, Rectangle outerBounds)
+    {
+        return innerBounds.Left >= outerBounds.Left && innerBounds.Right <= outerBounds.Right && innerBounds.Top >= outerBounds.Top &&
+               innerBounds.Bottom <= outerBounds.Bottom;
     }
 }

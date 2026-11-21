@@ -1,12 +1,12 @@
 using Microsoft.Xna.Framework;
+using Robotron2084.Core;
 using Robotron2084.Core.Extensions;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
 using Robotron2084.Entities;
-using Robotron2084.Input.Models;
 using Robotron2084.Input;
-using Robotron2084.Level.Models;
+using Robotron2084.Input.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -22,9 +22,111 @@ namespace Robotron2084.Tests.Entities;
 /// </summary>
 public sealed class PlayerAnimationAndAimTests
 {
-    private static PlayField CreateField(IPlayerInputSource playerInputSource)
+    [Fact]
+    public void Animation_FollowsMovementOnly_AimNeverChangesFacing_OrFreezesWhenIdle()
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithInput(playerInputSource).WithSeed(1).Build();
+        var playerInputSource = new PhaseInput { State = new PlayerInputState(new IntVector2(-1, 0), false) };
+        var playField = CreateField(playerInputSource);
+        playField.SkipWaveStart();
+
+        for (var tick = 0; tick < 4; tick++) playField.Update(new GameTime());
+
+        Assert.Equal(1, playField.Player.GetWalkAnimationFrameIndex()); // left walk, frame 2 (index 1)
+
+        // Round 8: aim UP while still moving left — the facing and the walk
+        // animation must stay LEFT (the old behaviour switched the sprite to
+        // the UP group; the playtest called that out).
+        playerInputSource.State = new PlayerInputState(new IntVector2(-1, 0), new IntVector2(0, -1), false);
+        playField.Update(new GameTime());
+
+        Assert.Equal(Direction8.Left, playField.Player.FacingDirection);
+        Assert.InRange(playField.Player.GetWalkAnimationFrameIndex(), 0, 2); // still the left walk group
+
+        // Idle: the animation freezes on the current frame (R5 $2FFE early-out).
+        playerInputSource.State = default;
+        var frozen = playField.Player.GetWalkAnimationFrameIndex();
+        for (var tick = 0; tick < 12; tick++)
+        {
+            playField.Update(new GameTime());
+            Assert.True(playField.Player.GetWalkAnimationFrameIndex() == frozen, $"idle tick {tick + 1} changed the frame");
+        }
+    }
+
+    /// <summary>
+    ///     ROM LTAB muzzle offsets (RRG23; notes 2026-09-12 (19) + 2026-09-13 (21)):
+    ///     the laser box top-left spawns at the player box top-left plus the
+    ///     per-direction offset (arcade pixels), then moves one LaserSpeed step in the
+    ///     same field update it is fired (Player updates before PlayerLasers).
+    /// </summary>
+    [Theory]
+    [InlineData(Direction8.Up, 2, -1)]
+    [InlineData(Direction8.Down, 2, 4)]
+    [InlineData(Direction8.Left, 0, 4)]
+    [InlineData(Direction8.Right, 2, 4)]
+    [InlineData(Direction8.UpLeft, 0, 0)]
+    [InlineData(Direction8.DownLeft, 0, 8)]
+    [InlineData(Direction8.UpRight, 2, 0)]
+    [InlineData(Direction8.DownRight, 2, 12)]
+    public void Fire_LaserSpawnsAtTheArcadeLtabMuzzleOffset(Direction8 direction, int offsetXSpec, int offsetYSpec)
+    {
+        var playField = CreateField(
+            new FakeInputSource(new PlayerInputState(IntVector2.Zero, direction.ToIntVector(), true)));
+        playField.SkipWaveStart();
+        var start = playField.Player.Position;
+        playField.Update(new GameTime());
+
+        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
+        Assert.Equal(direction, laser.Direction);
+        IntVector2 muzzle = new(start.X + ScreenSize.ToPortPixelsFromArcadePixels(offsetXSpec),
+            start.Y + ScreenSize.ToPortPixelsFromArcadePixels(offsetYSpec));
+        Assert.Equal(muzzle + direction.ToIntVector() * PlayerTuning.LaserSpeed, laser.Position);
+    }
+
+    [Fact]
+    public void Fire_UsesTheAimDirection_WhileMoving_OtherWay()
+    {
+        // Round 8 contract in one shot: moving LEFT, aiming RIGHT, firing —
+        // the laser goes RIGHT, the facing (and thus the walk animation)
+        // stays LEFT.
+        var playerInputSource = new PhaseInput { State = new PlayerInputState(new IntVector2(-1, 0), new IntVector2(1, 0), true) };
+        var playField = CreateField(playerInputSource);
+        playField.SkipWaveStart();
+
+        playField.Update(new GameTime());
+
+        Assert.Equal(Direction8.Left, playField.Player.FacingDirection);
+        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
+        Assert.Equal(Direction8.Right, laser.Direction);
+    }
+
+    [Fact]
+    public void Fire_WithAim_FollowsTheIJKLStick_WithoutMoving()
+    {
+        // No movement, aim right, fire: the laser must go RIGHT. Round 8:
+        // the aim must NOT change the facing or the walk animation — the
+        // sprite keeps its initial DOWN facing ("IJKL will shoot in the
+        // required direction ... the shooting direction should not specify
+        // the walking animation").
+        var playField = CreateField(new FakeInputSource(new PlayerInputState(IntVector2.Zero, new IntVector2(1, 0), true)));
+        playField.SkipWaveStart();
+        playField.Update(new GameTime());
+
+        Assert.Equal(Direction8.Up, playField.Player.FacingDirection); // the initial facing, untouched
+        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
+        Assert.Equal(Direction8.Right, laser.Direction);
+        Assert.Equal(6, playField.Player.GetWalkAnimationFrameIndex()); // idle frame, untouched
+    }
+
+    [Fact]
+    public void Fire_WithoutAim_UsesTheMovementFacing()
+    {
+        var playField = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(1, 1), IntVector2.Zero, true)));
+        playField.SkipWaveStart();
+        playField.Update(new GameTime());
+
+        Assert.Equal(Direction8.DownRight, playField.Player.FacingDirection);
+        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
+        Assert.Equal(Direction8.DownRight, laser.Direction);
     }
 
     [Fact]
@@ -58,111 +160,9 @@ public sealed class PlayerAnimationAndAimTests
         Assert.Equal(1 + 1 + (arcadeFrames - 1) / Player.WalkAnimationIntervalArcadeFrames, runs.Count);
     }
 
-    [Fact]
-    public void Fire_WithoutAim_UsesTheMovementFacing()
+    private static PlayField CreateField(IPlayerInputSource playerInputSource)
     {
-        var playField = CreateField(new FakeInputSource(new PlayerInputState(new IntVector2(1, 1), IntVector2.Zero, true)));
-        playField.SkipWaveStart();
-        playField.Update(new GameTime());
-
-        Assert.Equal(Direction8.DownRight, playField.Player.FacingDirection);
-        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
-        Assert.Equal(Direction8.DownRight, laser.Direction);
-    }
-
-    [Fact]
-    public void Fire_WithAim_FollowsTheIJKLStick_WithoutMoving()
-    {
-        // No movement, aim right, fire: the laser must go RIGHT. Round 8:
-        // the aim must NOT change the facing or the walk animation — the
-        // sprite keeps its initial DOWN facing ("IJKL will shoot in the
-        // required direction ... the shooting direction should not specify
-        // the walking animation").
-        var playField = CreateField(new FakeInputSource(new PlayerInputState(IntVector2.Zero, new IntVector2(1, 0), true)));
-        playField.SkipWaveStart();
-        playField.Update(new GameTime());
-
-        Assert.Equal(Direction8.Up, playField.Player.FacingDirection); // the initial facing, untouched
-        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
-        Assert.Equal(Direction8.Right, laser.Direction);
-        Assert.Equal(6, playField.Player.GetWalkAnimationFrameIndex()); // idle frame, untouched
-    }
-
-    [Fact]
-    public void Animation_FollowsMovementOnly_AimNeverChangesFacing_OrFreezesWhenIdle()
-    {
-        var playerInputSource = new PhaseInput { State = new PlayerInputState(new IntVector2(-1, 0), false) };
-        var playField = CreateField(playerInputSource);
-        playField.SkipWaveStart();
-
-        for (var tick = 0; tick < 4; tick++) playField.Update(new GameTime());
-
-        Assert.Equal(1, playField.Player.GetWalkAnimationFrameIndex()); // left walk, frame 2 (index 1)
-
-        // Round 8: aim UP while still moving left — the facing and the walk
-        // animation must stay LEFT (the old behaviour switched the sprite to
-        // the UP group; the playtest called that out).
-        playerInputSource.State = new PlayerInputState(new IntVector2(-1, 0), new IntVector2(0, -1), false);
-        playField.Update(new GameTime());
-
-        Assert.Equal(Direction8.Left, playField.Player.FacingDirection);
-        Assert.InRange(playField.Player.GetWalkAnimationFrameIndex(), 0, 2); // still the left walk group
-
-        // Idle: the animation freezes on the current frame (R5 $2FFE early-out).
-        playerInputSource.State = default;
-        var frozen = playField.Player.GetWalkAnimationFrameIndex();
-        for (var tick = 0; tick < 12; tick++)
-        {
-            playField.Update(new GameTime());
-            Assert.True(playField.Player.GetWalkAnimationFrameIndex() == frozen, $"idle tick {tick + 1} changed the frame");
-        }
-    }
-
-    [Fact]
-    public void Fire_UsesTheAimDirection_WhileMoving_OtherWay()
-    {
-        // Round 8 contract in one shot: moving LEFT, aiming RIGHT, firing —
-        // the laser goes RIGHT, the facing (and thus the walk animation)
-        // stays LEFT.
-        var playerInputSource = new PhaseInput { State = new PlayerInputState(new IntVector2(-1, 0), new IntVector2(1, 0), true) };
-        var playField = CreateField(playerInputSource);
-        playField.SkipWaveStart();
-
-        playField.Update(new GameTime());
-
-        Assert.Equal(Direction8.Left, playField.Player.FacingDirection);
-        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
-        Assert.Equal(Direction8.Right, laser.Direction);
-    }
-
-    /// <summary>
-    ///     ROM LTAB muzzle offsets (RRG23; notes 2026-09-12 (19) + 2026-09-13 (21)):
-    ///     the laser box top-left spawns at the player box top-left plus the
-    ///     per-direction offset (arcade pixels), then moves one LaserSpeed step in the
-    ///     same field update it is fired (Player updates before PlayerLasers).
-    /// </summary>
-    [Theory]
-    [InlineData(Direction8.Up, 2, -1)]
-    [InlineData(Direction8.Down, 2, 4)]
-    [InlineData(Direction8.Left, 0, 4)]
-    [InlineData(Direction8.Right, 2, 4)]
-    [InlineData(Direction8.UpLeft, 0, 0)]
-    [InlineData(Direction8.DownLeft, 0, 8)]
-    [InlineData(Direction8.UpRight, 2, 0)]
-    [InlineData(Direction8.DownRight, 2, 12)]
-    public void Fire_LaserSpawnsAtTheArcadeLtabMuzzleOffset(Direction8 direction, int offsetXSpec, int offsetYSpec)
-    {
-        var playField = CreateField(
-            new FakeInputSource(new PlayerInputState(IntVector2.Zero, direction.ToIntVector(), true)));
-        playField.SkipWaveStart();
-        var start = playField.Player.Position;
-        playField.Update(new GameTime());
-
-        var laser = Assert.Single(playField.PlayerLaserSlots.GetActiveLasers());
-        Assert.Equal(direction, laser.Direction);
-        IntVector2 muzzle = new(start.X + ScreenSize.ToPortPixelsFromArcadePixels(offsetXSpec),
-            start.Y + ScreenSize.ToPortPixelsFromArcadePixels(offsetYSpec));
-        Assert.Equal(muzzle + direction.ToIntVector() * PlayerTuning.LaserSpeed, laser.Position);
+        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithInput(playerInputSource).WithSeed(1).Build();
     }
 
     private sealed class PhaseInput : IPlayerInputSource

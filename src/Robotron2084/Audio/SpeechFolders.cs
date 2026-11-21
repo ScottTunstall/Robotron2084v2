@@ -4,11 +4,11 @@ namespace Robotron2084.Audio;
 /// <remarks>Port only: the arcade has no speech sound chip.</remarks>
 public static class SpeechFolders
 {
-    /// <summary>The folder of Gorf's speech lines.</summary>
-    public const string Gorf = "GORF";
-
     /// <summary>The folder of the Berzerk robot's speech lines: one word in each file.</summary>
     public const string Berzerk = "Berzerk";
+
+    /// <summary>The folder of Gorf's speech lines.</summary>
+    public const string Gorf = "GORF";
 
     /// <summary>Gets the names of the speech lines in a folder, in the order of <see cref="SpeechLinePaths" />.</summary>
     /// <param name="folder">The folder under <c>Content/Speech/</c>.</param>

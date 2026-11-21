@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Reflection;
-using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
+using Robotron2084.Audio.Models;
 
 namespace RobotronSoundPlayer;
 
@@ -47,17 +47,6 @@ internal sealed class SoundCatalog
         return isPlace && place >= 1 && place <= GameSounds.Count ? GameSounds[place - 1] : null;
     }
 
-    /// <summary>Reads every table in <see cref="SoundTables" />, in name order, then the eight coin tables (Coin1 to Coin8).</summary>
-    private static IEnumerable<ISoundRequest> ReadSoundTables()
-    {
-        return typeof(SoundTables)
-            .GetFields(BindingFlags.Public | BindingFlags.Static)
-            .Where(playField => playField.FieldType == typeof(SoundSequence))
-            .OrderBy(playField => playField.Name, StringComparer.Ordinal)
-            .Select(playField => new SoundTableRequest(playField.Name, (SoundSequence)playField.GetValue(null)!))
-            .Concat(SoundTables.Coin.Select((table, index) => new SoundTableRequest($"Coin{index + 1}", table)));
-    }
-
     /// <summary>Reads a sound number written as <c>$0E</c>, <c>0x0E</c> or <c>#14</c>.</summary>
     /// <param name="text">The text.</param>
     /// <returns>The sound number, or null when the text is not one or it is out of range.</returns>
@@ -80,5 +69,16 @@ internal sealed class SoundCatalog
 
         var isNumber = int.TryParse(text.AsSpan(prefix.Length), style, CultureInfo.InvariantCulture, out var value);
         return isNumber ? value : null;
+    }
+
+    /// <summary>Reads every table in <see cref="SoundTables" />, in name order, then the eight coin tables (Coin1 to Coin8).</summary>
+    private static IEnumerable<ISoundRequest> ReadSoundTables()
+    {
+        return typeof(SoundTables)
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(playField => playField.FieldType == typeof(SoundSequence))
+            .OrderBy(playField => playField.Name, StringComparer.Ordinal)
+            .Select(playField => new SoundTableRequest(playField.Name, (SoundSequence)playField.GetValue(null)!))
+            .Concat(SoundTables.Coin.Select((table, index) => new SoundTableRequest($"Coin{index + 1}", table)));
     }
 }

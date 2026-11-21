@@ -1,4 +1,3 @@
-using Robotron2084.Level;
 using Robotron2084.Persistence;
 using Robotron2084.Score;
 using Xunit;
@@ -9,14 +8,18 @@ namespace Robotron2084.Tests.Score;
 public sealed class ScoreBoardTests
 {
     [Fact]
-    public void TheFactoryThresholdAwardsALifeAt25000Points()
+    public void ASpareLifeIsGivenOnceAcrossTwoFieldsThatShareTheBoard()
     {
-        var scoreBoard = new ScoreBoard(0);
+        // A player's board lives through every field they play on, so the life at 20,000 comes once however the
+        // points are split between the fields.
+        var scoreBoard = new ScoreBoard(0, 20_000);
+        var firstField = new PlayFieldBuilder().WithScoreBoard(scoreBoard).Build();
+        var secondField = new PlayFieldBuilder().WithScoreBoard(scoreBoard).Build();
 
-        Assert.False(scoreBoard.Add(24_999));
-        Assert.True(scoreBoard.Add(1));
-        Assert.False(scoreBoard.Add(24_999));
-        Assert.True(scoreBoard.Add(1));
+        Assert.False(firstField.ScoreBoard.Add(15_000));
+        Assert.True(secondField.ScoreBoard.Add(5_000));
+        Assert.False(secondField.ScoreBoard.Add(5_000));
+        Assert.Same(scoreBoard, secondField.ScoreBoard);
     }
 
     [Fact]
@@ -34,20 +37,6 @@ public sealed class ScoreBoardTests
         var scoreBoard = new ScoreBoard(0, 0);
 
         Assert.False(scoreBoard.Add(500_000));
-    }
-
-    [Fact]
-    public void TheArcadesOwnStopsScaleTheThreshold()
-    {
-        Assert.True(new ScoreBoard(0, 20_000).Add(20_000));
-        Assert.True(new ScoreBoard(0, 30_000).Add(30_000));
-        Assert.True(new ScoreBoard(0, 50_000).Add(50_000));
-    }
-
-    [Fact]
-    public void TheFactoryExtraLifeValueIsTheArcardsRecommendedStop()
-    {
-        Assert.Equal(25_000, GameSettings.FactoryExtraLifeEveryPoints);
     }
 
     [Fact]
@@ -69,17 +58,27 @@ public sealed class ScoreBoardTests
     }
 
     [Fact]
-    public void ASpareLifeIsGivenOnceAcrossTwoFieldsThatShareTheBoard()
+    public void TheArcadesOwnStopsScaleTheThreshold()
     {
-        // A player's board lives through every field they play on, so the life at 20,000 comes once however the
-        // points are split between the fields.
-        var scoreBoard = new ScoreBoard(0, 20_000);
-        var firstField = new PlayFieldBuilder().WithScoreBoard(scoreBoard).Build();
-        var secondField = new PlayFieldBuilder().WithScoreBoard(scoreBoard).Build();
+        Assert.True(new ScoreBoard(0, 20_000).Add(20_000));
+        Assert.True(new ScoreBoard(0, 30_000).Add(30_000));
+        Assert.True(new ScoreBoard(0, 50_000).Add(50_000));
+    }
 
-        Assert.False(firstField.ScoreBoard.Add(15_000));
-        Assert.True(secondField.ScoreBoard.Add(5_000));
-        Assert.False(secondField.ScoreBoard.Add(5_000));
-        Assert.Same(scoreBoard, secondField.ScoreBoard);
+    [Fact]
+    public void TheFactoryExtraLifeValueIsTheArcardsRecommendedStop()
+    {
+        Assert.Equal(25_000, GameSettings.FactoryExtraLifeEveryPoints);
+    }
+
+    [Fact]
+    public void TheFactoryThresholdAwardsALifeAt25000Points()
+    {
+        var scoreBoard = new ScoreBoard(0);
+
+        Assert.False(scoreBoard.Add(24_999));
+        Assert.True(scoreBoard.Add(1));
+        Assert.False(scoreBoard.Add(24_999));
+        Assert.True(scoreBoard.Add(1));
     }
 }

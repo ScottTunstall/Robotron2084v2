@@ -7,11 +7,11 @@ namespace RobotronSoundPlayer;
 /// <summary>Plays a sound through the computer's speakers with MonoGame, until it ends or a key is pressed.</summary>
 internal static class SpeakerOutput
 {
-    /// <summary>Port ticks of sound kept queued, so the speakers never run dry.</summary>
-    private const int QueuedTicks = 4;
-
     /// <summary>How long to wait between topping the queue up, in milliseconds.</summary>
     private const int PollMilliseconds = 5;
+
+    /// <summary>Port ticks of sound kept queued, so the speakers never run dry.</summary>
+    private const int QueuedTicks = 4;
 
     /// <summary>Plays a sound until its length says to stop, or until a key is pressed.</summary>
     /// <param name="soundSource">Makes the sound.</param>

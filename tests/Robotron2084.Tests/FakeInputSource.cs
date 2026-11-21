@@ -1,5 +1,6 @@
-using Robotron2084.Input.Models;
 using Robotron2084.Input;
+
+using Robotron2084.Input.Models;
 
 namespace Robotron2084.Tests;
 

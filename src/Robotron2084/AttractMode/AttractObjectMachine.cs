@@ -1,5 +1,4 @@
 using Robotron2084.AttractMode.Models;
-using Robotron2084.Entities;
 
 namespace Robotron2084.AttractMode;
 
@@ -65,8 +64,8 @@ public sealed class AttractObjectMachine
     private const int PlayfieldMinColumn = 7;
 
     private readonly List<MovieExplosion> _movieExplosions = [];
-    private readonly List<MovieObject> _objects = [];
     private readonly List<MovieProcess> _movieProcesses = [];
+    private readonly List<MovieObject> _objects = [];
     private readonly Random _random;
     private readonly byte[] _scriptBytes;
 
@@ -128,20 +127,6 @@ public sealed class AttractObjectMachine
         _movieProcesses.Add(movieProcess);
     }
 
-    /// <summary>Adds an explosion to those waiting to be taken by the caller.</summary>
-    /// <param name="movieExplosion">The explosion to add.</param>
-    internal void AddExplosion(MovieExplosion movieExplosion)
-    {
-        _movieExplosions.Add(movieExplosion);
-    }
-
-    /// <summary>Adds a process to those that run on each step.</summary>
-    /// <param name="movieProcess">The process to add.</param>
-    internal void AddProcess(MovieProcess movieProcess)
-    {
-        _movieProcesses.Add(movieProcess);
-    }
-
     /// <summary>Runs one fiftieth of a second: move what moves, then advance every process.</summary>
     public void StepFrame()
     {
@@ -157,6 +142,16 @@ public sealed class AttractObjectMachine
 
         _objects.RemoveAll(movieObject => movieObject.IsDead || (movieObject.IsLaser && movieObject.LaserArcadeFramesLeft <= 0));
         _movieProcesses.RemoveAll(p => !p.IsAlive);
+    }
+
+    /// <summary>MONOP: hide the object, then every third frame move it in whole columns and box it.</summary>
+    internal static void BeginMono(MovieObject movieObject, int boxPaletteIndex, int imagePaletteIndex, bool isBrainVisible)
+    {
+        movieObject.IsOnList = false;
+        movieObject.IsMonoActive = true;
+        movieObject.MonoBoxPaletteIndex = boxPaletteIndex;
+        movieObject.MonoSilhouettePaletteIndex = imagePaletteIndex;
+        movieObject.BrainVisible = isBrainVisible;
     }
 
     /// <summary>Moves a laser bolt along, but never through a wall.</summary>
@@ -178,36 +173,23 @@ public sealed class AttractObjectMachine
             laserMovieObject.XSubpixels = next;
     }
 
-    /// <summary>MONOP: hide the object, then every third frame move it in whole columns and box it.</summary>
-    internal static void BeginMono(MovieObject movieObject, int boxPaletteIndex, int imagePaletteIndex, bool isBrainVisible)
+    /// <summary>Adds an explosion to those waiting to be taken by the caller.</summary>
+    /// <param name="movieExplosion">The explosion to add.</param>
+    internal void AddExplosion(MovieExplosion movieExplosion)
     {
-        movieObject.IsOnList = false;
-        movieObject.IsMonoActive = true;
-        movieObject.MonoBoxPaletteIndex = boxPaletteIndex;
-        movieObject.MonoSilhouettePaletteIndex = imagePaletteIndex;
-        movieObject.BrainVisible = isBrainVisible;
+        _movieExplosions.Add(movieExplosion);
     }
 
-    /// <summary>Integrates every live object's velocity for one frame; laser bolts stop at the walls and age.</summary>
-    private void MoveObjects()
+    /// <summary>Adds a process to those that run on each step.</summary>
+    /// <param name="movieProcess">The process to add.</param>
+    internal void AddProcess(MovieProcess movieProcess)
     {
-        foreach (var movieObject in _objects)
-        {
-            if (movieObject.IsDead) continue;
+        _movieProcesses.Add(movieProcess);
+    }
 
-            if (movieObject.IsLaser)
-            {
-                MoveLaserWithinTheWalls(movieObject);
-                movieObject.LaserArcadeFramesLeft--;
-                continue;
-            }
-
-            if (movieObject.IsOnList && !movieObject.IsMonoActive)
-            {
-                movieObject.XSubpixels += movieObject.XVelocitySubpixels;
-                movieObject.YSubpixels += movieObject.YVelocitySubpixels;
-            }
-        }
+    internal int GetRandomBelow(int exclusive)
+    {
+        return _random.Next(exclusive);
     }
 
     internal byte Read(MovieProcess movieProcess)
@@ -223,11 +205,6 @@ public sealed class AttractObjectMachine
     internal int ReadWord(MovieProcess movieProcess)
     {
         return (Read(movieProcess) << 8) | Read(movieProcess);
-    }
-
-    internal int GetRandomBelow(int exclusive)
-    {
-        return _random.Next(exclusive);
     }
 
     /// <summary>Fires a laser bolt from a character, to the left or to the right.</summary>
@@ -259,5 +236,27 @@ public sealed class AttractObjectMachine
             LaserArcadeFramesLeft = lifetime,
             XVelocitySubpixels = xVelocitySubpixels
         });
+    }
+
+    /// <summary>Integrates every live object's velocity for one frame; laser bolts stop at the walls and age.</summary>
+    private void MoveObjects()
+    {
+        foreach (var movieObject in _objects)
+        {
+            if (movieObject.IsDead) continue;
+
+            if (movieObject.IsLaser)
+            {
+                MoveLaserWithinTheWalls(movieObject);
+                movieObject.LaserArcadeFramesLeft--;
+                continue;
+            }
+
+            if (movieObject.IsOnList && !movieObject.IsMonoActive)
+            {
+                movieObject.XSubpixels += movieObject.XVelocitySubpixels;
+                movieObject.YSubpixels += movieObject.YVelocitySubpixels;
+            }
+        }
     }
 }

@@ -22,8 +22,11 @@ namespace Robotron2084.AttractMode;
 /// </remarks>
 public sealed class AttractMovie
 {
+    /// <summary>The most arcade frames <see cref="SkipToNextPage" /> will run, so a script that never reaches a page cannot hang the game.</summary>
+    public const int SkipFrameLimit = 20_000;
+
     private int
-        _clockUnits =
+            _clockUnits =
             ArcadeClock.UnitsPerArcadeFrame; // seeded so the first tick runs a frame, as the ROM's first cycle does
 
     /// <summary>Makes a movie that starts at the beginning of the story.</summary>
@@ -36,9 +39,6 @@ public sealed class AttractMovie
         AttractPageMachine = new AttractPageMachine(movieData, script, AttractObjectMachine, random);
     }
 
-    /// <summary>The most arcade frames <see cref="SkipToNextPage" /> will run, so a script that never reaches a page cannot hang the game.</summary>
-    public const int SkipFrameLimit = 20_000;
-
     /// <summary>Movie time played so far, in fiftieths of a second (a test hook).</summary>
     public int ArcadeFrames { get; private set; }
 
@@ -47,12 +47,6 @@ public sealed class AttractMovie
 
     /// <summary>The text/action interpreter that drives them.</summary>
     public AttractPageMachine AttractPageMachine { get; }
-
-    /// <summary>The script reached DONE / DONE2.</summary>
-    public bool IsFinished()
-    {
-        return AttractPageMachine.IsFinished;
-    }
 
     /// <summary>Makes a movie that has run on to the start of a page of the story.</summary>
     /// <param name="movieData">The ROM's movie data.</param>
@@ -68,14 +62,10 @@ public sealed class AttractMovie
         return attractMovie;
     }
 
-    /// <summary>Advances the movie by one port tick (0 or 1 fiftieths of a second of work).</summary>
-    public void Update(GameTime gameTime)
+    /// <summary>The script reached DONE / DONE2.</summary>
+    public bool IsFinished()
     {
-        _clockUnits += ArcadeClock.UnitsPerPortTick;
-        if (_clockUnits < ArcadeClock.UnitsPerArcadeFrame) return;
-
-        _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
-        RunArcadeFrame();
+        return AttractPageMachine.IsFinished;
     }
 
     /// <summary>
@@ -106,6 +96,16 @@ public sealed class AttractMovie
         }
 
         AttractObjectMachine.DrainExplosions();
+    }
+
+    /// <summary>Advances the movie by one port tick (0 or 1 fiftieths of a second of work).</summary>
+    public void Update(GameTime gameTime)
+    {
+        _clockUnits += ArcadeClock.UnitsPerPortTick;
+        if (_clockUnits < ArcadeClock.UnitsPerArcadeFrame) return;
+
+        _clockUnits -= ArcadeClock.UnitsPerArcadeFrame;
+        RunArcadeFrame();
     }
 
     /// <summary>Runs one 50th of a second of the movie.</summary>

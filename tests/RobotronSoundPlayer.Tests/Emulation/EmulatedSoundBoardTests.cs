@@ -10,13 +10,9 @@ namespace RobotronSoundPlayer.Tests.Emulation;
 public class EmulatedSoundBoardTests
 {
     [Fact]
-    public void TheBoardStartsSilent_UntilItIsSentASoundNumber()
+    public void ARomOfTheWrongSize_IsRefused()
     {
-        var emulatedSoundBoard = new EmulatedSoundBoard(EchoRom());
-
-        RunInstructions(emulatedSoundBoard, 100);
-
-        Assert.Equal(0, emulatedSoundBoard.OutputLevel);
+        Assert.Throws<ArgumentException>(() => new EmulatedSoundBoard(new byte[100]));
     }
 
     [Fact]
@@ -47,14 +43,13 @@ public class EmulatedSoundBoardTests
     }
 
     [Fact]
-    public void ARomOfTheWrongSize_IsRefused()
+    public void TheBoardStartsSilent_UntilItIsSentASoundNumber()
     {
-        Assert.Throws<ArgumentException>(() => new EmulatedSoundBoard(new byte[100]));
-    }
+        var emulatedSoundBoard = new EmulatedSoundBoard(EchoRom());
 
-    private static void RunInstructions(EmulatedSoundBoard emulatedSoundBoard, int count)
-    {
-        for (var i = 0; i < count; i++) emulatedSoundBoard.Run(1);
+        RunInstructions(emulatedSoundBoard, 100);
+
+        Assert.Equal(0, emulatedSoundBoard.OutputLevel);
     }
 
     /// <summary>
@@ -95,5 +90,10 @@ public class EmulatedSoundBoardTests
         rom[0xFFE] = 0xF0; // reset vector: $F000
         rom[0xFFF] = 0x00;
         return rom;
+    }
+
+    private static void RunInstructions(EmulatedSoundBoard emulatedSoundBoard, int count)
+    {
+        for (var i = 0; i < count; i++) emulatedSoundBoard.Run(1);
     }
 }

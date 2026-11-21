@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -38,6 +38,8 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
 
+    private readonly IGameEvents _gameEvents;
+
     // How long the spark lasts.
     private readonly int _lifeArcadeFrames;
 
@@ -47,7 +49,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
-    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     // Which flicker animation frame is showing.

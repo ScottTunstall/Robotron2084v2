@@ -1,9 +1,9 @@
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
 using Robotron2084.Graphics;
-using Robotron2084.States.SpriteTest.Models;
 using Robotron2084.States.SpriteTest;
+using Robotron2084.States.SpriteTest.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -14,37 +14,25 @@ public sealed class SpriteTestEntriesTests
 {
     private static readonly IReadOnlyList<SpriteTestEntry> Entries = SpriteTestEntries.Create(TestTextures.SharedTextureSet);
 
+    [Fact]
+    public void AFamilyMemberHasADifferentWalkForEachOfTheEightWays()
+    {
+        var mommy = GetEntry("MOMMY");
+
+        Assert.Equal(8, Enum.GetValues<Direction8>().Select(direction => mommy.GetCycle(direction)).Distinct().Count());
+    }
+
     [Theory]
-    [InlineData("PLAYER 1")]
-    [InlineData("MOMMY")]
-    [InlineData("DADDY")]
-    [InlineData("MIKEY")]
-    [InlineData("GRUNT")]
-    [InlineData("HULK")]
-    [InlineData("BRAIN")]
-    [InlineData("SPHEROID")]
-    [InlineData("ENFORCER")]
-    [InlineData("QUARK")]
-    [InlineData("TANK")]
-    [InlineData("BERZERK ROBOT")]
-    [InlineData("GORF")]
-    public void TheListHasEveryCharacter(string name)
+    [InlineData("ENFORCER GROWING", EnforcerTuning.GrowSteps, EnforcerTuning.GrowIntervalArcadeFrames)]
+    [InlineData("TANK GROWING", TankTuning.GrowSteps, TankTuning.GrowIntervalArcadeFrames)]
+    public void AGrowingRobotShowsEachGrowFrameAsLongAsInTheGame_ThenItsGrownFrame(string name, int growSteps,
+        int growIntervalArcadeFrames)
     {
-        Assert.Contains(Entries, entry => entry.Name == name);
-    }
+        var frames = GetEntry(name).GetCycle(null)!.Frames;
 
-    [Fact]
-    public void TheAuthorsOwnRobots_TheBerzerkRobotAndGorf_AreLast()
-    {
-        Assert.Equal(["BERZERK ROBOT", "GORF"], Entries.TakeLast(2).Select(entry => entry.Name));
-    }
-
-    [Fact]
-    public void TheListHasOneElectrodeForEachShape()
-    {
-        var shapes = TestTextures.SharedTextureSet.ElectrodeAnimationFrameTextures.Length / WavePaletteTables.ElectrodeAnimationFramesPerVariant;
-
-        Assert.Equal(shapes, Entries.Count(entry => entry.Name.StartsWith("ELECTRODE ", StringComparison.Ordinal)));
+        Assert.Equal(growSteps + 1, frames.Count);
+        Assert.All(frames.Take(growSteps),
+            frame => Assert.Equal(ArcadeClock.ToClockUnits(growIntervalArcadeFrames), frame.HoldClockUnits));
     }
 
     [Fact]
@@ -62,48 +50,29 @@ public sealed class SpriteTestEntriesTests
     }
 
     [Fact]
-    public void ThePlayerWalksOnlyWhileAWayIsHeld_ChangingFrameAsOftenAsInTheGame()
+    public void GorfFlapsAsOftenAsInTheGame_WhicheverWayIsHeld()
     {
-        var animator = new SpriteTestAnimator(GetEntry("PLAYER 1"), new Random(1));
-        for (var tick = 0; tick < 10; tick++) animator.Tick(null);
-        Assert.Equal(0, animator.FrameIndex);
+        var gorf = GetEntry("GORF");
+        var cycle = gorf.GetCycle(null)!;
 
-        animator.Tick(Direction8.Left); // turning to the left walk starts it
-        Assert.Equal(0, animator.FrameIndex);
-
-        var walk = GetEntry("PLAYER 1").GetCycle(Direction8.Left)!;
-        Assert.Equal(Player.WalkCycleLength, walk.Frames.Count);
-        Assert.All(walk.Frames,
-            frame => Assert.Equal(ArcadeClock.ToClockUnits(Player.WalkAnimationIntervalArcadeFrames), frame.HoldClockUnits));
+        Assert.False(gorf.IsSteerable);
+        Assert.Same(cycle, gorf.GetCycle(Direction8.Left));
+        Assert.All(cycle.Frames, frame => Assert.Equal(ArcadeClock.ToClockUnits(GorfTuning.AnimationIntervalArcadeFrames), frame.HoldClockUnits));
     }
 
     [Fact]
-    public void ThePlayerGoingDiagonally_ShowsTheSameWalkAsGoingSideways_SoTheWalkDoesNotStartAgain()
+    public void TheAuthorsOwnRobots_TheBerzerkRobotAndGorf_AreLast()
     {
-        var player = GetEntry("PLAYER 1");
-
-        Assert.Same(player.GetCycle(Direction8.Left), player.GetCycle(Direction8.UpLeft));
-        Assert.Same(player.GetCycle(Direction8.Right), player.GetCycle(Direction8.DownRight));
-        Assert.NotSame(player.GetCycle(Direction8.Up), player.GetCycle(Direction8.Down));
-        Assert.Null(player.GetCycle(null));
+        Assert.Equal(["BERZERK ROBOT", "GORF"], Entries.TakeLast(2).Select(entry => entry.Name));
     }
 
     [Fact]
-    public void AFamilyMemberHasADifferentWalkForEachOfTheEightWays()
+    public void TheBerzerkRobotIsDrawnInItsOwnColour_AsInTheGame()
     {
-        var mommy = GetEntry("MOMMY");
+        var berzerkRobot = GetEntry("BERZERK ROBOT");
 
-        Assert.Equal(8, Enum.GetValues<Direction8>().Select(direction => mommy.GetCycle(direction)).Distinct().Count());
-    }
-
-    [Fact]
-    public void TheTanksTreadsRunBackwardsWhileItGoesLeft_AndForwardsOtherwise()
-    {
-        var tank = GetEntry("TANK");
-
-        Assert.Same(tank.GetCycle(Direction8.Left), tank.GetCycle(Direction8.DownLeft));
-        Assert.NotSame(tank.GetCycle(Direction8.Left), tank.GetCycle(Direction8.Right));
-        Assert.Same(tank.GetCycle(Direction8.Right), tank.GetCycle(null));
+        Assert.Equal(SpriteTestDrawStyle.Solid, berzerkRobot.DrawStyle);
+        Assert.Equal(BerzerkRobot.DefaultColour, berzerkRobot.ShapeColour);
     }
 
     [Fact]
@@ -127,37 +96,68 @@ public sealed class SpriteTestEntriesTests
         Assert.Equal([BerzerkRobot.StepPixels], GetEntry("BERZERK ROBOT").WalkOn!.StepPortPixels);
     }
 
-    [Fact]
-    public void TheBerzerkRobotIsDrawnInItsOwnColour_AsInTheGame()
-    {
-        var berzerkRobot = GetEntry("BERZERK ROBOT");
-
-        Assert.Equal(SpriteTestDrawStyle.Solid, berzerkRobot.DrawStyle);
-        Assert.Equal(BerzerkRobot.DefaultColour, berzerkRobot.ShapeColour);
-    }
-
     [Theory]
-    [InlineData("ENFORCER GROWING", EnforcerTuning.GrowSteps, EnforcerTuning.GrowIntervalArcadeFrames)]
-    [InlineData("TANK GROWING", TankTuning.GrowSteps, TankTuning.GrowIntervalArcadeFrames)]
-    public void AGrowingRobotShowsEachGrowFrameAsLongAsInTheGame_ThenItsGrownFrame(string name, int growSteps,
-        int growIntervalArcadeFrames)
+    [InlineData("PLAYER 1")]
+    [InlineData("MOMMY")]
+    [InlineData("DADDY")]
+    [InlineData("MIKEY")]
+    [InlineData("GRUNT")]
+    [InlineData("HULK")]
+    [InlineData("BRAIN")]
+    [InlineData("SPHEROID")]
+    [InlineData("ENFORCER")]
+    [InlineData("QUARK")]
+    [InlineData("TANK")]
+    [InlineData("BERZERK ROBOT")]
+    [InlineData("GORF")]
+    public void TheListHasEveryCharacter(string name)
     {
-        var frames = GetEntry(name).GetCycle(null)!.Frames;
-
-        Assert.Equal(growSteps + 1, frames.Count);
-        Assert.All(frames.Take(growSteps),
-            frame => Assert.Equal(ArcadeClock.ToClockUnits(growIntervalArcadeFrames), frame.HoldClockUnits));
+        Assert.Contains(Entries, entry => entry.Name == name);
     }
 
     [Fact]
-    public void GorfFlapsAsOftenAsInTheGame_WhicheverWayIsHeld()
+    public void TheListHasOneElectrodeForEachShape()
     {
-        var gorf = GetEntry("GORF");
-        var cycle = gorf.GetCycle(null)!;
+        var shapes = TestTextures.SharedTextureSet.ElectrodeAnimationFrameTextures.Length / WavePaletteTables.ElectrodeAnimationFramesPerVariant;
 
-        Assert.False(gorf.IsSteerable);
-        Assert.Same(cycle, gorf.GetCycle(Direction8.Left));
-        Assert.All(cycle.Frames, frame => Assert.Equal(ArcadeClock.ToClockUnits(GorfTuning.AnimationIntervalArcadeFrames), frame.HoldClockUnits));
+        Assert.Equal(shapes, Entries.Count(entry => entry.Name.StartsWith("ELECTRODE ", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public void ThePlayerGoingDiagonally_ShowsTheSameWalkAsGoingSideways_SoTheWalkDoesNotStartAgain()
+    {
+        var player = GetEntry("PLAYER 1");
+
+        Assert.Same(player.GetCycle(Direction8.Left), player.GetCycle(Direction8.UpLeft));
+        Assert.Same(player.GetCycle(Direction8.Right), player.GetCycle(Direction8.DownRight));
+        Assert.NotSame(player.GetCycle(Direction8.Up), player.GetCycle(Direction8.Down));
+        Assert.Null(player.GetCycle(null));
+    }
+
+    [Fact]
+    public void ThePlayerWalksOnlyWhileAWayIsHeld_ChangingFrameAsOftenAsInTheGame()
+    {
+        var animator = new SpriteTestAnimator(GetEntry("PLAYER 1"), new Random(1));
+        for (var tick = 0; tick < 10; tick++) animator.Tick(null);
+        Assert.Equal(0, animator.FrameIndex);
+
+        animator.Tick(Direction8.Left); // turning to the left walk starts it
+        Assert.Equal(0, animator.FrameIndex);
+
+        var walk = GetEntry("PLAYER 1").GetCycle(Direction8.Left)!;
+        Assert.Equal(Player.WalkCycleLength, walk.Frames.Count);
+        Assert.All(walk.Frames,
+            frame => Assert.Equal(ArcadeClock.ToClockUnits(Player.WalkAnimationIntervalArcadeFrames), frame.HoldClockUnits));
+    }
+
+    [Fact]
+    public void TheTanksTreadsRunBackwardsWhileItGoesLeft_AndForwardsOtherwise()
+    {
+        var tank = GetEntry("TANK");
+
+        Assert.Same(tank.GetCycle(Direction8.Left), tank.GetCycle(Direction8.DownLeft));
+        Assert.NotSame(tank.GetCycle(Direction8.Left), tank.GetCycle(Direction8.Right));
+        Assert.Same(tank.GetCycle(Direction8.Right), tank.GetCycle(null));
     }
 
     private static SpriteTestEntry GetEntry(string name)

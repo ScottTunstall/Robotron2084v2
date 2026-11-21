@@ -8,9 +8,18 @@ namespace Robotron2084.Tests.Entities.Collections;
 /// <summary>The grunts on the field.</summary>
 public sealed class GruntListTests
 {
-    private static Grunt CreateGrunt(int moveIntervalMaxBeats)
+    [Fact]
+    public void SpeedingUpTheAliveLeavesTheDeadAlone()
     {
-        return new Grunt(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), moveIntervalMaxBeats);
+        var alive = CreateGrunt(16);
+        var dead = CreateGrunt(16);
+        dead.Kill();
+        GruntList grunts = [alive, dead];
+
+        grunts.SpeedUpAlive(4);
+
+        Assert.Equal(14, alive.MoveIntervalMaxBeats); // 16 x 7/8
+        Assert.Equal(16, dead.MoveIntervalMaxBeats);
     }
 
     [Fact]
@@ -29,17 +38,8 @@ public sealed class GruntListTests
         Assert.Equal(15, grunts.GetFastestMoveInterval(15));
     }
 
-    [Fact]
-    public void SpeedingUpTheAliveLeavesTheDeadAlone()
+    private static Grunt CreateGrunt(int moveIntervalMaxBeats)
     {
-        var alive = CreateGrunt(16);
-        var dead = CreateGrunt(16);
-        dead.Kill();
-        GruntList grunts = [alive, dead];
-
-        grunts.SpeedUpAlive(4);
-
-        Assert.Equal(14, alive.MoveIntervalMaxBeats); // 16 x 7/8
-        Assert.Equal(16, dead.MoveIntervalMaxBeats);
+        return new Grunt(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), moveIntervalMaxBeats);
     }
 }

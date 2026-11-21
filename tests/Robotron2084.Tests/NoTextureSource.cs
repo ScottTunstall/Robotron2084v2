@@ -13,18 +13,6 @@ namespace Robotron2084.Tests;
 internal sealed class NoTextureSource : ITextureSource
 {
     /// <inheritdoc />
-    public Texture2D Load(string assetName)
-    {
-        return null!;
-    }
-
-    /// <inheritdoc />
-    public Texture2D[] LoadAll(string[] assetNames)
-    {
-        return new Texture2D[assetNames.Length];
-    }
-
-    /// <inheritdoc />
     public Texture2D Create(int width, int height, Color[] pixels)
     {
         return null!;
@@ -34,5 +22,17 @@ internal sealed class NoTextureSource : ITextureSource
     public Texture2D CreateSolid(int width, int height, Color colour)
     {
         return null!;
+    }
+
+    /// <inheritdoc />
+    public Texture2D Load(string assetName)
+    {
+        return null!;
+    }
+
+    /// <inheritdoc />
+    public Texture2D[] LoadAll(string[] assetNames)
+    {
+        return new Texture2D[assetNames.Length];
     }
 }

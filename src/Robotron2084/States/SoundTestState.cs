@@ -6,7 +6,6 @@ using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Input.Models;
-using Robotron2084.Input;
 using Robotron2084.Palette;
 using Robotron2084.States.Models;
 
@@ -120,9 +119,6 @@ public sealed class SoundTestState : IGameState
         StartSound();
     }
 
-    /// <summary>The entry the page is on.</summary>
-    internal SoundTestEntry GetCurrentSoundTestEntry() => Entries[_index];
-
     /// <inheritdoc />
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
@@ -176,6 +172,9 @@ public sealed class SoundTestState : IGameState
             .. text.Replace('$', 'S').Where(character => ArcadeText.GetGlyphIndex(character) >= 0 || character == ' ')
         ]);
     }
+
+    /// <summary>The entry the page is on.</summary>
+    internal SoundTestEntry GetCurrentSoundTestEntry() => Entries[_index];
 
     /// <summary>Starts an entry: sends its sound number, or starts the transporter when it has none.</summary>
     /// <param name="soundTestEntry">The entry.</param>

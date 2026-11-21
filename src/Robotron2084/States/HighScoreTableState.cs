@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Graphics;
 using Robotron2084.Hud;
-using Robotron2084.Input.Models;
 using Robotron2084.Input;
+using Robotron2084.Input.Models;
 using Robotron2084.Palette;
-using Robotron2084.Persistence.Models;
 using Robotron2084.Persistence;
+using Robotron2084.Persistence.Models;
 using Robotron2084.States.Models;
 using Robotron2084.Tuning;
 
@@ -52,16 +52,16 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class HighScoreTableState : IClosableGameState, IAttractState
 {
-    private readonly HighScoreFrameAnimation _highScoreFrameAnimation = new();
     private readonly GameSettings _gameSettings;
+    private readonly HighScoreFrameAnimation _highScoreFrameAnimation = new();
+    private readonly HighScorePageHold _highScorePageHold = new();
     private readonly HighScorePalette _highScorePalette = new();
+    private readonly HighScorePrintSequence _highScorePrintSequence = new();
     private readonly HighScoreStore _highScoreStore;
     private readonly HighScoreTable _highScoreTable;
     private readonly IPlayerInputSource _playerInputSource;
-    private readonly Random _random;
-    private readonly HighScorePageHold _highScorePageHold = new();
     private readonly int[] _postedScores;
-    private readonly HighScorePrintSequence _highScorePrintSequence = new();
+    private readonly Random _random;
     private readonly TextureSet _textureSet;
     private bool _rampsStarted;
 
@@ -96,6 +96,12 @@ public sealed class HighScoreTableState : IClosableGameState, IAttractState
         // RRTABLE's TABLE starts the page's colour processes before it draws anything
         // (MAKP LOOPP comes first, the other four after the lists are printed).
         if (_textureSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Start(palette);
+    }
+
+    /// <summary>Puts the palette entries the table's pulsing colours took over back on the game's usual colours.</summary>
+    public void Close()
+    {
+        if (_textureSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Stop(palette);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -370,12 +376,6 @@ public sealed class HighScoreTableState : IClosableGameState, IAttractState
         if (isPostedScore) return highlightPaletteIndex;
 
         return normalPaletteIndex;
-    }
-
-    /// <summary>Puts the palette entries the table's pulsing colours took over back on the game's usual colours.</summary>
-    public void Close()
-    {
-        if (_textureSet.BlitterDraw.GamePalette is { } palette) _highScorePalette.Stop(palette);
     }
 
     private void Leave(GameStateManager gameStateManager)

@@ -12,12 +12,6 @@ namespace RobotronSoundPlayer.Tests;
 /// </summary>
 public class NativeBoardFidelityTests
 {
-    /// <summary>How long the boards run before the first sound number, as the renderer's warm-up does: a tenth of a second.</summary>
-    private const int WarmUpCycles = SoundBoard.ClockHertz / 10;
-
-    /// <summary>How long a single sound number is compared for: four seconds.</summary>
-    private const long SoundNumberCycles = SoundBoard.ClockHertz * 4L;
-
     /// <summary>How long a game sound is compared for, in port ticks: six seconds.</summary>
     private const int GameSoundTicks = 6 * 60;
 
@@ -34,25 +28,17 @@ public class NativeBoardFidelityTests
     /// </summary>
     private const double MostDisagreement = 0.03;
 
-    /// <summary>Every sound number the board has (the sound test page's list), which includes every one the game sends.</summary>
-    public static TheoryData<int> GameSoundNumbers => [.. BoardSounds.All.Select(sound => sound.Number)];
+    /// <summary>How long a single sound number is compared for: four seconds.</summary>
+    private const long SoundNumberCycles = SoundBoard.ClockHertz * 4L;
+
+    /// <summary>How long the boards run before the first sound number, as the renderer's warm-up does: a tenth of a second.</summary>
+    private const int WarmUpCycles = SoundBoard.ClockHertz / 10;
 
     /// <summary>Every sound the game plays, by its name in the player's catalog.</summary>
     public static TheoryData<string> GameSoundNames => [.. new SoundCatalog().GameSounds.Select(sound => sound.Name)];
 
-    [Theory]
-    [MemberData(nameof(GameSoundNumbers))]
-    public void EachSoundNumber_ChangesToTheSameLevels_AtTheSameMoments_AsTheRealRom(int soundNumber)
-    {
-        var emulatedSoundBoard = new EmulatedSoundBoard(RomFiles.ReadOrSkip(RomFiles.SoundRom));
-        var nativeSoundBoard = new SoundBoard();
-
-        var expected = PlayFromCold(emulatedSoundBoard, soundNumber);
-        var actual = PlayFromCold(nativeSoundBoard, soundNumber);
-
-        // The last run is cut wherever the recording stops, which an emulated instruction can overrun.
-        Assert.Equal(expected.SkipLast(1), actual.SkipLast(1));
-    }
+    /// <summary>Every sound number the board has (the sound test page's list), which includes every one the game sends.</summary>
+    public static TheoryData<int> GameSoundNumbers => [.. BoardSounds.All.Select(sound => sound.Number)];
 
     [Theory]
     [MemberData(nameof(GameSoundNames))]
@@ -66,6 +52,20 @@ public class NativeBoardFidelityTests
 
         Assert.InRange(disagreement.LongestCycles, 0, LongestInstructionCycles);
         Assert.InRange(disagreement.Share, 0, MostDisagreement);
+    }
+
+    [Theory]
+    [MemberData(nameof(GameSoundNumbers))]
+    public void EachSoundNumber_ChangesToTheSameLevels_AtTheSameMoments_AsTheRealRom(int soundNumber)
+    {
+        var emulatedSoundBoard = new EmulatedSoundBoard(RomFiles.ReadOrSkip(RomFiles.SoundRom));
+        var nativeSoundBoard = new SoundBoard();
+
+        var expected = PlayFromCold(emulatedSoundBoard, soundNumber);
+        var actual = PlayFromCold(nativeSoundBoard, soundNumber);
+
+        // The last run is cut wherever the recording stops, which an emulated instruction can overrun.
+        Assert.Equal(expected.SkipLast(1), actual.SkipLast(1));
     }
 
     private static List<LevelRun> PlayFromCold(ISoundBoard soundBoard, int soundNumber)

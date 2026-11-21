@@ -25,9 +25,9 @@ public sealed class EntriesMaximumState : IGameState
     private const int SecondLineColumn = 40;
     private const int SecondLineRow = 144;
 
-    private readonly ScoreEntryCeremony _scoreEntryCeremony;
-    private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.EntriesMaximumHoldArcadeFrames);
     private readonly GameStateParams _gameStateParams;
+    private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.EntriesMaximumHoldArcadeFrames);
+    private readonly ScoreEntryCeremony _scoreEntryCeremony;
     private int _elapsedTicks;
 
     /// <summary>Builds the page for the score whose initials hit the maximum.</summary>

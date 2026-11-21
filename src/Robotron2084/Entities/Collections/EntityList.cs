@@ -49,10 +49,17 @@ public abstract class EntityList<T> : IEntityList, IReadOnlyList<T>
         _items.Add(entity);
     }
 
-    /// <inheritdoc />
-    public void DrawAll(SpriteBatch spriteBatch, PlayField playField)
+    /// <summary>Says whether any entity in the list is still alive.</summary>
+    /// <returns>True when at least one is alive.</returns>
+    public bool AnyAlive()
     {
-        foreach (var entity in _items) playField.DrawEntity(entity, spriteBatch);
+        return _items.Any(entity => entity.IsAlive());
+    }
+
+    /// <inheritdoc />
+    public bool AreAllDead()
+    {
+        return _items.All(entity => entity.IsDead());
     }
 
     /// <summary>Counts the entities in the list that are still alive.</summary>
@@ -60,13 +67,6 @@ public abstract class EntityList<T> : IEntityList, IReadOnlyList<T>
     public int CountAlive()
     {
         return _items.Count(entity => entity.IsAlive());
-    }
-
-    /// <summary>Says whether any entity in the list is still alive.</summary>
-    /// <returns>True when at least one is alive.</returns>
-    public bool AnyAlive()
-    {
-        return _items.Any(entity => entity.IsAlive());
     }
 
     /// <summary>Counts the entities still on the field: alive, or still playing their death.</summary>
@@ -77,9 +77,9 @@ public abstract class EntityList<T> : IEntityList, IReadOnlyList<T>
     }
 
     /// <inheritdoc />
-    public bool AreAllDead()
+    public void DrawAll(SpriteBatch spriteBatch, PlayField playField)
     {
-        return _items.All(entity => entity.IsDead());
+        foreach (var entity in _items) playField.DrawEntity(entity, spriteBatch);
     }
 
     /// <summary>Goes through the list in order.</summary>

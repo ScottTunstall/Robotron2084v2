@@ -29,8 +29,8 @@ public sealed class SoundBoardRenderer
     /// <summary>How long the board runs before the first sample, so its start-up settles out of earshot: a tenth of a second.</summary>
     private const int WarmUpCycles = SoundBoard.ClockHertz / 10;
 
-    private readonly ISoundBoard _soundBoard;
     private readonly double _cyclesPerSample;
+    private readonly ISoundBoard _soundBoard;
     private byte _level;
     private float _previousInput;
     private float _previousOutput;

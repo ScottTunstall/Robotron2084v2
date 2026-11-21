@@ -1,15 +1,15 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Audio;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -42,11 +42,20 @@ namespace Robotron2084.Entities;
 ///     docs/glossary.md.
 ///     <para>
 ///         Announces <see cref="GameEventKind.RobotKilled" /> (for a <see cref="RobotKind.Brain" />), <see cref="GameEventKind.FamilyMemberReprogrammed" /> when it finishes reprogramming a family member, and <see cref="GameEventKind.FamilyMemberKilled" /> when it lets go of one it was
-    ///     reprogramming, to the <see cref="IGameEvents" /> it is given.
+///     reprogramming, to the <see cref="IGameEvents" /> it is given.
 ///     </para>
 /// </remarks>
 public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 {
+    /// <summary>How far the brain moves sideways on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, in port pixels.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 column.</item>
+    ///         <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>).</item>
+    ///     </list>
+    /// </remarks>
+    internal static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(1);
+
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> takes to run. The time from one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> to the next.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -178,15 +187,6 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BrainCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BrainCollisionSize.Height));
 
-    /// <summary>How far the brain moves sideways on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, in port pixels.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Original source: <c>RRB10.ASM</c> <c>BRNL1</c>, a step of 1 column.</item>
-    ///         <item>Disassembly: <c>ANIMATE_BRAIN</c> (<c>$1C0F</c>).</item>
-    ///     </list>
-    /// </remarks>
-    internal static readonly int StepXPixels = ScreenSize.ToPortPixelsFromColumns(1);
-
     /// <summary>How far the brain moves up or down on each <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>, in port pixels.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -216,8 +216,8 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     /// </summary>
     private readonly int _fireIntervalBeats;
 
-    private readonly Random _random;
     private readonly IGameEvents _gameEvents;
+    private readonly Random _random;
     private readonly TextureSet _textureSet;
 
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
@@ -227,14 +227,14 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
 
     private IntVector2 _position;
 
+    /// <summary>Says when it is time for the next reprogramming step.</summary>
+    private ArcadeFrameTimer _reprogramArcadeFrameTimer = new();
+
     /// <summary>True when the next reprogramming step moves the family member down, false when it moves them back up.</summary>
     private bool _reprogramMovingDown;
 
     /// <summary>Steps left before the reprogramming is finished.</summary>
     private int _reprogramRedrawsRemaining;
-
-    /// <summary>Says when it is time for the next reprogramming step.</summary>
-    private ArcadeFrameTimer _reprogramArcadeFrameTimer = new();
 
     /// <summary>Which place in the family list the brain is chasing.</summary>
     private int _targetSlot;
@@ -299,6 +299,9 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     ///     </list>
     /// </remarks>
     public IntVector2 Position => _position;
+
+    /// <summary>How many steps a walk's cycle has before it starts again.</summary>
+    internal static int WalkCycleLength => WalkCycle.Length;
 
     /// <summary>The family member this brain is chasing, or null when it is chasing the player.</summary>
     /// <remarks>
@@ -437,6 +440,46 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
         if (_beatArcadeFrameTimer.Tick(_beatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
+    /// <summary>Works out the time from one of a brain's beats to the next.</summary>
+    /// <param name="beatWaitArcadeFrames">The wave's wait between beats, in arcade frames.</param>
+    /// <returns>The time from one beat to the next, in arcade frames: the wait, plus the frame the beat itself takes.</returns>
+    internal static int GetBeatIntervalArcadeFrames(int beatWaitArcadeFrames)
+    {
+        return BeatExecutionArcadeFrames + beatWaitArcadeFrames;
+    }
+
+    /// <summary>
+    ///     Works out which animation frame a walk shows at a step of its cycle, as a place in
+    ///     <see cref="TextureSet.BrainAnimationFrameTextures" />.
+    /// </summary>
+    /// <param name="walkSequence">The walk.</param>
+    /// <param name="walkCycleIndex">The step of the walk's cycle, from 0 to <see cref="WalkCycleLength" /> less 1.</param>
+    /// <returns>The place of the animation frame, counting from 0.</returns>
+    internal static int GetWalkAnimationFrameIndex(WalkSequence walkSequence, int walkCycleIndex)
+    {
+        return (int)walkSequence * 3 + WalkCycle[walkCycleIndex];
+    }
+
+    /// <summary>Gets the walk that matches a step. Left and right win over up and down.</summary>
+    /// <param name="step">The step the brain tried to take.</param>
+    /// <returns>The walk for the way the step goes.</returns>
+    internal static WalkSequence GetWalkSequence(IntVector2 step)
+    {
+        var isMovingSideways = step.X != 0;
+        if (isMovingSideways)
+        {
+            var isMovingRight = step.X > 0;
+            if (isMovingRight) return WalkSequence.Right;
+
+            return WalkSequence.Left;
+        }
+
+        var isMovingUp = step.Y < 0;
+        if (isMovingUp) return WalkSequence.Up;
+
+        return WalkSequence.Down;
+    }
+
     /// <summary>
     ///     Starts turning a family member into a prog. The family member is moved next to the brain and the reprogramming
     ///     animation begins.
@@ -522,29 +565,6 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     }
 
     /// <summary>
-    ///     Works out which animation frame a walk shows at a step of its cycle, as a place in
-    ///     <see cref="TextureSet.BrainAnimationFrameTextures" />.
-    /// </summary>
-    /// <param name="walkSequence">The walk.</param>
-    /// <param name="walkCycleIndex">The step of the walk's cycle, from 0 to <see cref="WalkCycleLength" /> less 1.</param>
-    /// <returns>The place of the animation frame, counting from 0.</returns>
-    internal static int GetWalkAnimationFrameIndex(WalkSequence walkSequence, int walkCycleIndex)
-    {
-        return (int)walkSequence * 3 + WalkCycle[walkCycleIndex];
-    }
-
-    /// <summary>How many steps a walk's cycle has before it starts again.</summary>
-    internal static int WalkCycleLength => WalkCycle.Length;
-
-    /// <summary>Works out the time from one of a brain's beats to the next.</summary>
-    /// <param name="beatWaitArcadeFrames">The wave's wait between beats, in arcade frames.</param>
-    /// <returns>The time from one beat to the next, in arcade frames: the wait, plus the frame the beat itself takes.</returns>
-    internal static int GetBeatIntervalArcadeFrames(int beatWaitArcadeFrames)
-    {
-        return BeatExecutionArcadeFrames + beatWaitArcadeFrames;
-    }
-
-    /// <summary>
     ///     Lets go of the family member being reprogrammed, if there is one. That family member is then lost.
     /// </summary>
     /// <remarks>
@@ -575,26 +595,6 @@ public sealed class Brain : IExplodable, IRemovable, IWaveStartRobot
     internal void Retarget(int targetFamilySlot)
     {
         _targetSlot = targetFamilySlot;
-    }
-
-    /// <summary>Gets the walk that matches a step. Left and right win over up and down.</summary>
-    /// <param name="step">The step the brain tried to take.</param>
-    /// <returns>The walk for the way the step goes.</returns>
-    internal static WalkSequence GetWalkSequence(IntVector2 step)
-    {
-        var isMovingSideways = step.X != 0;
-        if (isMovingSideways)
-        {
-            var isMovingRight = step.X > 0;
-            if (isMovingRight) return WalkSequence.Right;
-
-            return WalkSequence.Left;
-        }
-
-        var isMovingUp = step.Y < 0;
-        if (isMovingUp) return WalkSequence.Up;
-
-        return WalkSequence.Down;
     }
 
     /// <summary>Says whether the brain would still be inside the playfield if its left edge were at <paramref name="x" />.</summary>

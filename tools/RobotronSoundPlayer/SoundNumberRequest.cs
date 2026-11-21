@@ -6,11 +6,11 @@ namespace RobotronSoundPlayer;
 /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>).</param>
 internal sealed class SoundNumberRequest(int soundNumber) : ISoundRequest
 {
-    /// <summary>The sound number, written as the source writes it, such as <c>$0E</c>.</summary>
-    public string Name => $"${soundNumber:X2}";
-
     /// <summary>Says that it is a bare sound number.</summary>
     public string Description => "the board's sound number on its own";
+
+    /// <summary>The sound number, written as the source writes it, such as <c>$0E</c>.</summary>
+    public string Name => $"${soundNumber:X2}";
 
     /// <summary>Sends the sound number to the board.</summary>
     /// <param name="soundEngine">The sequencer that passes the number straight to the board.</param>

@@ -1,10 +1,8 @@
-using Microsoft.Xna.Framework;
 using Robotron2084.Audio;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
-using Robotron2084.Entities.Extensions;
-using Robotron2084.Entities.Models;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
+using Robotron2084.Entities.Models;
 using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
@@ -44,6 +42,30 @@ internal sealed class MidWaveSpawner
         var cruiseMissile = new CruiseMissile(_playField.EntityParams, origin, _playField.GetPlayerPosition());
         _fieldEntities.CruiseMissiles.Add(cruiseMissile);
         _playField.PlaySoundFrom(SoundTables.BrainShoot, cruiseMissile.GetBounds());
+    }
+
+    /// <summary>A grunt comes through a door in the wall: it appears just inside the wall, in the opening.</summary>
+    /// <param name="position">Where the grunt's top-left corner is.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>Port only: the arcade has no doors (notes §151).</item>
+    ///         <item>The grunt is kept inside the playfield.</item>
+    ///         <item>The wave's limit on grunts does not hold it back, since the wave's flag asked for it.</item>
+    ///         <item>
+    ///             It starts at its slowest: the longest wait between steps the wave gives its grunts at the start
+    ///             (<see cref="WaveParams.GruntMoveDelay" />), whatever the grunts already on the field have since been
+    ///             speeded up to.
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    public void SpawnDoorwayGrunt(IntVector2 position)
+    {
+        var bounds = _playField.GetPlayfieldBounds();
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
+        var x = Math.Clamp(position.X, bounds.X, bounds.Right - width);
+        var y = Math.Clamp(position.Y, bounds.Y, bounds.Bottom - height);
+        _fieldEntities.Grunts.Add(new Grunt(_playField.EntityParams, new IntVector2(x, y), _playField.WaveParams.GruntMoveDelay));
     }
 
     /// <summary>A spheroid drops an enforcer.</summary>
@@ -86,6 +108,15 @@ internal sealed class MidWaveSpawner
         _fieldEntities.Grunts.Add(grunt);
     }
 
+    /// <summary>A brain's touch turns a family member into a prog where they stand.</summary>
+    /// <param name="position">Where the family member stood.</param>
+    /// <param name="kind">Which family member it was, since the prog keeps their look.</param>
+    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> and <c>PROGST</c>.</remarks>
+    public void SpawnProg(IntVector2 position, FamilyMemberKind kind)
+    {
+        _fieldEntities.Progs.Add(new Prog(_playField.EntityParams, position, kind));
+    }
+
     /// <summary>A Gorf comes on to drop the grunts a Gorf that was shot did not drop.</summary>
     /// <param name="gruntsOwed">How many grunts it drops.</param>
     /// <param name="dropIntervalSteps">How many steps there are between its drops.</param>
@@ -94,42 +125,8 @@ internal sealed class MidWaveSpawner
     /// </remarks>
     public void SpawnReturningGorf(int gruntsOwed, int dropIntervalSteps)
     {
-
         _fieldEntities.Gorfs.Add(new Gorf(_playField.EntityParams, new GorfPlayfieldParams(_playField.GetPlayfieldBounds()),
             new GorfDropParams(_playField.WaveParams.MaxDropsX2, gruntsOwed, dropIntervalSteps)));
-    }
-
-    /// <summary>A grunt comes through a door in the wall: it appears just inside the wall, in the opening.</summary>
-    /// <param name="position">Where the grunt's top-left corner is.</param>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>Port only: the arcade has no doors (notes §151).</item>
-    ///         <item>The grunt is kept inside the playfield.</item>
-    ///         <item>The wave's limit on grunts does not hold it back, since the wave's flag asked for it.</item>
-    ///         <item>
-    ///             It starts at its slowest: the longest wait between steps the wave gives its grunts at the start
-    ///             (<see cref="WaveParams.GruntMoveDelay" />), whatever the grunts already on the field have since been
-    ///             speeded up to.
-    ///         </item>
-    ///     </list>
-    /// </remarks>
-    public void SpawnDoorwayGrunt(IntVector2 position)
-    {
-        var bounds = _playField.GetPlayfieldBounds();
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
-        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
-        var x = Math.Clamp(position.X, bounds.X, bounds.Right - width);
-        var y = Math.Clamp(position.Y, bounds.Y, bounds.Bottom - height);
-        _fieldEntities.Grunts.Add(new Grunt(_playField.EntityParams, new IntVector2(x, y), _playField.WaveParams.GruntMoveDelay));
-    }
-
-    /// <summary>A brain's touch turns a family member into a prog where they stand.</summary>
-    /// <param name="position">Where the family member stood.</param>
-    /// <param name="kind">Which family member it was, since the prog keeps their look.</param>
-    /// <remarks>Original source: <c>RRB10.ASM</c> <c>BMUT</c> and <c>PROGST</c>.</remarks>
-    public void SpawnProg(IntVector2 position, FamilyMemberKind kind)
-    {
-        _fieldEntities.Progs.Add(new Prog(_playField.EntityParams, position, kind));
     }
 
     /// <summary>An enforcer fires a spark at the player.</summary>

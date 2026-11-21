@@ -13,40 +13,6 @@ namespace Robotron2084.Tests.Hud;
 public sealed class HighScorePageHoldTests
 {
     [Fact]
-    public void NothingShortensTheHold_NotEvenASwitchHeldDownThroughIt()
-    {
-        var highScorePageHold = new HighScorePageHold();
-
-        // 600 fiftieths of a second = 720 port ticks.
-        for (var tick = 0; tick < 719; tick++)
-        {
-            Assert.False(highScorePageHold.Tick(true), $"the page left during the hold (tick {tick})");
-            Assert.False(highScorePageHold.HoldIsOver);
-        }
-
-        Assert.False(highScorePageHold.Tick(true));
-        Assert.True(highScorePageHold.HoldIsOver); // the 600 frames ran out on this tick
-    }
-
-    [Fact]
-    public void WithNothingHeld_ThePageLeavesOneNapFourAfterTheHold()
-    {
-        var highScorePageHold = new HighScorePageHold();
-        for (var tick = 0; tick < 720; tick++) highScorePageHold.Tick(false);
-
-        // TAB777's NAP 4 — 4 fiftieths of a second ≈ 4.8 ticks — is the first switch read.
-        var ticks = 0;
-        while (!highScorePageHold.Tick(false))
-        {
-            ticks++;
-            Assert.True(ticks < 8, "the page never left an idle cabinet");
-        }
-
-        Assert.InRange(ticks, 3, 5);
-        Assert.Equal(0, highScorePageHold.ChecksWithSwitchDown);
-    }
-
-    [Fact]
     public void AHeldSwitchDelaysTheExit_ForTheRoms255Checks()
     {
         var highScorePageHold = new HighScorePageHold();
@@ -62,6 +28,22 @@ public sealed class HighScorePageHoldTests
         // 255 checks of four frames each ≈ 1224 ticks, plus the hold.
         Assert.InRange(ticks, 1200, 1250);
         Assert.Equal(255, highScorePageHold.ChecksWithSwitchDown);
+    }
+
+    [Fact]
+    public void NothingShortensTheHold_NotEvenASwitchHeldDownThroughIt()
+    {
+        var highScorePageHold = new HighScorePageHold();
+
+        // 600 fiftieths of a second = 720 port ticks.
+        for (var tick = 0; tick < 719; tick++)
+        {
+            Assert.False(highScorePageHold.Tick(true), $"the page left during the hold (tick {tick})");
+            Assert.False(highScorePageHold.HoldIsOver);
+        }
+
+        Assert.False(highScorePageHold.Tick(true));
+        Assert.True(highScorePageHold.HoldIsOver); // the 600 frames ran out on this tick
     }
 
     [Fact]
@@ -81,5 +63,23 @@ public sealed class HighScorePageHoldTests
         }
 
         Assert.Equal(5, highScorePageHold.ChecksWithSwitchDown);
+    }
+
+    [Fact]
+    public void WithNothingHeld_ThePageLeavesOneNapFourAfterTheHold()
+    {
+        var highScorePageHold = new HighScorePageHold();
+        for (var tick = 0; tick < 720; tick++) highScorePageHold.Tick(false);
+
+        // TAB777's NAP 4 — 4 fiftieths of a second ≈ 4.8 ticks — is the first switch read.
+        var ticks = 0;
+        while (!highScorePageHold.Tick(false))
+        {
+            ticks++;
+            Assert.True(ticks < 8, "the page never left an idle cabinet");
+        }
+
+        Assert.InRange(ticks, 3, 5);
+        Assert.Equal(0, highScorePageHold.ChecksWithSwitchDown);
     }
 }

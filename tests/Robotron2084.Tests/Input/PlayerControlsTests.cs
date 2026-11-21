@@ -1,9 +1,8 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
-using Robotron2084.Input.Models;
 using Robotron2084.Input;
+using Robotron2084.Input.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Input;
@@ -16,6 +15,47 @@ namespace Robotron2084.Tests.Input;
 public sealed class PlayerControlsTests
 {
     private static readonly GamePadState NoGamePadState = new();
+
+    [Fact]
+    public void AReboundAction_ReplacesOnlyItsOwnDeviceSlot()
+    {
+        var controls = PlayerControls.CreateDefaults(0);
+        var line = controls[InputAction.MoveUp];
+
+        // A keyboard key replaces the keyboard slot and leaves the pad binding alone.
+        var rebound = line.With(InputBinding.CreateKey(Keys.Up));
+        Assert.Equal("UP", rebound.KeyBinding.GetDisplayName());
+        Assert.Equal("P1 LEFT STICK UP", rebound.PadBinding.GetDisplayName());
+
+        // …and a pad input leaves the keyboard slot alone.
+        var onPad = line.With(InputBinding.CreateButton(0, Buttons.Y));
+        Assert.Equal("W", onPad.KeyBinding.GetDisplayName());
+        Assert.Equal("P1 Y", onPad.PadBinding.GetDisplayName());
+
+        // The page's Del clears both.
+        Assert.Equal(InputBindingKind.None, line.With(InputBinding.None).KeyBinding.Kind);
+        Assert.Equal(InputBindingKind.None, line.With(InputBinding.None).PadBinding.Kind);
+    }
+
+    [Fact]
+    public void IJKL_ProducesTheShootVector_AndFires()
+    {
+        var controls = PlayerControls.CreateDefaults(0);
+        var keyboardState = new KeyboardState(Keys.J); // shoot left
+
+        Assert.Equal(new IntVector2(-1, 0), controls.GetShootDirection(keyboardState, NoGamePadState, NoGamePadState));
+        Assert.True(controls.IsFiring(keyboardState, NoGamePadState, NoGamePadState));
+    }
+
+    [Fact]
+    public void OppositeDirectionsCancel_AndNothingHeldMeansNoFire()
+    {
+        var controls = PlayerControls.CreateDefaults(0);
+        var bothKeyboardState = new KeyboardState(Keys.A, Keys.D);
+
+        Assert.Equal(IntVector2.Zero, controls.GetMoveDirection(bothKeyboardState, NoGamePadState, NoGamePadState));
+        Assert.False(controls.IsFiring(new KeyboardState(), NoGamePadState, NoGamePadState));
+    }
 
     [Fact]
     public void PlayerOneDefaults_AreThePortsKeyboardScheme()
@@ -55,36 +95,6 @@ public sealed class PlayerControlsTests
     }
 
     [Fact]
-    public void WASD_ProducesTheMoveVector()
-    {
-        var controls = PlayerControls.CreateDefaults(0);
-
-        var diagonal = controls.GetMoveDirection(new KeyboardState(Keys.W, Keys.D), NoGamePadState, NoGamePadState);
-
-        Assert.Equal(new IntVector2(1, -1), diagonal);
-    }
-
-    [Fact]
-    public void IJKL_ProducesTheShootVector_AndFires()
-    {
-        var controls = PlayerControls.CreateDefaults(0);
-        var keyboardState = new KeyboardState(Keys.J); // shoot left
-
-        Assert.Equal(new IntVector2(-1, 0), controls.GetShootDirection(keyboardState, NoGamePadState, NoGamePadState));
-        Assert.True(controls.IsFiring(keyboardState, NoGamePadState, NoGamePadState));
-    }
-
-    [Fact]
-    public void OppositeDirectionsCancel_AndNothingHeldMeansNoFire()
-    {
-        var controls = PlayerControls.CreateDefaults(0);
-        var bothKeyboardState = new KeyboardState(Keys.A, Keys.D);
-
-        Assert.Equal(IntVector2.Zero, controls.GetMoveDirection(bothKeyboardState, NoGamePadState, NoGamePadState));
-        Assert.False(controls.IsFiring(new KeyboardState(), NoGamePadState, NoGamePadState));
-    }
-
-    [Fact]
     public void TheLeftStickMoves_AndTheRightStickShoots()
     {
         var controls = PlayerControls.CreateDefaults(0);
@@ -96,23 +106,12 @@ public sealed class PlayerControlsTests
     }
 
     [Fact]
-    public void AReboundAction_ReplacesOnlyItsOwnDeviceSlot()
+    public void WASD_ProducesTheMoveVector()
     {
         var controls = PlayerControls.CreateDefaults(0);
-        var line = controls[InputAction.MoveUp];
 
-        // A keyboard key replaces the keyboard slot and leaves the pad binding alone.
-        var rebound = line.With(InputBinding.CreateKey(Keys.Up));
-        Assert.Equal("UP", rebound.KeyBinding.GetDisplayName());
-        Assert.Equal("P1 LEFT STICK UP", rebound.PadBinding.GetDisplayName());
+        var diagonal = controls.GetMoveDirection(new KeyboardState(Keys.W, Keys.D), NoGamePadState, NoGamePadState);
 
-        // …and a pad input leaves the keyboard slot alone.
-        var onPad = line.With(InputBinding.CreateButton(0, Buttons.Y));
-        Assert.Equal("W", onPad.KeyBinding.GetDisplayName());
-        Assert.Equal("P1 Y", onPad.PadBinding.GetDisplayName());
-
-        // The page's Del clears both.
-        Assert.Equal(InputBindingKind.None, line.With(InputBinding.None).KeyBinding.Kind);
-        Assert.Equal(InputBindingKind.None, line.With(InputBinding.None).PadBinding.Kind);
+        Assert.Equal(new IntVector2(1, -1), diagonal);
     }
 }

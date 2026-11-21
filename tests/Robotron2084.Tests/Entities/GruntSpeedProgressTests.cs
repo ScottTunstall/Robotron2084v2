@@ -1,9 +1,9 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Entities;
@@ -28,6 +28,9 @@ namespace Robotron2084.Tests.Entities;
 /// </summary>
 public sealed class GruntSpeedProgressTests
 {
+    /// <summary>fiftieths of a second between one check and the next: 15 passes of 15.</summary>
+    private const int CheckIntervalArcadeFrames = 15 * 15;
+
     /// <summary>fiftieths of a second from the game going live to GEXEC starting: `NAP 12,PLS3` and `NAP 10,PLS4`.</summary>
     private const int ExecutiveStartArcadeFrames = 12 + 10;
 
@@ -37,83 +40,47 @@ public sealed class GruntSpeedProgressTests
     /// </summary>
     private const int FirstCheckArcadeFrames = ExecutiveStartArcadeFrames + 17 * 15;
 
-    /// <summary>fiftieths of a second between one check and the next: 15 passes of 15.</summary>
-    private const int CheckIntervalArcadeFrames = 15 * 15;
-
     private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime OneTick()
+    [Fact]
+    public void APassThatFollowsScoring_IsGentler_AndTheFlagIsSpentByIt()
     {
-        return new GameTime(TimeSpan.Zero, OneTickSpan);
-    }
+        var playField = CreateField(7);
+        Grunt trackedGrunt = new(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), 15);
+        playField.FieldEntities.Grunts.Add(trackedGrunt);
 
-    /// <summary>
-    ///     The port tick, counted from the field being made, on which a fiftieth of a second that many after the game
-    ///     goes live falls.
-    /// </summary>
-    private static int TickOfRomFrameAfterLive(PlayField playField, int arcadeFrames)
-    {
-        return ArcadeClock.ToPortTicksRoundedUp(playField.GetLiveArcadeFrames() + arcadeFrames);
-    }
+        // The score must come after GEXEC has started, because GEXEC opens by clearing the flag.
+        var executiveStartTick = TickOfRomFrameAfterLive(playField, ExecutiveStartArcadeFrames);
+        var firstCheckTick = TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames);
+        Tick(playField, executiveStartTick);
+        playField.AwardScore(100); // SCRFLG is set by any score (ROM UPDATE_PLAYER_SCORE, $DB9C)
+        Tick(playField, firstCheckTick - executiveStartTick);
 
-    private static void Tick(PlayField playField, int ticks)
-    {
-        for (var tick = 0; tick < ticks; tick++) playField.Update(OneTick());
-    }
+        Assert.Equal(4, playField.GetGruntSpeedFloor()); // 5 − 1, not 5 − 2
+        Assert.Equal(13, trackedGrunt.MoveIntervalMaxBeats); // 15 − 2, not 15 − 4
 
-    private static PlayField CreateField(int wave = 1)
-    {
-        return new PlayFieldBuilder()
-            .WithParameters(WaveParams.CreateFromWave(wave, WaveTable.GetParameters(wave))).WithSeed(1).Build();
-    }
+        // The pass cleared the flag, so with no further score the next one is the harsh one.
+        Tick(playField, TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames + CheckIntervalArcadeFrames) - firstCheckTick);
 
-    private static Grunt CreateGruntAt(PlayField playField, int x, int y, int seed)
-    {
-        return new Grunt(TestEntityParams.Create(new Random(seed)), new IntVector2(x, y), 20);
+        Assert.Equal(2, playField.GetGruntSpeedFloor()); // 4 − 2
+        Assert.Equal(9, trackedGrunt.MoveIntervalMaxBeats); // 13 − 4
     }
 
     [Fact]
-    public void SpeedUp_TruncatesTo7Eighths_AndRespectsTheCurrentFloor()
+    public void AScoreMadeBeforeTheExecutiveStarts_IsForgotten_SoTheFirstPassIsTheHarshOne()
     {
-        var grunt = CreateGruntAt(CreateField(), 100, 100, 1);
-        Assert.Equal(20, grunt.MoveIntervalMaxBeats);
+        var playField = CreateField(7);
+        Grunt trackedGrunt = new(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), 15);
+        playField.FieldEntities.Grunts.Add(trackedGrunt);
 
-        // 20 × 224/256 = 17.5 → the ROM's MUL high byte truncates to 17.
-        grunt.SpeedUp(1);
-        Assert.Equal(17, grunt.MoveIntervalMaxBeats);
+        // GEXEC opens with CLR SCRFLG (R5 $2A8B), 22 arcade frames after the game goes live, so this score does not count.
+        var scoreTick = WaveStartTicks.UntilLive(playField) + 1;
+        Tick(playField, scoreTick);
+        playField.AwardScore(100);
+        Tick(playField, TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames) - scoreTick);
 
-        // 17 × 7/8 = 14.875 → 14, which is BELOW the floor 19, so the ROM's
-        // `BCS` branch leaves the limit UNCHANGED at 17 (it does not clamp UP to
-        // the floor — that was the port's bug, and it made the grunts faster than
-        // the arcade's).
-        grunt.SpeedUp(19);
-        Assert.Equal(17, grunt.MoveIntervalMaxBeats);
-
-        // With a floor the next step can respect, the limit does move.
-        grunt.SpeedUp(14);
-        Assert.Equal(14, grunt.MoveIntervalMaxBeats);
-
-        // And it stops there: 14 × 7/8 = 12 < 14. The in-flight countdown is
-        // deliberately untouched by a kill (the ROM only changes the shared limit),
-        // so the survivors accelerate on their own next pick.
-    }
-
-    [Fact]
-    public void SpeedUpAsWaveGoesOn_LowersLimitBy4_ClampedAtTheFloor()
-    {
-        var grunt = CreateGruntAt(CreateField(), 100, 100, 2);
-
-        grunt.SpeedUpAsWaveGoesOn(9);
-        Assert.Equal(16, grunt.MoveIntervalMaxBeats);
-
-        grunt.SpeedUpAsWaveGoesOn(9);
-        Assert.Equal(12, grunt.MoveIntervalMaxBeats);
-
-        grunt.SpeedUpAsWaveGoesOn(9);
-        Assert.Equal(9, grunt.MoveIntervalMaxBeats); // clamped, does not go below the floor
-
-        grunt.SpeedUpAsWaveGoesOn(1);
-        Assert.Equal(5, grunt.MoveIntervalMaxBeats); // 9 − 4, floor 1
+        Assert.Equal(3, playField.GetGruntSpeedFloor()); // 5 − 2, not 5 − 1
+        Assert.Equal(11, trackedGrunt.MoveIntervalMaxBeats); // 15 − 4, not 15 − 2
     }
 
     [Fact]
@@ -163,47 +130,6 @@ public sealed class GruntSpeedProgressTests
     }
 
     [Fact]
-    public void APassThatFollowsScoring_IsGentler_AndTheFlagIsSpentByIt()
-    {
-        var playField = CreateField(7);
-        Grunt trackedGrunt = new(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), 15);
-        playField.FieldEntities.Grunts.Add(trackedGrunt);
-
-        // The score must come after GEXEC has started, because GEXEC opens by clearing the flag.
-        var executiveStartTick = TickOfRomFrameAfterLive(playField, ExecutiveStartArcadeFrames);
-        var firstCheckTick = TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames);
-        Tick(playField, executiveStartTick);
-        playField.AwardScore(100); // SCRFLG is set by any score (ROM UPDATE_PLAYER_SCORE, $DB9C)
-        Tick(playField, firstCheckTick - executiveStartTick);
-
-        Assert.Equal(4, playField.GetGruntSpeedFloor()); // 5 − 1, not 5 − 2
-        Assert.Equal(13, trackedGrunt.MoveIntervalMaxBeats); // 15 − 2, not 15 − 4
-
-        // The pass cleared the flag, so with no further score the next one is the harsh one.
-        Tick(playField, TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames + CheckIntervalArcadeFrames) - firstCheckTick);
-
-        Assert.Equal(2, playField.GetGruntSpeedFloor()); // 4 − 2
-        Assert.Equal(9, trackedGrunt.MoveIntervalMaxBeats); // 13 − 4
-    }
-
-    [Fact]
-    public void AScoreMadeBeforeTheExecutiveStarts_IsForgotten_SoTheFirstPassIsTheHarshOne()
-    {
-        var playField = CreateField(7);
-        Grunt trackedGrunt = new(TestEntityParams.Create(new Random(1)), new IntVector2(100, 100), 15);
-        playField.FieldEntities.Grunts.Add(trackedGrunt);
-
-        // GEXEC opens with CLR SCRFLG (R5 $2A8B), 22 arcade frames after the game goes live, so this score does not count.
-        var scoreTick = WaveStartTicks.UntilLive(playField) + 1;
-        Tick(playField, scoreTick);
-        playField.AwardScore(100);
-        Tick(playField, TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames) - scoreTick);
-
-        Assert.Equal(3, playField.GetGruntSpeedFloor()); // 5 − 2, not 5 − 1
-        Assert.Equal(11, trackedGrunt.MoveIntervalMaxBeats); // 15 − 4, not 15 − 2
-    }
-
-    [Fact]
     public void Floor_Holds_WhileThirtyOrMoreGruntsAreAlive()
     {
         var playField = CreateField();
@@ -214,5 +140,79 @@ public sealed class GruntSpeedProgressTests
         Tick(playField, TickOfRomFrameAfterLive(playField, FirstCheckArcadeFrames + CheckIntervalArcadeFrames));
 
         Assert.Equal(9, playField.GetGruntSpeedFloor());
+    }
+
+    [Fact]
+    public void SpeedUp_TruncatesTo7Eighths_AndRespectsTheCurrentFloor()
+    {
+        var grunt = CreateGruntAt(CreateField(), 100, 100, 1);
+        Assert.Equal(20, grunt.MoveIntervalMaxBeats);
+
+        // 20 × 224/256 = 17.5 → the ROM's MUL high byte truncates to 17.
+        grunt.SpeedUp(1);
+        Assert.Equal(17, grunt.MoveIntervalMaxBeats);
+
+        // 17 × 7/8 = 14.875 → 14, which is BELOW the floor 19, so the ROM's
+        // `BCS` branch leaves the limit UNCHANGED at 17 (it does not clamp UP to
+        // the floor — that was the port's bug, and it made the grunts faster than
+        // the arcade's).
+        grunt.SpeedUp(19);
+        Assert.Equal(17, grunt.MoveIntervalMaxBeats);
+
+        // With a floor the next step can respect, the limit does move.
+        grunt.SpeedUp(14);
+        Assert.Equal(14, grunt.MoveIntervalMaxBeats);
+
+        // And it stops there: 14 × 7/8 = 12 < 14. The in-flight countdown is
+        // deliberately untouched by a kill (the ROM only changes the shared limit),
+        // so the survivors accelerate on their own next pick.
+    }
+
+    [Fact]
+    public void SpeedUpAsWaveGoesOn_LowersLimitBy4_ClampedAtTheFloor()
+    {
+        var grunt = CreateGruntAt(CreateField(), 100, 100, 2);
+
+        grunt.SpeedUpAsWaveGoesOn(9);
+        Assert.Equal(16, grunt.MoveIntervalMaxBeats);
+
+        grunt.SpeedUpAsWaveGoesOn(9);
+        Assert.Equal(12, grunt.MoveIntervalMaxBeats);
+
+        grunt.SpeedUpAsWaveGoesOn(9);
+        Assert.Equal(9, grunt.MoveIntervalMaxBeats); // clamped, does not go below the floor
+
+        grunt.SpeedUpAsWaveGoesOn(1);
+        Assert.Equal(5, grunt.MoveIntervalMaxBeats); // 9 − 4, floor 1
+    }
+
+    private static PlayField CreateField(int wave = 1)
+    {
+        return new PlayFieldBuilder()
+            .WithParameters(WaveParams.CreateFromWave(wave, WaveTable.GetParameters(wave))).WithSeed(1).Build();
+    }
+
+    private static Grunt CreateGruntAt(PlayField playField, int x, int y, int seed)
+    {
+        return new Grunt(TestEntityParams.Create(new Random(seed)), new IntVector2(x, y), 20);
+    }
+
+    private static GameTime OneTick()
+    {
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
+    }
+
+    private static void Tick(PlayField playField, int ticks)
+    {
+        for (var tick = 0; tick < ticks; tick++) playField.Update(OneTick());
+    }
+
+    /// <summary>
+    ///     The port tick, counted from the field being made, on which a fiftieth of a second that many after the game
+    ///     goes live falls.
+    /// </summary>
+    private static int TickOfRomFrameAfterLive(PlayField playField, int arcadeFrames)
+    {
+        return ArcadeClock.ToPortTicksRoundedUp(playField.GetLiveArcadeFrames() + arcadeFrames);
     }
 }

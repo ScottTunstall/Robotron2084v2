@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -34,6 +34,18 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
 {
+    /// <summary>The last animation frame the spheroid shows while it spins or escapes, counting from 0.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: <c>RRC11.ASM</c> <c>CIRCLE</c>/<c>CIRC3L</c>, which start again after the fifth
+    ///             animation frame.
+    ///         </item>
+    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
+    ///     </list>
+    /// </remarks>
+    internal const int SpinLastAnimationFrame = 4;
+
     /// <summary>
     ///     The most <see cref="Robotron2084.Core.ArcadeFrameTimer">beats</see> a spheroid keeps changing its speed by the
     ///     same amounts before it picks new ones.
@@ -121,18 +133,6 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// </remarks>
     private const int RepeatDropIntervalDivisor = 4;
 
-    /// <summary>The last animation frame the spheroid shows while it spins or escapes, counting from 0.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item>
-    ///             Original source: <c>RRC11.ASM</c> <c>CIRCLE</c>/<c>CIRC3L</c>, which start again after the fifth
-    ///             animation frame.
-    ///         </item>
-    ///         <item>Disassembly: <c>asm/robomame.asm</c> <c>ANIMATE_SPHEROID</c> (<c>$11AF</c>).</item>
-    ///     </list>
-    /// </remarks>
-    internal const int SpinLastAnimationFrame = 4;
-
     /// <summary>
     ///     How big the spheroid is, in port pixels. It is the size of the spheroid's sprite.
     /// </summary>
@@ -146,11 +146,12 @@ public sealed class Spheroid : IEntity, IAnimationFrameSource, IRemovable
     /// <summary>Which way the spheroid goes when it escapes: <see cref="DirectionSigns.Left" /> or <see cref="DirectionSigns.Right" />.</summary>
     private readonly int _escapeDirectionSignX;
 
+    private readonly IGameEvents _gameEvents;
+
     /// <summary>Times the spheroid's moves.</summary>
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = ArcadeFrameTimer.CreateDue(ArcadeClock.MoveIntervalArcadeFrames);
 
     private readonly Random _random;
-    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the spheroid picks new amounts to change its speed by.</summary>

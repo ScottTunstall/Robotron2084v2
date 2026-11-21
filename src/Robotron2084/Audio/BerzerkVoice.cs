@@ -23,20 +23,27 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public static class BerzerkVoice
 {
-    /// <summary>The lowest pitch: the slowest and deepest voice.</summary>
-    public const int MinimumPitch = 0;
-
     /// <summary>The highest pitch: the quickest and highest voice.</summary>
     public const int MaximumPitch = 7;
 
-    /// <summary>The pitch the word samples were recorded at. It is the game's pitch for "INTRUDER ALERT".</summary>
-    public const int SamplePitch = 3;
+    /// <summary>The highest volume: the board as loud as it goes.</summary>
+    public const int MaximumVolume = 7;
+
+    /// <summary>The lowest pitch: the slowest and deepest voice.</summary>
+    public const int MinimumPitch = 0;
 
     /// <summary>The lowest volume: silent.</summary>
     public const int MinimumVolume = 0;
 
-    /// <summary>The highest volume: the board as loud as it goes.</summary>
-    public const int MaximumVolume = 7;
+    /// <summary>
+    ///     How long a <see cref="BerzerkWord.Pause" /> lasts, in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>:
+    ///     a sixth of a second. A port addition: the chip has no pause. Tuned by ear: a quarter of a second was slightly too
+    ///     long between the two halves of "INTRUDER ALERT INTRUDER ALERT".
+    /// </summary>
+    public const int PauseTicks = 10;
+
+    /// <summary>The pitch the word samples were recorded at. It is the game's pitch for "INTRUDER ALERT".</summary>
+    public const int SamplePitch = 3;
 
     /// <summary>
     ///     The volume the word samples are taken to have been recorded at: the loudest. It is the game's volume for
@@ -45,12 +52,8 @@ public static class BerzerkVoice
     /// <remarks>Original source: the author's Berzerk disassembly, <c>berzerk.asm</c> <c>INTRUDER_ALERT_INTRUDER_ALERT</c>, whose control byte is <c>$7B</c>. Disassembly: <c>$2C4A</c>.</remarks>
     public const int SampleVolume = 7;
 
-    /// <summary>
-    ///     How long a <see cref="BerzerkWord.Pause" /> lasts, in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>:
-    ///     a sixth of a second. A port addition: the chip has no pause. Tuned by ear: a quarter of a second was slightly too
-    ///     long between the two halves of "INTRUDER ALERT INTRUDER ALERT".
-    /// </summary>
-    public const int PauseTicks = 10;
+    /// <summary>The speech board divides the chip's clock by this number less the pitch.</summary>
+    private const int PitchDividerBase = 16;
 
     /// <summary>Gets the name of a word's speech line: its file name in <c>Content/Speech/Berzerk/</c>, in capitals.</summary>
     /// <param name="berzerkWord">The word. It must not be <see cref="BerzerkWord.Pause" />, which has no line.</param>
@@ -61,9 +64,6 @@ public static class BerzerkVoice
 
         return berzerkWord.ToString().ToUpperInvariant();
     }
-
-    /// <summary>The speech board divides the chip's clock by this number less the pitch.</summary>
-    private const int PitchDividerBase = 16;
 
     /// <summary>Gets how far to raise or lower the word samples to play them at a pitch.</summary>
     /// <param name="pitch">The pitch, from <see cref="MinimumPitch" /> to <see cref="MaximumPitch" />.</param>

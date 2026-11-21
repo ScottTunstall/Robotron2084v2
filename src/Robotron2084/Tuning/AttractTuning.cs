@@ -70,6 +70,13 @@ public static class AttractTuning
     /// </remarks>
     public const int TitleArcadeTextSeconds = 6;
 
+    /// <summary>
+    ///     How many seconds the presentation page's bottom row shows the copyright line before the prompt for the menu page
+    ///     takes its place, and how long the prompt stays before the copyright line is back.
+    /// </summary>
+    /// <remarks>Port only.</remarks>
+    public const int TitleFooterSeconds = 2;
+
     /// <summary>How many seconds the title sits idle before the demo takes over.</summary>
     /// <remarks>Port only.</remarks>
     public const int TitleIdleSeconds = 12;
@@ -80,13 +87,6 @@ public static class AttractTuning
     /// </summary>
     /// <remarks>Port only.</remarks>
     public const int TitlePortTextSeconds = 3;
-
-    /// <summary>
-    ///     How many seconds the presentation page's bottom row shows the copyright line before the prompt for the menu page
-    ///     takes its place, and how long the prompt stays before the copyright line is back.
-    /// </summary>
-    /// <remarks>Port only.</remarks>
-    public const int TitleFooterSeconds = 2;
 
     /// <summary>The palette index of the wall on the title screen.</summary>
     /// <remarks>

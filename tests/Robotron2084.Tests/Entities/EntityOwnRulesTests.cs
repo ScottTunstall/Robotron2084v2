@@ -1,13 +1,13 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Collections;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
 using Robotron2084.Events;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -34,16 +34,33 @@ public sealed class EntityOwnRulesTests
     }
 
     [Fact]
-    public void ATanksSpot_IsMovedSoItsWholeBoxIsInsideThePlayfield()
+    public void AnEntityListCountsItsLiving_UntilTheDeadArePruned()
     {
-        var bounds = new Rectangle(20, 30, 400, 300);
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Width);
-        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Height);
+        var list = new ElectrodeList
+        {
+            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)),
+            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 10))
+        };
+        Assert.Equal(2, list.Count(entity => !entity.IsDead()));
 
-        Assert.Equal(new IntVector2(20, 30), Tank.GetPositionInside(bounds, new IntVector2(0, 0)));
-        Assert.Equal(new IntVector2(bounds.Right - width, bounds.Bottom - height),
-            Tank.GetPositionInside(bounds, new IntVector2(900, 900)));
-        Assert.Equal(new IntVector2(100, 100), Tank.GetPositionInside(bounds, new IntVector2(100, 100)));
+        // A shrivelling electrode is dying, not dead, so it still counts.
+        list[0].Kill();
+        Assert.Equal(2, list.Count(entity => !entity.IsDead()));
+    }
+
+    [Fact]
+    public void AnEntityListCountsOnlyTheAlive_SoADyingOneIsAlreadyOffTheCount()
+    {
+        var list = new ElectrodeList
+        {
+            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)),
+            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 10))
+        };
+        Assert.Equal(2, list.CountAlive());
+
+        list[0].Kill(); // an electrode shrivels: dying, not yet dead
+
+        Assert.Equal(1, list.CountAlive());
     }
 
     [Fact]
@@ -69,53 +86,16 @@ public sealed class EntityOwnRulesTests
     }
 
     [Fact]
-    public void AnEntityListCountsOnlyTheAlive_SoADyingOneIsAlreadyOffTheCount()
-    {
-        var list = new ElectrodeList
-        {
-            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)),
-            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 10))
-        };
-        Assert.Equal(2, list.CountAlive());
-
-        list[0].Kill(); // an electrode shrivels: dying, not yet dead
-
-        Assert.Equal(1, list.CountAlive());
-    }
-
-    [Fact]
-    public void AnEntityListCountsItsLiving_UntilTheDeadArePruned()
-    {
-        var list = new ElectrodeList
-        {
-            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)),
-            new(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 10))
-        };
-        Assert.Equal(2, list.Count(entity => !entity.IsDead()));
-
-        // A shrivelling electrode is dying, not dead, so it still counts.
-        list[0].Kill();
-        Assert.Equal(2, list.Count(entity => !entity.IsDead()));
-    }
-
-    [Fact]
-    public void TheStripClip_IsThePlayfieldInArcadePixels()
+    public void ATanksSpot_IsMovedSoItsWholeBoxIsInsideThePlayfield()
     {
         var bounds = new Rectangle(20, 30, 400, 300);
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankCollisionSize.Height);
 
-        var clip = StripClip.CreateFromPortPixels(bounds);
-
-        Assert.Equal(
-            new StripClip(20 / ScreenSize.PortPixelsPerArcadePixel, 420 / ScreenSize.PortPixelsPerArcadePixel,
-                30 / ScreenSize.PortPixelsPerArcadePixel, 330 / ScreenSize.PortPixelsPerArcadePixel), clip);
-    }
-
-    [Fact]
-    public void TheDemosPlayerChasesEveryKind_ExceptTheElectrodesAndTheShotsItDodges()
-    {
-        var notChased = RobotKinds.All.Where(kind => !kind.IsChasedByDemoPlayer).Select(kind => kind.Kind).ToArray();
-
-        Assert.Equal([RobotKind.Electrode, RobotKind.Spark, RobotKind.TankShell], notChased);
+        Assert.Equal(new IntVector2(20, 30), Tank.GetPositionInside(bounds, new IntVector2(0, 0)));
+        Assert.Equal(new IntVector2(bounds.Right - width, bounds.Bottom - height),
+            Tank.GetPositionInside(bounds, new IntVector2(900, 900)));
+        Assert.Equal(new IntVector2(100, 100), Tank.GetPositionInside(bounds, new IntVector2(100, 100)));
     }
 
     [Fact]
@@ -128,6 +108,14 @@ public sealed class EntityOwnRulesTests
         Assert.Equal(ScreenSize.ToPortPixelsFromColumns(3) + ScreenSize.ToPortPixelsFromArcadePixels(5),
             from.GetManhattanDistance(to));
         Assert.Equal(3 + 5, ScreenSize.ToColumnAndRowDistance(from, to));
+    }
+
+    [Fact]
+    public void TheDemosPlayerChasesEveryKind_ExceptTheElectrodesAndTheShotsItDodges()
+    {
+        var notChased = RobotKinds.All.Where(kind => !kind.IsChasedByDemoPlayer).Select(kind => kind.Kind).ToArray();
+
+        Assert.Equal([RobotKind.Electrode, RobotKind.Spark, RobotKind.TankShell], notChased);
     }
 
     [Fact]
@@ -147,5 +135,17 @@ public sealed class EntityOwnRulesTests
         grunt.Kill();
         Assert.True(grunt.IsDead());
         Assert.False(grunt.IsAlive());
+    }
+
+    [Fact]
+    public void TheStripClip_IsThePlayfieldInArcadePixels()
+    {
+        var bounds = new Rectangle(20, 30, 400, 300);
+
+        var clip = StripClip.CreateFromPortPixels(bounds);
+
+        Assert.Equal(
+            new StripClip(20 / ScreenSize.PortPixelsPerArcadePixel, 420 / ScreenSize.PortPixelsPerArcadePixel,
+                30 / ScreenSize.PortPixelsPerArcadePixel, 330 / ScreenSize.PortPixelsPerArcadePixel), clip);
     }
 }

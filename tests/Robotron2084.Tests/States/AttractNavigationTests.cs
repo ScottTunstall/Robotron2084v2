@@ -9,17 +9,6 @@ namespace Robotron2084.Tests.States;
 public sealed class AttractNavigationTests
 {
     [Fact]
-    public void TheSequence_IsTheTitleTwice_TheStoryPages_TheDemo_AndTheHighScores()
-    {
-        Assert.Equal(0, AttractNavigation.TitleArcadePaneStep);
-        Assert.Equal(1, AttractNavigation.TitlePortPaneStep);
-        Assert.Equal(2, AttractNavigation.FirstStoryPageStep);
-        Assert.Equal(AttractNavigation.FirstStoryPageStep + AttractNavigation.StoryPageCount, AttractNavigation.DemoStep);
-        Assert.Equal(AttractNavigation.DemoStep + 1, AttractNavigation.HighScoresStep);
-        Assert.Equal(AttractNavigation.HighScoresStep + 1, AttractNavigation.StepCount);
-    }
-
-    [Fact]
     public void Next_VisitsEveryStepOnceAndComesBackToTheFirst()
     {
         var visited = new List<int>();
@@ -47,6 +36,17 @@ public sealed class AttractNavigationTests
             AttractNavigation.GetNeighbourStep(AttractNavigation.TitleArcadePaneStep, -1));
         Assert.Equal(AttractNavigation.TitleArcadePaneStep,
             AttractNavigation.GetNeighbourStep(AttractNavigation.HighScoresStep, 1));
+    }
+
+    [Fact]
+    public void TheSequence_IsTheTitleTwice_TheStoryPages_TheDemo_AndTheHighScores()
+    {
+        Assert.Equal(0, AttractNavigation.TitleArcadePaneStep);
+        Assert.Equal(1, AttractNavigation.TitlePortPaneStep);
+        Assert.Equal(2, AttractNavigation.FirstStoryPageStep);
+        Assert.Equal(AttractNavigation.FirstStoryPageStep + AttractNavigation.StoryPageCount, AttractNavigation.DemoStep);
+        Assert.Equal(AttractNavigation.DemoStep + 1, AttractNavigation.HighScoresStep);
+        Assert.Equal(AttractNavigation.HighScoresStep + 1, AttractNavigation.StepCount);
     }
 
     [Fact]

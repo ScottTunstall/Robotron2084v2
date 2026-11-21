@@ -1,16 +1,15 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Audio.Models;
-using Robotron2084.Audio;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -42,6 +41,9 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class Gorf : IExplodable, IRemovable
 {
+    /// <summary>How far Gorf goes sideways on each step, in port pixels.</summary>
+    private const int StepPixels = GorfTuning.StepPixels;
+
     /// <summary>How big Gorf is, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GorfCollisionSize.Width),
@@ -50,26 +52,23 @@ public sealed class Gorf : IExplodable, IRemovable
     /// <summary>How high every hop goes, in port pixels.</summary>
     private static readonly int HopPixels = ScreenSize.ToPortPixelsFromArcadePixels(GorfTuning.HopRows);
 
-    /// <summary>How far Gorf goes sideways on each step, in port pixels.</summary>
-    private const int StepPixels = GorfTuning.StepPixels;
-
     private readonly ArcadeFrameTimer _animationArcadeFrameTimer = new();
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private readonly int _directionSignX;
     private readonly Queue<int> _dropCounts = new();
+    private readonly int _dropIntervalSteps;
     private readonly Queue<int> _dropSteps = new();
+    private readonly IGameEvents _gameEvents;
     private readonly int _groundY;
     private readonly int _maxDropsX2;
     private readonly Rectangle _playfieldBounds;
     private readonly Random _random;
-    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private readonly int _totalSteps;
-    private IntVector2 _position;
-    private PlayField? _playField;
-    private readonly int _dropIntervalSteps;
-    private int _pendingDropCount;
     private GorfLine? _lineToSay;
+    private int _pendingDropCount;
+    private PlayField? _playField;
+    private IntVector2 _position;
     private int _stepCount;
 
     /// <summary>
@@ -191,22 +190,6 @@ public sealed class Gorf : IExplodable, IRemovable
     }
 
     /// <summary>
-    ///     Takes Gorf off the field, killed or not, and arranges for a new Gorf to bring any grunts it still owes.
-    /// </summary>
-    private void Remove()
-    {
-        LifeState = EntityLifeState.Dead;
-        if (_playField is null || (_dropCounts.Count == 0 && _pendingDropCount == 0)) return;
-
-        var gruntsOwed = _dropCounts.Sum() + _pendingDropCount;
-        _pendingDropCount = 0;
-        _dropCounts.Clear();
-        _dropSteps.Clear();
-        var fasterInterval = Math.Max(1, _dropIntervalSteps * GorfTuning.ReturnDropIntervalFifths / 5);
-        _playField.ScheduleGorfReturn(gruntsOwed, fasterInterval);
-    }
-
-    /// <summary>
     ///     Runs one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>. On a
     ///     <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> Gorf animates, takes a step along its hop, and drops
     ///     grunts if it has reached a drop point.
@@ -222,16 +205,6 @@ public sealed class Gorf : IExplodable, IRemovable
 
         if (_animationArcadeFrameTimer.Tick(GorfTuning.AnimationIntervalArcadeFrames)) ShowNextAnimationFrame();
         if (_beatArcadeFrameTimer.Tick(GorfTuning.BeatIntervalArcadeFrames)) ActOnBeat(playField);
-    }
-
-    /// <summary>Says the line Gorf was given to say when it first appears, once, and then has none left to say.</summary>
-    /// <param name="playField">The playfield, which has the line said.</param>
-    private void SayTheAppearanceLine(PlayField playField)
-    {
-        if (_lineToSay is not { } gorfLine) return;
-
-        _lineToSay = null;
-        playField.SayGorfLine(gorfLine);
     }
 
     /// <summary>
@@ -278,24 +251,6 @@ public sealed class Gorf : IExplodable, IRemovable
         if (_stepCount >= _totalSteps) Remove();
     }
 
-    /// <summary>Plans the usual drops: <see cref="GorfTuning.DropStops" /> stops, evenly spaced, each dropping a number by chance.</summary>
-    private void PlanDropStops()
-    {
-        for (var stop = 1; stop <= GorfTuning.DropStops; stop++)
-            _dropSteps.Enqueue(stop * _totalSteps / (GorfTuning.DropStops + 1));
-    }
-
-    /// <summary>Plans an exact number of drops: one grunt at a time, the same number of steps apart.</summary>
-    /// <param name="gruntDropCount">How many grunts to drop in all.</param>
-    private void PlanGradualDrops(int gruntDropCount)
-    {
-        for (var drop = 1; drop <= gruntDropCount; drop++)
-        {
-            _dropSteps.Enqueue(drop * _dropIntervalSteps);
-            _dropCounts.Enqueue(1);
-        }
-    }
-
     /// <summary>
     ///     Chooses the height of the ground Gorf hops along. It is by chance anywhere the whole of Gorf, hops included, is
     ///     inside the wall, and, when there is a player to avoid, anywhere its whole body stays clear of the player's box.
@@ -320,16 +275,23 @@ public sealed class Gorf : IExplodable, IRemovable
         return highestGroundBelowPlayer + (pick - roomAbove);
     }
 
-    /// <summary>
-    ///     Gets how many grunts this stop drops: its exact share when Gorf was given a number to drop in all. Otherwise
-    ///     it is picked the way a spheroid picks its enforcers (a random number from 1 up to the wave's limit, halved and
-    ///     rounded up) and is never more than <see cref="GorfTuning.MaxGruntsPerDrop" />.
-    /// </summary>
-    private int GetDropCount()
+    /// <summary>Drops some grunts side by side from Gorf's body.</summary>
+    /// <param name="playField">The playfield, which puts the grunts on the field and holds them back when the wave is full.</param>
+    /// <param name="count">How many grunts to drop.</param>
+    private void DropGrunts(PlayField playField, int count)
     {
-        if (_dropCounts.Count > 0) return _dropCounts.Dequeue();
+        var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
+        var gruntHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
+        var spacing = gruntWidth + GorfTuning.DropGapPixels;
+        var centreX = _position.X + (CollisionSize.Width - gruntWidth) / 2;
+        var bodyY = _position.Y + (CollisionSize.Height - gruntHeight) / 2;
+        var groundY = _groundY + CollisionSize.Height - gruntHeight;
 
-        return Math.Min(GorfTuning.MaxGruntsPerDrop, (_random.Next(_maxDropsX2) + 2) / 2);
+        for (var index = 0; index < count; index++)
+        {
+            var sideways = (2 * index - (count - 1)) * spacing / 2;
+            playField.SpawnGrunt(new IntVector2(centreX + sideways, bodyY), new IntVector2(centreX + sideways, groundY));
+        }
     }
 
     /// <summary>
@@ -349,23 +311,60 @@ public sealed class Gorf : IExplodable, IRemovable
         return new Rectangle(left, top, rowWidth, Math.Max(gruntHeight, bottom - top));
     }
 
-    /// <summary>Drops some grunts side by side from Gorf's body.</summary>
-    /// <param name="playField">The playfield, which puts the grunts on the field and holds them back when the wave is full.</param>
-    /// <param name="count">How many grunts to drop.</param>
-    private void DropGrunts(PlayField playField, int count)
+    /// <summary>
+    ///     Gets how many grunts this stop drops: its exact share when Gorf was given a number to drop in all. Otherwise
+    ///     it is picked the way a spheroid picks its enforcers (a random number from 1 up to the wave's limit, halved and
+    ///     rounded up) and is never more than <see cref="GorfTuning.MaxGruntsPerDrop" />.
+    /// </summary>
+    private int GetDropCount()
     {
-        var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
-        var gruntHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
-        var spacing = gruntWidth + GorfTuning.DropGapPixels;
-        var centreX = _position.X + (CollisionSize.Width - gruntWidth) / 2;
-        var bodyY = _position.Y + (CollisionSize.Height - gruntHeight) / 2;
-        var groundY = _groundY + CollisionSize.Height - gruntHeight;
+        if (_dropCounts.Count > 0) return _dropCounts.Dequeue();
 
-        for (var index = 0; index < count; index++)
+        return Math.Min(GorfTuning.MaxGruntsPerDrop, (_random.Next(_maxDropsX2) + 2) / 2);
+    }
+
+    /// <summary>Plans the usual drops: <see cref="GorfTuning.DropStops" /> stops, evenly spaced, each dropping a number by chance.</summary>
+    private void PlanDropStops()
+    {
+        for (var stop = 1; stop <= GorfTuning.DropStops; stop++)
+            _dropSteps.Enqueue(stop * _totalSteps / (GorfTuning.DropStops + 1));
+    }
+
+    /// <summary>Plans an exact number of drops: one grunt at a time, the same number of steps apart.</summary>
+    /// <param name="gruntDropCount">How many grunts to drop in all.</param>
+    private void PlanGradualDrops(int gruntDropCount)
+    {
+        for (var drop = 1; drop <= gruntDropCount; drop++)
         {
-            var sideways = (2 * index - (count - 1)) * spacing / 2;
-            playField.SpawnGrunt(new IntVector2(centreX + sideways, bodyY), new IntVector2(centreX + sideways, groundY));
+            _dropSteps.Enqueue(drop * _dropIntervalSteps);
+            _dropCounts.Enqueue(1);
         }
+    }
+
+    /// <summary>
+    ///     Takes Gorf off the field, killed or not, and arranges for a new Gorf to bring any grunts it still owes.
+    /// </summary>
+    private void Remove()
+    {
+        LifeState = EntityLifeState.Dead;
+        if (_playField is null || (_dropCounts.Count == 0 && _pendingDropCount == 0)) return;
+
+        var gruntsOwed = _dropCounts.Sum() + _pendingDropCount;
+        _pendingDropCount = 0;
+        _dropCounts.Clear();
+        _dropSteps.Clear();
+        var fasterInterval = Math.Max(1, _dropIntervalSteps * GorfTuning.ReturnDropIntervalFifths / 5);
+        _playField.ScheduleGorfReturn(gruntsOwed, fasterInterval);
+    }
+
+    /// <summary>Says the line Gorf was given to say when it first appears, once, and then has none left to say.</summary>
+    /// <param name="playField">The playfield, which has the line said.</param>
+    private void SayTheAppearanceLine(PlayField playField)
+    {
+        if (_lineToSay is not { } gorfLine) return;
+
+        _lineToSay = null;
+        playField.SayGorfLine(gorfLine);
     }
 
     /// <summary>Moves on to the next of Gorf's animation frames, and goes back to the first after the last one.</summary>

@@ -1,8 +1,7 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Entities.Extensions;
-using Robotron2084.Entities;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Level;
@@ -16,39 +15,6 @@ namespace Robotron2084.Tests.Level;
 public sealed class FamilyMemberSpawnTests
 {
     private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
-
-    private static GameTime OneTick()
-    {
-        return new GameTime(TimeSpan.Zero, OneTickSpan);
-    }
-
-    /// <summary>The ROM's own wave table, so the family, electrodes and robots are the arcade's.</summary>
-    private static PlayField CreateField(int seed, int wave)
-    {
-        return new PlayFieldBuilder()
-            .WithParameters(WaveParams.CreateFromWave(wave, WaveTable.GetParameters(wave)))
-            .WithRandom(new Random(seed)).Build();
-    }
-
-    [Fact]
-    public void TheFamilyNeverStartsOnAnElectrode()
-    {
-        // A family member refuses to step into a live electrode, so one placed inside stands there for
-        // the whole wave (the author's report). The placement predicate has to hold for every
-        // wave — including the fallback paths, which used to return an unchecked point.
-        foreach (var wave in new[] { 1, 5, 6, 7, 12, 20, 33 })
-            for (var seed = 1; seed <= 120; seed++)
-            {
-                var playField = CreateField(seed, wave);
-
-                foreach (var familyMember in playField.FieldEntities.FamilyList)
-                foreach (var electrode in playField.FieldEntities.Electrodes)
-                    Assert.False(
-                        electrode.GetBounds().Intersects(familyMember.GetBounds()),
-                        $"wave {wave} seed {seed}: {familyMember.Kind} at {familyMember.GetBounds()} spawns on an "
-                        + $"electrode at {electrode.GetBounds()}");
-            }
-    }
 
     [Fact]
     public void TheFamilyAlsoNeverWalksOntoAnElectrode()
@@ -78,6 +44,26 @@ public sealed class FamilyMemberSpawnTests
     }
 
     [Fact]
+    public void TheFamilyNeverStartsOnAnElectrode()
+    {
+        // A family member refuses to step into a live electrode, so one placed inside stands there for
+        // the whole wave (the author's report). The placement predicate has to hold for every
+        // wave — including the fallback paths, which used to return an unchecked point.
+        foreach (var wave in new[] { 1, 5, 6, 7, 12, 20, 33 })
+            for (var seed = 1; seed <= 120; seed++)
+            {
+                var playField = CreateField(seed, wave);
+
+                foreach (var familyMember in playField.FieldEntities.FamilyList)
+                    foreach (var electrode in playField.FieldEntities.Electrodes)
+                        Assert.False(
+                            electrode.GetBounds().Intersects(familyMember.GetBounds()),
+                            $"wave {wave} seed {seed}: {familyMember.Kind} at {familyMember.GetBounds()} spawns on an "
+                            + $"electrode at {electrode.GetBounds()}");
+            }
+    }
+
+    [Fact]
     public void TheFamilyStartsWalkingWhileTheRobotsAreStillHeld()
     {
         // Two things were holding the family at the start of a wave: the shared
@@ -96,5 +82,18 @@ public sealed class FamilyMemberSpawnTests
 
         var moved = familyMembers.Count(h => h.IsAlive() && h.Position != start[h]);
         Assert.True(moved > 0, "the family was still standing after half a second");
+    }
+
+    /// <summary>The ROM's own wave table, so the family, electrodes and robots are the arcade's.</summary>
+    private static PlayField CreateField(int seed, int wave)
+    {
+        return new PlayFieldBuilder()
+            .WithParameters(WaveParams.CreateFromWave(wave, WaveTable.GetParameters(wave)))
+            .WithRandom(new Random(seed)).Build();
+    }
+
+    private static GameTime OneTick()
+    {
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 }

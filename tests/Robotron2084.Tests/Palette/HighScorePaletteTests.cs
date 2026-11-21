@@ -12,24 +12,6 @@ namespace Robotron2084.Tests.Palette;
 /// </summary>
 public sealed class HighScorePaletteTests
 {
-    private static (GamePalette GamePalette, HighScorePalette HighScorePalette) Started()
-    {
-        var gamePalette = new GamePalette();
-        var cycleHighScorePalette = new HighScorePalette();
-        cycleHighScorePalette.Start(gamePalette);
-        cycleHighScorePalette.StartRamps(gamePalette);
-        return (gamePalette, cycleHighScorePalette);
-    }
-
-    /// <summary>Started but with the four ramps still to come (the ROM's page order).</summary>
-    private static (GamePalette GamePalette, HighScorePalette HighScorePalette) FrameOnly()
-    {
-        var gamePalette = new GamePalette();
-        var cycleHighScorePalette = new HighScorePalette();
-        cycleHighScorePalette.Start(gamePalette);
-        return (gamePalette, cycleHighScorePalette);
-    }
-
     [Fact]
     public void Start_BlacksThePaletteAndStartsOnlyTheWallsCycle()
     {
@@ -54,6 +36,20 @@ public sealed class HighScorePaletteTests
     }
 
     [Fact]
+    public void Start_TakesPaletteIndicesTenTwelveAndThirteenOffTheInGameAnimator()
+    {
+        var (gamePalette, _) = Started();
+
+        // The ROM kills the game's colour processes when the game ends; in the port the
+        // in-game animator owns 10-15 until this suspends the three the page drives.
+        foreach (var paletteIndex in HighScorePalette.OwnedPaletteIndices) Assert.True(gamePalette.IsPaletteIndexSuspended(paletteIndex), $"palette index {paletteIndex}");
+
+        Assert.False(gamePalette.IsPaletteIndexSuspended(8));
+        Assert.False(gamePalette.IsPaletteIndexSuspended(11));
+        Assert.False(gamePalette.IsPaletteIndexSuspended(14));
+    }
+
+    [Fact]
     public void StartRamps_BringsTheFourRampsUpInTheirOwnPhases()
     {
         var (gamePalette, cycleHighScorePalette) = Started();
@@ -75,66 +71,30 @@ public sealed class HighScorePaletteTests
     }
 
     [Fact]
-    public void TheRampsDoNotRunBeforeTheyAreStarted()
-    {
-        var (gamePalette, cycleHighScorePalette) = FrameOnly();
-
-        for (var tick = 0; tick < 100; tick++) cycleHighScorePalette.Update(gamePalette);
-
-        Assert.Equal(0x00, gamePalette.GetPaletteIndexValue(9));
-        Assert.Equal(0x00, gamePalette.GetPaletteIndexValue(10));
-        Assert.Equal(0x00, gamePalette.GetPaletteIndexValue(12));
-        Assert.Equal(0x00, gamePalette.GetPaletteIndexValue(13));
-
-        // ...the wall's cycle runs regardless (it comes up with the frame).
-        Assert.NotEqual(0x00, gamePalette.GetPaletteIndexValue(8));
-    }
-
-    [Fact]
-    public void Start_TakesPaletteIndicesTenTwelveAndThirteenOffTheInGameAnimator()
-    {
-        var (gamePalette, _) = Started();
-
-        // The ROM kills the game's colour processes when the game ends; in the port the
-        // in-game animator owns 10-15 until this suspends the three the page drives.
-        foreach (var paletteIndex in HighScorePalette.OwnedPaletteIndices) Assert.True(gamePalette.IsPaletteIndexSuspended(paletteIndex), $"palette index {paletteIndex}");
-
-        Assert.False(gamePalette.IsPaletteIndexSuspended(8));
-        Assert.False(gamePalette.IsPaletteIndexSuspended(11));
-        Assert.False(gamePalette.IsPaletteIndexSuspended(14));
-    }
-
-    [Fact]
-    public void TheWallCycle_StepsEveryThreeArcadeFramesAndWalksTheOldColourDownAPaletteIndex()
+    public void Stop_GivesTheDefaultPaletteAndTheCyclingPaletteIndicesBack()
     {
         var (gamePalette, cycleHighScorePalette) = Started();
 
-        // 3 fiftieths of a second = 18 clock units = 3.6 port ticks, so the first step lands on tick 4.
-        for (var tick = 0; tick < 3; tick++) cycleHighScorePalette.Update(gamePalette);
+        for (var tick = 0; tick < 40; tick++) cycleHighScorePalette.Update(gamePalette);
 
-        Assert.Equal(HighScorePalette.CycleTable[0], gamePalette.GetPaletteIndexValue(8));
+        cycleHighScorePalette.Stop(gamePalette);
 
-        cycleHighScorePalette.Update(gamePalette);
-        Assert.Equal(HighScorePalette.CycleTable[1], gamePalette.GetPaletteIndexValue(8));
-        Assert.Equal(HighScorePalette.CycleTable[0], gamePalette.GetPaletteIndexValue(7));
-
-        for (var tick = 0; tick < 4; tick++) cycleHighScorePalette.Update(gamePalette);
-
-        Assert.Equal(HighScorePalette.CycleTable[2], gamePalette.GetPaletteIndexValue(8));
-        Assert.Equal(HighScorePalette.CycleTable[1], gamePalette.GetPaletteIndexValue(7));
-        Assert.Equal(HighScorePalette.CycleTable[0], gamePalette.GetPaletteIndexValue(6));
+        for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++)
+        {
+            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], gamePalette.GetPaletteIndexValue(paletteIndex));
+            Assert.False(gamePalette.IsPaletteIndexSuspended(paletteIndex), $"palette index {paletteIndex}");
+        }
     }
 
     [Fact]
-    public void TheWallCycle_RunsTheWholeTableAndStartsItAgain()
+    public void TheHighlightRamps_MatchTheirOwnTableAndPhase()
     {
         var (gamePalette, cycleHighScorePalette) = Started();
 
-        // 21 entries at 3 fiftieths of a second each = 63 fiftieths of a second = 378 clock units = 75.6 port ticks,
-        // so one lap later the process is back at the table's start.
-        for (var tick = 0; tick < 76; tick++) cycleHighScorePalette.Update(gamePalette);
+        for (var tick = 0; tick < 5; tick++) cycleHighScorePalette.Update(gamePalette);
 
-        Assert.Equal(HighScorePalette.CycleTable[0], gamePalette.GetPaletteIndexValue(8));
+        Assert.Equal(0xD2, gamePalette.GetPaletteIndexValue(12)); // COLC was started at CCTAB+7 ($E4)
+        Assert.Equal(0xFF, gamePalette.GetPaletteIndexValue(13)); // COLD is still in CCTAB's seven $FFs
     }
 
     [Fact]
@@ -173,29 +133,69 @@ public sealed class HighScorePaletteTests
     }
 
     [Fact]
-    public void TheHighlightRamps_MatchTheirOwnTableAndPhase()
+    public void TheRampsDoNotRunBeforeTheyAreStarted()
     {
-        var (gamePalette, cycleHighScorePalette) = Started();
+        var (gamePalette, cycleHighScorePalette) = FrameOnly();
 
-        for (var tick = 0; tick < 5; tick++) cycleHighScorePalette.Update(gamePalette);
+        for (var tick = 0; tick < 100; tick++) cycleHighScorePalette.Update(gamePalette);
 
-        Assert.Equal(0xD2, gamePalette.GetPaletteIndexValue(12)); // COLC was started at CCTAB+7 ($E4)
-        Assert.Equal(0xFF, gamePalette.GetPaletteIndexValue(13)); // COLD is still in CCTAB's seven $FFs
+        Assert.Equal(0x00, gamePalette.GetPaletteIndexValue(9));
+        Assert.Equal(0x00, gamePalette.GetPaletteIndexValue(10));
+        Assert.Equal(0x00, gamePalette.GetPaletteIndexValue(12));
+        Assert.Equal(0x00, gamePalette.GetPaletteIndexValue(13));
+
+        // ...the wall's cycle runs regardless (it comes up with the frame).
+        Assert.NotEqual(0x00, gamePalette.GetPaletteIndexValue(8));
     }
 
     [Fact]
-    public void Stop_GivesTheDefaultPaletteAndTheCyclingPaletteIndicesBack()
+    public void TheWallCycle_RunsTheWholeTableAndStartsItAgain()
     {
         var (gamePalette, cycleHighScorePalette) = Started();
 
-        for (var tick = 0; tick < 40; tick++) cycleHighScorePalette.Update(gamePalette);
+        // 21 entries at 3 fiftieths of a second each = 63 fiftieths of a second = 378 clock units = 75.6 port ticks,
+        // so one lap later the process is back at the table's start.
+        for (var tick = 0; tick < 76; tick++) cycleHighScorePalette.Update(gamePalette);
 
-        cycleHighScorePalette.Stop(gamePalette);
+        Assert.Equal(HighScorePalette.CycleTable[0], gamePalette.GetPaletteIndexValue(8));
+    }
 
-        for (var paletteIndex = 0; paletteIndex <= 15; paletteIndex++)
-        {
-            Assert.Equal(GamePalette.DefaultPaletteValues[paletteIndex], gamePalette.GetPaletteIndexValue(paletteIndex));
-            Assert.False(gamePalette.IsPaletteIndexSuspended(paletteIndex), $"palette index {paletteIndex}");
-        }
+    [Fact]
+    public void TheWallCycle_StepsEveryThreeArcadeFramesAndWalksTheOldColourDownAPaletteIndex()
+    {
+        var (gamePalette, cycleHighScorePalette) = Started();
+
+        // 3 fiftieths of a second = 18 clock units = 3.6 port ticks, so the first step lands on tick 4.
+        for (var tick = 0; tick < 3; tick++) cycleHighScorePalette.Update(gamePalette);
+
+        Assert.Equal(HighScorePalette.CycleTable[0], gamePalette.GetPaletteIndexValue(8));
+
+        cycleHighScorePalette.Update(gamePalette);
+        Assert.Equal(HighScorePalette.CycleTable[1], gamePalette.GetPaletteIndexValue(8));
+        Assert.Equal(HighScorePalette.CycleTable[0], gamePalette.GetPaletteIndexValue(7));
+
+        for (var tick = 0; tick < 4; tick++) cycleHighScorePalette.Update(gamePalette);
+
+        Assert.Equal(HighScorePalette.CycleTable[2], gamePalette.GetPaletteIndexValue(8));
+        Assert.Equal(HighScorePalette.CycleTable[1], gamePalette.GetPaletteIndexValue(7));
+        Assert.Equal(HighScorePalette.CycleTable[0], gamePalette.GetPaletteIndexValue(6));
+    }
+
+    /// <summary>Started but with the four ramps still to come (the ROM's page order).</summary>
+    private static (GamePalette GamePalette, HighScorePalette HighScorePalette) FrameOnly()
+    {
+        var gamePalette = new GamePalette();
+        var cycleHighScorePalette = new HighScorePalette();
+        cycleHighScorePalette.Start(gamePalette);
+        return (gamePalette, cycleHighScorePalette);
+    }
+
+    private static (GamePalette GamePalette, HighScorePalette HighScorePalette) Started()
+    {
+        var gamePalette = new GamePalette();
+        var cycleHighScorePalette = new HighScorePalette();
+        cycleHighScorePalette.Start(gamePalette);
+        cycleHighScorePalette.StartRamps(gamePalette);
+        return (gamePalette, cycleHighScorePalette);
     }
 }

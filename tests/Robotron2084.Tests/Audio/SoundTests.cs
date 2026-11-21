@@ -9,10 +9,37 @@ public sealed class SoundTests : IDisposable
     private readonly bool _wasAttractMuted = Sound.AttractMuted;
     private readonly bool _wasEnabled = Sound.Enabled;
 
+    [Fact]
+    public void ASoundAskedForWithoutAPlaceIsHeardInTheMiddle()
+    {
+        var recordingSink = new RecordingSink();
+        Sound.Initialise(recordingSink);
+        Sound.Enabled = true;
+
+        Sound.Play(SoundTables.PlayerLaser);
+        Sound.Tick();
+
+        Assert.Equal(0f, recordingSink.Sends[0].Pan);
+    }
+
     public void Dispose()
     {
         Sound.Enabled = _wasEnabled;
         Sound.AttractMuted = _wasAttractMuted;
+    }
+
+    [Fact]
+    public void WhileTheAttractIsMuted_NothingReachesTheSink()
+    {
+        var recordingSink = new RecordingSink();
+        Sound.Initialise(recordingSink);
+        Sound.Enabled = true;
+        Sound.AttractMuted = true;
+
+        Sound.Play(SoundTables.PlayerLaser);
+        for (var i = 0; i < 20; i++) Sound.Tick();
+
+        Assert.Empty(recordingSink.Sends);
     }
 
     [Fact]
@@ -40,32 +67,5 @@ public sealed class SoundTests : IDisposable
         for (var i = 0; i < 20; i++) Sound.Tick();
 
         Assert.Single(recordingSink.Sends);
-    }
-
-    [Fact]
-    public void WhileTheAttractIsMuted_NothingReachesTheSink()
-    {
-        var recordingSink = new RecordingSink();
-        Sound.Initialise(recordingSink);
-        Sound.Enabled = true;
-        Sound.AttractMuted = true;
-
-        Sound.Play(SoundTables.PlayerLaser);
-        for (var i = 0; i < 20; i++) Sound.Tick();
-
-        Assert.Empty(recordingSink.Sends);
-    }
-
-    [Fact]
-    public void ASoundAskedForWithoutAPlaceIsHeardInTheMiddle()
-    {
-        var recordingSink = new RecordingSink();
-        Sound.Initialise(recordingSink);
-        Sound.Enabled = true;
-
-        Sound.Play(SoundTables.PlayerLaser);
-        Sound.Tick();
-
-        Assert.Equal(0f, recordingSink.Sends[0].Pan);
     }
 }

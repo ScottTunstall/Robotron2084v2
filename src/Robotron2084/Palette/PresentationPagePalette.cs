@@ -53,7 +53,7 @@ namespace Robotron2084.Palette;
 ///                     (<c>DOBALL</c>), <c>$88EF</c> (<c>WILL55</c>) and <c>$8A70</c> (<c>LCTAB</c>). The disassembly gives no
 ///                     label for these routines, only addresses.
 ///                 </description>
-///             
+///
 ///     </para>
 /// </remarks>
 public sealed class PresentationPagePalette
@@ -85,6 +85,15 @@ public sealed class PresentationPagePalette
     /// </remarks>
     public static readonly byte[] PageColours = [0x07, 0xC0, 0x17, 0x30, 0xC7, 0x1F, 0x3F];
 
+    /// <summary>How many fiftieths of a second pass between one colour change of the border logos and the next.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRLOG.ASM</c> <c>DOBALL</c>, <c>LDA #28</c> ("WE'LL DO 28"), with the wait in <c>WILL55</c>.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$87D9</c>, <c>LDA #$1C</c>, and <c>$88EF</c>.</description></item>
+    ///     </list>
+    /// </remarks>
+    private const int LargeTitleLettersArcadeFramesPerCycle = 28;
+
     /// <summary>How many fiftieths of a second pass between one cycle of the white flash and the next.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -103,21 +112,12 @@ public sealed class PresentationPagePalette
     /// </remarks>
     private const byte WhiteFlashColour = 0xFF;
 
-    /// <summary>How many fiftieths of a second pass between one colour change of the border logos and the next.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item><description>Original source: <c>RRLOG.ASM</c> <c>DOBALL</c>, <c>LDA #28</c> ("WE'LL DO 28"), with the wait in <c>WILL55</c>.</description></item>
-    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$87D9</c>, <c>LDA #$1C</c>, and <c>$88EF</c>.</description></item>
-    ///     </list>
-    /// </remarks>
-    private const int LargeTitleLettersArcadeFramesPerCycle = 28;
-
     private readonly int _paletteIndexCount = LastPaletteIndex - FirstPaletteIndex + 1;
 
-    private int _whiteFlashClockUnits;
-    private int _whiteFlashPaletteIndex = FirstPaletteIndex;
     private int _largeTitleLettersClockUnits;
     private int _largeTitleLettersCyclePosition;
+    private int _whiteFlashClockUnits;
+    private int _whiteFlashPaletteIndex = FirstPaletteIndex;
 
     /// <summary>
     ///     The palette entry the large title letters is drawn in right now. It goes 7, 6, 5, 4, 3, 2, 1 and then back to 7.

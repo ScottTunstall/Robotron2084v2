@@ -11,34 +11,19 @@ namespace Robotron2084.Tests.Hud;
 /// </summary>
 public sealed class HighScorePrintSequenceTests
 {
-    private const int Today = 10;
     private const int AllTime = 36;
+    private const int Today = 10;
 
     [Fact]
-    public void NothingIsPrinted_UntilTheFramesTwoPassesHaveFinished()
+    public void AnEmptyPageFinishesAsSoonAsItStarts()
     {
         var highScorePrintSequence = new HighScorePrintSequence();
 
-        for (var tick = 0; tick < 200; tick++) highScorePrintSequence.Tick(false, Today, AllTime);
+        highScorePrintSequence.Tick(true, 0, 0);
 
-        Assert.False(highScorePrintSequence.IsPrinting());
+        Assert.True(highScorePrintSequence.HeadersPrinted);
+        Assert.True(highScorePrintSequence.IsDone());
         Assert.Equal(0, highScorePrintSequence.TodayRows);
-        Assert.Equal(0, highScorePrintSequence.AllTimeRows);
-        Assert.False(highScorePrintSequence.TopPrinted);
-        Assert.False(highScorePrintSequence.HeadersPrinted);
-        Assert.False(highScorePrintSequence.IsDone());
-    }
-
-    [Fact]
-    public void TheFirstGroupPrintsWithTheFramesLastStroke()
-    {
-        var highScorePrintSequence = new HighScorePrintSequence();
-
-        highScorePrintSequence.Tick(true, Today, AllTime);
-
-        // PRJNK's first group prints the moment it is called (TOD44 falls into TOD33).
-        Assert.Equal(4, highScorePrintSequence.TodayRows);
-        Assert.True(highScorePrintSequence.IsPrinting());
     }
 
     [Fact]
@@ -73,6 +58,33 @@ public sealed class HighScorePrintSequenceTests
     }
 
     [Fact]
+    public void NothingIsPrinted_UntilTheFramesTwoPassesHaveFinished()
+    {
+        var highScorePrintSequence = new HighScorePrintSequence();
+
+        for (var tick = 0; tick < 200; tick++) highScorePrintSequence.Tick(false, Today, AllTime);
+
+        Assert.False(highScorePrintSequence.IsPrinting());
+        Assert.Equal(0, highScorePrintSequence.TodayRows);
+        Assert.Equal(0, highScorePrintSequence.AllTimeRows);
+        Assert.False(highScorePrintSequence.TopPrinted);
+        Assert.False(highScorePrintSequence.HeadersPrinted);
+        Assert.False(highScorePrintSequence.IsDone());
+    }
+
+    [Fact]
+    public void TheFirstGroupPrintsWithTheFramesLastStroke()
+    {
+        var highScorePrintSequence = new HighScorePrintSequence();
+
+        highScorePrintSequence.Tick(true, Today, AllTime);
+
+        // PRJNK's first group prints the moment it is called (TOD44 falls into TOD33).
+        Assert.Equal(4, highScorePrintSequence.TodayRows);
+        Assert.True(highScorePrintSequence.IsPrinting());
+    }
+
+    [Fact]
     public void TheWholePagePrintsInAboutTenArcadeFrames()
     {
         // 10 rows = 3 groups (2 sleeps) and 36 rows = 9 groups (8 sleeps): ten fiftieths of a second
@@ -89,16 +101,10 @@ public sealed class HighScorePrintSequenceTests
         Assert.InRange(ticks, 11, 14);
     }
 
-    [Fact]
-    public void AnEmptyPageFinishesAsSoonAsItStarts()
+    /// <summary>Ticks <paramref name="frames" /> fiftieths of a second' worth of printing.</summary>
+    private static void TickFrames(HighScorePrintSequence highScorePrintSequence, int frames)
     {
-        var highScorePrintSequence = new HighScorePrintSequence();
-
-        highScorePrintSequence.Tick(true, 0, 0);
-
-        Assert.True(highScorePrintSequence.HeadersPrinted);
-        Assert.True(highScorePrintSequence.IsDone());
-        Assert.Equal(0, highScorePrintSequence.TodayRows);
+        for (var tick = 0; tick < (frames * 6 + 4) / 5; tick++) highScorePrintSequence.Tick(false, Today, AllTime);
     }
 
     private static void TickUntil(HighScorePrintSequence highScorePrintSequence, Func<HighScorePrintSequence, bool> condition)
@@ -106,11 +112,5 @@ public sealed class HighScorePrintSequenceTests
         for (var tick = 0; tick < 200 && !condition(highScorePrintSequence); tick++) highScorePrintSequence.Tick(false, Today, AllTime);
 
         Assert.True(condition(highScorePrintSequence), "the page never reached the expected state");
-    }
-
-    /// <summary>Ticks <paramref name="frames" /> fiftieths of a second' worth of printing.</summary>
-    private static void TickFrames(HighScorePrintSequence highScorePrintSequence, int frames)
-    {
-        for (var tick = 0; tick < (frames * 6 + 4) / 5; tick++) highScorePrintSequence.Tick(false, Today, AllTime);
     }
 }

@@ -1,5 +1,5 @@
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Persistence;
 using Xunit;
 
@@ -13,17 +13,48 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public sealed class DifficultyTuningTests
 {
-    private static WaveParams Wave(int number)
+    [Theory]
+    [InlineData(6, 8)]
+    [InlineData(6, 10)]
+    [InlineData(1, 6)]
+    public void AHarderSettingIsNeverMercied(int wave, int difficulty)
     {
-        return WaveParams.CreateFromWave(number, WaveTable.GetParameters(number));
+        var waveParams = Wave(wave);
+
+        Assert.NotSame(waveParams, DifficultyTuning.Apply(waveParams, difficulty, 1));
     }
 
     [Fact]
-    public void TheRecommendedDifficultyChangesNothing()
+    public void AnEasierSettingIsRaisedToRecommendedForAPlayerAtWaveFourteen()
     {
-        var waveParams = Wave(6);
+        var waveParams = Wave(14);
 
-        Assert.Same(waveParams, DifficultyTuning.Apply(waveParams, GameSettings.RecommendedDifficulty, 3));
+        Assert.Same(waveParams, DifficultyTuning.Apply(waveParams, 2, 1));
+    }
+
+    [Fact]
+    public void AnEasierSettingIsRaisedToRecommendedFromWaveFiveWithThreeMenLeft()
+    {
+        var waveParams = Wave(5);
+
+        Assert.Same(waveParams, DifficultyTuning.Apply(waveParams, 2, 3));
+    }
+
+    [Fact]
+    public void EasierThanRecommendedGoesTheOtherWay()
+    {
+        // Wave 6 at difficulty 2, two lives left so the mercy does not quietly step it back to 5.
+        var adjusted = DifficultyTuning.Apply(Wave(6), 2, 2);
+
+        Assert.Equal(17, adjusted.GruntMoveDelay); // 15 + 2
+        Assert.Equal(8, adjusted.MaxDropsX2); // 10 − 2
+        Assert.Equal(4, adjusted.MaxEnforcersPerSpheroid); // ceil(8/2)
+        Assert.Equal(23, adjusted.EnforcerFireDelay); // 20 + 3
+        Assert.Equal(8, adjusted.HulkBeatIntervalArcadeFrames); // 7 + 1
+        Assert.Equal(47, adjusted.BrainFireDelay); // 40 + 7
+        Assert.Equal(160, adjusted.ShellSpeed); // 176 − 29, clamped to the record's floor
+        Assert.Equal(19, adjusted.QuarkDropDelay); // 16 + 3
+        Assert.Equal(42, adjusted.QuarkMaxSpeed); // 50 − 8
     }
 
     [Fact]
@@ -49,36 +80,11 @@ public sealed class DifficultyTuningTests
     }
 
     [Fact]
-    public void EasierThanRecommendedGoesTheOtherWay()
+    public void TheMercyDoesNotApplyBeforeWaveFive()
     {
-        // Wave 6 at difficulty 2, two lives left so the mercy does not quietly step it back to 5.
-        var adjusted = DifficultyTuning.Apply(Wave(6), 2, 2);
+        var adjusted = DifficultyTuning.Apply(Wave(4), 2, 3);
 
-        Assert.Equal(17, adjusted.GruntMoveDelay); // 15 + 2
-        Assert.Equal(8, adjusted.MaxDropsX2); // 10 − 2
-        Assert.Equal(4, adjusted.MaxEnforcersPerSpheroid); // ceil(8/2)
-        Assert.Equal(23, adjusted.EnforcerFireDelay); // 20 + 3
-        Assert.Equal(8, adjusted.HulkBeatIntervalArcadeFrames); // 7 + 1
-        Assert.Equal(47, adjusted.BrainFireDelay); // 40 + 7
-        Assert.Equal(160, adjusted.ShellSpeed); // 176 − 29, clamped to the record's floor
-        Assert.Equal(19, adjusted.QuarkDropDelay); // 16 + 3
-        Assert.Equal(42, adjusted.QuarkMaxSpeed); // 50 − 8
-    }
-
-    [Fact]
-    public void AnEasierSettingIsRaisedToRecommendedForAPlayerAtWaveFourteen()
-    {
-        var waveParams = Wave(14);
-
-        Assert.Same(waveParams, DifficultyTuning.Apply(waveParams, 2, 1));
-    }
-
-    [Fact]
-    public void AnEasierSettingIsRaisedToRecommendedFromWaveFiveWithThreeMenLeft()
-    {
-        var waveParams = Wave(5);
-
-        Assert.Same(waveParams, DifficultyTuning.Apply(waveParams, 2, 3));
+        Assert.Equal(8, adjusted.MaxDropsX2);
     }
 
     [Fact]
@@ -90,21 +96,15 @@ public sealed class DifficultyTuningTests
     }
 
     [Fact]
-    public void TheMercyDoesNotApplyBeforeWaveFive()
+    public void TheRecommendedDifficultyChangesNothing()
     {
-        var adjusted = DifficultyTuning.Apply(Wave(4), 2, 3);
+        var waveParams = Wave(6);
 
-        Assert.Equal(8, adjusted.MaxDropsX2);
+        Assert.Same(waveParams, DifficultyTuning.Apply(waveParams, GameSettings.RecommendedDifficulty, 3));
     }
 
-    [Theory]
-    [InlineData(6, 8)]
-    [InlineData(6, 10)]
-    [InlineData(1, 6)]
-    public void AHarderSettingIsNeverMercied(int wave, int difficulty)
+    private static WaveParams Wave(int number)
     {
-        var waveParams = Wave(wave);
-
-        Assert.NotSame(waveParams, DifficultyTuning.Apply(waveParams, difficulty, 1));
+        return WaveParams.CreateFromWave(number, WaveTable.GetParameters(number));
     }
 }

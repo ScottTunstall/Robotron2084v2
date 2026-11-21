@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.AttractMode.Models;
 using Robotron2084.AttractMode;
+using Robotron2084.AttractMode.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.AttractMode;
@@ -13,54 +13,15 @@ public sealed class AttractStorylineTests
 {
     private const int TickLimit = 60_000;
 
-    private static GameTime Tick()
-    {
-        return new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
-    }
-
-    /// <summary>Everything the movie shows in one 50th of a second, as text, so two movies can be compared.</summary>
-    private static string GetSnapshot(AttractMovie attractMovie)
-    {
-        var objects = attractMovie.AttractObjectMachine.Objects.Select(movieObject =>
-            $"{movieObject.Descriptor?.Animation}:{movieObject.AnimationFrameIndex}@{movieObject.XSubpixels},{movieObject.YSubpixels}");
-        var cells = attractMovie.AttractPageMachine.TextCells.Select(cell => $"{cell.Character}{cell.PaletteIndex}@{cell.X},{cell.Y}");
-        return $"{string.Join(';', objects)}|{string.Join(';', cells)}|{attractMovie.AttractPageMachine.Message}";
-    }
-
     [Fact]
-    public void WithTheDoneWaits_TheStorylinePlaysExactlyAsTheArcadesDoes()
+    public void AScriptWithNoneOfTheArcadesMarkers_IsCopiedAsItIs()
     {
-        var arcadeMovie = new AttractMovie(AttractMovieData.Rom, AttractMovieData.Rom.Histo, new Random(5));
-        var portMovie = new AttractMovie(AttractMovieData.Rom, AttractStoryline.Create(AttractMovieData.Rom.Histo), new Random(5));
+        byte[] script = [0x41, 0x5F, 0x42];
 
-        for (var tick = 0; tick < TickLimit && !arcadeMovie.IsFinished(); tick++)
-        {
-            arcadeMovie.Update(Tick());
-            portMovie.Update(Tick());
-            Assert.Equal(GetSnapshot(arcadeMovie), GetSnapshot(portMovie));
-            Assert.Equal(arcadeMovie.IsFinished(), portMovie.IsFinished());
-        }
+        var created = AttractStoryline.Create(script);
 
-        Assert.True(arcadeMovie.IsFinished());
-        Assert.Equal(arcadeMovie.ArcadeFrames, portMovie.ArcadeFrames);
-    }
-
-    [Fact]
-    public void TheDoneWaits_GoAtTheEndOfTheFamilyGruntsHulkAndSpheroidPages_AndTheEndOfTheMovie()
-    {
-        var script = AttractStoryline.Create(AttractMovieData.Rom.Histo);
-
-        var waits = new List<AttractSequence>();
-        for (var index = 0; index < script.Length - 1; index++)
-            if (script[index] == PageScriptOpcodes.WaitUntilDone && script[index + 1] <= (byte)AttractSequence.Electrodes)
-                waits.Add((AttractSequence)script[index + 1]);
-
-        Assert.Equal(
-            [
-                AttractSequence.Family, AttractSequence.Grunts, AttractSequence.Hulk, AttractSequence.SpheroidsAndQuarks,
-                AttractSequence.Electrodes
-            ],
-            waits);
+        Assert.Equal(script, created);
+        Assert.NotSame(script, created);
     }
 
     [Fact]
@@ -89,13 +50,52 @@ public sealed class AttractStorylineTests
     }
 
     [Fact]
-    public void AScriptWithNoneOfTheArcadesMarkers_IsCopiedAsItIs()
+    public void TheDoneWaits_GoAtTheEndOfTheFamilyGruntsHulkAndSpheroidPages_AndTheEndOfTheMovie()
     {
-        byte[] script = [0x41, 0x5F, 0x42];
+        var script = AttractStoryline.Create(AttractMovieData.Rom.Histo);
 
-        var created = AttractStoryline.Create(script);
+        var waits = new List<AttractSequence>();
+        for (var index = 0; index < script.Length - 1; index++)
+            if (script[index] == PageScriptOpcodes.WaitUntilDone && script[index + 1] <= (byte)AttractSequence.Electrodes)
+                waits.Add((AttractSequence)script[index + 1]);
 
-        Assert.Equal(script, created);
-        Assert.NotSame(script, created);
+        Assert.Equal(
+            [
+                AttractSequence.Family, AttractSequence.Grunts, AttractSequence.Hulk, AttractSequence.SpheroidsAndQuarks,
+                AttractSequence.Electrodes
+            ],
+            waits);
+    }
+
+    [Fact]
+    public void WithTheDoneWaits_TheStorylinePlaysExactlyAsTheArcadesDoes()
+    {
+        var arcadeMovie = new AttractMovie(AttractMovieData.Rom, AttractMovieData.Rom.Histo, new Random(5));
+        var portMovie = new AttractMovie(AttractMovieData.Rom, AttractStoryline.Create(AttractMovieData.Rom.Histo), new Random(5));
+
+        for (var tick = 0; tick < TickLimit && !arcadeMovie.IsFinished(); tick++)
+        {
+            arcadeMovie.Update(Tick());
+            portMovie.Update(Tick());
+            Assert.Equal(GetSnapshot(arcadeMovie), GetSnapshot(portMovie));
+            Assert.Equal(arcadeMovie.IsFinished(), portMovie.IsFinished());
+        }
+
+        Assert.True(arcadeMovie.IsFinished());
+        Assert.Equal(arcadeMovie.ArcadeFrames, portMovie.ArcadeFrames);
+    }
+
+    /// <summary>Everything the movie shows in one 50th of a second, as text, so two movies can be compared.</summary>
+    private static string GetSnapshot(AttractMovie attractMovie)
+    {
+        var objects = attractMovie.AttractObjectMachine.Objects.Select(movieObject =>
+            $"{movieObject.Descriptor?.Animation}:{movieObject.AnimationFrameIndex}@{movieObject.XSubpixels},{movieObject.YSubpixels}");
+        var cells = attractMovie.AttractPageMachine.TextCells.Select(cell => $"{cell.Character}{cell.PaletteIndex}@{cell.X},{cell.Y}");
+        return $"{string.Join(';', objects)}|{string.Join(';', cells)}|{attractMovie.AttractPageMachine.Message}";
+    }
+
+    private static GameTime Tick()
+    {
+        return new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
     }
 }

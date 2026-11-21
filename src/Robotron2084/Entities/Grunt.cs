@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -34,6 +34,9 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts.</summary>
     internal const int BeatIntervalArcadeFrames = 4;
 
+    /// <summary>How many walk animation frames a grunt has.</summary>
+    internal const int WalkAnimationFrameCount = 4;
+
     /// <summary>How long the arcade's routine sleeps after the look that finds the game live, before the first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -52,9 +55,6 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
     /// </remarks>
     private const int LivePollArcadeFrames = 2;
 
-    /// <summary>How many walk animation frames a grunt has.</summary>
-    internal const int WalkAnimationFrameCount = 4;
-
     /// <summary>
     ///     How big the grunt is, in port pixels. It is the size of the grunt's sprite.
     /// </summary>
@@ -62,8 +62,8 @@ public sealed class Grunt : IExplodable, IRemovable, IWaveStartRobot
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width),
             ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height));
 
-    private readonly Random _random;
     private readonly IGameEvents _gameEvents;
+    private readonly Random _random;
     private readonly TextureSet _textureSet;
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
 

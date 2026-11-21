@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -35,6 +35,12 @@ namespace Robotron2084.Entities;
 /// </remarks>
 public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, IStripDrawer
 {
+    /// <summary>
+    ///     The robot's colour when it is not given one: blue, the arcade's colour byte <c>$C0</c> (0, 0, 240).
+    /// </summary>
+    /// <remarks>Not from the arcade: the author's choice.</remarks>
+    public static readonly Color DefaultColour = RobotronColour.CreateFromByte(0xC0);
+
     /// <summary>How long one <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see> lasts. It is the same as a grunt's.</summary>
     internal const int BeatIntervalArcadeFrames = 4;
 
@@ -48,16 +54,8 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, ISt
     /// </remarks>
     internal const int StepIntervalBeats = 2;
 
-    /// <summary>
-    ///     How far one step goes, in arcade pixels: sideways, or up or down, towards the player. Never both at once, so
-    ///     the robot never moves on a slant.
-    /// </summary>
-    /// <remarks>
-    ///     A robot in the Berzerk arcade game also moves one pixel at a time (the author's Berzerk disassembly,
-    ///     <c>berzerk.asm</c> <c>MOVE_ANIMATE_VECTOR</c>, <c>$27A9</c>). The author: "The berzerk robots cannot move
-    ///     diagonally".
-    /// </remarks>
-    private const int StepArcadePixels = 1;
+    /// <summary>How far one step goes, in port pixels.</summary>
+    internal static readonly int StepPixels = ScreenSize.ToPortPixelsFromArcadePixels(StepArcadePixels);
 
     /// <summary>How long the robot waits after the look that finds the game live, before its first <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>.</summary>
     /// <remarks>
@@ -76,6 +74,17 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, ISt
     /// <summary>How many animation frames each sideways walk has. They are shown in order: the first, then the second.</summary>
     private const int SidewaysWalkFrameCount = 2;
 
+    /// <summary>
+    ///     How far one step goes, in arcade pixels: sideways, or up or down, towards the player. Never both at once, so
+    ///     the robot never moves on a slant.
+    /// </summary>
+    /// <remarks>
+    ///     A robot in the Berzerk arcade game also moves one pixel at a time (the author's Berzerk disassembly,
+    ///     <c>berzerk.asm</c> <c>MOVE_ANIMATE_VECTOR</c>, <c>$27A9</c>). The author: "The berzerk robots cannot move
+    ///     diagonally".
+    /// </remarks>
+    private const int StepArcadePixels = 1;
+
     /// <summary>How big the robot is, in port pixels.</summary>
     private static readonly (int Width, int Height) CollisionSize =
         (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.BerzerkRobotCollisionSize.Width),
@@ -84,25 +93,16 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, ISt
     /// <summary>The order the up and down walks show their three animation frames in: first, second, third, second.</summary>
     private static readonly int[] UpAndDownWalkOrder = [0, 1, 2, 1];
 
-    /// <summary>How far one step goes, in port pixels.</summary>
-    internal static readonly int StepPixels = ScreenSize.ToPortPixelsFromArcadePixels(StepArcadePixels);
-
-    /// <summary>
-    ///     The robot's colour when it is not given one: blue, the arcade's colour byte <c>$C0</c> (0, 0, 240).
-    /// </summary>
-    /// <remarks>Not from the arcade: the author's choice.</remarks>
-    public static readonly Color DefaultColour = RobotronColour.CreateFromByte(0xC0);
-
     private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
     private int _animationStep;
     private ArcadeFrameTimer _beatArcadeFrameTimer = new();
     private bool _hasMoved;
 
+    private IntVector2 _position;
+
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the robot takes its next step.</summary>
     private int _stepBeatsRemaining = StepIntervalBeats;
-
-    private IntVector2 _position;
 
     /// <summary>Makes a robot, standing still until its first step.</summary>
     /// <param name="entityParams">
@@ -215,49 +215,6 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, ISt
         if (_beatArcadeFrameTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
-    /// <summary>Works out which animation frame of a walk to show.</summary>
-    /// <param name="textureSet">The textures the frames come from.</param>
-    /// <param name="walkSequence">The way the robot is walking.</param>
-    /// <param name="animationStep">How many steps the robot has taken.</param>
-    /// <returns>The place of the animation frame in that walk's set.</returns>
-    /// <remarks>
-    ///     A sideways walk shows the first, then the second. A walk up or down shows the first, second, third, then the
-    ///     second again. This order is the author's (notes §138).
-    /// </remarks>
-    internal static int GetWalkFrameIndex(WalkSequence walkSequence, int animationStep)
-    {
-        return walkSequence switch
-        {
-            WalkSequence.Left or WalkSequence.Right => animationStep % SidewaysWalkFrameCount,
-            _ => UpAndDownWalkOrder[animationStep % UpAndDownWalkOrder.Length]
-        };
-    }
-
-    /// <summary>
-    ///     Works out which way the robot faces. It faces sideways if the player is at least as far away sideways as up or
-    ///     down.
-    /// </summary>
-    /// <param name="from">The robot's top-left corner.</param>
-    /// <param name="playerPosition">The player's top-left corner.</param>
-    /// <returns>The walk for the way the robot faces.</returns>
-    /// <remarks>
-    ///     Otherwise it faces up or down.
-    /// </remarks>
-    internal static WalkSequence GetWalkSequenceTowards(IntVector2 from, IntVector2 playerPosition)
-    {
-        var gapX = playerPosition.X - from.X;
-        var gapY = playerPosition.Y - from.Y;
-        var isSidewaysFurther = Math.Abs(gapX) >= Math.Abs(gapY);
-        if (isSidewaysFurther)
-        {
-            var isPlayerToTheRight = gapX >= 0;
-            return isPlayerToTheRight ? WalkSequence.Right : WalkSequence.Left;
-        }
-
-        var isPlayerBelow = gapY >= 0;
-        return isPlayerBelow ? WalkSequence.Down : WalkSequence.Up;
-    }
-
     /// <summary>
     ///     Works out where the robot is after one step towards the player. The step goes the way the robot faces
     ///     (<see cref="GetWalkSequenceTowards" />): sideways, or up or down, never on a slant.
@@ -287,6 +244,63 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, ISt
         return isInsideWall ? nextPosition : position;
     }
 
+    /// <summary>Works out which animation frame of a walk to show.</summary>
+    /// <param name="textureSet">The textures the frames come from.</param>
+    /// <param name="walkSequence">The way the robot is walking.</param>
+    /// <param name="animationStep">How many steps the robot has taken.</param>
+    /// <returns>The place of the animation frame in that walk's set.</returns>
+    /// <remarks>
+    ///     A sideways walk shows the first, then the second. A walk up or down shows the first, second, third, then the
+    ///     second again. This order is the author's (notes §138).
+    /// </remarks>
+    internal static int GetWalkFrameIndex(WalkSequence walkSequence, int animationStep)
+    {
+        return walkSequence switch
+        {
+            WalkSequence.Left or WalkSequence.Right => animationStep % SidewaysWalkFrameCount,
+            _ => UpAndDownWalkOrder[animationStep % UpAndDownWalkOrder.Length]
+        };
+    }
+
+    /// <summary>Gets the set of animation frames for a walk.</summary>
+    /// <param name="textureSet">The textures the frames come from.</param>
+    /// <param name="walkSequence">The way the robot is walking.</param>
+    internal static Texture2D[] GetWalkFrames(TextureSet textureSet, WalkSequence walkSequence)
+    {
+        return walkSequence switch
+        {
+            WalkSequence.Right => textureSet.BerzerkRobotWalkRightAnimationFrameTextures,
+            WalkSequence.Left => textureSet.BerzerkRobotWalkLeftAnimationFrameTextures,
+            WalkSequence.Up => textureSet.BerzerkRobotWalkUpAnimationFrameTextures,
+            _ => textureSet.BerzerkRobotWalkDownAnimationFrameTextures
+        };
+    }
+
+    /// <summary>
+    ///     Works out which way the robot faces. It faces sideways if the player is at least as far away sideways as up or
+    ///     down.
+    /// </summary>
+    /// <param name="from">The robot's top-left corner.</param>
+    /// <param name="playerPosition">The player's top-left corner.</param>
+    /// <returns>The walk for the way the robot faces.</returns>
+    /// <remarks>
+    ///     Otherwise it faces up or down.
+    /// </remarks>
+    internal static WalkSequence GetWalkSequenceTowards(IntVector2 from, IntVector2 playerPosition)
+    {
+        var gapX = playerPosition.X - from.X;
+        var gapY = playerPosition.Y - from.Y;
+        var isSidewaysFurther = Math.Abs(gapX) >= Math.Abs(gapY);
+        if (isSidewaysFurther)
+        {
+            var isPlayerToTheRight = gapX >= 0;
+            return isPlayerToTheRight ? WalkSequence.Right : WalkSequence.Left;
+        }
+
+        var isPlayerBelow = gapY >= 0;
+        return isPlayerBelow ? WalkSequence.Down : WalkSequence.Up;
+    }
+
     /// <summary>
     ///     What the robot does on its <see cref="Robotron2084.Core.ArcadeFrameTimer">beat</see>. It takes a step every
     ///     <see cref="StepIntervalBeats" /> beats.
@@ -303,20 +317,6 @@ public sealed class BerzerkRobot : IExplodable, IRemovable, IWaveStartRobot, ISt
 
         _stepBeatsRemaining = StepIntervalBeats;
         Step(playField);
-    }
-
-    /// <summary>Gets the set of animation frames for a walk.</summary>
-    /// <param name="textureSet">The textures the frames come from.</param>
-    /// <param name="walkSequence">The way the robot is walking.</param>
-    internal static Texture2D[] GetWalkFrames(TextureSet textureSet, WalkSequence walkSequence)
-    {
-        return walkSequence switch
-        {
-            WalkSequence.Right => textureSet.BerzerkRobotWalkRightAnimationFrameTextures,
-            WalkSequence.Left => textureSet.BerzerkRobotWalkLeftAnimationFrameTextures,
-            WalkSequence.Up => textureSet.BerzerkRobotWalkUpAnimationFrameTextures,
-            _ => textureSet.BerzerkRobotWalkDownAnimationFrameTextures
-        };
     }
 
     /// <summary>Faces the player, then takes one step that way.</summary>

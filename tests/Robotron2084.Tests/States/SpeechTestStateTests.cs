@@ -1,5 +1,4 @@
 using Robotron2084.Audio;
-using Robotron2084.States;
 using Xunit;
 
 namespace Robotron2084.Tests.States;
@@ -8,15 +7,9 @@ namespace Robotron2084.Tests.States;
 public sealed class SpeechTestStateTests
 {
     [Fact]
-    public void TheGorfPageHasTheGorfLines_AndTheBerzerkPageHasTheBerzerkLines()
+    public void APageForAFolderThatHasNoLinesHasNone()
     {
-        var gorf = SpeechFolders.GetLineNames(SpeechFolders.Gorf);
-        var berzerk = SpeechFolders.GetLineNames(SpeechFolders.Berzerk);
-
-        Assert.Contains("GOTYOU", gorf);
-        Assert.DoesNotContain("GOTYOU", berzerk);
-        Assert.Contains("INTRUDER", berzerk);
-        Assert.DoesNotContain("INTRUDER", gorf);
+        Assert.Empty(SpeechFolders.GetLineNames("Nobody"));
     }
 
     [Fact]
@@ -29,8 +22,14 @@ public sealed class SpeechTestStateTests
     }
 
     [Fact]
-    public void APageForAFolderThatHasNoLinesHasNone()
+    public void TheGorfPageHasTheGorfLines_AndTheBerzerkPageHasTheBerzerkLines()
     {
-        Assert.Empty(SpeechFolders.GetLineNames("Nobody"));
+        var gorf = SpeechFolders.GetLineNames(SpeechFolders.Gorf);
+        var berzerk = SpeechFolders.GetLineNames(SpeechFolders.Berzerk);
+
+        Assert.Contains("GOTYOU", gorf);
+        Assert.DoesNotContain("GOTYOU", berzerk);
+        Assert.Contains("INTRUDER", berzerk);
+        Assert.DoesNotContain("INTRUDER", gorf);
     }
 }

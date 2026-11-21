@@ -8,6 +8,18 @@ public class StereoPannerTests
     private const int GlideSettledSamples = 4000;
 
     [Fact]
+    public void ALoudSample_IsClippedRatherThanWrappingAround()
+    {
+        var stereoPanner = new StereoPanner();
+        float[] samples = [4f];
+        var stereo = new short[2];
+
+        stereoPanner.Spread(samples, 1f, stereo);
+
+        Assert.Equal(short.MaxValue, stereo[0]);
+    }
+
+    [Fact]
     public void ASoundInTheMiddle_IsEquallyLoudInBothSpeakers_AtAboutSeventyOnePercent()
     {
         var stereoPanner = new StereoPanner();
@@ -40,18 +52,6 @@ public class StereoPannerTests
 
         Assert.InRange(left, 23000, 23400);
         Assert.InRange(right, 23000, 23400);
-    }
-
-    [Fact]
-    public void ALoudSample_IsClippedRatherThanWrappingAround()
-    {
-        var stereoPanner = new StereoPanner();
-        float[] samples = [4f];
-        var stereo = new short[2];
-
-        stereoPanner.Spread(samples, 1f, stereo);
-
-        Assert.Equal(short.MaxValue, stereo[0]);
     }
 
     private static (short Left, short Right) LastFrame(StereoPanner stereoPanner, int samples)

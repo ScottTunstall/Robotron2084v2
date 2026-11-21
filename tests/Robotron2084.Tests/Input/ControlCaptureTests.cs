@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using Robotron2084.Input.Models;
 using Robotron2084.Input;
+using Robotron2084.Input.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Input;
@@ -13,19 +13,14 @@ namespace Robotron2084.Tests.Input;
 /// </summary>
 public sealed class ControlCaptureTests
 {
-    private static InputSnapshot Bare(KeyboardState? keyboardState = null, GamePadState? gamePadState = null)
-    {
-        return new InputSnapshot(keyboardState ?? new KeyboardState(), gamePadState ?? new GamePadState(), new GamePadState());
-    }
-
     [Fact]
-    public void AKeyGoingDown_IsCaptured()
+    public void AGamePadButton_IsCapturedWithItsPadAndButton()
     {
-        var captured = ControlCapture.GetNewlyPressed(
-            Bare(new KeyboardState(Keys.W)),
-            Bare(new KeyboardState(Keys.W, Keys.Up)));
+        var gamePadState = TestPads.WithButton(Buttons.Y);
 
-        Assert.Equal(InputBinding.CreateKey(Keys.Up), captured);
+        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(gamePadState: gamePadState));
+
+        Assert.Equal(InputBinding.CreateButton(0, Buttons.Y), captured);
     }
 
     [Fact]
@@ -39,13 +34,24 @@ public sealed class ControlCaptureTests
     }
 
     [Fact]
-    public void AGamePadButton_IsCapturedWithItsPadAndButton()
+    public void AKeyBeatsAPadPressOnTheSameTick()
     {
-        var gamePadState = TestPads.WithButton(Buttons.Y);
+        // A keyboard-defining pass is the common case, so it wins the tie.
+        var gamePadState = TestPads.WithButton(Buttons.A);
 
-        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(gamePadState: gamePadState));
+        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(new KeyboardState(Keys.R), gamePadState));
 
-        Assert.Equal(InputBinding.CreateButton(0, Buttons.Y), captured);
+        Assert.Equal(InputBinding.CreateKey(Keys.R), captured);
+    }
+
+    [Fact]
+    public void AKeyGoingDown_IsCaptured()
+    {
+        var captured = ControlCapture.GetNewlyPressed(
+            Bare(new KeyboardState(Keys.W)),
+            Bare(new KeyboardState(Keys.W, Keys.Up)));
+
+        Assert.Equal(InputBinding.CreateKey(Keys.Up), captured);
     }
 
     [Fact]
@@ -57,30 +63,6 @@ public sealed class ControlCaptureTests
 
         // Up on the left stick, in screen space (XNA's Y is up-positive).
         Assert.Equal(InputBinding.CreateStick(0, false, 0, -1), captured);
-    }
-
-    [Fact]
-    public void TheSecondPadsInputSaysSo()
-    {
-        var gamePadState = TestPads.WithButton(Buttons.A);
-        InputSnapshot previous = new(new KeyboardState(), new GamePadState(), new GamePadState());
-        InputSnapshot current = new(new KeyboardState(), new GamePadState(), gamePadState);
-
-        var captured = ControlCapture.GetNewlyPressed(previous, current);
-
-        Assert.Equal(InputBinding.CreateButton(1, Buttons.A), captured);
-        Assert.Equal("P2 A", captured.GetDisplayName());
-    }
-
-    [Fact]
-    public void AKeyBeatsAPadPressOnTheSameTick()
-    {
-        // A keyboard-defining pass is the common case, so it wins the tie.
-        var gamePadState = TestPads.WithButton(Buttons.A);
-
-        var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(new KeyboardState(Keys.R), gamePadState));
-
-        Assert.Equal(InputBinding.CreateKey(Keys.R), captured);
     }
 
     [Theory]
@@ -97,5 +79,23 @@ public sealed class ControlCaptureTests
         var captured = ControlCapture.GetNewlyPressed(Bare(), Bare(gamePadState: gamePadState));
 
         Assert.Equal(InputBinding.CreateButton(0, button), captured);
+    }
+
+    [Fact]
+    public void TheSecondPadsInputSaysSo()
+    {
+        var gamePadState = TestPads.WithButton(Buttons.A);
+        InputSnapshot previous = new(new KeyboardState(), new GamePadState(), new GamePadState());
+        InputSnapshot current = new(new KeyboardState(), new GamePadState(), gamePadState);
+
+        var captured = ControlCapture.GetNewlyPressed(previous, current);
+
+        Assert.Equal(InputBinding.CreateButton(1, Buttons.A), captured);
+        Assert.Equal("P2 A", captured.GetDisplayName());
+    }
+
+    private static InputSnapshot Bare(KeyboardState? keyboardState = null, GamePadState? gamePadState = null)
+    {
+        return new InputSnapshot(keyboardState ?? new KeyboardState(), gamePadState ?? new GamePadState(), new GamePadState());
     }
 }

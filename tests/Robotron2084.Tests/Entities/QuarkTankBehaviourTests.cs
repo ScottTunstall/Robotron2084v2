@@ -1,11 +1,11 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -26,18 +26,25 @@ public sealed class QuarkTankBehaviourTests
 {
     private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime OneTick()
+    [Fact]
+    public void ANearLeftWallQuark_IsTurnedRight_WithinFiveColumnsNotFiveArcadePixels()
     {
-        return new GameTime(TimeSpan.Zero, OneTickSpan);
-    }
+        // ROM SQVEL: `CMPB #XMIN+5` is in columns, so a quark within 5 columns (10 arcade
+        // pixels) of the left wall always picks a rightward speed. 15 port pixels in is
+        // inside that margin, but outside a margin of 5 arcade pixels.
+        for (var seed = 0; seed < 40; seed++)
+        {
+            var playField = CreateField(seed);
+            var bounds = playField.PlayfieldWall.PlayfieldBounds;
+            var quark = new Quark(TestEntityParams.Create(new Random(seed)), new IntVector2(bounds.X + 15, bounds.Y + 200), new QuarkWaveParams(10, 60));
+            playField.FieldEntities.Quarks.Add(quark);
+            var startX = quark.Position.X;
 
-    private static PlayField CreateField(int seed)
-    {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(
-            1,
-            SpheroidCount: 0,
-            MaxDropsX2: 10,
-            SpheroidDropDelay: 30)).WithRandom(new Random(seed)).Build();
+            for (var tick = 0; tick < 12; tick++) playField.Update(OneTick());
+
+            Assert.True(quark.Position.X >= startX,
+                $"seed {seed}: the quark drifted left from {startX} to {quark.Position.X}");
+        }
     }
 
     [Fact]
@@ -126,6 +133,21 @@ public sealed class QuarkTankBehaviourTests
     }
 
     [Fact]
+    public void Tank_BirthIsClampedInsideThePlayfield()
+    {
+        var playField = CreateField(1);
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
+
+        playField.SpawnTank(new IntVector2(bounds.Right + 100, bounds.Bottom + 100));
+
+        var tank = Assert.Single(playField.FieldEntities.Tanks);
+        Assert.True(tank.GetBounds().X >= bounds.X && tank.GetBounds().Right <= bounds.Right,
+            "tank not inside horizontally");
+        Assert.True(tank.GetBounds().Y >= bounds.Y && tank.GetBounds().Bottom <= bounds.Bottom,
+            "tank not inside vertically");
+    }
+
+    [Fact]
     public void Tank_IsBornBeforeItMoves()
     {
         var playField = CreateField(1);
@@ -175,21 +197,6 @@ public sealed class QuarkTankBehaviourTests
     }
 
     [Fact]
-    public void Tank_BirthIsClampedInsideThePlayfield()
-    {
-        var playField = CreateField(1);
-        var bounds = playField.PlayfieldWall.PlayfieldBounds;
-
-        playField.SpawnTank(new IntVector2(bounds.Right + 100, bounds.Bottom + 100));
-
-        var tank = Assert.Single(playField.FieldEntities.Tanks);
-        Assert.True(tank.GetBounds().X >= bounds.X && tank.GetBounds().Right <= bounds.Right,
-            "tank not inside horizontally");
-        Assert.True(tank.GetBounds().Y >= bounds.Y && tank.GetBounds().Bottom <= bounds.Bottom,
-            "tank not inside vertically");
-    }
-
-    [Fact]
     public void Tank_TreadAdvancesOnABeatAndNeverOtherwise()
     {
         var playField = CreateField(1);
@@ -230,24 +237,17 @@ public sealed class QuarkTankBehaviourTests
         Assert.True(advanced, "the tread never advanced after the tank was born");
     }
 
-    [Fact]
-    public void ANearLeftWallQuark_IsTurnedRight_WithinFiveColumnsNotFiveArcadePixels()
+    private static PlayField CreateField(int seed)
     {
-        // ROM SQVEL: `CMPB #XMIN+5` is in columns, so a quark within 5 columns (10 arcade
-        // pixels) of the left wall always picks a rightward speed. 15 port pixels in is
-        // inside that margin, but outside a margin of 5 arcade pixels.
-        for (var seed = 0; seed < 40; seed++)
-        {
-            var playField = CreateField(seed);
-            var bounds = playField.PlayfieldWall.PlayfieldBounds;
-            var quark = new Quark(TestEntityParams.Create(new Random(seed)), new IntVector2(bounds.X + 15, bounds.Y + 200), new QuarkWaveParams(10, 60));
-            playField.FieldEntities.Quarks.Add(quark);
-            var startX = quark.Position.X;
+        return new PlayFieldBuilder().WithParameters(new WaveParams(
+            1,
+            SpheroidCount: 0,
+            MaxDropsX2: 10,
+            SpheroidDropDelay: 30)).WithRandom(new Random(seed)).Build();
+    }
 
-            for (var tick = 0; tick < 12; tick++) playField.Update(OneTick());
-
-            Assert.True(quark.Position.X >= startX,
-                $"seed {seed}: the quark drifted left from {startX} to {quark.Position.X}");
-        }
+    private static GameTime OneTick()
+    {
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 }

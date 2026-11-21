@@ -105,13 +105,13 @@ public static class PlayerTuning
     /// <remarks>See <see cref="PlayerSpeedX" />.</remarks>
     public const int PlayerSpeedY = 3;
 
-    /// <summary>The wave the first game starts at.</summary>
-    /// <remarks>The arcade spec says "assigned level 1".</remarks>
-    public const int StartingWaveNumber = 1;
-
     /// <summary>How many lives each player starts a game with.</summary>
     /// <remarks>The arcade spec says "the PLAYER is awarded 3 lives".</remarks>
     public const int StartingLives = 3;
+
+    /// <summary>The wave the first game starts at.</summary>
+    /// <remarks>The arcade spec says "assigned level 1".</remarks>
+    public const int StartingWaveNumber = 1;
 
     /// <summary>
     ///     The values the death fade writes into the palette index it fades in, one after another. The last one ends the

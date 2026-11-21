@@ -5,16 +5,16 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Robotron2084.Audio;
 using Robotron2084.Audio.Synthesis;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
-using Robotron2084.States.Models;
 using Robotron2084.States;
+using Robotron2084.States.Models;
 
 namespace Robotron2084;
 
@@ -31,6 +31,8 @@ namespace Robotron2084;
 /// <seealso cref="ScreenSize" />
 public sealed class RobotronGame : Game
 {
+    private const ScaleMode CanvasScaleMode = ScaleMode.Integer;
+
     /// <summary>The function keys that start a game on an attract screen, each with the game it starts.</summary>
     private static readonly (Keys Key, GameMode GameMode)[] StartGameKeys =
     [
@@ -40,28 +42,28 @@ public sealed class RobotronGame : Game
     ];
 
     private readonly GraphicsDeviceManager _graphicsDeviceManager;
+
+    /// <summary>The one source of random numbers the whole game shares.</summary>
+    private readonly Random _random = new();
+
     private Rectangle _canvasBounds = new(0, 0, ScreenSize.Width, ScreenSize.Height);
     private ControlSettings _controlSettings = null!;
     private ControlSettingsStore _controlSettingsStore = null!;
     private SpriteFont _font = null!;
     private GameSettings _gameSettings = null!;
     private GameSettingsStore _gameSettingsStore = null!;
+    private GameStateManager _gameStateManager = null!;
+    private GameStateParams _gameStateParams = null!;
     private HighScoreStore _highScoreStore = null!;
-    private IPlayerInputSource _playerInputSource = null!;
     private bool _isFullScreen;
     private PaletteAnimator _paletteAnimator = null!;
+    private IPlayerInputSource _playerInputSource = null!;
     private KeyboardState _previousKeyboardState;
     private GamePadState _previousPadOneState;
     private GamePadState _previousPadTwoState;
     private RenderTarget2D _renderTarget2D = null!;
-    private const ScaleMode CanvasScaleMode = ScaleMode.Integer;
-    private GameStateParams _gameStateParams = null!;
-
-    /// <summary>The one source of random numbers the whole game shares.</summary>
-    private readonly Random _random = new();
     private SpriteBatch _spriteBatch = null!;
     private TextureSet _textureSet = null!;
-    private GameStateManager _gameStateManager = null!;
     private int _windowedScale = 1;
 
     public RobotronGame()
@@ -199,19 +201,6 @@ public sealed class RobotronGame : Game
         catch (NoAudioHardwareException exception)
         {
             Debug.WriteLine($"No sound: {exception.Message}");
-        }
-    }
-
-    /// <summary>Switches the speech voice on. It is separate from the sound board, so nothing the board plays can stop it.</summary>
-    private void StartSpeech()
-    {
-        try
-        {
-            Speech.Initialise(new SoundEffectSpeechVoice(Content));
-        }
-        catch (NoAudioHardwareException exception)
-        {
-            Debug.WriteLine($"No speech: {exception.Message}");
         }
     }
 
@@ -359,6 +348,19 @@ public sealed class RobotronGame : Game
         gameSession.GetCurrent().ScoreBoard.SetScore(DeveloperKeys.QualifyingScore);
         _gameStateManager.TransitionTo(GameOverState.CreateFromSession(_playerInputSource, _textureSet, _highScoreStore, gameSession,
             _random));
+    }
+
+    /// <summary>Switches the speech voice on. It is separate from the sound board, so nothing the board plays can stop it.</summary>
+    private void StartSpeech()
+    {
+        try
+        {
+            Speech.Initialise(new SoundEffectSpeechVoice(Content));
+        }
+        catch (NoAudioHardwareException exception)
+        {
+            Debug.WriteLine($"No speech: {exception.Message}");
+        }
     }
 
     /// <summary>Switches between the windowed window and borderless full screen at the desktop's own mode.</summary>

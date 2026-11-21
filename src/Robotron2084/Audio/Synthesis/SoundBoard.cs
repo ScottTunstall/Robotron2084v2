@@ -145,10 +145,6 @@ public sealed class SoundBoard : ISoundBoard
         _routines = BuildRoutines();
     }
 
-    /// <inheritdoc />
-    public bool IsPlaying() =>
-        _waitingSoundNumber != NoSoundNumber || _outputChanges is not null || _cyclesLeftInChange > 0;
-
     /// <summary>The level the board is sending to the loudspeaker circuit right now, 0 to 255.</summary>
     public byte OutputLevel { get; private set; }
 
@@ -159,6 +155,10 @@ public sealed class SoundBoard : ISoundBoard
     {
         return _routines.ContainsKey(soundNumber);
     }
+
+    /// <inheritdoc />
+    public bool IsPlaying() =>
+        _waitingSoundNumber != NoSoundNumber || _outputChanges is not null || _cyclesLeftInChange > 0;
 
     /// <summary>Runs the board on, until the next change of level or for <paramref name="maxCycles" />, whichever comes first.</summary>
     /// <param name="maxCycles">The most cycles to run; at least 1.</param>

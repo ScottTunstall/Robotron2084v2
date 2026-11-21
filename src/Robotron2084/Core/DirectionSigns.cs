@@ -6,6 +6,9 @@ namespace Robotron2084.Core;
 /// </summary>
 public static class DirectionSigns
 {
+    /// <summary>The sign of a step down the screen.</summary>
+    public const int Down = 1;
+
     /// <summary>The sign of a step to the left.</summary>
     public const int Left = -1;
 
@@ -14,7 +17,4 @@ public static class DirectionSigns
 
     /// <summary>The sign of a step up the screen.</summary>
     public const int Up = -1;
-
-    /// <summary>The sign of a step down the screen.</summary>
-    public const int Down = 1;
 }

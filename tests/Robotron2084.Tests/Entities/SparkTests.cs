@@ -1,12 +1,12 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -29,18 +29,49 @@ public sealed class SparkTests
 {
     private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime OneTick()
+    [Fact]
+    public void AccelerationAndAimJitter_AreInColumnsSidewaysAndRowsUpAndDown()
     {
-        return new GameTime(TimeSpan.Zero, OneTickSpan);
+        // ROM ENFSHT: OXV/OYV are in 1/256 of a column / of a row per frame, and a column is
+        // twice a row, so a sideways unit of acceleration is twice an up-and-down one.
+        var subpixelsPerPortPxPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
+        var sidewaysLimit = SparkTuning.SparkAccelArcadeRange * subpixelsPerPortPxPerMove;
+        var upAndDownLimit = sidewaysLimit / 2;
+        var sidewaysUsedMoreThanTheUpAndDownRange = false;
+
+        for (var seed = 0; seed < 200; seed++)
+        {
+            var spark = new Spark(TestEntityParams.Create(new Random(seed)), new IntVector2(300, 200), new IntVector2(100, 100));
+            Assert.InRange(spark.AccelerationSubpixels.Y, -upAndDownLimit, upAndDownLimit);
+            sidewaysUsedMoreThanTheUpAndDownRange |= Math.Abs(spark.AccelerationSubpixels.X) > upAndDownLimit;
+        }
+
+        Assert.True(sidewaysUsedMoreThanTheUpAndDownRange);
     }
 
-    private static PlayField CreateField(int seed)
+    [Fact]
+    public void Spark_AimsAtThePlayer_WithDistanceProportionalSpeed()
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(
-            1,
-            SpheroidCount: 0,
-            MaxDropsX2: 10,
-            SpheroidDropDelay: 30)).WithRandom(new Random(seed)).Build();
+        var playField = CreateField(3);
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
+
+        // GOSPEL (RRC11.ASM ENFSHT + the generic mover RRS22.ASM OPB80):
+        // OXV = 4 x delta and the mover adds the FULL 16-bit velocity to the
+        // position once per FRAME, so a spark covers delta/64 COLUMNS per frame
+        // — here 300/64 ≈ 4.7 columns ≈ 4.7 port px... per FRAME, and with the
+        // per-axis jitter of (seed & $1F) - 16 columns = ±16 columns = ±64 port
+        // px folded into the delta: after 4 frames the X has moved delta/16 for
+        // delta ∈ [-(300+64), -(300-60)] → about -15 to -23 px.
+        IntVector2 origin = new(inner.X + 300, inner.Y + 100);
+        playField.SpawnSpark(origin, new IntVector2(inner.X, inner.Y + 100));
+        var spark = playField.FieldEntities.Sparks[^1];
+
+        for (var tick = 0; tick < 4; tick++) playField.Update(OneTick());
+
+        Assert.InRange(spark.Position.X - origin.X, -24, -13);
+        // Y had zero aim distance: only the jitter (±64 port px → ±1 px per
+        // frame) can have shown.
+        Assert.InRange(spark.Position.Y - origin.Y, -5, 5);
     }
 
     [Fact]
@@ -68,36 +99,6 @@ public sealed class SparkTests
 
         // It died of its ROM life (<= 168 ticks), not of the wall.
         Assert.Equal(EntityLifeState.Dead, spark.LifeState);
-    }
-
-    [Fact]
-    public void Spark_Life_Is80To140ArcadeFrames()
-    {
-        var playField = CreateField(2);
-        var inner = playField.PlayfieldWall.PlayfieldBounds;
-        IntVector2 centre = new(inner.X + inner.Width / 2, inner.Y + inner.Height / 2);
-
-        for (var seed = 1; seed <= 16; seed++)
-        {
-            playField.SpawnSpark(centre, new IntVector2(centre.X + 1, centre.Y)); // +1 keeps vx non-zero
-            var spark = playField.FieldEntities.Sparks[^1];
-
-            var diedAt = -1;
-            for (var tick = 1; tick <= 400; tick++)
-            {
-                playField.Update(OneTick());
-                if (spark.IsDead())
-                {
-                    diedAt = tick;
-                    break;
-                }
-            }
-
-            Assert.True(diedAt > 0, $"seed {seed}: spark never died");
-            var minTicks = ArcadeClock.ToPortTicks(SparkTuning.SparkLifeMinArcadeFrames);
-            var maxTicks = ArcadeClock.ToPortTicks(SparkTuning.SparkLifeMaxArcadeFrames);
-            Assert.InRange(diedAt, minTicks, maxTicks);
-        }
     }
 
     [Fact]
@@ -132,28 +133,33 @@ public sealed class SparkTests
     }
 
     [Fact]
-    public void Spark_AimsAtThePlayer_WithDistanceProportionalSpeed()
+    public void Spark_Life_Is80To140ArcadeFrames()
     {
-        var playField = CreateField(3);
+        var playField = CreateField(2);
         var inner = playField.PlayfieldWall.PlayfieldBounds;
+        IntVector2 centre = new(inner.X + inner.Width / 2, inner.Y + inner.Height / 2);
 
-        // GOSPEL (RRC11.ASM ENFSHT + the generic mover RRS22.ASM OPB80):
-        // OXV = 4 x delta and the mover adds the FULL 16-bit velocity to the
-        // position once per FRAME, so a spark covers delta/64 COLUMNS per frame
-        // — here 300/64 ≈ 4.7 columns ≈ 4.7 port px... per FRAME, and with the
-        // per-axis jitter of (seed & $1F) - 16 columns = ±16 columns = ±64 port
-        // px folded into the delta: after 4 frames the X has moved delta/16 for
-        // delta ∈ [-(300+64), -(300-60)] → about -15 to -23 px.
-        IntVector2 origin = new(inner.X + 300, inner.Y + 100);
-        playField.SpawnSpark(origin, new IntVector2(inner.X, inner.Y + 100));
-        var spark = playField.FieldEntities.Sparks[^1];
+        for (var seed = 1; seed <= 16; seed++)
+        {
+            playField.SpawnSpark(centre, new IntVector2(centre.X + 1, centre.Y)); // +1 keeps vx non-zero
+            var spark = playField.FieldEntities.Sparks[^1];
 
-        for (var tick = 0; tick < 4; tick++) playField.Update(OneTick());
+            var diedAt = -1;
+            for (var tick = 1; tick <= 400; tick++)
+            {
+                playField.Update(OneTick());
+                if (spark.IsDead())
+                {
+                    diedAt = tick;
+                    break;
+                }
+            }
 
-        Assert.InRange(spark.Position.X - origin.X, -24, -13);
-        // Y had zero aim distance: only the jitter (±64 port px → ±1 px per
-        // frame) can have shown.
-        Assert.InRange(spark.Position.Y - origin.Y, -5, 5);
+            Assert.True(diedAt > 0, $"seed {seed}: spark never died");
+            var minTicks = ArcadeClock.ToPortTicks(SparkTuning.SparkLifeMinArcadeFrames);
+            var maxTicks = ArcadeClock.ToPortTicks(SparkTuning.SparkLifeMaxArcadeFrames);
+            Assert.InRange(diedAt, minTicks, maxTicks);
+        }
     }
 
     /// <summary>
@@ -199,23 +205,17 @@ public sealed class SparkTests
         Assert.InRange(expected.Y, -maxAccelSubpixels, maxAccelSubpixels);
     }
 
-    [Fact]
-    public void AccelerationAndAimJitter_AreInColumnsSidewaysAndRowsUpAndDown()
+    private static PlayField CreateField(int seed)
     {
-        // ROM ENFSHT: OXV/OYV are in 1/256 of a column / of a row per frame, and a column is
-        // twice a row, so a sideways unit of acceleration is twice an up-and-down one.
-        var subpixelsPerPortPxPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
-        var sidewaysLimit = SparkTuning.SparkAccelArcadeRange * subpixelsPerPortPxPerMove;
-        var upAndDownLimit = sidewaysLimit / 2;
-        var sidewaysUsedMoreThanTheUpAndDownRange = false;
+        return new PlayFieldBuilder().WithParameters(new WaveParams(
+            1,
+            SpheroidCount: 0,
+            MaxDropsX2: 10,
+            SpheroidDropDelay: 30)).WithRandom(new Random(seed)).Build();
+    }
 
-        for (var seed = 0; seed < 200; seed++)
-        {
-            var spark = new Spark(TestEntityParams.Create(new Random(seed)), new IntVector2(300, 200), new IntVector2(100, 100));
-            Assert.InRange(spark.AccelerationSubpixels.Y, -upAndDownLimit, upAndDownLimit);
-            sidewaysUsedMoreThanTheUpAndDownRange |= Math.Abs(spark.AccelerationSubpixels.X) > upAndDownLimit;
-        }
-
-        Assert.True(sidewaysUsedMoreThanTheUpAndDownRange);
+    private static GameTime OneTick()
+    {
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 }

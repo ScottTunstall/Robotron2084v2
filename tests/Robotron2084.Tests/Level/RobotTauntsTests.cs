@@ -14,7 +14,8 @@ namespace Robotron2084.Tests.Level;
 /// </summary>
 public sealed class RobotTauntsTests
 {
-    private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
+    /// <summary>More ticks than the longest talk timer can run, so a taunt that is allowed is sure to come in them.</summary>
+    private const int LongestTalkTimerTicks = (RobotTaunts.LongestTalkTimerSeconds + 1) * TicksPerSecond;
 
     /// <summary>How many sentences the picking tests pick: enough for every sentence in a list to come up.</summary>
     private const int SentencesPicked = 2000;
@@ -22,202 +23,11 @@ public sealed class RobotTauntsTests
     /// <summary>Ticks in a second, which is how often the talk timer is counted down.</summary>
     private const int TicksPerSecond = ArcadeClock.PortTicksPerSecond;
 
-    /// <summary>More ticks than the longest talk timer can run, so a taunt that is allowed is sure to come in them.</summary>
-    private const int LongestTalkTimerTicks = (RobotTaunts.LongestTalkTimerSeconds + 1) * TicksPerSecond;
-
+    private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
     private readonly List<IReadOnlyList<BerzerkWord>> _saidSentences = [];
     private readonly List<BerzerkVoiceSetting> _saidVoiceSettings = [];
     private bool _isSpeechBusy;
     private bool _isWaveEndMusicPlaying;
-
-    private RobotTaunts CreateRobotTaunts(int seed = 1)
-    {
-        return new RobotTaunts(new Random(seed), () => _isSpeechBusy, () => _isWaveEndMusicPlaying,
-            (berzerkVoiceSetting, berzerkWords) =>
-            {
-                _saidVoiceSettings.Add(berzerkVoiceSetting);
-                _saidSentences.Add(berzerkWords);
-            });
-    }
-
-    [Fact]
-    public void EachTaunt_IsSaidAtARandomPitchAndVolume_AsBerzerkPicksThem()
-    {
-        var playField = CreateLiveField(CreateBerzerkWave());
-        var robotTaunts = CreateRobotTaunts();
-        var gameSession = CreateGame();
-
-        for (var tick = 0; tick < 200 * LongestTalkTimerTicks; tick++) robotTaunts.Tick(gameSession, playField);
-
-        Assert.True(_saidVoiceSettings.Count >= 100, $"only {_saidVoiceSettings.Count} taunts");
-        var pitches = _saidVoiceSettings.Select(berzerkVoiceSetting => berzerkVoiceSetting.Pitch).Distinct().Order();
-        var volumes = _saidVoiceSettings.Select(berzerkVoiceSetting => berzerkVoiceSetting.Volume).Distinct().Order();
-        Assert.Equal([0, 1, 2, 3, 4, 5, 6, 7], pitches);
-        Assert.Equal([4, 5, 6, 7], volumes);
-    }
-
-    private static PlayField CreateField(WaveParams waveParams)
-    {
-        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(1).Build();
-    }
-
-    private static PlayField CreateLiveField(WaveParams waveParams)
-    {
-        var playField = CreateField(waveParams);
-        for (var tick = 0; tick < WaveStartTicks.UntilLive(playField); tick++)
-            playField.Update(new GameTime(TimeSpan.Zero, OneTickSpan));
-
-        Assert.False(playField.RobotsFrozen());
-        return playField;
-    }
-
-    private static GameSession CreateGame(GameMode gameMode = GameMode.OnePlayer)
-    {
-        return GameSession.CreateNewGame(gameMode, new FakeInputSource());
-    }
-
-    private static WaveParams CreateBerzerkWave(int hulkCount = 0)
-    {
-        return new WaveParams(1, MommyCount: 1, HulkCount: hulkCount, EnableBerzerkSpeak: true);
-    }
-
-    private void TickUntilATauntOrGiveUp(RobotTaunts robotTaunts, GameSession gameSession, PlayField playField)
-    {
-        for (var tick = 0; tick <= LongestTalkTimerTicks && _saidSentences.Count == 0; tick++)
-            robotTaunts.Tick(gameSession, playField);
-    }
-
-    [Fact]
-    public void AClassicWave_NeverTaunts()
-    {
-        var classicWaveParams = new WaveParamsGenerator().Generate(1, GameStyle.Classic);
-        var playField = CreateLiveField(classicWaveParams);
-        var robotTaunts = CreateRobotTaunts();
-
-        for (var tick = 0; tick < 3 * LongestTalkTimerTicks; tick++) robotTaunts.Tick(CreateGame(), playField);
-
-        Assert.False(robotTaunts.IsAllowedToTaunt(playField));
-        Assert.Empty(_saidSentences);
-    }
-
-    [Fact]
-    public void TheFirstTaunt_ComesOnTheGamesFirstSecond()
-    {
-        var playField = CreateLiveField(CreateBerzerkWave());
-        var robotTaunts = CreateRobotTaunts();
-        var gameSession = CreateGame();
-
-        for (var tick = 1; tick < TicksPerSecond; tick++) robotTaunts.Tick(gameSession, playField);
-        Assert.Empty(_saidSentences);
-
-        robotTaunts.Tick(gameSession, playField);
-        Assert.Single(_saidSentences);
-    }
-
-    [Fact]
-    public void AfterATaunt_TheNextComesFourEightTwelveOrSixteenSecondsLater()
-    {
-        var playField = CreateLiveField(CreateBerzerkWave());
-        var robotTaunts = CreateRobotTaunts();
-        var gameSession = CreateGame();
-        List<int> tauntTicks = [];
-
-        for (var tick = 1; tick <= 200 * LongestTalkTimerTicks; tick++)
-        {
-            robotTaunts.Tick(gameSession, playField);
-            if (_saidSentences.Count > tauntTicks.Count) tauntTicks.Add(tick);
-        }
-
-        var gapsInSeconds = tauntTicks.Zip(tauntTicks.Skip(1),
-            (earlierTick, laterTick) => (laterTick - earlierTick) / TicksPerSecond);
-        Assert.Equal([4, 8, 12, 16], gapsInSeconds.Distinct().Order());
-    }
-
-    [Fact]
-    public void TheGetRandomTalkTimerSeconds_IsFourEightTwelveOrSixteen()
-    {
-        var robotTaunts = CreateRobotTaunts();
-
-        var talkTimers = Enumerable.Range(0, 200).Select(_ => robotTaunts.GetRandomTalkTimerSeconds()).Distinct()
-            .Order();
-
-        Assert.Equal([4, 8, 12, 16], talkTimers);
-    }
-
-    [Fact]
-    public void TheRobots_DoNotTaunt_BeforeTheyMayMove()
-    {
-        var playField = CreateField(CreateBerzerkWave());
-        var robotTaunts = CreateRobotTaunts();
-
-        Assert.True(playField.RobotsFrozen());
-        TickUntilATauntOrGiveUp(robotTaunts, CreateGame(), playField);
-
-        Assert.Empty(_saidSentences);
-    }
-
-    [Fact]
-    public void TheRobots_DoNotTaunt_WhileTheWaveEndMusicPlays()
-    {
-        var playField = CreateLiveField(CreateBerzerkWave());
-        var robotTaunts = CreateRobotTaunts();
-        _isWaveEndMusicPlaying = true;
-
-        TickUntilATauntOrGiveUp(robotTaunts, CreateGame(), playField);
-
-        Assert.Empty(_saidSentences);
-    }
-
-    [Fact]
-    public void TheRobots_DoNotStartASentence_WhileAnythingIsBeingSaid()
-    {
-        var playField = CreateLiveField(CreateBerzerkWave());
-        var robotTaunts = CreateRobotTaunts();
-        _isSpeechBusy = true;
-
-        TickUntilATauntOrGiveUp(robotTaunts, CreateGame(), playField);
-
-        Assert.Empty(_saidSentences);
-    }
-
-    [Fact]
-    public void TheTalkTimer_OnlyCountsDown_WhileTheRobotsAreAllowedToTaunt()
-    {
-        var playField = CreateLiveField(CreateBerzerkWave());
-        var robotTaunts = CreateRobotTaunts();
-        var gameSession = CreateGame();
-        for (var tick = 0; tick < TicksPerSecond; tick++) robotTaunts.Tick(gameSession, playField);
-        Assert.Single(_saidSentences);
-
-        _isSpeechBusy = true;
-        for (var tick = 0; tick < 3 * LongestTalkTimerTicks; tick++) robotTaunts.Tick(gameSession, playField);
-        Assert.Single(_saidSentences);
-
-        _isSpeechBusy = false;
-        var quietTicks = 0;
-        while (_saidSentences.Count == 1 && quietTicks <= LongestTalkTimerTicks)
-        {
-            robotTaunts.Tick(gameSession, playField);
-            quietTicks++;
-        }
-
-        Assert.Equal(2, _saidSentences.Count);
-        Assert.InRange(quietTicks, (RobotTaunts.ShortestTalkTimerSeconds - 1) * TicksPerSecond, LongestTalkTimerTicks);
-    }
-
-    [Fact]
-    public void APlayerWhoIsNotAChicken_HearsOnlyTheOnePlayerSentences()
-    {
-        var playField = CreateField(CreateBerzerkWave());
-        var robotTaunts = CreateRobotTaunts();
-        var gameSession = CreateGame();
-
-        var sentences = Enumerable.Range(0, SentencesPicked)
-            .Select(_ => robotTaunts.GetRandomSentence(gameSession, playField)).ToList();
-
-        Assert.All(sentences, sentence => Assert.Contains(sentence, RobotTauntSentences.OnePlayer));
-        Assert.Equal(RobotTauntSentences.OnePlayer.Count, sentences.Distinct().Count());
-    }
 
     [Fact]
     public void AChicken_HearsTheOnePlayerChickenSentences()
@@ -253,6 +63,65 @@ public sealed class RobotTauntsTests
     }
 
     [Fact]
+    public void AClassicWave_NeverTaunts()
+    {
+        var classicWaveParams = new WaveParamsGenerator().Generate(1, GameStyle.Classic);
+        var playField = CreateLiveField(classicWaveParams);
+        var robotTaunts = CreateRobotTaunts();
+
+        for (var tick = 0; tick < 3 * LongestTalkTimerTicks; tick++) robotTaunts.Tick(CreateGame(), playField);
+
+        Assert.False(robotTaunts.IsAllowedToTaunt(playField));
+        Assert.Empty(_saidSentences);
+    }
+
+    [Fact]
+    public void AfterATaunt_TheNextComesFourEightTwelveOrSixteenSecondsLater()
+    {
+        var playField = CreateLiveField(CreateBerzerkWave());
+        var robotTaunts = CreateRobotTaunts();
+        var gameSession = CreateGame();
+        List<int> tauntTicks = [];
+
+        for (var tick = 1; tick <= 200 * LongestTalkTimerTicks; tick++)
+        {
+            robotTaunts.Tick(gameSession, playField);
+            if (_saidSentences.Count > tauntTicks.Count) tauntTicks.Add(tick);
+        }
+
+        var gapsInSeconds = tauntTicks.Zip(tauntTicks.Skip(1),
+            (earlierTick, laterTick) => (laterTick - earlierTick) / TicksPerSecond);
+        Assert.Equal([4, 8, 12, 16], gapsInSeconds.Distinct().Order());
+    }
+
+    [Fact]
+    public void AHulkWithNoFamily_DoesNotAddTheFamilySentences()
+    {
+        var playField = CreateField(new WaveParams(1, HulkCount: 1, EnableBerzerkSpeak: true));
+        var robotTaunts = CreateRobotTaunts();
+        var gameSession = CreateGame();
+
+        var sentences = Enumerable.Range(0, SentencesPicked)
+            .Select(_ => robotTaunts.GetRandomSentence(gameSession, playField));
+
+        Assert.All(sentences, sentence => Assert.Contains(sentence, RobotTauntSentences.OnePlayer));
+    }
+
+    [Fact]
+    public void APlayerWhoIsNotAChicken_HearsOnlyTheOnePlayerSentences()
+    {
+        var playField = CreateField(CreateBerzerkWave());
+        var robotTaunts = CreateRobotTaunts();
+        var gameSession = CreateGame();
+
+        var sentences = Enumerable.Range(0, SentencesPicked)
+            .Select(_ => robotTaunts.GetRandomSentence(gameSession, playField)).ToList();
+
+        Assert.All(sentences, sentence => Assert.Contains(sentence, RobotTauntSentences.OnePlayer));
+        Assert.Equal(RobotTauntSentences.OnePlayer.Count, sentences.Distinct().Count());
+    }
+
+    [Fact]
     public void APlayerWhoIsNotAChicken_IsNeverCalledOne_EvenWithTheFamilyAndAHulk()
     {
         var playField = CreateField(CreateBerzerkWave(hulkCount: 1));
@@ -264,37 +133,20 @@ public sealed class RobotTauntsTests
         Assert.DoesNotContain(sentences, RobotTaunts.IsChickenCall);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void InATwoPlayerSimultaneousGame_WithOnePlayerLeft_TheRobotsTauntThatPlayerAlone(bool isChicken)
-    {
-        var playField = CreateField(CreateBerzerkWave());
-        var robotTaunts = CreateRobotTaunts();
-        var gameSession = CreateGame(GameMode.TwoPlayerSimultaneous);
-        gameSession.PlayerSlots[0].RecordWaveCleared(!isChicken);
-        gameSession.PlayerSlots[1].LivesCounter.SetLives(0);
-        var expectedSentences = isChicken ? RobotTauntSentences.OnePlayerChicken : RobotTauntSentences.OnePlayer;
-
-        var sentences = Enumerable.Range(0, SentencesPicked).Select(_ => robotTaunts.GetRandomSentence(gameSession, playField)).ToList();
-
-        Assert.All(sentences, sentence => Assert.Contains(sentence, expectedSentences));
-        Assert.DoesNotContain(sentences, sentence => sentence.Contains(Chickens) || sentence.Contains(Intruders));
-    }
-
     [Fact]
-    public void InATwoPlayerSimultaneousGame_WithBothPlayersLeft_AChickenIsCalledTheChickens()
+    public void EachTaunt_IsSaidAtARandomPitchAndVolume_AsBerzerkPicksThem()
     {
-        var playField = CreateField(CreateBerzerkWave());
+        var playField = CreateLiveField(CreateBerzerkWave());
         var robotTaunts = CreateRobotTaunts();
-        var gameSession = CreateGame(GameMode.TwoPlayerSimultaneous);
-        gameSession.PlayerSlots[1].RecordWaveCleared(false);
+        var gameSession = CreateGame();
 
-        var chickenCalls = Enumerable.Range(0, SentencesPicked).Select(_ => robotTaunts.GetRandomSentence(gameSession, playField))
-            .Where(RobotTaunts.IsChickenCall).ToList();
+        for (var tick = 0; tick < 200 * LongestTalkTimerTicks; tick++) robotTaunts.Tick(gameSession, playField);
 
-        Assert.NotEmpty(chickenCalls);
-        Assert.All(chickenCalls, sentence => Assert.Contains(Chickens, sentence));
+        Assert.True(_saidVoiceSettings.Count >= 100, $"only {_saidVoiceSettings.Count} taunts");
+        var pitches = _saidVoiceSettings.Select(berzerkVoiceSetting => berzerkVoiceSetting.Pitch).Distinct().Order();
+        var volumes = _saidVoiceSettings.Select(berzerkVoiceSetting => berzerkVoiceSetting.Volume).Distinct().Order();
+        Assert.Equal([0, 1, 2, 3, 4, 5, 6, 7], pitches);
+        Assert.Equal([4, 5, 6, 7], volumes);
     }
 
     [Fact]
@@ -335,6 +187,39 @@ public sealed class RobotTauntsTests
     }
 
     [Fact]
+    public void InATwoPlayerSimultaneousGame_WithBothPlayersLeft_AChickenIsCalledTheChickens()
+    {
+        var playField = CreateField(CreateBerzerkWave());
+        var robotTaunts = CreateRobotTaunts();
+        var gameSession = CreateGame(GameMode.TwoPlayerSimultaneous);
+        gameSession.PlayerSlots[1].RecordWaveCleared(false);
+
+        var chickenCalls = Enumerable.Range(0, SentencesPicked).Select(_ => robotTaunts.GetRandomSentence(gameSession, playField))
+            .Where(RobotTaunts.IsChickenCall).ToList();
+
+        Assert.NotEmpty(chickenCalls);
+        Assert.All(chickenCalls, sentence => Assert.Contains(Chickens, sentence));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void InATwoPlayerSimultaneousGame_WithOnePlayerLeft_TheRobotsTauntThatPlayerAlone(bool isChicken)
+    {
+        var playField = CreateField(CreateBerzerkWave());
+        var robotTaunts = CreateRobotTaunts();
+        var gameSession = CreateGame(GameMode.TwoPlayerSimultaneous);
+        gameSession.PlayerSlots[0].RecordWaveCleared(!isChicken);
+        gameSession.PlayerSlots[1].LivesCounter.SetLives(0);
+        var expectedSentences = isChicken ? RobotTauntSentences.OnePlayerChicken : RobotTauntSentences.OnePlayer;
+
+        var sentences = Enumerable.Range(0, SentencesPicked).Select(_ => robotTaunts.GetRandomSentence(gameSession, playField)).ToList();
+
+        Assert.All(sentences, sentence => Assert.Contains(sentence, expectedSentences));
+        Assert.DoesNotContain(sentences, sentence => sentence.Contains(Chickens) || sentence.Contains(Intruders));
+    }
+
+    [Fact]
     public void TheFamilyWithAHulk_AddsTheFamilySentences()
     {
         var playField = CreateField(CreateBerzerkWave(1));
@@ -352,15 +237,129 @@ public sealed class RobotTauntsTests
     }
 
     [Fact]
-    public void AHulkWithNoFamily_DoesNotAddTheFamilySentences()
+    public void TheFirstTaunt_ComesOnTheGamesFirstSecond()
     {
-        var playField = CreateField(new WaveParams(1, HulkCount: 1, EnableBerzerkSpeak: true));
+        var playField = CreateLiveField(CreateBerzerkWave());
         var robotTaunts = CreateRobotTaunts();
         var gameSession = CreateGame();
 
-        var sentences = Enumerable.Range(0, SentencesPicked)
-            .Select(_ => robotTaunts.GetRandomSentence(gameSession, playField));
+        for (var tick = 1; tick < TicksPerSecond; tick++) robotTaunts.Tick(gameSession, playField);
+        Assert.Empty(_saidSentences);
 
-        Assert.All(sentences, sentence => Assert.Contains(sentence, RobotTauntSentences.OnePlayer));
+        robotTaunts.Tick(gameSession, playField);
+        Assert.Single(_saidSentences);
+    }
+
+    [Fact]
+    public void TheGetRandomTalkTimerSeconds_IsFourEightTwelveOrSixteen()
+    {
+        var robotTaunts = CreateRobotTaunts();
+
+        var talkTimers = Enumerable.Range(0, 200).Select(_ => robotTaunts.GetRandomTalkTimerSeconds()).Distinct()
+            .Order();
+
+        Assert.Equal([4, 8, 12, 16], talkTimers);
+    }
+
+    [Fact]
+    public void TheRobots_DoNotStartASentence_WhileAnythingIsBeingSaid()
+    {
+        var playField = CreateLiveField(CreateBerzerkWave());
+        var robotTaunts = CreateRobotTaunts();
+        _isSpeechBusy = true;
+
+        TickUntilATauntOrGiveUp(robotTaunts, CreateGame(), playField);
+
+        Assert.Empty(_saidSentences);
+    }
+
+    [Fact]
+    public void TheRobots_DoNotTaunt_BeforeTheyMayMove()
+    {
+        var playField = CreateField(CreateBerzerkWave());
+        var robotTaunts = CreateRobotTaunts();
+
+        Assert.True(playField.RobotsFrozen());
+        TickUntilATauntOrGiveUp(robotTaunts, CreateGame(), playField);
+
+        Assert.Empty(_saidSentences);
+    }
+
+    [Fact]
+    public void TheRobots_DoNotTaunt_WhileTheWaveEndMusicPlays()
+    {
+        var playField = CreateLiveField(CreateBerzerkWave());
+        var robotTaunts = CreateRobotTaunts();
+        _isWaveEndMusicPlaying = true;
+
+        TickUntilATauntOrGiveUp(robotTaunts, CreateGame(), playField);
+
+        Assert.Empty(_saidSentences);
+    }
+
+    [Fact]
+    public void TheTalkTimer_OnlyCountsDown_WhileTheRobotsAreAllowedToTaunt()
+    {
+        var playField = CreateLiveField(CreateBerzerkWave());
+        var robotTaunts = CreateRobotTaunts();
+        var gameSession = CreateGame();
+        for (var tick = 0; tick < TicksPerSecond; tick++) robotTaunts.Tick(gameSession, playField);
+        Assert.Single(_saidSentences);
+
+        _isSpeechBusy = true;
+        for (var tick = 0; tick < 3 * LongestTalkTimerTicks; tick++) robotTaunts.Tick(gameSession, playField);
+        Assert.Single(_saidSentences);
+
+        _isSpeechBusy = false;
+        var quietTicks = 0;
+        while (_saidSentences.Count == 1 && quietTicks <= LongestTalkTimerTicks)
+        {
+            robotTaunts.Tick(gameSession, playField);
+            quietTicks++;
+        }
+
+        Assert.Equal(2, _saidSentences.Count);
+        Assert.InRange(quietTicks, (RobotTaunts.ShortestTalkTimerSeconds - 1) * TicksPerSecond, LongestTalkTimerTicks);
+    }
+
+    private static WaveParams CreateBerzerkWave(int hulkCount = 0)
+    {
+        return new WaveParams(1, MommyCount: 1, HulkCount: hulkCount, EnableBerzerkSpeak: true);
+    }
+
+    private static PlayField CreateField(WaveParams waveParams)
+    {
+        return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(1).Build();
+    }
+
+    private static GameSession CreateGame(GameMode gameMode = GameMode.OnePlayer)
+    {
+        return GameSession.CreateNewGame(gameMode, new FakeInputSource());
+    }
+
+    private static PlayField CreateLiveField(WaveParams waveParams)
+    {
+        var playField = CreateField(waveParams);
+        for (var tick = 0; tick < WaveStartTicks.UntilLive(playField); tick++)
+            playField.Update(new GameTime(TimeSpan.Zero, OneTickSpan));
+
+        Assert.False(playField.RobotsFrozen());
+        return playField;
+    }
+
+    private RobotTaunts CreateRobotTaunts(int seed = 1)
+    {
+        return new RobotTaunts(new Random(seed), () => _isSpeechBusy, () => _isWaveEndMusicPlaying,
+            (berzerkVoiceSetting, berzerkWords) =>
+            {
+                _saidVoiceSettings.Add(berzerkVoiceSetting);
+                _saidSentences.Add(berzerkWords);
+            });
+    }
+
+    private void TickUntilATauntOrGiveUp(RobotTaunts robotTaunts, GameSession gameSession, PlayField playField)
+    {
+        for (var tick = 0; tick <= LongestTalkTimerTicks && _saidSentences.Count == 0; tick++)
+            robotTaunts.Tick(gameSession, playField);
     }
 }

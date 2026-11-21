@@ -1,7 +1,6 @@
 using Robotron2084.Audio;
 using Robotron2084.Input;
 using Robotron2084.Level.Models;
-using Robotron2084.Level;
 using Robotron2084.Persistence;
 using Robotron2084.States;
 using Robotron2084.Tests.Audio;
@@ -31,6 +30,18 @@ public sealed class PlayingStateStartSoundTests : IDisposable
         Sound.Initialise(_recordingSink);
     }
 
+    [Fact]
+    public void AClassicGameStartsWithTheArcadesStartSound()
+    {
+        Assert.Contains(StartOnePlayerSoundNumber, StartGameAndListen(GameStyle.Classic));
+    }
+
+    [Fact]
+    public void AnExtendedGameStartsWithoutIt()
+    {
+        Assert.DoesNotContain(StartOnePlayerSoundNumber, StartGameAndListen(GameStyle.Extended));
+    }
+
     /// <summary>Leaves the shared sound service as it was before each test.</summary>
     public void Dispose()
     {
@@ -47,17 +58,5 @@ public sealed class PlayingStateStartSoundTests : IDisposable
         for (var tick = 0; tick < TicksToListen; tick++) Sound.Tick();
 
         return _recordingSink.SoundNumbers();
-    }
-
-    [Fact]
-    public void AClassicGameStartsWithTheArcadesStartSound()
-    {
-        Assert.Contains(StartOnePlayerSoundNumber, StartGameAndListen(GameStyle.Classic));
-    }
-
-    [Fact]
-    public void AnExtendedGameStartsWithoutIt()
-    {
-        Assert.DoesNotContain(StartOnePlayerSoundNumber, StartGameAndListen(GameStyle.Extended));
     }
 }

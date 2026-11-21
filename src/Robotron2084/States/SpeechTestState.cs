@@ -6,7 +6,6 @@ using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Input.Models;
-using Robotron2084.Input;
 using Robotron2084.Palette;
 using Robotron2084.States.Models;
 
@@ -40,10 +39,8 @@ public sealed class SpeechTestState : IGameState
 
     private const string AutoLine = "A - AUTO UP";
 
-    private const string DescriptionWords = "SPEECH SAMPLE";
-
     private const int DescriptionRow = 170;
-
+    private const string DescriptionWords = "SPEECH SAMPLE";
     private const string ExitLine = "F10 - DEVELOPER TOOLS";
 
     private const int ExitRow = 342;
@@ -66,11 +63,13 @@ public sealed class SpeechTestState : IGameState
     /// <summary>The palette index the page draws in: the game's white, as the SOUND TEST page does.</summary>
     private const int TextPaletteIndex = 9;
 
+    private readonly string _description;
+
+    private readonly GameStateParams _gameStateParams;
+
     /// <summary>The names of this page's lines, in the order of <see cref="SpeechLinePaths" />.</summary>
     private readonly IReadOnlyList<string> _lineNames;
 
-    private readonly string _description;
-    private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
     private int _index;
     private bool _isAutoUp;
@@ -93,14 +92,6 @@ public sealed class SpeechTestState : IGameState
             palette.SetPaletteIndexValue(TextPaletteIndex, GamePalette.DefaultPaletteValues[TextPaletteIndex]);
 
         SpeakCurrentLine();
-    }
-
-    /// <summary>Gets the name of the line the page is on, or an empty string when there are no lines.</summary>
-    internal string GetCurrentLineName()
-    {
-        if (_lineNames.Count == 0) return string.Empty;
-
-        return _lineNames[_index];
     }
 
     /// <inheritdoc />
@@ -141,6 +132,14 @@ public sealed class SpeechTestState : IGameState
             RunTimer();
 
         _previousSnapshot = now;
+    }
+
+    /// <summary>Gets the name of the line the page is on, or an empty string when there are no lines.</summary>
+    internal string GetCurrentLineName()
+    {
+        if (_lineNames.Count == 0) return string.Empty;
+
+        return _lineNames[_index];
     }
 
     private void DrawLarge(SpriteBatch spriteBatch, string text, int y)

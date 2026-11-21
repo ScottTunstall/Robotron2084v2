@@ -20,8 +20,8 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public sealed class SpeechChannel
 {
-    private readonly Queue<SpeechChannelEntry> _waitingEntries = new();
     private readonly ISpeechVoice _speechVoice;
+    private readonly Queue<SpeechChannelEntry> _waitingEntries = new();
     private int _silenceTicksLeft;
 
     /// <summary>Makes a channel with nothing waiting.</summary>
@@ -46,15 +46,6 @@ public sealed class SpeechChannel
         _waitingEntries.Enqueue(new SpeechChannelEntry(lineName, pitchOctaves, volumeShare, 0));
     }
 
-    /// <summary>Asks for a silence after anything already waiting, before the next line.</summary>
-    /// <param name="ticks">
-    ///     How long the silence lasts, in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.
-    /// </param>
-    public void Wait(int ticks)
-    {
-        _waitingEntries.Enqueue(new SpeechChannelEntry(null, 0f, 0f, ticks));
-    }
-
     /// <summary>Counts a silence down, or gives the voice the next waiting line if it has finished the last one.</summary>
     public void Tick()
     {
@@ -72,5 +63,14 @@ public sealed class SpeechChannel
         }
 
         _speechVoice.Speak(lineName, nextEntry.PitchOctaves, nextEntry.VolumeShare);
+    }
+
+    /// <summary>Asks for a silence after anything already waiting, before the next line.</summary>
+    /// <param name="ticks">
+    ///     How long the silence lasts, in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.
+    /// </param>
+    public void Wait(int ticks)
+    {
+        _waitingEntries.Enqueue(new SpeechChannelEntry(null, 0f, 0f, ticks));
     }
 }

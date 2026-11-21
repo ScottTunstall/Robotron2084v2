@@ -16,11 +16,17 @@ internal sealed class CommandLine
         if (Error is null && _words.Count > 2) Error = $"Too many words: {string.Join(" ", _words)}";
     }
 
+    /// <summary>What to play: a name, a place in the list or a sound number.</summary>
+    public string? Choice => _words.Count > 1 ? _words[1] : null;
+
     /// <summary>The command: <c>list</c>, <c>play</c> or <c>help</c>, or null to show the menu.</summary>
     public string? Command => _words.Count > 0 ? _words[0].ToLowerInvariant() : null;
 
-    /// <summary>What to play: a name, a place in the list or a sound number.</summary>
-    public string? Choice => _words.Count > 1 ? _words[1] : null;
+    /// <summary>What was wrong with the command line, or null when it read cleanly.</summary>
+    public string? Error { get; private set; }
+
+    /// <summary>Where the sound ROM is, or null to look for it.</summary>
+    public string? RomPath { get; private set; }
 
     /// <summary>How long to play, in seconds, or null to stop when the sound goes quiet.</summary>
     public double? Seconds { get; private set; }
@@ -28,11 +34,44 @@ internal sealed class CommandLine
     /// <summary>The WAV file to write instead of playing, or null to play through the speakers.</summary>
     public string? WavPath { get; private set; }
 
-    /// <summary>Where the sound ROM is, or null to look for it.</summary>
-    public string? RomPath { get; private set; }
+    /// <summary>Reads an option's value.</summary>
+    /// <param name="option">The option, such as <c>--seconds</c>.</param>
+    /// <param name="value">The word after it.</param>
+    private void ReadOption(string option, string value)
+    {
+        switch (option.ToLowerInvariant())
+        {
+            case "--seconds":
+                ReadSeconds(value);
+                break;
 
-    /// <summary>What was wrong with the command line, or null when it read cleanly.</summary>
-    public string? Error { get; private set; }
+            case "--wav":
+                WavPath = value;
+                break;
+
+            case "--rom":
+                RomPath = value;
+                break;
+
+            default:
+                Error = $"Unknown option {option}.";
+                break;
+        }
+    }
+
+    /// <summary>Reads the <c>--seconds</c> value, which must be a number above zero.</summary>
+    /// <param name="value">The value.</param>
+    private void ReadSeconds(string value)
+    {
+        var isNumber = double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds);
+        if (!isNumber || seconds <= 0)
+        {
+            Error = $"--seconds needs a number above zero, not {value}.";
+            return;
+        }
+
+        Seconds = seconds;
+    }
 
     /// <summary>Reads one word, or one option and its value.</summary>
     /// <param name="args">The words.</param>
@@ -55,41 +94,5 @@ internal sealed class CommandLine
 
         ReadOption(word, args[index + 1]);
         return index + 1;
-    }
-
-    /// <summary>Reads an option's value.</summary>
-    /// <param name="option">The option, such as <c>--seconds</c>.</param>
-    /// <param name="value">The word after it.</param>
-    private void ReadOption(string option, string value)
-    {
-        switch (option.ToLowerInvariant())
-        {
-            case "--seconds":
-                ReadSeconds(value);
-                break;
-            case "--wav":
-                WavPath = value;
-                break;
-            case "--rom":
-                RomPath = value;
-                break;
-            default:
-                Error = $"Unknown option {option}.";
-                break;
-        }
-    }
-
-    /// <summary>Reads the <c>--seconds</c> value, which must be a number above zero.</summary>
-    /// <param name="value">The value.</param>
-    private void ReadSeconds(string value)
-    {
-        var isNumber = double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var seconds);
-        if (!isNumber || seconds <= 0)
-        {
-            Error = $"--seconds needs a number above zero, not {value}.";
-            return;
-        }
-
-        Seconds = seconds;
     }
 }

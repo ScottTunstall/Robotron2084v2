@@ -1,9 +1,9 @@
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
-using Robotron2084.States.SpriteTest.Models;
 using Robotron2084.States.SpriteTest;
+using Robotron2084.States.SpriteTest.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -15,23 +15,6 @@ public sealed class SpriteTestWalkOnRunTests
     private const int StartX = 640;
 
     private static readonly Texture2D[] FourFrames = new Texture2D[4];
-
-    [Fact]
-    public void ASpriteThatStepsAsItsFrameChanges_TakesTheStepForTheFrameItMovesOnTo_AndNoneBetween()
-    {
-        // Frames change every tick; steps of 1, 2, 3 and 4 pixels go with frames 0, 1, 2 and 3.
-        var entry = SpriteTestEntry.CreateUnsteerable("TEST", SpriteTestCycle.CreateFromTicks(FourFrames, 1));
-        var animator = new SpriteTestAnimator(entry, new Random(1));
-        var run = new SpriteTestWalkOnRun(new SpriteTestWalkOn([1, 2, 3, 4]), StartX, animator);
-
-        animator.Tick(Direction8.Left);
-        run.Tick(animator);
-        Assert.Equal(StartX - 2, run.X); // frame 1's step
-
-        animator.Tick(Direction8.Left);
-        run.Tick(animator);
-        Assert.Equal(StartX - 2 - 3, run.X); // frame 2's step
-    }
 
     [Fact]
     public void ASpriteThatStepsAsItsFrameChanges_StandsStillWhileItsFrameHolds()
@@ -52,20 +35,39 @@ public sealed class SpriteTestWalkOnRunTests
     }
 
     [Fact]
-    public void ThePlayerWalksOnAtItsSpeedInTheGame_OneStepEveryTick()
+    public void ASpriteThatStepsAsItsFrameChanges_TakesTheStepForTheFrameItMovesOnTo_AndNoneBetween()
     {
-        var player = SpriteTestEntries.Create(TestTextures.SharedTextureSet).Single(entry => entry.Name == "PLAYER 1");
-        var animator = new SpriteTestAnimator(player, new Random(1));
-        var run = new SpriteTestWalkOnRun(player.WalkOn!, StartX, animator);
+        // Frames change every tick; steps of 1, 2, 3 and 4 pixels go with frames 0, 1, 2 and 3.
+        var entry = SpriteTestEntry.CreateUnsteerable("TEST", SpriteTestCycle.CreateFromTicks(FourFrames, 1));
+        var animator = new SpriteTestAnimator(entry, new Random(1));
+        var run = new SpriteTestWalkOnRun(new SpriteTestWalkOn([1, 2, 3, 4]), StartX, animator);
 
-        for (var tick = 0; tick < 10; tick++)
-        {
-            animator.Tick(Direction8.Left);
-            run.Tick(animator);
-        }
+        animator.Tick(Direction8.Left);
+        run.Tick(animator);
+        Assert.Equal(StartX - 2, run.X); // frame 1's step
 
-        Assert.Equal(StartX - 10 * PlayerTuning.PlayerSpeedX, run.X);
-        Assert.Equal(0, run.Rise);
+        animator.Tick(Direction8.Left);
+        run.Tick(animator);
+        Assert.Equal(StartX - 2 - 3, run.X); // frame 2's step
+    }
+
+    [Theory]
+    [InlineData("PLAYER 1")]
+    [InlineData("MOMMY")]
+    [InlineData("DADDY")]
+    [InlineData("MIKEY")]
+    [InlineData("GRUNT")]
+    [InlineData("HULK")]
+    [InlineData("BRAIN")]
+    [InlineData("PROG MOMMY")]
+    [InlineData("BERZERK ROBOT")]
+    [InlineData("GORF")]
+    public void EverySpriteThatWalksInTheGame_CanWalkOn(string name)
+    {
+        var entry = SpriteTestEntries.Create(TestTextures.SharedTextureSet).Single(candidate => candidate.Name == name);
+
+        Assert.NotNull(entry.WalkOn);
+        Assert.All(entry.WalkOn!.StepPortPixels, step => Assert.True(step > 0, "every step goes left"));
     }
 
     [Fact]
@@ -100,22 +102,20 @@ public sealed class SpriteTestWalkOnRunTests
         Assert.Equal(Gorf.GetHopRisePixels(1), Gorf.GetHopRisePixels(GorfTuning.HopSteps + 1));
     }
 
-    [Theory]
-    [InlineData("PLAYER 1")]
-    [InlineData("MOMMY")]
-    [InlineData("DADDY")]
-    [InlineData("MIKEY")]
-    [InlineData("GRUNT")]
-    [InlineData("HULK")]
-    [InlineData("BRAIN")]
-    [InlineData("PROG MOMMY")]
-    [InlineData("BERZERK ROBOT")]
-    [InlineData("GORF")]
-    public void EverySpriteThatWalksInTheGame_CanWalkOn(string name)
+    [Fact]
+    public void ThePlayerWalksOnAtItsSpeedInTheGame_OneStepEveryTick()
     {
-        var entry = SpriteTestEntries.Create(TestTextures.SharedTextureSet).Single(candidate => candidate.Name == name);
+        var player = SpriteTestEntries.Create(TestTextures.SharedTextureSet).Single(entry => entry.Name == "PLAYER 1");
+        var animator = new SpriteTestAnimator(player, new Random(1));
+        var run = new SpriteTestWalkOnRun(player.WalkOn!, StartX, animator);
 
-        Assert.NotNull(entry.WalkOn);
-        Assert.All(entry.WalkOn!.StepPortPixels, step => Assert.True(step > 0, "every step goes left"));
+        for (var tick = 0; tick < 10; tick++)
+        {
+            animator.Tick(Direction8.Left);
+            run.Tick(animator);
+        }
+
+        Assert.Equal(StartX - 10 * PlayerTuning.PlayerSpeedX, run.X);
+        Assert.Equal(0, run.Rise);
     }
 }

@@ -9,15 +9,6 @@ namespace Robotron2084.Tests.Entities.Collections;
 /// <summary>What every kind's list can count and answer, shown with electrodes, which take a while to die.</summary>
 public sealed class EntityListTests
 {
-    private static ElectrodeList CreateTwoElectrodes()
-    {
-        return
-        [
-            new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)),
-            new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 10))
-        ];
-    }
-
     [Fact]
     public void ADyingEntityIsStillOnTheField_ButNoLongerAlive()
     {
@@ -27,6 +18,19 @@ public sealed class EntityListTests
 
         Assert.Equal(2, electrodes.CountOnField());
         Assert.Equal(1, electrodes.CountAlive());
+    }
+
+    [Fact]
+    public void AListIsAllDeadOnlyWhenNothingInItIsAliveOrDying()
+    {
+        var electrodes = CreateTwoElectrodes();
+        Assert.False(electrodes.AreAllDead());
+
+        electrodes[0].Kill();
+        electrodes[1].Kill();
+
+        Assert.False(electrodes.AreAllDead()); // still shrivelling
+        Assert.True(new ElectrodeList().AreAllDead());
     }
 
     [Fact]
@@ -42,16 +46,12 @@ public sealed class EntityListTests
         Assert.False(electrodes.AnyAlive());
     }
 
-    [Fact]
-    public void AListIsAllDeadOnlyWhenNothingInItIsAliveOrDying()
+    private static ElectrodeList CreateTwoElectrodes()
     {
-        var electrodes = CreateTwoElectrodes();
-        Assert.False(electrodes.AreAllDead());
-
-        electrodes[0].Kill();
-        electrodes[1].Kill();
-
-        Assert.False(electrodes.AreAllDead()); // still shrivelling
-        Assert.True(new ElectrodeList().AreAllDead());
+        return
+        [
+            new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(10, 10)),
+            new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, new IntVector2(50, 10))
+        ];
     }
 }

@@ -8,14 +8,25 @@ namespace RobotronSoundPlayer;
 /// </summary>
 internal static class Program
 {
-    /// <summary>The exit code for success.</summary>
-    private const int Success = 0;
-
     /// <summary>The exit code for a command line that could not be acted on.</summary>
     private const int BadCommandLine = 1;
 
     /// <summary>The exit code for a missing sound ROM or a computer with no sound output.</summary>
     private const int CannotPlay = 2;
+
+    /// <summary>The exit code for success.</summary>
+    private const int Success = 0;
+
+    /// <summary>Says what was wrong, then how to use the player.</summary>
+    /// <param name="message">What was wrong.</param>
+    /// <returns>The exit code for a bad command line.</returns>
+    private static int Fail(string message)
+    {
+        Console.Error.WriteLine(message);
+        Console.Error.WriteLine();
+        PrintUsage();
+        return BadCommandLine;
+    }
 
     /// <summary>Reads the command line and does what it asks.</summary>
     /// <param name="args">The words after the player's name.</param>
@@ -30,40 +41,17 @@ internal static class Program
             case "help" or "-h" or "-?" or "/?":
                 PrintUsage();
                 return Success;
+
             case "list":
                 CatalogPrinter.Print(new SoundCatalog());
                 return Success;
+
             case null or "play":
                 return PlayOrShowMenu(commandLine);
+
             default:
                 return Fail($"Unknown command '{commandLine.Command}'.");
         }
-    }
-
-    /// <summary>Plays the sound the command line names, or shows the menu when it names none.</summary>
-    /// <param name="commandLine">The command line.</param>
-    /// <returns>An exit code.</returns>
-    private static int PlayOrShowMenu(CommandLine commandLine)
-    {
-        var soundCatalog = new SoundCatalog();
-        ISoundRequest? soundRequest = null;
-        if (commandLine.Command == "play")
-        {
-            soundRequest = soundCatalog.Find(commandLine.Choice ?? string.Empty);
-            if (soundRequest is null)
-                return Fail(
-                    $"There is no sound called '{commandLine.Choice}'. Run 'RobotronSoundPlayer list' to see them all.");
-        }
-
-        var romPath = SoundRomLocator.Find(commandLine.RomPath);
-        if (romPath is null)
-        {
-            Console.Error.WriteLine(
-                $"The sound ROM ({SoundRomLocator.RomFileName}) was not found. Copy it into ref/rom, or pass --rom <file>.");
-            return CannotPlay;
-        }
-
-        return Play(soundCatalog, soundRequest, commandLine, new SoundPlayback(File.ReadAllBytes(romPath)));
     }
 
     /// <summary>Plays one sound, or runs the menu when there is none.</summary>
@@ -100,15 +88,30 @@ internal static class Program
         }
     }
 
-    /// <summary>Says what was wrong, then how to use the player.</summary>
-    /// <param name="message">What was wrong.</param>
-    /// <returns>The exit code for a bad command line.</returns>
-    private static int Fail(string message)
+    /// <summary>Plays the sound the command line names, or shows the menu when it names none.</summary>
+    /// <param name="commandLine">The command line.</param>
+    /// <returns>An exit code.</returns>
+    private static int PlayOrShowMenu(CommandLine commandLine)
     {
-        Console.Error.WriteLine(message);
-        Console.Error.WriteLine();
-        PrintUsage();
-        return BadCommandLine;
+        var soundCatalog = new SoundCatalog();
+        ISoundRequest? soundRequest = null;
+        if (commandLine.Command == "play")
+        {
+            soundRequest = soundCatalog.Find(commandLine.Choice ?? string.Empty);
+            if (soundRequest is null)
+                return Fail(
+                    $"There is no sound called '{commandLine.Choice}'. Run 'RobotronSoundPlayer list' to see them all.");
+        }
+
+        var romPath = SoundRomLocator.Find(commandLine.RomPath);
+        if (romPath is null)
+        {
+            Console.Error.WriteLine(
+                $"The sound ROM ({SoundRomLocator.RomFileName}) was not found. Copy it into ref/rom, or pass --rom <file>.");
+            return CannotPlay;
+        }
+
+        return Play(soundCatalog, soundRequest, commandLine, new SoundPlayback(File.ReadAllBytes(romPath)));
     }
 
     /// <summary>Prints how to use the player.</summary>

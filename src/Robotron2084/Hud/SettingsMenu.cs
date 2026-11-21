@@ -3,7 +3,6 @@ using Robotron2084.Persistence;
 
 namespace Robotron2084.Hud;
 
-
 /// <summary>
 ///     The GAME ADJUSTMENT page's logic, with no MonoGame in it (notes §131) — the same split the
 ///     DEFINITIONS page uses (<see cref="DefineInputsMenu" />): the state draws and reads hardware, this

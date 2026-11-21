@@ -3,7 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
 using Robotron2084.Persistence;
 using Robotron2084.Score.Models;
@@ -26,9 +25,9 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class GameOverState : IGameState
 {
+    private readonly GameStateParams _gameStateParams;
     private readonly int _holdTicks = ArcadeClock.ToPortTicks(ScreenTuning.GameOverMessageArcadeFrames);
     private readonly IReadOnlyList<FinalScore> _scores;
-    private readonly GameStateParams _gameStateParams;
     private int _elapsedTicks;
 
     /// <summary>Builds the screen for a finished game's scores.</summary>

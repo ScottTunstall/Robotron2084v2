@@ -52,23 +52,6 @@ public static class Speech
         _speechChannel?.Say(lineName);
     }
 
-    /// <summary>Asks for Gorf to say a line, raised or lowered if asked, after anything already waiting.</summary>
-    /// <param name="gorfLine">The line.</param>
-    /// <param name="pitchOctaves">
-    ///     How far to raise (more than 0) or lower (less than 0) the line, in octaves, up to
-    ///     <see cref="GorfVoice.MaximumPitchOctaves" /> either way. 0, unless given, says it as recorded. Raised, it is
-    ///     also quicker; lowered, slower.
-    /// </param>
-    /// <exception cref="ArgumentOutOfRangeException">The pitch is more than an octave either way.</exception>
-    public static void SayGorf(GorfLine gorfLine, float pitchOctaves = 0f)
-    {
-        ArgumentOutOfRangeException.ThrowIfLessThan(pitchOctaves, -GorfVoice.MaximumPitchOctaves);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(pitchOctaves, GorfVoice.MaximumPitchOctaves);
-        if (AttractMuted) return;
-
-        _speechChannel?.Say(GorfVoice.GetLineName(gorfLine), pitchOctaves);
-    }
-
     /// <summary>
     ///     Asks for the Berzerk robot to say words, one after another, at the pitch and volume its samples were recorded at
     ///     (<see cref="BerzerkVoiceSetting.Sample" />), after anything already waiting.
@@ -106,11 +89,21 @@ public static class Speech
         }
     }
 
-    /// <summary>Puts the speech service back as it is before <see cref="Initialise" />: no voice, and nothing muted (test hook).</summary>
-    internal static void ResetForTesting()
+    /// <summary>Asks for Gorf to say a line, raised or lowered if asked, after anything already waiting.</summary>
+    /// <param name="gorfLine">The line.</param>
+    /// <param name="pitchOctaves">
+    ///     How far to raise (more than 0) or lower (less than 0) the line, in octaves, up to
+    ///     <see cref="GorfVoice.MaximumPitchOctaves" /> either way. 0, unless given, says it as recorded. Raised, it is
+    ///     also quicker; lowered, slower.
+    /// </param>
+    /// <exception cref="ArgumentOutOfRangeException">The pitch is more than an octave either way.</exception>
+    public static void SayGorf(GorfLine gorfLine, float pitchOctaves = 0f)
     {
-        _speechChannel = null;
-        AttractMuted = false;
+        ArgumentOutOfRangeException.ThrowIfLessThan(pitchOctaves, -GorfVoice.MaximumPitchOctaves);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(pitchOctaves, GorfVoice.MaximumPitchOctaves);
+        if (AttractMuted) return;
+
+        _speechChannel?.Say(GorfVoice.GetLineName(gorfLine), pitchOctaves);
     }
 
     /// <summary>Moves the speech on by one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</summary>
@@ -119,5 +112,12 @@ public static class Speech
         if (AttractMuted) return;
 
         _speechChannel?.Tick();
+    }
+
+    /// <summary>Puts the speech service back as it is before <see cref="Initialise" />: no voice, and nothing muted (test hook).</summary>
+    internal static void ResetForTesting()
+    {
+        _speechChannel = null;
+        AttractMuted = false;
     }
 }

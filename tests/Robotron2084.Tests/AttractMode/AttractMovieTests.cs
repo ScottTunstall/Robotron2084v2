@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.AttractMode.Models;
 using Robotron2084.AttractMode;
+using Robotron2084.AttractMode.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.AttractMode;
@@ -13,19 +13,19 @@ namespace Robotron2084.Tests.AttractMode;
 /// </summary>
 public sealed class AttractMovieTests
 {
-    private static GameTime Tick()
+    [Fact]
+    public void IntroScreen_KeepsTheTitleBandClearOfTheStoryText()
     {
-        return new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
-    }
+        var attractMovie = new AttractMovie(AttractMovieData.Rom, AttractMovieData.Rom.Histo, new Random(7));
 
-    /// <summary>The story text as lines: cells grouped by row, in pen order.</summary>
-    private static List<string> Lines(AttractPageMachine attractPageMachine)
-    {
-        var lines = new List<string>();
-        foreach (var group in attractPageMachine.TextCells.GroupBy(c => c.Y).OrderBy(g => g.Key))
-            lines.Add(new string(group.OrderBy(c => c.X).Select(c => c.Character).ToArray()));
+        for (var tick = 0; tick < 1500; tick++)
+        {
+            attractMovie.Update(Tick());
 
-        return lines;
+            // The ROM's CLEARM starts at row 48 (and the title is printed at row
+            // 36), so no story character may land above it.
+            Assert.All(attractMovie.AttractPageMachine.TextCells, cell => Assert.True(cell.Y >= 48, $"printed at row {cell.Y}"));
+        }
     }
 
     [Fact]
@@ -58,18 +58,143 @@ public sealed class AttractMovieTests
     }
 
     [Fact]
-    public void IntroScreen_KeepsTheTitleBandClearOfTheStoryText()
+    public void ObjectMachine_ReprogramShakeIsAWholeScript_AndDoesNotRunOnIntoTheNext()
     {
-        var attractMovie = new AttractMovie(AttractMovieData.Rom, AttractMovieData.Rom.Histo, new Random(7));
+        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(3));
 
-        for (var tick = 0; tick < 1500; tick++)
+        // PSHAKE ($868C) is a ONE-BYTE script — `FCB RPROG` — GHOSTed onto the family member
+        // the brain is reprogramming. RPROG OWNS the process until the shake ends:
+        // R5 $7CD9 stores the base row and a 64 countdown, allocates its own
+        // two-frame tasks (+RND(0..7) rows, then −RND(0..7)) and frees the process at
+        // $7D16 — it never returns to the script reader. Returning "keep reading"
+        // made the process run on into the bytes that FOLLOW PSHAKE, which are
+        // BRAING ($868D): the shaking family member's object executed `SETOB BRAIN /
+        // SETPOS (10,160)` on itself, and the movie showed a SECOND brain streaking
+        // off across the screen instead of a reprogrammed mummy (notes §97.4).
+        attractObjectMachine.StartScript(0x868C);
+
+        var shaking = Assert.Single(attractObjectMachine.Objects);
+        Assert.Null(shaking.Descriptor); // nothing has run on into BRAING's SETOB
+
+        var shook = false;
+        for (var frame = 0; frame < 300; frame++)
         {
-            attractMovie.Update(Tick());
+            attractObjectMachine.StepFrame();
 
-            // The ROM's CLEARM starts at row 48 (and the title is printed at row
-            // 36), so no story character may land above it.
-            Assert.All(attractMovie.AttractPageMachine.TextCells, cell => Assert.True(cell.Y >= 48, $"printed at row {cell.Y}"));
+            // The property: whatever else happens, the one-byte script never runs
+            // on into the bytes that follow it (which are BRAING's).
+            Assert.Null(shaking.Descriptor);
+            shook |= shaking.ShakeRowOffset != 0;
         }
+
+        Assert.True(shook, "PSHAKE never moved the object's row");
+        Assert.Equal(0, shaking.ShakeRowOffset); // the shake ends by restoring the base row
+        Assert.False(shaking.IsDead); // the ROM frees the ghost's metadata entry, not the object
+    }
+
+    [Fact]
+    public void ObjectMachine_WalkCostsExactlyOneStepIntervalPerStep()
+    {
+        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(4));
+
+        // DUMYOU again: 128 left steps at YOU's 2-frame nap, then DIE — so the
+        // object is gone on frame 256 exactly. ANA2/BANA2 only SLEEP again while
+        // steps remain (`DEC ... / BNE` then `JMP [LEV2,U]`), so waiting once more
+        // after the LAST step would push every following opcode a period late and
+        // drag the script's phase with it (notes §96.10: the hulk reached a family member
+        // half a second before her scripted death).
+        attractObjectMachine.StartScript(0x8739);
+        attractObjectMachine.StepFrame();
+        Assert.NotEmpty(attractObjectMachine.Objects);
+
+        for (var frame = 0; frame < 255; frame++) attractObjectMachine.StepFrame();
+
+        Assert.NotEmpty(attractObjectMachine.Objects);
+        attractObjectMachine.StepFrame();
+        Assert.Empty(attractObjectMachine.Objects);
+    }
+
+    [Fact]
+    public void ObjectMachine_WalksAGruntAndExplodesIt()
+    {
+        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(11));
+
+        // GS1 ($84F5): the grunt walks left down its HUMANA steps, then GSSS1 ends
+        // in EXP.
+        attractObjectMachine.StartScript(0x84F5);
+
+        MovieObject? gruntMovieObject = null;
+        for (var i = 0; i < 4; i++)
+        {
+            attractObjectMachine.StepFrame();
+            gruntMovieObject ??= attractObjectMachine.Objects.FirstOrDefault(o => o.Descriptor?.Animation == MovieAnimation.Grunt);
+        }
+
+        Assert.NotNull(gruntMovieObject);
+        var startX = gruntMovieObject.XSubpixels;
+
+        List<MovieExplosion> explosions = [];
+        for (var frame = 0; frame < 3000 && explosions.Count == 0; frame++)
+        {
+            attractObjectMachine.StepFrame();
+            explosions.AddRange(attractObjectMachine.DrainExplosions());
+        }
+
+        Assert.True(gruntMovieObject.XSubpixels < startX, "the grunt did not walk left");
+        var explosion = Assert.Single(explosions);
+        Assert.Equal(MovieAnimation.Grunt, explosion.Animation);
+        Assert.Equal(0xA6, explosion.Row); // EXPP's ACTHIT+6
+    }
+
+    [Fact]
+    public void ObjectMachine_WalksTheHeroLeftWithTheRomsOwnStepSize()
+    {
+        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(11));
+
+        // DUMYOU ($8739) — the title's "dumb player": YOU at (104,106), MLEFT $80,
+        // DIE. YOU's descriptor walks the BR* way: step 1 (half a column) every 2
+        // frames, so 128 steps cover 128 pixels.
+        attractObjectMachine.StartScript(0x8739);
+        attractObjectMachine.StepFrame();
+
+        var hero = attractObjectMachine.Objects[0];
+        Assert.Equal(104, hero.GetColumn());
+
+        // The BR* walker cycles ANATAB (0,1,0,2) on top of the direction's base
+        // image, so a LEFT walk shows animation frames 0,1,0,2 — every one of them inside
+        // the descriptor's 12 animation frames (the source of the "player animations are
+        // not quite right" report: a 12-byte ANATAB made it cycle garbage).
+        var animationFrames = new List<int>();
+        for (var frame = 0; frame < 300; frame++)
+        {
+            attractObjectMachine.StepFrame();
+            animationFrames.Add(hero.AnimationFrameIndex);
+        }
+
+        Assert.Equal(104 - 64, hero.GetColumn());
+        Assert.All(animationFrames, index => Assert.InRange(index, 0, 11));
+
+        // The ROM's BANA1 sleeps the descriptor's nap BEFORE the first step and
+        // sets the animation frame on the step, so the cycle is one entry every 2 frames
+        // starting at frame 3.
+        Assert.Equal([0, 1, 0, 2],
+            new[] { animationFrames[2], animationFrames[4], animationFrames[6], animationFrames[8] });
+    }
+
+    [Fact]
+    public void PageMachine_PrintsACharacterEveryThreeFramesAndSleepsForTheRest()
+    {
+        // "A", then a $5F sleep (95 fiftieths of a second), then "B" — the ROM's SPWAKE.
+        byte[] script = [0x41, 0x5F, 0x42];
+        var attractPageMachine = new AttractPageMachine(AttractMovieData.Rom, script, new AttractObjectMachine(AttractMovieData.Rom, new Random(1)), new Random(1));
+
+        for (var frame = 0; frame < 3; frame++) attractPageMachine.StepFrame();
+
+        Assert.Equal(['A'], attractPageMachine.TextCells.Select(c => c.Character).ToArray());
+
+        for (var frame = 0; frame < 200; frame++) attractPageMachine.StepFrame();
+
+        Assert.Equal(['A', 'B'], attractPageMachine.TextCells.Select(c => c.Character).ToArray());
     }
 
     [Fact]
@@ -110,143 +235,18 @@ public sealed class AttractMovieTests
         Assert.Contains("MIKEY", messages);
     }
 
-    [Fact]
-    public void ObjectMachine_WalksTheHeroLeftWithTheRomsOwnStepSize()
+    /// <summary>The story text as lines: cells grouped by row, in pen order.</summary>
+    private static List<string> Lines(AttractPageMachine attractPageMachine)
     {
-        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(11));
+        var lines = new List<string>();
+        foreach (var group in attractPageMachine.TextCells.GroupBy(c => c.Y).OrderBy(g => g.Key))
+            lines.Add(new string(group.OrderBy(c => c.X).Select(c => c.Character).ToArray()));
 
-        // DUMYOU ($8739) — the title's "dumb player": YOU at (104,106), MLEFT $80,
-        // DIE. YOU's descriptor walks the BR* way: step 1 (half a column) every 2
-        // frames, so 128 steps cover 128 pixels.
-        attractObjectMachine.StartScript(0x8739);
-        attractObjectMachine.StepFrame();
-
-        var hero = attractObjectMachine.Objects[0];
-        Assert.Equal(104, hero.GetColumn());
-
-        // The BR* walker cycles ANATAB (0,1,0,2) on top of the direction's base
-        // image, so a LEFT walk shows animation frames 0,1,0,2 — every one of them inside
-        // the descriptor's 12 animation frames (the source of the "player animations are
-        // not quite right" report: a 12-byte ANATAB made it cycle garbage).
-        var animationFrames = new List<int>();
-        for (var frame = 0; frame < 300; frame++)
-        {
-            attractObjectMachine.StepFrame();
-            animationFrames.Add(hero.AnimationFrameIndex);
-        }
-
-        Assert.Equal(104 - 64, hero.GetColumn());
-        Assert.All(animationFrames, index => Assert.InRange(index, 0, 11));
-
-        // The ROM's BANA1 sleeps the descriptor's nap BEFORE the first step and
-        // sets the animation frame on the step, so the cycle is one entry every 2 frames
-        // starting at frame 3.
-        Assert.Equal([0, 1, 0, 2],
-            new[] { animationFrames[2], animationFrames[4], animationFrames[6], animationFrames[8] });
+        return lines;
     }
 
-    [Fact]
-    public void ObjectMachine_WalkCostsExactlyOneStepIntervalPerStep()
+    private static GameTime Tick()
     {
-        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(4));
-
-        // DUMYOU again: 128 left steps at YOU's 2-frame nap, then DIE — so the
-        // object is gone on frame 256 exactly. ANA2/BANA2 only SLEEP again while
-        // steps remain (`DEC ... / BNE` then `JMP [LEV2,U]`), so waiting once more
-        // after the LAST step would push every following opcode a period late and
-        // drag the script's phase with it (notes §96.10: the hulk reached a family member
-        // half a second before her scripted death).
-        attractObjectMachine.StartScript(0x8739);
-        attractObjectMachine.StepFrame();
-        Assert.NotEmpty(attractObjectMachine.Objects);
-
-        for (var frame = 0; frame < 255; frame++) attractObjectMachine.StepFrame();
-
-        Assert.NotEmpty(attractObjectMachine.Objects);
-        attractObjectMachine.StepFrame();
-        Assert.Empty(attractObjectMachine.Objects);
-    }
-
-    [Fact]
-    public void ObjectMachine_ReprogramShakeIsAWholeScript_AndDoesNotRunOnIntoTheNext()
-    {
-        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(3));
-
-        // PSHAKE ($868C) is a ONE-BYTE script — `FCB RPROG` — GHOSTed onto the family member
-        // the brain is reprogramming. RPROG OWNS the process until the shake ends:
-        // R5 $7CD9 stores the base row and a 64 countdown, allocates its own
-        // two-frame tasks (+RND(0..7) rows, then −RND(0..7)) and frees the process at
-        // $7D16 — it never returns to the script reader. Returning "keep reading"
-        // made the process run on into the bytes that FOLLOW PSHAKE, which are
-        // BRAING ($868D): the shaking family member's object executed `SETOB BRAIN /
-        // SETPOS (10,160)` on itself, and the movie showed a SECOND brain streaking
-        // off across the screen instead of a reprogrammed mummy (notes §97.4).
-        attractObjectMachine.StartScript(0x868C);
-
-        var shaking = Assert.Single(attractObjectMachine.Objects);
-        Assert.Null(shaking.Descriptor); // nothing has run on into BRAING's SETOB
-
-        var shook = false;
-        for (var frame = 0; frame < 300; frame++)
-        {
-            attractObjectMachine.StepFrame();
-
-            // The property: whatever else happens, the one-byte script never runs
-            // on into the bytes that follow it (which are BRAING's).
-            Assert.Null(shaking.Descriptor);
-            shook |= shaking.ShakeRowOffset != 0;
-        }
-
-        Assert.True(shook, "PSHAKE never moved the object's row");
-        Assert.Equal(0, shaking.ShakeRowOffset); // the shake ends by restoring the base row
-        Assert.False(shaking.IsDead); // the ROM frees the ghost's metadata entry, not the object
-    }
-
-    [Fact]
-    public void ObjectMachine_WalksAGruntAndExplodesIt()
-    {
-        var attractObjectMachine = new AttractObjectMachine(AttractMovieData.Rom, new Random(11));
-
-        // GS1 ($84F5): the grunt walks left down its HUMANA steps, then GSSS1 ends
-        // in EXP.
-        attractObjectMachine.StartScript(0x84F5);
-
-        MovieObject? gruntMovieObject = null;
-        for (var i = 0; i < 4; i++)
-        {
-            attractObjectMachine.StepFrame();
-            gruntMovieObject ??= attractObjectMachine.Objects.FirstOrDefault(o => o.Descriptor?.Animation == MovieAnimation.Grunt);
-        }
-
-        Assert.NotNull(gruntMovieObject);
-        var startX = gruntMovieObject.XSubpixels;
-
-        List<MovieExplosion> explosions = [];
-        for (var frame = 0; frame < 3000 && explosions.Count == 0; frame++)
-        {
-            attractObjectMachine.StepFrame();
-            explosions.AddRange(attractObjectMachine.DrainExplosions());
-        }
-
-        Assert.True(gruntMovieObject.XSubpixels < startX, "the grunt did not walk left");
-        var explosion = Assert.Single(explosions);
-        Assert.Equal(MovieAnimation.Grunt, explosion.Animation);
-        Assert.Equal(0xA6, explosion.Row); // EXPP's ACTHIT+6
-    }
-
-    [Fact]
-    public void PageMachine_PrintsACharacterEveryThreeFramesAndSleepsForTheRest()
-    {
-        // "A", then a $5F sleep (95 fiftieths of a second), then "B" — the ROM's SPWAKE.
-        byte[] script = [0x41, 0x5F, 0x42];
-        var attractPageMachine = new AttractPageMachine(AttractMovieData.Rom, script, new AttractObjectMachine(AttractMovieData.Rom, new Random(1)), new Random(1));
-
-        for (var frame = 0; frame < 3; frame++) attractPageMachine.StepFrame();
-
-        Assert.Equal(['A'], attractPageMachine.TextCells.Select(c => c.Character).ToArray());
-
-        for (var frame = 0; frame < 200; frame++) attractPageMachine.StepFrame();
-
-        Assert.Equal(['A', 'B'], attractPageMachine.TextCells.Select(c => c.Character).ToArray());
+        return new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
     }
 }

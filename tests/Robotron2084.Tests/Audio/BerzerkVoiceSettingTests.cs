@@ -18,10 +18,12 @@ public sealed class BerzerkVoiceSettingTests
         Assert.Equal(new BerzerkVoiceSetting(pitch, volume), BerzerkVoiceSetting.CreateFromControlByte(controlByte));
     }
 
-    [Fact]
-    public void TheSampleSetting_IsIntruderAlerts()
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(8)]
+    public void AVolumeOutside0To7_IsRefused(int volume)
     {
-        Assert.Equal(BerzerkVoiceSetting.CreateFromControlByte(0x7B), BerzerkVoiceSetting.Sample);
+        Assert.Throws<ArgumentOutOfRangeException>(() => BerzerkVoice.GetVolumeShare(volume));
     }
 
     [Theory]
@@ -33,11 +35,9 @@ public sealed class BerzerkVoiceSettingTests
         Assert.Equal(volumeShare, BerzerkVoice.GetVolumeShare(volume), 5);
     }
 
-    [Theory]
-    [InlineData(-1)]
-    [InlineData(8)]
-    public void AVolumeOutside0To7_IsRefused(int volume)
+    [Fact]
+    public void TheSampleSetting_IsIntruderAlerts()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => BerzerkVoice.GetVolumeShare(volume));
+        Assert.Equal(BerzerkVoiceSetting.CreateFromControlByte(0x7B), BerzerkVoiceSetting.Sample);
     }
 }

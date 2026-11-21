@@ -11,63 +11,6 @@ namespace Robotron2084.Tests.Hud;
 /// </summary>
 public class ScoreFormatterTests
 {
-    private static string Drawn(int score)
-    {
-        return string.Concat(ScoreFormatter.DrawnDigits(score).Select(d => d.ToString()));
-    }
-
-    [Fact]
-    public void ZeroScore_ShowsTwoDigits()
-    {
-        // ROM $DC4D sets its "printed something" flag before the last two digit
-        // positions, so a fresh game shows "00" — it is never blank.
-        Assert.Equal("00", Drawn(0));
-    }
-
-    [Fact]
-    public void LeadingZeros_Suppressed()
-    {
-        Assert.Equal("100", Drawn(100));
-
-        // The last two digit positions are ALWAYS drawn, so a score under 100
-        // keeps its tens zero: 5 prints "05", not "5".
-        Assert.Equal("05", Drawn(5));
-    }
-
-    [Fact]
-    public void InteriorZeros_Kept()
-    {
-        Assert.Equal("1002", Drawn(1002));
-    }
-
-    [Fact]
-    public void SevenDigitScore_DrawsSevenDigits()
-    {
-        Assert.Equal("9999999", Drawn(9_999_999));
-    }
-
-    [Fact]
-    public void EightDigitScore_DrawsAllEight_BeyondTheArcade()
-    {
-        // The arcade masked the ten-millions digit, so 10,000,000 showed as 0000000. The port goes beyond (notes §139).
-        Assert.Equal("10000000", Drawn(10_000_000));
-        Assert.Equal("12345678", Drawn(12_345_678));
-        Assert.Equal("99999999", Drawn(99_999_999));
-    }
-
-    [Fact]
-    public void ScoreThatPassesTheEightDigitLimit_ShowsTheLimit()
-    {
-        Assert.Equal("99999999", Drawn(123_456_789));
-        Assert.Equal(99_999_999, ScoreFormatter.MaxScore);
-    }
-
-    [Fact]
-    public void NegativeScore_IsTreatedAsZero()
-    {
-        Assert.Equal("00", Drawn(-500));
-    }
-
     [Fact]
     public void Digits_AlwaysReportsEightPositions_AndSuppressesTheLeadingOnes()
     {
@@ -81,6 +24,21 @@ public class ScoreFormatterTests
         Assert.Equal(1, digits[5].Value);
         Assert.False(digits[7].Suppressed);
         Assert.Equal(0, digits[7].Value);
+    }
+
+    [Fact]
+    public void EightDigitScore_DrawsAllEight_BeyondTheArcade()
+    {
+        // The arcade masked the ten-millions digit, so 10,000,000 showed as 0000000. The port goes beyond (notes §139).
+        Assert.Equal("10000000", Drawn(10_000_000));
+        Assert.Equal("12345678", Drawn(12_345_678));
+        Assert.Equal("99999999", Drawn(99_999_999));
+    }
+
+    [Fact]
+    public void InteriorZeros_Kept()
+    {
+        Assert.Equal("1002", Drawn(1002));
     }
 
     [Fact]
@@ -100,5 +58,47 @@ public class ScoreFormatterTests
         var glyphs = ScoreFormatter.LayOutGlyphs(0, 0, 7, 6);
 
         Assert.Equal([(0, 36), (0, 43)], glyphs.Select(g => (g.Digit, g.X)));
+    }
+
+    [Fact]
+    public void LeadingZeros_Suppressed()
+    {
+        Assert.Equal("100", Drawn(100));
+
+        // The last two digit positions are ALWAYS drawn, so a score under 100
+        // keeps its tens zero: 5 prints "05", not "5".
+        Assert.Equal("05", Drawn(5));
+    }
+
+    [Fact]
+    public void NegativeScore_IsTreatedAsZero()
+    {
+        Assert.Equal("00", Drawn(-500));
+    }
+
+    [Fact]
+    public void ScoreThatPassesTheEightDigitLimit_ShowsTheLimit()
+    {
+        Assert.Equal("99999999", Drawn(123_456_789));
+        Assert.Equal(99_999_999, ScoreFormatter.MaxScore);
+    }
+
+    [Fact]
+    public void SevenDigitScore_DrawsSevenDigits()
+    {
+        Assert.Equal("9999999", Drawn(9_999_999));
+    }
+
+    [Fact]
+    public void ZeroScore_ShowsTwoDigits()
+    {
+        // ROM $DC4D sets its "printed something" flag before the last two digit
+        // positions, so a fresh game shows "00" — it is never blank.
+        Assert.Equal("00", Drawn(0));
+    }
+
+    private static string Drawn(int score)
+    {
+        return string.Concat(ScoreFormatter.DrawnDigits(score).Select(d => d.ToString()));
     }
 }

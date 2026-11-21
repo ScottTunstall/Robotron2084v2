@@ -103,7 +103,7 @@ public static class AttractStoryline
         script = InsertBefore(script, BrainPageStart, CreateWait(AttractSequence.SpheroidsAndQuarks));
         var waitForHeroToBlowUp = CreateWait(AttractSequence.Electrodes);
         byte[] pauseThenEnd = [PageScriptOpcodes.Pause, EndPauseArcadeFrames, PageScriptOpcodes.Done];
-        byte[] newEnding = [..waitForHeroToBlowUp, ..pauseThenEnd];
+        byte[] newEnding = [.. waitForHeroToBlowUp, .. pauseThenEnd];
         return Replace(script, ElectrodesPageEnd, newEnding);
     }
 
@@ -117,22 +117,22 @@ public static class AttractStoryline
     private static byte[] InsertBefore(byte[] script, byte[] marker, byte[] inserted)
     {
         var index = script.AsSpan().IndexOf(marker);
-        if (index < 0) return [..script];
+        if (index < 0) return [.. script];
 
         var bytesBeforeMarker = script[..index];
         var bytesFromMarker = script[index..];
-        return [..bytesBeforeMarker, ..inserted, ..bytesFromMarker];
+        return [.. bytesBeforeMarker, .. inserted, .. bytesFromMarker];
     }
 
     /// <summary>Creates a copy of a script with the first place the marker bytes are replaced by other bytes.</summary>
     private static byte[] Replace(byte[] script, byte[] marker, byte[] replacement)
     {
         var index = script.AsSpan().IndexOf(marker);
-        if (index < 0) return [..script];
+        if (index < 0) return [.. script];
 
         var endOfMarker = index + marker.Length;
         var bytesBeforeMarker = script[..index];
         var bytesAfterMarker = script[endOfMarker..];
-        return [..bytesBeforeMarker, ..replacement, ..bytesAfterMarker];
+        return [.. bytesBeforeMarker, .. replacement, .. bytesAfterMarker];
     }
 }

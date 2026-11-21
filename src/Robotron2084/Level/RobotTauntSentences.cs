@@ -26,6 +26,13 @@ public static class RobotTauntSentences
     private static readonly BerzerkWord[] OrderWords = [Get, Charge, Attack, Destroy, Shoot, Kill];
 
     /// <summary>
+    ///     Family members on the field with a hulk or a brain, in any game: an order then IT, THE INTRUDERS, THE FAMILY or
+    ///     THE HUMANS; or THE HUMANS or THE FAMILY MUST NOT ESCAPE.
+    /// </summary>
+    public static IReadOnlyList<IReadOnlyList<BerzerkWord>> FamilyWithHulksOrBrains { get; } =
+        CreateSentences([[It], [The, Intruders], [The, Family], [The, Humans]], [Humans, Family]);
+
+    /// <summary>
     ///     One player on the field, in a one-player game or a two-player game where the players take turns, who is not a
     ///     chicken: an order then IT, THE INTRUDER or THE HUMANOID; or THE INTRUDER or THE HUMANOID MUST NOT ESCAPE.
     /// </summary>
@@ -52,13 +59,6 @@ public static class RobotTauntSentences
     /// </summary>
     public static IReadOnlyList<IReadOnlyList<BerzerkWord>> TwoPlayersChicken { get; } =
         CreateSentences([[It], [The, Intruders], [The, Chickens], [The, Humanoids]], [Humanoids]);
-
-    /// <summary>
-    ///     Family members on the field with a hulk or a brain, in any game: an order then IT, THE INTRUDERS, THE FAMILY or
-    ///     THE HUMANS; or THE HUMANS or THE FAMILY MUST NOT ESCAPE.
-    /// </summary>
-    public static IReadOnlyList<IReadOnlyList<BerzerkWord>> FamilyWithHulksOrBrains { get; } =
-        CreateSentences([[It], [The, Intruders], [The, Family], [The, Humans]], [Humans, Family]);
 
     /// <summary>
     ///     Makes every order sentence for some targets, followed by a MUST NOT ESCAPE sentence for each of some escapers.

@@ -37,38 +37,19 @@ public sealed class WallDoor
         GapLength = gapLength;
     }
 
-    /// <summary>Which wall the door is in.</summary>
-    public WallDoorSide Side { get; }
-
     /// <summary>Where the middle of the opening is along the wall, in port pixels.</summary>
     public int Centre { get; }
 
     /// <summary>How long the opening is along the wall, in port pixels, when the door is shut.</summary>
     public int GapLength { get; }
 
-    /// <summary>Where the opening starts along the wall, in port pixels.</summary>
-    public int GetStart()
-    {
-        return Centre - GapLength / 2;
-    }
+    /// <summary>Which wall the door is in.</summary>
+    public WallDoorSide Side { get; }
 
     /// <summary>Where the opening ends along the wall, in port pixels.</summary>
     public int GetEnd()
     {
         return GetStart() + GapLength;
-    }
-
-    /// <summary>Gets whether the door is wide open: the panels are all the way apart.</summary>
-    public bool IsWideOpen()
-    {
-        return _ticksSinceStart >= WallDoorTuning.OpenTicks &&
-               _ticksSinceStart < WallDoorTuning.OpenTicks + WallDoorTuning.HoldTicks;
-    }
-
-    /// <summary>Gets whether the door has slid shut again, and is no longer needed.</summary>
-    public bool IsFinished()
-    {
-        return _ticksSinceStart >= TotalTicks;
     }
 
     /// <summary>Gets how long the opening is now, in port pixels: 0 when the door is shut, the whole gap when it is wide open.</summary>
@@ -80,6 +61,25 @@ public sealed class WallDoor
 
         var ticksLeft = Math.Max(0, TotalTicks - _ticksSinceStart);
         return GapLength * ticksLeft / WallDoorTuning.CloseTicks;
+    }
+
+    /// <summary>Where the opening starts along the wall, in port pixels.</summary>
+    public int GetStart()
+    {
+        return Centre - GapLength / 2;
+    }
+
+    /// <summary>Gets whether the door has slid shut again, and is no longer needed.</summary>
+    public bool IsFinished()
+    {
+        return _ticksSinceStart >= TotalTicks;
+    }
+
+    /// <summary>Gets whether the door is wide open: the panels are all the way apart.</summary>
+    public bool IsWideOpen()
+    {
+        return _ticksSinceStart >= WallDoorTuning.OpenTicks &&
+               _ticksSinceStart < WallDoorTuning.OpenTicks + WallDoorTuning.HoldTicks;
     }
 
     /// <summary>Moves the door on by one tick.</summary>

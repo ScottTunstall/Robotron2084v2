@@ -1,5 +1,4 @@
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Events;
 using Robotron2084.Tests.Entities.Extensions;
@@ -9,18 +8,6 @@ namespace Robotron2084.Tests.Entities;
 
 public sealed class LaserSlotsTests
 {
-    [Fact]
-    public void Fire_AllowsThreeLiveLasersThenHasNoFreeSlot()
-    {
-        LaserSlots laserSlots = new(TestTextures.SharedTextureSet, NullGameEvents.Instance);
-
-        laserSlots.Fire(new IntVector2(100, 100), Direction8.Up);
-        laserSlots.Fire(new IntVector2(120, 100), Direction8.Up);
-        laserSlots.Fire(new IntVector2(140, 100), Direction8.Up);
-        Assert.False(laserSlots.HasFreeSlot());
-        Assert.Equal(3, laserSlots.GetActiveLasers().Count());
-    }
-
     [Fact]
     public void Fire_AfterDeactivation_ReusesTheFreedSlot()
     {
@@ -34,6 +21,18 @@ public sealed class LaserSlotsTests
         var laser = laserSlots.FireAndGet(new IntVector2(300, 300), Direction8.Right);
         Assert.NotNull(laser);
         Assert.Equal(Direction8.Right, laser!.Direction);
+        Assert.Equal(3, laserSlots.GetActiveLasers().Count());
+    }
+
+    [Fact]
+    public void Fire_AllowsThreeLiveLasersThenHasNoFreeSlot()
+    {
+        LaserSlots laserSlots = new(TestTextures.SharedTextureSet, NullGameEvents.Instance);
+
+        laserSlots.Fire(new IntVector2(100, 100), Direction8.Up);
+        laserSlots.Fire(new IntVector2(120, 100), Direction8.Up);
+        laserSlots.Fire(new IntVector2(140, 100), Direction8.Up);
+        Assert.False(laserSlots.HasFreeSlot());
         Assert.Equal(3, laserSlots.GetActiveLasers().Count());
     }
 }

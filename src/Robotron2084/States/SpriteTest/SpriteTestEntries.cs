@@ -1,13 +1,13 @@
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core;
 using Robotron2084.Core.Extensions;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.States.SpriteTest.Models;
 using Robotron2084.Tuning;
 
@@ -93,129 +93,6 @@ public static class SpriteTestEntries
         return entries;
     }
 
-    /// <summary>Makes an entry whose walk depends on the way held, with one cycle made up front for each walk.</summary>
-    /// <typeparam name="TWalk">What tells the walks apart, such as a <see cref="WalkSequence" />.</typeparam>
-    /// <param name="name">The name shown in the list.</param>
-    /// <param name="getWalk">Gets the walk for a way, by the entity's own rule.</param>
-    /// <param name="createCycle">Makes the cycle for a walk.</param>
-    /// <param name="cycleWhenNoneHeld">The cycle shown when no way is held, or null to stay on the frame showing.</param>
-    private static SpriteTestEntry CreateSteerable<TWalk>(string name, Func<Direction8, TWalk> getWalk,
-        Func<TWalk, SpriteTestCycle> createCycle, SpriteTestCycle? cycleWhenNoneHeld = null)
-        where TWalk : notnull
-    {
-        Dictionary<TWalk, SpriteTestCycle> cyclesByWalk = [];
-        Dictionary<Direction8, SpriteTestCycle> cyclesByDirection = [];
-        foreach (var direction in Enum.GetValues<Direction8>())
-        {
-            var walk = getWalk(direction);
-            if (!cyclesByWalk.TryGetValue(walk, out var cycle))
-            {
-                cycle = createCycle(walk);
-                cyclesByWalk[walk] = cycle;
-            }
-
-            cyclesByDirection[direction] = cycle;
-        }
-
-        return new SpriteTestEntry(name, direction => direction is { } held ? cyclesByDirection[held] : cycleWhenNoneHeld, true);
-    }
-
-    private static SpriteTestEntry CreatePlayer(TextureSet textureSet)
-    {
-        return CreateSteerable("PLAYER 1", Player.GetWalkSequence, walkSequence => SpriteTestCycle.CreateFromArcadeFrames(
-            Enumerable.Range(0, Player.WalkCycleLength)
-                .Select(step => textureSet.PlayerAnimationFrameTextures[Player.GetWalkAnimationFrameIndex(walkSequence, step)]),
-            Player.WalkAnimationIntervalArcadeFrames)) with
-        {
-            WalkOn = new SpriteTestWalkOn([PlayerTuning.PlayerSpeedX], ArcadeClock.UnitsPerPortTick)
-        };
-    }
-
-    private static SpriteTestEntry CreateFamilyMember(string name, Texture2D[] animationFrameTextures)
-    {
-        return CreateSteerable(name, FamilyMember.GetDirectionBlock, directionBlock => SpriteTestCycle.CreateFromArcadeFrames(
-            Enumerable.Range(0, FamilyMember.SubStepsPerDirection)
-                .Select(subStep => animationFrameTextures[FamilyMember.GetWalkAnimationFrameIndex(directionBlock, subStep)]),
-            FamilyMember.BeatIntervalArcadeFrames)) with
-        {
-            WalkOn = new SpriteTestWalkOn([
-                .. Enumerable.Range(0, FamilyMember.SubStepsPerDirection).Select(subStep => ScreenSize.ToPortPixelsFromArcadePixels(
-                    -FamilyMember.GetSidewaysStepArcadePixels(FamilyMember.GetDirectionBlock(Direction8.Left), subStep)))
-            ])
-        };
-    }
-
-    /// <summary>Makes the grunt: it walks the same whichever way it goes, and steps after a random number of beats.</summary>
-    private static SpriteTestEntry CreateGrunt(TextureSet textureSet)
-    {
-        var waveParams = GetFirstWaveWith(WaveTable.Grunts);
-        return SpriteTestEntry.CreateUnsteerable("GRUNT", SpriteTestCycle.CreateFromArcadeFrames(
-            Enumerable.Range(1, Grunt.WalkAnimationFrameCount)
-                .Select(arcadeAnimationFrameNumber => textureSet.GruntAnimationFrameTextures[Grunt.GetAnimationFrameIndex(arcadeAnimationFrameNumber)]),
-            Grunt.BeatIntervalArcadeFrames, waveParams.GruntMoveDelay)) with
-        {
-            WalkOn = new SpriteTestWalkOn([GruntChaseStep.StepXPixels])
-        };
-    }
-
-    private static SpriteTestEntry CreateHulk(TextureSet textureSet)
-    {
-        var waveParams = GetFirstWaveWith(WaveTable.Hulks);
-        return CreateSteerable("HULK", direction => direction, direction => SpriteTestCycle.CreateFromArcadeFrames(
-            Hulk.GetFrames(direction).Select(frame => textureSet.HulkAnimationFrameTextures[frame]),
-            waveParams.HulkBeatIntervalArcadeFrames)) with
-        {
-            WalkOn = new SpriteTestWalkOn([
-                .. Enumerable.Range(0, Hulk.GetFrames(Direction8.Left).Length)
-                    .Select(step => ScreenSize.ToPortPixelsFromArcadePixels(Hulk.GetSidewaysStepArcadePixels(step)))
-            ])
-        };
-    }
-
-    private static SpriteTestEntry CreateBrain(TextureSet textureSet)
-    {
-        var waveParams = GetFirstWaveWith(WaveTable.Brains);
-        return CreateSteerable("BRAIN", direction => Brain.GetWalkSequence(direction.ToIntVector()), walkSequence =>
-            SpriteTestCycle.CreateFromArcadeFrames(
-                Enumerable.Range(0, Brain.WalkCycleLength)
-                    .Select(step => textureSet.BrainAnimationFrameTextures[Brain.GetWalkAnimationFrameIndex(walkSequence, step)]),
-                Brain.GetBeatIntervalArcadeFrames(waveParams.BrainBeatWaitArcadeFrames))) with
-        {
-            WalkOn = new SpriteTestWalkOn([Brain.StepXPixels])
-        };
-    }
-
-    private static SpriteTestEntry CreateProg(string name, Texture2D[] animationFrameTextures)
-    {
-        return CreateSteerable(name, Prog.GetWalkSequence, walkSequence => SpriteTestCycle.CreateFromArcadeFrames(
-                Enumerable.Range(0, Prog.WalkCycleLength)
-                    .Select(step => animationFrameTextures[Prog.GetWalkAnimationFrameIndex(walkSequence, step)]),
-                Prog.BeatIntervalArcadeFrames)) with
-            {
-                DrawStyle = SpriteTestDrawStyle.SolidWithBackground,
-                ShapePaletteIndex = ProgTuning.ShapePaletteIndex,
-                BackgroundPaletteIndex = ProgTuning.BackgroundPaletteIndex,
-                WalkOn = new SpriteTestWalkOn([ScreenSize.ToPortPixelsFromColumns(Prog.StepXColumns)])
-            };
-    }
-
-    /// <summary>Makes the tank: its treads run backwards while it goes left, and forwards otherwise, even when no way is held.</summary>
-    private static SpriteTestEntry CreateTank(TextureSet textureSet)
-    {
-        var treadFrames = textureSet.TankAnimationFrameTextures;
-        SpriteTestCycle CreateTreads(bool isGoingLeft)
-        {
-            return SpriteTestCycle.CreateFromArcadeFrames(
-                Enumerable.Range(0, treadFrames.Length)
-                    .Select(counter => treadFrames[Tank.GetTreadFrameIndex(counter, treadFrames.Length, isGoingLeft)]),
-                TankTuning.BeatIntervalArcadeFrames);
-        }
-
-        var forwards = CreateTreads(false);
-        var backwards = CreateTreads(true);
-        return new SpriteTestEntry("TANK", direction => direction?.ToIntVector().X < 0 ? backwards : forwards, true);
-    }
-
     /// <summary>
     ///     Makes the Berzerk robot: it plays its waiting animation until it walks, then walks the way held, one small step
     ///     every <see cref="BerzerkRobot.StepIntervalBeats" /> beats, with no random wait.
@@ -239,6 +116,19 @@ public static class SpriteTestEntries
             WalkOn = new SpriteTestWalkOn([BerzerkRobot.StepPixels]),
             DrawStyle = SpriteTestDrawStyle.Solid,
             ShapeColour = BerzerkRobot.DefaultColour
+        };
+    }
+
+    private static SpriteTestEntry CreateBrain(TextureSet textureSet)
+    {
+        var waveParams = GetFirstWaveWith(WaveTable.Brains);
+        return CreateSteerable("BRAIN", direction => Brain.GetWalkSequence(direction.ToIntVector()), walkSequence =>
+            SpriteTestCycle.CreateFromArcadeFrames(
+                Enumerable.Range(0, Brain.WalkCycleLength)
+                    .Select(step => textureSet.BrainAnimationFrameTextures[Brain.GetWalkAnimationFrameIndex(walkSequence, step)]),
+                Brain.GetBeatIntervalArcadeFrames(waveParams.BrainBeatWaitArcadeFrames))) with
+        {
+            WalkOn = new SpriteTestWalkOn([Brain.StepXPixels])
         };
     }
 
@@ -268,6 +158,20 @@ public static class SpriteTestEntries
         }
     }
 
+    private static SpriteTestEntry CreateFamilyMember(string name, Texture2D[] animationFrameTextures)
+    {
+        return CreateSteerable(name, FamilyMember.GetDirectionBlock, directionBlock => SpriteTestCycle.CreateFromArcadeFrames(
+            Enumerable.Range(0, FamilyMember.SubStepsPerDirection)
+                .Select(subStep => animationFrameTextures[FamilyMember.GetWalkAnimationFrameIndex(directionBlock, subStep)]),
+            FamilyMember.BeatIntervalArcadeFrames)) with
+        {
+            WalkOn = new SpriteTestWalkOn([
+                .. Enumerable.Range(0, FamilyMember.SubStepsPerDirection).Select(subStep => ScreenSize.ToPortPixelsFromArcadePixels(
+                    -FamilyMember.GetSidewaysStepArcadePixels(FamilyMember.GetDirectionBlock(Direction8.Left), subStep)))
+            ])
+        };
+    }
+
     /// <summary>Makes a cycle that grows through its frames, then holds the grown frame for <see cref="EndHoldArcadeFrames" />.</summary>
     private static SpriteTestCycle CreateGrowth(IEnumerable<Texture2D> growTextures, int growIntervalArcadeFrames, Texture2D grownTexture)
     {
@@ -277,6 +181,102 @@ public static class SpriteTestEntries
             .. growTextures.Select(texture => new SpriteTestFrame(texture, growClockUnits)),
             new SpriteTestFrame(grownTexture, ArcadeClock.ToClockUnits(EndHoldArcadeFrames))
         ]);
+    }
+
+    /// <summary>Makes the grunt: it walks the same whichever way it goes, and steps after a random number of beats.</summary>
+    private static SpriteTestEntry CreateGrunt(TextureSet textureSet)
+    {
+        var waveParams = GetFirstWaveWith(WaveTable.Grunts);
+        return SpriteTestEntry.CreateUnsteerable("GRUNT", SpriteTestCycle.CreateFromArcadeFrames(
+            Enumerable.Range(1, Grunt.WalkAnimationFrameCount)
+                .Select(arcadeAnimationFrameNumber => textureSet.GruntAnimationFrameTextures[Grunt.GetAnimationFrameIndex(arcadeAnimationFrameNumber)]),
+            Grunt.BeatIntervalArcadeFrames, waveParams.GruntMoveDelay)) with
+        {
+            WalkOn = new SpriteTestWalkOn([GruntChaseStep.StepXPixels])
+        };
+    }
+
+    private static SpriteTestEntry CreateHulk(TextureSet textureSet)
+    {
+        var waveParams = GetFirstWaveWith(WaveTable.Hulks);
+        return CreateSteerable("HULK", direction => direction, direction => SpriteTestCycle.CreateFromArcadeFrames(
+            Hulk.GetFrames(direction).Select(frame => textureSet.HulkAnimationFrameTextures[frame]),
+            waveParams.HulkBeatIntervalArcadeFrames)) with
+        {
+            WalkOn = new SpriteTestWalkOn([
+                .. Enumerable.Range(0, Hulk.GetFrames(Direction8.Left).Length)
+                    .Select(step => ScreenSize.ToPortPixelsFromArcadePixels(Hulk.GetSidewaysStepArcadePixels(step)))
+            ])
+        };
+    }
+
+    private static SpriteTestEntry CreatePlayer(TextureSet textureSet)
+    {
+        return CreateSteerable("PLAYER 1", Player.GetWalkSequence, walkSequence => SpriteTestCycle.CreateFromArcadeFrames(
+            Enumerable.Range(0, Player.WalkCycleLength)
+                .Select(step => textureSet.PlayerAnimationFrameTextures[Player.GetWalkAnimationFrameIndex(walkSequence, step)]),
+            Player.WalkAnimationIntervalArcadeFrames)) with
+        {
+            WalkOn = new SpriteTestWalkOn([PlayerTuning.PlayerSpeedX], ArcadeClock.UnitsPerPortTick)
+        };
+    }
+
+    private static SpriteTestEntry CreateProg(string name, Texture2D[] animationFrameTextures)
+    {
+        return CreateSteerable(name, Prog.GetWalkSequence, walkSequence => SpriteTestCycle.CreateFromArcadeFrames(
+                Enumerable.Range(0, Prog.WalkCycleLength)
+                    .Select(step => animationFrameTextures[Prog.GetWalkAnimationFrameIndex(walkSequence, step)]),
+                Prog.BeatIntervalArcadeFrames)) with
+        {
+            DrawStyle = SpriteTestDrawStyle.SolidWithBackground,
+            ShapePaletteIndex = ProgTuning.ShapePaletteIndex,
+            BackgroundPaletteIndex = ProgTuning.BackgroundPaletteIndex,
+            WalkOn = new SpriteTestWalkOn([ScreenSize.ToPortPixelsFromColumns(Prog.StepXColumns)])
+        };
+    }
+
+    /// <summary>Makes an entry whose walk depends on the way held, with one cycle made up front for each walk.</summary>
+    /// <typeparam name="TWalk">What tells the walks apart, such as a <see cref="WalkSequence" />.</typeparam>
+    /// <param name="name">The name shown in the list.</param>
+    /// <param name="getWalk">Gets the walk for a way, by the entity's own rule.</param>
+    /// <param name="createCycle">Makes the cycle for a walk.</param>
+    /// <param name="cycleWhenNoneHeld">The cycle shown when no way is held, or null to stay on the frame showing.</param>
+    private static SpriteTestEntry CreateSteerable<TWalk>(string name, Func<Direction8, TWalk> getWalk,
+        Func<TWalk, SpriteTestCycle> createCycle, SpriteTestCycle? cycleWhenNoneHeld = null)
+        where TWalk : notnull
+    {
+        Dictionary<TWalk, SpriteTestCycle> cyclesByWalk = [];
+        Dictionary<Direction8, SpriteTestCycle> cyclesByDirection = [];
+        foreach (var direction in Enum.GetValues<Direction8>())
+        {
+            var walk = getWalk(direction);
+            if (!cyclesByWalk.TryGetValue(walk, out var cycle))
+            {
+                cycle = createCycle(walk);
+                cyclesByWalk[walk] = cycle;
+            }
+
+            cyclesByDirection[direction] = cycle;
+        }
+
+        return new SpriteTestEntry(name, direction => direction is { } held ? cyclesByDirection[held] : cycleWhenNoneHeld, true);
+    }
+
+    /// <summary>Makes the tank: its treads run backwards while it goes left, and forwards otherwise, even when no way is held.</summary>
+    private static SpriteTestEntry CreateTank(TextureSet textureSet)
+    {
+        var treadFrames = textureSet.TankAnimationFrameTextures;
+        SpriteTestCycle CreateTreads(bool isGoingLeft)
+        {
+            return SpriteTestCycle.CreateFromArcadeFrames(
+                Enumerable.Range(0, treadFrames.Length)
+                    .Select(counter => treadFrames[Tank.GetTreadFrameIndex(counter, treadFrames.Length, isGoingLeft)]),
+                TankTuning.BeatIntervalArcadeFrames);
+        }
+
+        var forwards = CreateTreads(false);
+        var backwards = CreateTreads(true);
+        return new SpriteTestEntry("TANK", direction => direction?.ToIntVector().X < 0 ? backwards : forwards, true);
     }
 
     /// <summary>Gets the parameters of the first wave whose count in a wave table column is more than 0.</summary>

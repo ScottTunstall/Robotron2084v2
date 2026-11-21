@@ -1,8 +1,8 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities;
-using Robotron2084.Level.Models;
+using Robotron2084.Entities.Extensions;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Entities;
@@ -31,41 +31,15 @@ public sealed class SpheroidAnimationTests
 {
     private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime OneTick()
+    [Fact]
+    public void ASpheroidIsBornOnCIRP4()
     {
-        return new GameTime(TimeSpan.Zero, OneTickSpan);
-    }
+        // MPROB: `LDD ,U++ / STD OLDPIC,X / STD OPICT,X` — the animation frame argument of
+        // `MKPROB CIRCLE,CIRP4,CIRKIL` becomes the new object's OPICT, so the very
+        // first animation frame on screen is the medium ring, not the dot.
+        var playField = CreateField(11);
 
-    /// <summary>
-    ///     ENFNUM 2 + CDPTIM 3: the initial countdown is 1..3 five-animation-frame wraps, the drop
-    ///     phase's is always 1 (CDPTIM/4 = 0), and `ceil(RND(1..2)/2)` = 1 enforcer — so the
-    ///     first drop ends the drop phase and the spheroid escapes almost at once.
-    /// </summary>
-    private static PlayField CreateField(int seed)
-    {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(
-            1,
-            SpheroidCount: 1,
-            MaxDropsX2: 2,
-            SpheroidDropDelay: 3)).WithRandom(new Random(seed)).Build();
-    }
-
-    /// <summary>
-    ///     Drives one spheroid (seeded, so this is deterministic) through the start of the wave
-    ///     and on into its escape phase. Dropped enforcers are never updated, so they cannot
-    ///     kill the standing player and freeze the field.
-    /// </summary>
-    private static (PlayField PlayField, Spheroid Spheroid) DriveToEscape(int seed)
-    {
-        var playField = CreateField(seed);
-        var spheroid = playField.FieldEntities.Spheroids[0];
-
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
-
-        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(OneTick(), playField);
-
-        Assert.True(spheroid.IsEscaping, "the spheroid never reached its escape phase");
-        return (playField, spheroid);
+        Assert.Equal(4, playField.FieldEntities.Spheroids[0].AnimationFrameIndex);
     }
 
     [Fact]
@@ -154,14 +128,40 @@ public sealed class SpheroidAnimationTests
         Assert.Contains(7, dropAnimationFrames);
     }
 
-    [Fact]
-    public void ASpheroidIsBornOnCIRP4()
+    /// <summary>
+    ///     ENFNUM 2 + CDPTIM 3: the initial countdown is 1..3 five-animation-frame wraps, the drop
+    ///     phase's is always 1 (CDPTIM/4 = 0), and `ceil(RND(1..2)/2)` = 1 enforcer — so the
+    ///     first drop ends the drop phase and the spheroid escapes almost at once.
+    /// </summary>
+    private static PlayField CreateField(int seed)
     {
-        // MPROB: `LDD ,U++ / STD OLDPIC,X / STD OPICT,X` — the animation frame argument of
-        // `MKPROB CIRCLE,CIRP4,CIRKIL` becomes the new object's OPICT, so the very
-        // first animation frame on screen is the medium ring, not the dot.
-        var playField = CreateField(11);
+        return new PlayFieldBuilder().WithParameters(new WaveParams(
+            1,
+            SpheroidCount: 1,
+            MaxDropsX2: 2,
+            SpheroidDropDelay: 3)).WithRandom(new Random(seed)).Build();
+    }
 
-        Assert.Equal(4, playField.FieldEntities.Spheroids[0].AnimationFrameIndex);
+    /// <summary>
+    ///     Drives one spheroid (seeded, so this is deterministic) through the start of the wave
+    ///     and on into its escape phase. Dropped enforcers are never updated, so they cannot
+    ///     kill the standing player and freeze the field.
+    /// </summary>
+    private static (PlayField PlayField, Spheroid Spheroid) DriveToEscape(int seed)
+    {
+        var playField = CreateField(seed);
+        var spheroid = playField.FieldEntities.Spheroids[0];
+
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
+
+        for (var guard = 0; guard < 4000 && !spheroid.IsEscaping; guard++) spheroid.Update(OneTick(), playField);
+
+        Assert.True(spheroid.IsEscaping, "the spheroid never reached its escape phase");
+        return (playField, spheroid);
+    }
+
+    private static GameTime OneTick()
+    {
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 }

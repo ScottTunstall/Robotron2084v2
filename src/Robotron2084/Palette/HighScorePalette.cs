@@ -68,7 +68,7 @@ namespace Robotron2084.Palette;
 ///                     (<c>COLC</c>), <c>$E2F5</c> (<c>COLD</c>), <c>$E2FE</c> (<c>COLTAB</c>), <c>$E2C2</c> (<c>CATAB</c>) and
 ///                     <c>$E2D1</c> (<c>CCTAB</c>). The disassembly gives no label for these, only addresses.
 ///                 </description>
-///             
+///
 ///     </para>
 /// </remarks>
 public sealed class HighScorePalette

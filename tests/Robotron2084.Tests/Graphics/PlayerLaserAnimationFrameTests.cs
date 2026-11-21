@@ -39,30 +39,30 @@ public sealed class PlayerLaserAnimationFrameTests
     }
 
     [Fact]
-    public void DiagonalMain_Is6x6_TopLeftToBottomRight()
-    {
-        var pattern = TextureFactory.BuildLaserDiagonalMainPattern(Color.White);
-
-        Assert.Equal(N * N, pattern.Length);
-        for (var y = 0; y < N; y++)
-        for (var x = 0; x < N; x++)
-        {
-            var lit = x == y;
-            Assert.Equal(lit ? Color.White : Color.Transparent, pattern[y * N + x]);
-        }
-    }
-
-    [Fact]
     public void DiagonalAnti_Is6x6_TopRightToBottomLeft()
     {
         var pattern = TextureFactory.BuildLaserDiagonalAntiPattern(Color.White);
 
         Assert.Equal(N * N, pattern.Length);
         for (var y = 0; y < N; y++)
-        for (var x = 0; x < N; x++)
-        {
-            var lit = x == N - 1 - y;
-            Assert.Equal(lit ? Color.White : Color.Transparent, pattern[y * N + x]);
-        }
+            for (var x = 0; x < N; x++)
+            {
+                var lit = x == N - 1 - y;
+                Assert.Equal(lit ? Color.White : Color.Transparent, pattern[y * N + x]);
+            }
+    }
+
+    [Fact]
+    public void DiagonalMain_Is6x6_TopLeftToBottomRight()
+    {
+        var pattern = TextureFactory.BuildLaserDiagonalMainPattern(Color.White);
+
+        Assert.Equal(N * N, pattern.Length);
+        for (var y = 0; y < N; y++)
+            for (var x = 0; x < N; x++)
+            {
+                var lit = x == y;
+                Assert.Equal(lit ? Color.White : Color.Transparent, pattern[y * N + x]);
+            }
     }
 }

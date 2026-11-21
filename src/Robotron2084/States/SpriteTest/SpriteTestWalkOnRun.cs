@@ -23,11 +23,11 @@ public sealed class SpriteTestWalkOnRun
         _clockUnitsToNextStep = walkOn.StepIntervalClockUnits ?? 0;
     }
 
-    /// <summary>Where the sprite's left edge is, in port pixels from the left.</summary>
-    public int X { get; private set; }
-
     /// <summary>How high above the ground the sprite is, in port pixels. It is 0 for every sprite but Gorf.</summary>
     public int Rise { get; private set; }
+
+    /// <summary>Where the sprite's left edge is, in port pixels from the left.</summary>
+    public int X { get; private set; }
 
     /// <summary>
     ///     Takes the steps due this tick. Call it after the animator has had its tick, so that a sprite that steps as its

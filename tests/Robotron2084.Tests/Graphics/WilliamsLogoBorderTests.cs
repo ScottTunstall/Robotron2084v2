@@ -7,41 +7,6 @@ namespace Robotron2084.Tests.Graphics;
 /// <summary>The attract page's border of Williams "W"s (ROM <c>$87D6</c> onward).</summary>
 public sealed class WilliamsLogoBorderTests
 {
-    /// <summary>A one-pixel stand-in for the W, so a test can find exactly where it was drawn.</summary>
-    private static WilliamsLogoBorder NewBorder()
-    {
-        return new WilliamsLogoBorder(SpriteMask.CreateFromPixels(28, 27, [(0, 0)]));
-    }
-
-    private static void TickArcadeFrames(WilliamsLogoBorder williamsLogoBorder, int arcadeFrames)
-    {
-        // A fiftieth of a second is six clock units and a port tick five, so N frames take 6N/5 ticks, rounded up.
-        var ticks = (ArcadeClock.ToClockUnits(arcadeFrames) + ArcadeClock.UnitsPerPortTick - 1) /
-                    ArcadeClock.UnitsPerPortTick;
-        for (var i = 0; i < ticks; i++) williamsLogoBorder.Tick();
-    }
-
-    private static int Count(WilliamsLogoBorder williamsLogoBorder)
-    {
-        return williamsLogoBorder.Pixels.Count(pixel => pixel != 0);
-    }
-
-    private static byte PixelAt(WilliamsLogoBorder williamsLogoBorder, int column, int row)
-    {
-        return williamsLogoBorder.Pixels[row * WilliamsLogoBorder.Width + column * ScreenSize.ArcadePixelsPerByte];
-    }
-
-    [Fact]
-    public void TheFirstWIsDrawnAtOnceInPaletteIndexSeven()
-    {
-        var williamsLogoBorder = NewBorder();
-
-        TickArcadeFrames(williamsLogoBorder, 1);
-
-        Assert.Equal(7, PixelAt(williamsLogoBorder, 5, 0x0F));
-        Assert.Equal(1, Count(williamsLogoBorder));
-    }
-
     [Fact]
     public void AnotherWComesEveryFourArcadeFrames()
     {
@@ -55,13 +20,24 @@ public sealed class WilliamsLogoBorderTests
     }
 
     [Fact]
-    public void TheRingHasTwentyEightWsBeforeItStartsToMove()
+    public void ItFinishesAfterSevenHundredAndFourMovingFrames()
     {
         var williamsLogoBorder = NewBorder();
 
-        TickArcadeFrames(williamsLogoBorder, 4 * 27 + 1); // the 28th W is drawn on the 109th fiftieth of a second
+        TickArcadeFrames(williamsLogoBorder, 4 * 28 + 704 + 8);
 
-        Assert.Equal(28, Count(williamsLogoBorder));
+        Assert.True(williamsLogoBorder.IsFinished());
+    }
+
+    [Fact]
+    public void TheFirstWIsDrawnAtOnceInPaletteIndexSeven()
+    {
+        var williamsLogoBorder = NewBorder();
+
+        TickArcadeFrames(williamsLogoBorder, 1);
+
+        Assert.Equal(7, PixelAt(williamsLogoBorder, 5, 0x0F));
+        Assert.Equal(1, Count(williamsLogoBorder));
     }
 
     [Fact]
@@ -79,12 +55,36 @@ public sealed class WilliamsLogoBorderTests
     }
 
     [Fact]
-    public void ItFinishesAfterSevenHundredAndFourMovingFrames()
+    public void TheRingHasTwentyEightWsBeforeItStartsToMove()
     {
         var williamsLogoBorder = NewBorder();
 
-        TickArcadeFrames(williamsLogoBorder, 4 * 28 + 704 + 8);
+        TickArcadeFrames(williamsLogoBorder, 4 * 27 + 1); // the 28th W is drawn on the 109th fiftieth of a second
 
-        Assert.True(williamsLogoBorder.IsFinished());
+        Assert.Equal(28, Count(williamsLogoBorder));
+    }
+
+    private static int Count(WilliamsLogoBorder williamsLogoBorder)
+    {
+        return williamsLogoBorder.Pixels.Count(pixel => pixel != 0);
+    }
+
+    /// <summary>A one-pixel stand-in for the W, so a test can find exactly where it was drawn.</summary>
+    private static WilliamsLogoBorder NewBorder()
+    {
+        return new WilliamsLogoBorder(SpriteMask.CreateFromPixels(28, 27, [(0, 0)]));
+    }
+
+    private static byte PixelAt(WilliamsLogoBorder williamsLogoBorder, int column, int row)
+    {
+        return williamsLogoBorder.Pixels[row * WilliamsLogoBorder.Width + column * ScreenSize.ArcadePixelsPerByte];
+    }
+
+    private static void TickArcadeFrames(WilliamsLogoBorder williamsLogoBorder, int arcadeFrames)
+    {
+        // A fiftieth of a second is six clock units and a port tick five, so N frames take 6N/5 ticks, rounded up.
+        var ticks = (ArcadeClock.ToClockUnits(arcadeFrames) + ArcadeClock.UnitsPerPortTick - 1) /
+                    ArcadeClock.UnitsPerPortTick;
+        for (var i = 0; i < ticks; i++) williamsLogoBorder.Tick();
     }
 }

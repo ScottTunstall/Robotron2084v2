@@ -44,14 +44,14 @@ public sealed class SoundBoardAudioSink : IAudioSink
     /// </summary>
     private const int SamplesPerPortTick = SampleRate / Robotron2084.Core.ArcadeClock.PortTicksPerSecond;
 
-    private readonly ISoundBoard _soundBoard;
-    private readonly float[] _monoSamples = new float[SamplesPerPortTick];
-    private readonly StereoPanner _stereoPanner = new();
-    private readonly SoundBoardRenderer _soundBoardRenderer;
-    private readonly DynamicSoundEffectInstance _dynamicSoundEffectInstance;
-    private readonly short[] _stereoSamples = new short[SamplesPerPortTick * ChannelsPerFrame];
     private readonly BoardVolumeDuringSpeech _boardVolumeDuringSpeech = new();
+    private readonly DynamicSoundEffectInstance _dynamicSoundEffectInstance;
     private readonly Func<bool> _isSpeechTalking;
+    private readonly float[] _monoSamples = new float[SamplesPerPortTick];
+    private readonly ISoundBoard _soundBoard;
+    private readonly SoundBoardRenderer _soundBoardRenderer;
+    private readonly StereoPanner _stereoPanner = new();
+    private readonly short[] _stereoSamples = new short[SamplesPerPortTick * ChannelsPerFrame];
 
     /// <summary>
     ///     Starts playing a sound board through the speakers. The board is turned down while the speech talks (see

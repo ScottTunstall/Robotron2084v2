@@ -1,5 +1,5 @@
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Level;
@@ -11,6 +11,114 @@ public sealed class WaveParamsGeneratorTests
 
     /// <summary>The last wave the style tests look at: past the table's end, since waves 41 to 60 repeat 21 to 40.</summary>
     private const int LastWaveChecked = 60;
+
+    [Fact]
+    public void ClassicWavesHaveBerzerkSpeakAndGorfSpeakOff()
+    {
+        WaveParamsGenerator waveParamsGenerator = new();
+
+        for (var waveNumber = 1; waveNumber <= LastWaveChecked; waveNumber++)
+        {
+            var waveParams = waveParamsGenerator.Generate(waveNumber, GameStyle.Classic);
+
+            Assert.False(waveParams.EnableBerzerkSpeak, $"wave {waveNumber}");
+            Assert.False(waveParams.EnableGorfSpeak, $"wave {waveNumber}");
+        }
+    }
+
+    [Theory]
+    [InlineData(5)] // 20 grunts and 15 brains
+    [InlineData(40)] // 30 grunts and 25 brains
+    public void ExtendedBrainWaveHasNoBerzerkSpeak(int waveNumber)
+    {
+        var waveParams = new WaveParamsGenerator().Generate(waveNumber, GameStyle.Extended);
+
+        Assert.True(waveParams.GruntCount > 0);
+        Assert.True(waveParams.BrainCount > 0);
+        Assert.False(waveParams.EnableBerzerkSpeak);
+    }
+
+    [Theory]
+    [InlineData(7)] // quarks and no grunts
+    [InlineData(28)] // 35 grunts and 1 quark
+    [InlineData(34)] // 30 grunts and 2 quarks
+    public void ExtendedTankWaveHasNoBerzerkSpeak(int waveNumber)
+    {
+        var waveParams = new WaveParamsGenerator().Generate(waveNumber, GameStyle.Extended);
+
+        Assert.True(waveParams.QuarkCount > 0);
+        Assert.False(waveParams.EnableBerzerkSpeak);
+    }
+
+    [Fact]
+    public void ExtendedWaveIsTheClassicWaveApartFromItsExtendedSettings()
+    {
+        WaveParamsGenerator waveParamsGenerator = new();
+
+        for (var waveNumber = 1; waveNumber <= LastWaveChecked; waveNumber++)
+        {
+            var classic = waveParamsGenerator.Generate(waveNumber, GameStyle.Classic);
+            var extended = waveParamsGenerator.Generate(waveNumber, GameStyle.Extended);
+
+            Assert.Equal(classic, extended with { EnableBerzerkSpeak = false, EnableGorfSpeak = false });
+        }
+    }
+
+    [Fact]
+    public void ExtendedWavesHaveBerzerkSpeakOnTheGruntWavesWithNoBrainsOrQuarksOnly()
+    {
+        WaveParamsGenerator waveParamsGenerator = new();
+        int[] berzerkSpeakWaves = [1, 2, 3, 4, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 26];
+
+        for (var waveNumber = 1; waveNumber <= ArcadeWaveCount; waveNumber++)
+        {
+            var waveParams = waveParamsGenerator.Generate(waveNumber, GameStyle.Extended);
+
+            Assert.Equal(berzerkSpeakWaves.Contains(waveNumber), waveParams.EnableBerzerkSpeak);
+        }
+    }
+
+    [Fact]
+    public void ExtendedWavesHaveGorfSpeakOff()
+    {
+        WaveParamsGenerator waveParamsGenerator = new();
+
+        for (var waveNumber = 1; waveNumber <= LastWaveChecked; waveNumber++)
+            Assert.False(waveParamsGenerator.Generate(waveNumber, GameStyle.Extended).EnableGorfSpeak, $"wave {waveNumber}");
+    }
+
+    [Fact]
+    public void Generate_MalformedTable_FallsBackToArcadeWaveTable()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"robotron-bad-{Guid.NewGuid():N}.csv");
+        File.WriteAllText(
+            path,
+            "Wave,GruntCount,HulkCount,SpheroidCount,QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark\n" +
+            "1,notanumber,2,1,1,10,3,2\n");
+        try
+        {
+            var waveParamsGenerator = new WaveParamsGenerator(path);
+            var p = waveParamsGenerator.Generate(1, GameStyle.Classic);
+
+            Assert.Equal(15, p.GruntCount);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Generate_MissingTable_FallsBackToArcadeWaveTable()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"robotron-missing-{Guid.NewGuid():N}.csv");
+        var waveParamsGenerator = new WaveParamsGenerator(path);
+
+        var p = waveParamsGenerator.Generate(1, GameStyle.Classic);
+
+        Assert.Equal(15, p.GruntCount); // ROM wave 1
+        Assert.Equal(5, p.ElectrodeCount);
+    }
 
     [Fact]
     public void Generate_UsesArcadeWaveTable_ExactValues()
@@ -112,114 +220,6 @@ public sealed class WaveParamsGeneratorTests
         {
             File.Delete(path);
         }
-    }
-
-    [Fact]
-    public void Generate_MissingTable_FallsBackToArcadeWaveTable()
-    {
-        var path = Path.Combine(Path.GetTempPath(), $"robotron-missing-{Guid.NewGuid():N}.csv");
-        var waveParamsGenerator = new WaveParamsGenerator(path);
-
-        var p = waveParamsGenerator.Generate(1, GameStyle.Classic);
-
-        Assert.Equal(15, p.GruntCount); // ROM wave 1
-        Assert.Equal(5, p.ElectrodeCount);
-    }
-
-    [Fact]
-    public void Generate_MalformedTable_FallsBackToArcadeWaveTable()
-    {
-        var path = Path.Combine(Path.GetTempPath(), $"robotron-bad-{Guid.NewGuid():N}.csv");
-        File.WriteAllText(
-            path,
-            "Wave,GruntCount,HulkCount,SpheroidCount,QuarkCount,ElectrodeCount,MaxEnforcersPerSpheroid,MaxTanksPerQuark\n" +
-            "1,notanumber,2,1,1,10,3,2\n");
-        try
-        {
-            var waveParamsGenerator = new WaveParamsGenerator(path);
-            var p = waveParamsGenerator.Generate(1, GameStyle.Classic);
-
-            Assert.Equal(15, p.GruntCount);
-        }
-        finally
-        {
-            File.Delete(path);
-        }
-    }
-
-    [Fact]
-    public void ClassicWavesHaveBerzerkSpeakAndGorfSpeakOff()
-    {
-        WaveParamsGenerator waveParamsGenerator = new();
-
-        for (var waveNumber = 1; waveNumber <= LastWaveChecked; waveNumber++)
-        {
-            var waveParams = waveParamsGenerator.Generate(waveNumber, GameStyle.Classic);
-
-            Assert.False(waveParams.EnableBerzerkSpeak, $"wave {waveNumber}");
-            Assert.False(waveParams.EnableGorfSpeak, $"wave {waveNumber}");
-        }
-    }
-
-    [Fact]
-    public void ExtendedWaveIsTheClassicWaveApartFromItsExtendedSettings()
-    {
-        WaveParamsGenerator waveParamsGenerator = new();
-
-        for (var waveNumber = 1; waveNumber <= LastWaveChecked; waveNumber++)
-        {
-            var classic = waveParamsGenerator.Generate(waveNumber, GameStyle.Classic);
-            var extended = waveParamsGenerator.Generate(waveNumber, GameStyle.Extended);
-
-            Assert.Equal(classic, extended with { EnableBerzerkSpeak = false, EnableGorfSpeak = false });
-        }
-    }
-
-    [Fact]
-    public void ExtendedWavesHaveBerzerkSpeakOnTheGruntWavesWithNoBrainsOrQuarksOnly()
-    {
-        WaveParamsGenerator waveParamsGenerator = new();
-        int[] berzerkSpeakWaves = [1, 2, 3, 4, 6, 8, 9, 11, 13, 14, 16, 18, 19, 21, 23, 26];
-
-        for (var waveNumber = 1; waveNumber <= ArcadeWaveCount; waveNumber++)
-        {
-            var waveParams = waveParamsGenerator.Generate(waveNumber, GameStyle.Extended);
-
-            Assert.Equal(berzerkSpeakWaves.Contains(waveNumber), waveParams.EnableBerzerkSpeak);
-        }
-    }
-
-    [Theory]
-    [InlineData(5)] // 20 grunts and 15 brains
-    [InlineData(40)] // 30 grunts and 25 brains
-    public void ExtendedBrainWaveHasNoBerzerkSpeak(int waveNumber)
-    {
-        var waveParams = new WaveParamsGenerator().Generate(waveNumber, GameStyle.Extended);
-
-        Assert.True(waveParams.GruntCount > 0);
-        Assert.True(waveParams.BrainCount > 0);
-        Assert.False(waveParams.EnableBerzerkSpeak);
-    }
-
-    [Theory]
-    [InlineData(7)] // quarks and no grunts
-    [InlineData(28)] // 35 grunts and 1 quark
-    [InlineData(34)] // 30 grunts and 2 quarks
-    public void ExtendedTankWaveHasNoBerzerkSpeak(int waveNumber)
-    {
-        var waveParams = new WaveParamsGenerator().Generate(waveNumber, GameStyle.Extended);
-
-        Assert.True(waveParams.QuarkCount > 0);
-        Assert.False(waveParams.EnableBerzerkSpeak);
-    }
-
-    [Fact]
-    public void ExtendedWavesHaveGorfSpeakOff()
-    {
-        WaveParamsGenerator waveParamsGenerator = new();
-
-        for (var waveNumber = 1; waveNumber <= LastWaveChecked; waveNumber++)
-            Assert.False(waveParamsGenerator.Generate(waveNumber, GameStyle.Extended).EnableGorfSpeak, $"wave {waveNumber}");
     }
 
     [Fact]

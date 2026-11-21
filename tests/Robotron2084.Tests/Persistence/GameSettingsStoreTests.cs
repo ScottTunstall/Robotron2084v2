@@ -1,5 +1,4 @@
 using Robotron2084.Level.Models;
-using Robotron2084.Level;
 using Robotron2084.Persistence;
 using Xunit;
 
@@ -14,21 +13,6 @@ namespace Robotron2084.Tests.Persistence;
 /// </summary>
 public sealed class GameSettingsStoreTests
 {
-    private static string TempFile()
-    {
-        return Path.Combine(Path.GetTempPath(), $"robotron-settings-{Guid.NewGuid():N}.ini");
-    }
-
-    [Fact]
-    public void MissingFile_YieldsTheFactorySettings()
-    {
-        var loaded = GameSettingsStore.Load(TempFile());
-
-        Assert.Equal(25, loaded.ExtraLifeEvery);
-        Assert.Equal(3, loaded.TurnsPerPlayer);
-        Assert.Equal(5, loaded.Difficulty);
-    }
-
     [Fact]
     public void AFileThatCannotBeOpened_ThrowsNamingTheFile()
     {
@@ -57,7 +41,7 @@ public sealed class GameSettingsStoreTests
         try
         {
             var gameSettings = new GameSettings
-                { ExtraLifeEvery = 50, TurnsPerPlayer = 5, Difficulty = 10, AttractModeSoundEnabled = false };
+            { ExtraLifeEvery = 50, TurnsPerPlayer = 5, Difficulty = 10, AttractModeSoundEnabled = false };
 
             GameSettingsStore.Save(path, gameSettings);
             var loaded = GameSettingsStore.Load(path);
@@ -73,6 +57,16 @@ public sealed class GameSettingsStoreTests
         }
     }
 
+    [Fact]
+    public void MissingFile_YieldsTheFactorySettings()
+    {
+        var loaded = GameSettingsStore.Load(TempFile());
+
+        Assert.Equal(25, loaded.ExtraLifeEvery);
+        Assert.Equal(3, loaded.TurnsPerPlayer);
+        Assert.Equal(5, loaded.Difficulty);
+    }
+
     [Theory]
     [InlineData("extramanevery=17")] // off the ROM's five-stop list
     [InlineData("extramanevery=1000")]
@@ -81,18 +75,6 @@ public sealed class GameSettingsStoreTests
         var loaded = GameSettingsStore.Parse(["[game]", line]);
 
         Assert.Equal(25, loaded.ExtraLifeEvery);
-    }
-
-    [Theory]
-    [InlineData("turnsperplayer=0")]
-    [InlineData("turnsperplayer=21")]
-    [InlineData("difficulty=11")]
-    public void ValuesOutsideTheRomsRangeAreIgnored(string line)
-    {
-        var loaded = GameSettingsStore.Parse(["[game]", line]);
-
-        Assert.Equal(3, loaded.TurnsPerPlayer);
-        Assert.Equal(5, loaded.Difficulty);
     }
 
     [Fact]
@@ -113,7 +95,7 @@ public sealed class GameSettingsStoreTests
         Assert.True(factory.BozoModeEnabled);
 
         var off = new GameSettings
-            { TankShellBugEnabled = false, BrainsChaseMikeyBugEnabled = false, BozoModeEnabled = false };
+        { TankShellBugEnabled = false, BrainsChaseMikeyBugEnabled = false, BozoModeEnabled = false };
         var loaded = GameSettingsStore.Parse(GameSettingsStore.Write(off).Split(Environment.NewLine));
         Assert.False(loaded.TankShellBugEnabled);
         Assert.False(loaded.BrainsChaseMikeyBugEnabled);
@@ -121,6 +103,25 @@ public sealed class GameSettingsStoreTests
 
         // Anything but 0 or 1 is ignored, so the factory value (on) stays.
         Assert.True(GameSettingsStore.Parse(["[game]", "tankshellbug=7"]).TankShellBugEnabled);
+    }
+
+    [Fact]
+    public void TheGameStyleIsClassicUnlessTheFileSaysExtended_AndAnythingElseIsIgnored()
+    {
+        Assert.Equal(GameStyle.Classic, GameSettingsStore.Parse(["[game]"]).GameStyle);
+        Assert.Equal(GameStyle.Extended, GameSettingsStore.Parse(["[game]", "gamestyle=1"]).GameStyle);
+        Assert.Equal(GameStyle.Classic, GameSettingsStore.Parse(["[game]", "gamestyle=0"]).GameStyle);
+        Assert.Equal(GameStyle.Classic, GameSettingsStore.Parse(["[game]", "gamestyle=7"]).GameStyle);
+    }
+
+    [Fact]
+    public void TheGameStyleSurvivesARoundTrip()
+    {
+        var gameSettings = new GameSettings { GameStyle = GameStyle.Extended };
+
+        var loaded = GameSettingsStore.Parse(GameSettingsStore.Write(gameSettings).Split('\n'));
+
+        Assert.Equal(GameStyle.Extended, loaded.GameStyle);
     }
 
     [Fact]
@@ -141,22 +142,20 @@ public sealed class GameSettingsStoreTests
         Assert.Equal(25, loaded.ExtraLifeEvery); // untouched
     }
 
-    [Fact]
-    public void TheGameStyleIsClassicUnlessTheFileSaysExtended_AndAnythingElseIsIgnored()
+    [Theory]
+    [InlineData("turnsperplayer=0")]
+    [InlineData("turnsperplayer=21")]
+    [InlineData("difficulty=11")]
+    public void ValuesOutsideTheRomsRangeAreIgnored(string line)
     {
-        Assert.Equal(GameStyle.Classic, GameSettingsStore.Parse(["[game]"]).GameStyle);
-        Assert.Equal(GameStyle.Extended, GameSettingsStore.Parse(["[game]", "gamestyle=1"]).GameStyle);
-        Assert.Equal(GameStyle.Classic, GameSettingsStore.Parse(["[game]", "gamestyle=0"]).GameStyle);
-        Assert.Equal(GameStyle.Classic, GameSettingsStore.Parse(["[game]", "gamestyle=7"]).GameStyle);
+        var loaded = GameSettingsStore.Parse(["[game]", line]);
+
+        Assert.Equal(3, loaded.TurnsPerPlayer);
+        Assert.Equal(5, loaded.Difficulty);
     }
 
-    [Fact]
-    public void TheGameStyleSurvivesARoundTrip()
+    private static string TempFile()
     {
-        var gameSettings = new GameSettings { GameStyle = GameStyle.Extended };
-
-        var loaded = GameSettingsStore.Parse(GameSettingsStore.Write(gameSettings).Split('\n'));
-
-        Assert.Equal(GameStyle.Extended, loaded.GameStyle);
+        return Path.Combine(Path.GetTempPath(), $"robotron-settings-{Guid.NewGuid():N}.ini");
     }
 }

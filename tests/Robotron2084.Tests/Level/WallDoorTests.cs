@@ -1,8 +1,8 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
-using Robotron2084.Level.Models;
+using Robotron2084.Core.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Palette;
 using Robotron2084.Tuning;
 using Xunit;
@@ -19,19 +19,21 @@ public sealed class WallDoorTests
 
     private static readonly Rectangle Playfield = new(40, 40, 600, 320);
 
-    private static PlayfieldWall CreateWall()
+    [Fact]
+    public void ADoorOnlyLetsGruntsThroughWhileItIsWideOpen()
     {
-        return new PlayfieldWall(Playfield, new WallColourCycle());
-    }
+        var gruntTicks = new List<int>();
+        var tick = 0;
+        var doors = new WallDoors(Playfield, new Random(11), _ => gruntTicks.Add(tick));
+        var wideOpenTicks = new List<int>();
 
-    private static WallDoor CreateDoor(WallDoorSide side)
-    {
-        return new WallDoor(side, 300, 80);
-    }
+        for (; tick < TicksLimit && doors.IsBusy(); tick++)
+        {
+            doors.Update();
+            if (doors.Doors.Any(door => door.IsWideOpen())) wideOpenTicks.Add(tick);
+        }
 
-    private static int GetArea(IEnumerable<Rectangle> rectangles)
-    {
-        return rectangles.Sum(rectangle => rectangle.Width * rectangle.Height);
+        Assert.All(gruntTicks, gruntTick => Assert.Contains(gruntTick, wideOpenTicks));
     }
 
     [Fact]
@@ -58,6 +60,25 @@ public sealed class WallDoorTests
         Assert.Equal(opening.Order(), opening); // it only ever opens further while it is opening
     }
 
+    [Fact]
+    public void AGruntThroughADoor_StartsAtTheSlowestTheWaveAllows_WhateverTheOthersHaveBeenSpeededUpTo()
+    {
+        var waveParams = new WaveParams(1, 6, GruntMoveDelay: 15);
+        var playField = new PlayFieldBuilder().WithParameters(waveParams).WithSeed(5).Build();
+        var gameTime = new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
+        for (var tick = 0; tick < 400 && playField.RobotsFrozen(); tick++) playField.Update(gameTime);
+
+        // The grunts already on the field are speeded up, as they are every time a grunt is killed.
+        foreach (var grunt in playField.FieldEntities.Grunts) grunt.SpeedUpAsWaveGoesOn(4, 8);
+        Assert.All(playField.FieldEntities.Grunts, grunt => Assert.True(grunt.MoveIntervalMaxBeats < 15));
+        var knownGrunts = playField.FieldEntities.Grunts.ToList();
+
+        playField.SpawnDoorwayGrunt(new IntVector2(Playfield.X + 100, Playfield.Y + 100));
+
+        var newcomer = Assert.Single(playField.FieldEntities.Grunts.Except(knownGrunts));
+        Assert.Equal(waveParams.GruntMoveDelay, newcomer.MoveIntervalMaxBeats);
+    }
+
     [Theory]
     [InlineData(WallDoorSide.North)]
     [InlineData(WallDoorSide.South)]
@@ -73,35 +94,6 @@ public sealed class WallDoorTests
         var panelArea = GetArea(wall.GetDoorPanels(doors));
 
         Assert.Equal(withoutDoors, wallArea + panelArea);
-    }
-
-    [Fact]
-    public void AWideOpenDoor_HasNoPanels_AndLeavesAGapInTheWall()
-    {
-        var wall = CreateWall();
-        var door = CreateDoor(WallDoorSide.South);
-        for (var tick = 0; tick < WallDoorTuning.OpenTicks + 1; tick++) door.Tick();
-        WallDoor[] doors = [door];
-
-        Assert.Empty(wall.GetDoorPanels(doors));
-        Assert.Equal(GetArea(wall.GetWallPieces([])) - door.GapLength * PlayfieldWall.Thickness,
-            GetArea(wall.GetWallPieces(doors)));
-    }
-
-    [Fact]
-    public void ThePanelsSlideApartFromTheMiddleOfTheOpening()
-    {
-        var wall = CreateWall();
-        var door = CreateDoor(WallDoorSide.North);
-        for (var tick = 0; tick < WallDoorTuning.OpenTicks / 2; tick++) door.Tick();
-
-        var panels = wall.GetDoorPanels([door]);
-
-        var left = panels.OrderBy(panel => panel.X).First();
-        var right = panels.OrderBy(panel => panel.X).Last();
-        Assert.Equal(door.GetStart(), left.X); // each panel stays at its own end of the opening
-        Assert.Equal(door.GetEnd(), right.Right);
-        Assert.True(left.Right < door.Centre && right.X > door.Centre); // the middle of the opening is clear
     }
 
     [Fact]
@@ -128,57 +120,16 @@ public sealed class WallDoorTests
     }
 
     [Fact]
-    public void TheGruntsAllComeInsideThePlayfield()
+    public void AWideOpenDoor_HasNoPanels_AndLeavesAGapInTheWall()
     {
-        var grunts = new List<IntVector2>();
-        var doors = new WallDoors(Playfield, new Random(3), grunts.Add);
+        var wall = CreateWall();
+        var door = CreateDoor(WallDoorSide.South);
+        for (var tick = 0; tick < WallDoorTuning.OpenTicks + 1; tick++) door.Tick();
+        WallDoor[] doors = [door];
 
-        for (var tick = 0; tick < TicksLimit && doors.IsBusy(); tick++) doors.Update();
-
-        var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
-        var gruntHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
-        Assert.All(grunts, grunt =>
-        {
-            Assert.InRange(grunt.X, Playfield.X, Playfield.Right - gruntWidth);
-            Assert.InRange(grunt.Y, Playfield.Y, Playfield.Bottom - gruntHeight);
-        });
-        Assert.True(grunts.Count > 1);
-    }
-
-    [Fact]
-    public void ADoorOnlyLetsGruntsThroughWhileItIsWideOpen()
-    {
-        var gruntTicks = new List<int>();
-        var tick = 0;
-        var doors = new WallDoors(Playfield, new Random(11), _ => gruntTicks.Add(tick));
-        var wideOpenTicks = new List<int>();
-
-        for (; tick < TicksLimit && doors.IsBusy(); tick++)
-        {
-            doors.Update();
-            if (doors.Doors.Any(door => door.IsWideOpen())) wideOpenTicks.Add(tick);
-        }
-
-        Assert.All(gruntTicks, gruntTick => Assert.Contains(gruntTick, wideOpenTicks));
-    }
-
-    [Fact]
-    public void AGruntThroughADoor_StartsAtTheSlowestTheWaveAllows_WhateverTheOthersHaveBeenSpeededUpTo()
-    {
-        var waveParams = new WaveParams(1, 6, GruntMoveDelay: 15);
-        var playField = new PlayFieldBuilder().WithParameters(waveParams).WithSeed(5).Build();
-        var gameTime = new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1.0 / 60.0));
-        for (var tick = 0; tick < 400 && playField.RobotsFrozen(); tick++) playField.Update(gameTime);
-
-        // The grunts already on the field are speeded up, as they are every time a grunt is killed.
-        foreach (var grunt in playField.FieldEntities.Grunts) grunt.SpeedUpAsWaveGoesOn(4, 8);
-        Assert.All(playField.FieldEntities.Grunts, grunt => Assert.True(grunt.MoveIntervalMaxBeats < 15));
-        var knownGrunts = playField.FieldEntities.Grunts.ToList();
-
-        playField.SpawnDoorwayGrunt(new IntVector2(Playfield.X + 100, Playfield.Y + 100));
-
-        var newcomer = Assert.Single(playField.FieldEntities.Grunts.Except(knownGrunts));
-        Assert.Equal(waveParams.GruntMoveDelay, newcomer.MoveIntervalMaxBeats);
+        Assert.Empty(wall.GetDoorPanels(doors));
+        Assert.Equal(GetArea(wall.GetWallPieces([])) - door.GapLength * PlayfieldWall.Thickness,
+            GetArea(wall.GetWallPieces(doors)));
     }
 
     [Fact]
@@ -206,5 +157,54 @@ public sealed class WallDoorTests
 
             Assert.All(openings, opening => Assert.Equal(opening.Count, opening.Distinct().Count()));
         }
+    }
+
+    [Fact]
+    public void TheGruntsAllComeInsideThePlayfield()
+    {
+        var grunts = new List<IntVector2>();
+        var doors = new WallDoors(Playfield, new Random(3), grunts.Add);
+
+        for (var tick = 0; tick < TicksLimit && doors.IsBusy(); tick++) doors.Update();
+
+        var gruntWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Width);
+        var gruntHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.GruntCollisionSize.Height);
+        Assert.All(grunts, grunt =>
+        {
+            Assert.InRange(grunt.X, Playfield.X, Playfield.Right - gruntWidth);
+            Assert.InRange(grunt.Y, Playfield.Y, Playfield.Bottom - gruntHeight);
+        });
+        Assert.True(grunts.Count > 1);
+    }
+
+    [Fact]
+    public void ThePanelsSlideApartFromTheMiddleOfTheOpening()
+    {
+        var wall = CreateWall();
+        var door = CreateDoor(WallDoorSide.North);
+        for (var tick = 0; tick < WallDoorTuning.OpenTicks / 2; tick++) door.Tick();
+
+        var panels = wall.GetDoorPanels([door]);
+
+        var left = panels.OrderBy(panel => panel.X).First();
+        var right = panels.OrderBy(panel => panel.X).Last();
+        Assert.Equal(door.GetStart(), left.X); // each panel stays at its own end of the opening
+        Assert.Equal(door.GetEnd(), right.Right);
+        Assert.True(left.Right < door.Centre && right.X > door.Centre); // the middle of the opening is clear
+    }
+
+    private static WallDoor CreateDoor(WallDoorSide side)
+    {
+        return new WallDoor(side, 300, 80);
+    }
+
+    private static PlayfieldWall CreateWall()
+    {
+        return new PlayfieldWall(Playfield, new WallColourCycle());
+    }
+
+    private static int GetArea(IEnumerable<Rectangle> rectangles)
+    {
+        return rectangles.Sum(rectangle => rectangle.Width * rectangle.Height);
     }
 }

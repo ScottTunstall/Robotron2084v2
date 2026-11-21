@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
 using Robotron2084.Level;
@@ -40,12 +40,6 @@ public sealed class StripEffect : IEntity
 
     private readonly StripClip _clip;
 
-    /// <summary>
-    ///     Draws a strip the way the thing that is exploding or appearing draws itself, or null to draw the strip in the
-    ///     animation frame's own colours.
-    /// </summary>
-    private readonly IStripDrawer? _stripDrawer;
-
     private readonly Func<Texture2D> _getAnimationFrame;
 
     /// <summary>
@@ -80,6 +74,12 @@ public sealed class StripEffect : IEntity
     private readonly int _smallestAppearSpacing;
 
     private readonly ArcadeFrameTimer _stepArcadeFrameTimer;
+
+    /// <summary>
+    ///     Draws a strip the way the thing that is exploding or appearing draws itself, or null to draw the strip in the
+    ///     animation frame's own colours.
+    /// </summary>
+    private readonly IStripDrawer? _stripDrawer;
 
     // notes §52, §67.4
     private int _arcadeFramesRemaining;

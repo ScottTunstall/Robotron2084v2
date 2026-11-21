@@ -26,6 +26,9 @@ public sealed class HighScoreTable
     /// </summary>
     public const int AllTimeCapacity = 36;
 
+    /// <summary>ROM: three initials per entry (`NULSCR` is three spaces).</summary>
+    public const int InitialsLength = 3;
+
     /// <summary>
     ///     ROM `SETBOT`'s maximum: the all-time list keeps at most this many entries sharing one set of
     ///     initials, and a score that beats the lowest of a full set replaces it (`ONLY5P` explains the
@@ -35,9 +38,6 @@ public sealed class HighScoreTable
 
     /// <summary>ROM `SETBOT`'s `LDA #4` — the maximum when the initials are the top entry's own.</summary>
     public const int MaxAllTimeTopInitials = 4;
-
-    /// <summary>ROM: three initials per entry (`NULSCR` is three spaces).</summary>
-    public const int InitialsLength = 3;
 
     /// <summary>
     ///     ROM `TODAYS`: the screen shows 10 (5 per column × 2 columns). It is how many entries <see cref="_today" /> is

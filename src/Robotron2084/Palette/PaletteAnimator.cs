@@ -56,7 +56,7 @@ namespace Robotron2084.Palette;
 ///                     <c>$DA0D</c> (<c>LF</c>) and <c>$DA2C</c> (<c>COLTAB</c>). The disassembly gives no label for these, only
 ///                     addresses.
 ///                 </description>
-///             
+///
 ///     </para>
 /// </remarks>
 public sealed class PaletteAnimator
@@ -77,15 +77,6 @@ public sealed class PaletteAnimator
         0xBF, 0x3F, 0x3E, 0x3C
     ];
 
-    /// <summary>How many fiftieths of a second the laser flash stays white.</summary>
-    /// <remarks>
-    ///     <list type="bullet">
-    ///         <item><description>Original source: <c>RRS22.ASM</c> <c>LF</c>, <c>NAP 2,LF1</c>.</description></item>
-    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$DA11</c>, <c>LDA #$02</c>.</description></item>
-    ///     </list>
-    /// </remarks>
-    private const int LaserFlashWhiteArcadeFrames = 2;
-
     /// <summary>How many fiftieths of a second the laser flash stays a random colour, before it goes white again.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -104,17 +95,24 @@ public sealed class PaletteAnimator
     /// </remarks>
     private const int LaserFlashRandomColourCount = 32;
 
-    private readonly GamePalette _gamePalette;
+    /// <summary>How many fiftieths of a second the laser flash stays white.</summary>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item><description>Original source: <c>RRS22.ASM</c> <c>LF</c>, <c>NAP 2,LF1</c>.</description></item>
+    ///         <item><description>Disassembly: <c>asm/robomame.asm</c> at <c>$DA11</c>, <c>LDA #$02</c>.</description></item>
+    ///     </list>
+    /// </remarks>
+    private const int LaserFlashWhiteArcadeFrames = 2;
 
     private readonly PaletteColourProcess[] _colourProcesses;
-
+    private readonly GamePalette _gamePalette;
     private readonly Random _random;
-
-    /// <summary>What the laser flash's timer has gathered so far, in clock units.</summary>
-    private int _laserFlashClockUnits;
 
     /// <summary>True when the laser flash goes white next, and false when it goes a random colour next.</summary>
     private bool _isLaserFlashWhiteNext = true;
+
+    /// <summary>What the laser flash's timer has gathered so far, in clock units.</summary>
+    private int _laserFlashClockUnits;
 
     /// <summary>How many fiftieths of a second the laser flash waits before its next change. It starts at none.</summary>
     private int _laserFlashWaitArcadeFrames;

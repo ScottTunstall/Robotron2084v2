@@ -101,8 +101,8 @@ internal sealed class FilteredNoise
     private const int WordMask = 0xFFFF;
 
     private readonly BoardMemory _boardMemory;
-    private readonly FilteredNoiseParams _noiseParams;
     private readonly BoardOutput _boardOutput;
+    private readonly FilteredNoiseParams _noiseParams;
     private bool _isFirstStretch = true;
     private byte _level;
     private ushort _levelsLeft;

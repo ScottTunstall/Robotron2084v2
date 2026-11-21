@@ -1,11 +1,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core;
 using Robotron2084.Core.Extensions;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
@@ -233,10 +233,10 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     /// </remarks>
     private readonly int _beatIntervalArcadeFrames;
 
+    private readonly IGameEvents _gameEvents;
     private readonly Func<IntVector2> _getTargetPosition;
 
     private readonly Random _random;
-    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     /// <summary>Which animation frame is showing, as a place in the texture set's hulk animation frames.</summary>
@@ -405,6 +405,18 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
         if (_beatArcadeFrameTimer.Tick(_beatIntervalArcadeFrames)) ActOnBeat(playField);
     }
 
+    /// <summary>Gets the walk animation frames for a direction, in the order they are shown.</summary>
+    /// <param name="direction">The way the hulk is walking.</param>
+    internal static int[] GetFrames(Direction8 direction)
+    {
+        return direction switch
+        {
+            Direction8.Left => LeftAnimationFrames,
+            Direction8.Right => RightAnimationFrames,
+            _ => VerticalAnimationFrames // Walking up and walking down use the same animation frames, as in the arcade.
+        };
+    }
+
     /// <summary>
     ///     Works out where a hulk with nothing real to stalk heads for: a fixed spot off the top-right corner of the
     ///     playfield. Such a hulk drifts to that corner and stays near it.
@@ -433,6 +445,15 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
             playfieldBounds.Y - ScreenSize.ToPortPixelsFromArcadePixels(PhantomRowsAboveTopWall));
     }
 
+    /// <summary>Gets how far a sideways step goes. Sideways steps go short, long, short, long.</summary>
+    /// <param name="walkCycleIndex">The step of the walk's cycle, counting from 0.</param>
+    /// <returns>The length of the step, in arcade pixels.</returns>
+    internal static int GetSidewaysStepArcadePixels(int walkCycleIndex)
+    {
+        var isShortStep = walkCycleIndex % 2 == 0;
+        return isShortStep ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels;
+    }
+
     /// <summary>
     ///     Where the hulk is heading for now: the player, a family member, or the spot off the corner of the playfield.
     /// </summary>
@@ -446,27 +467,6 @@ public sealed class Hulk : IEntity, IAnimationFrameSource, IWaveStartRobot
     internal void MoveTo(IntVector2 position)
     {
         _position = position;
-    }
-
-    /// <summary>Gets how far a sideways step goes. Sideways steps go short, long, short, long.</summary>
-    /// <param name="walkCycleIndex">The step of the walk's cycle, counting from 0.</param>
-    /// <returns>The length of the step, in arcade pixels.</returns>
-    internal static int GetSidewaysStepArcadePixels(int walkCycleIndex)
-    {
-        var isShortStep = walkCycleIndex % 2 == 0;
-        return isShortStep ? SidewaysShortStepArcadePixels : SidewaysLongStepArcadePixels;
-    }
-
-    /// <summary>Gets the walk animation frames for a direction, in the order they are shown.</summary>
-    /// <param name="direction">The way the hulk is walking.</param>
-    internal static int[] GetFrames(Direction8 direction)
-    {
-        return direction switch
-        {
-            Direction8.Left => LeftAnimationFrames,
-            Direction8.Right => RightAnimationFrames,
-            _ => VerticalAnimationFrames // Walking up and walking down use the same animation frames, as in the arcade.
-        };
     }
 
     /// <summary>

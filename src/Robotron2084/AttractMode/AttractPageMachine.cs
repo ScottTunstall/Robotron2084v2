@@ -95,8 +95,8 @@ public sealed class AttractPageMachine
     /// </remarks>
     private static readonly int[] GruntScripts = [0x84F5, 0x8517, 0x8540, 0x8567];
 
-    private readonly AttractMovieData _movieData;
     private readonly AttractObjectMachine _attractObjectMachine;
+    private readonly AttractMovieData _movieData;
     private readonly Random _random;
     private readonly byte[] _scriptBytes;
     private readonly List<MovieTextCell> _textCells = [];
@@ -123,11 +123,11 @@ public sealed class AttractPageMachine
     /// <summary>The script reached DONE / DONE2.</summary>
     public bool IsFinished { get; private set; }
 
-    /// <summary>How many pages of the story have started. Each page starts by clearing the text of the page before it.</summary>
-    public int PagesStarted { get; private set; }
-
     /// <summary>The name popup currently in the score row, if any.</summary>
     public MovieMessage? Message { get; private set; }
+
+    /// <summary>How many pages of the story have started. Each page starts by clearing the text of the page before it.</summary>
+    public int PagesStarted { get; private set; }
 
     /// <summary>Every character currently on the story screen.</summary>
     public IReadOnlyList<MovieTextCell> TextCells => _textCells;
@@ -203,15 +203,6 @@ public sealed class AttractPageMachine
         };
     }
 
-    private string GetMessageText(int number)
-    {
-        var index = number - _movieData.FirstMessageNumber;
-        var isKnownMessage = index >= 0 && index < _movieData.Messages.Length;
-        if (!isKnownMessage) return string.Empty;
-
-        return _movieData.Messages[index];
-    }
-
     /// <summary>Takes away every character inside a block that is cleared.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -229,6 +220,15 @@ public sealed class AttractPageMachine
             message.X >= x && message.X < x + width &&
             message.Y >= y && message.Y < y + height)
             Message = null;
+    }
+
+    private string GetMessageText(int number)
+    {
+        var index = number - _movieData.FirstMessageNumber;
+        var isKnownMessage = index >= 0 && index < _movieData.Messages.Length;
+        if (!isKnownMessage) return string.Empty;
+
+        return _movieData.Messages[index];
     }
 
     private byte NextByte()
@@ -347,6 +347,17 @@ public sealed class AttractPageMachine
         }
     }
 
+    private void SpawnQueuedGrunts()
+    {
+        if (_gruntsLeft <= 0) return;
+
+        if (--_gruntTimer > 0) return;
+
+        _gruntTimer = 16;
+        _gruntsLeft--;
+        _attractObjectMachine.StartScript(GruntScripts[_random.Next(GruntScripts.Length)]);
+    }
+
     /// <summary>Holds the script back until the part of the movie named by the action's operand is done.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -360,16 +371,5 @@ public sealed class AttractPageMachine
 
         _scriptIndex -= WaitUntilDoneLength;
         _waitArcadeFrames = 1;
-    }
-
-    private void SpawnQueuedGrunts()
-    {
-        if (_gruntsLeft <= 0) return;
-
-        if (--_gruntTimer > 0) return;
-
-        _gruntTimer = 16;
-        _gruntsLeft--;
-        _attractObjectMachine.StartScript(GruntScripts[_random.Next(GruntScripts.Length)]);
     }
 }

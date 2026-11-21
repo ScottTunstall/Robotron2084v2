@@ -1,15 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Core;
 using Robotron2084.Core.Extensions;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
 using Robotron2084.Input.Models;
-using Robotron2084.Input;
 using Robotron2084.Level;
 using Robotron2084.Tuning;
 
@@ -73,10 +72,13 @@ public sealed class Player : IEntity, IAnimationFrameSource
     private static readonly int[] WalkCycle = { 0, 1, 0, 2 };
 
     private readonly ArcadeFrameTimer _deathArcadeFrameTimer = new();
-    private readonly Random _random;
     private readonly IGameEvents _gameEvents;
     private readonly LivesCounter _livesCounter;
+    private readonly Random _random;
     private readonly TextureSet _textureSet;
+
+    /// <summary>Times the arcade frames the walk animation counts.</summary>
+    private readonly ArcadeFrameTimer _walkAnimationArcadeFrameTimer = new();
 
     private int _autoFireTicksRemaining;
 
@@ -100,9 +102,6 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///     again at <see cref="WalkAnimationIntervalArcadeFrames" />. The first animation frame has already been shown for one.
     /// </summary>
     private int _walkAnimationCountUp = 1;
-
-    /// <summary>Times the arcade frames the walk animation counts.</summary>
-    private readonly ArcadeFrameTimer _walkAnimationArcadeFrameTimer = new();
 
     private int _walkCycleIndex;
 
@@ -166,6 +165,9 @@ public sealed class Player : IEntity, IAnimationFrameSource
     ///     </list>
     /// </remarks>
     public IntVector2 Position => _position;
+
+    /// <summary>How many steps a walk's cycle has before it starts again.</summary>
+    internal static int WalkCycleLength => WalkCycle.Length;
 
     /// <summary>Gives the player one more life. This is done when the score passes the number of points that earns one.</summary>
     public void AddLife()
@@ -270,6 +272,18 @@ public sealed class Player : IEntity, IAnimationFrameSource
         AdvanceWalkAnimation(move);
     }
 
+    /// <summary>
+    ///     Works out which animation frame a walk shows at a step of its cycle, as a place in
+    ///     <see cref="TextureSet.PlayerAnimationFrameTextures" />.
+    /// </summary>
+    /// <param name="walkSequence">The walk.</param>
+    /// <param name="walkCycleIndex">The step of the walk's cycle, from 0 to <see cref="WalkCycleLength" /> less 1.</param>
+    /// <returns>The place of the animation frame, counting from 0.</returns>
+    internal static int GetWalkAnimationFrameIndex(WalkSequence walkSequence, int walkCycleIndex)
+    {
+        return (int)walkSequence * 3 + WalkCycle[walkCycleIndex];
+    }
+
     /// <summary>Works out which walk to show for a direction. Walking diagonally shows the left walk or the right walk.</summary>
     /// <param name="direction">The way the player is facing.</param>
     /// <returns>The walk to show.</returns>
@@ -311,32 +325,17 @@ public sealed class Player : IEntity, IAnimationFrameSource
         return GetWalkAnimationFrameIndex(_walkSequence, _walkCycleIndex);
     }
 
-    /// <summary>
-    ///     Works out which animation frame a walk shows at a step of its cycle, as a place in
-    ///     <see cref="TextureSet.PlayerAnimationFrameTextures" />.
-    /// </summary>
-    /// <param name="walkSequence">The walk.</param>
-    /// <param name="walkCycleIndex">The step of the walk's cycle, from 0 to <see cref="WalkCycleLength" /> less 1.</param>
-    /// <returns>The place of the animation frame, counting from 0.</returns>
-    internal static int GetWalkAnimationFrameIndex(WalkSequence walkSequence, int walkCycleIndex)
-    {
-        return (int)walkSequence * 3 + WalkCycle[walkCycleIndex];
-    }
-
-    /// <summary>How many steps a walk's cycle has before it starts again.</summary>
-    internal static int WalkCycleLength => WalkCycle.Length;
-
-    /// <summary>Starts the death animation, even when <see cref="InvincibleForTesting" /> is on.</summary>
-    internal void StartDeathForTesting()
-    {
-        if (this.IsAlive()) StartDeath();
-    }
-
     /// <summary>Puts the player at <paramref name="position" />.</summary>
     /// <param name="position">Where to put the player's top-left corner.</param>
     internal void MoveTo(IntVector2 position)
     {
         _position = position;
+    }
+
+    /// <summary>Starts the death animation, even when <see cref="InvincibleForTesting" /> is on.</summary>
+    internal void StartDeathForTesting()
+    {
+        if (this.IsAlive()) StartDeath();
     }
 
     /// <summary>Works out where a laser fired in a direction starts, measured from the player's top-left corner.</summary>

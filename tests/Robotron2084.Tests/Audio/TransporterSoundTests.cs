@@ -6,8 +6,8 @@ namespace Robotron2084.Tests.Audio;
 /// <summary>RRT2 <c>TRSPRC</c>: clear the system, then sound $12 every vblank 72 times and every other vblank 36 times.</summary>
 public class TransporterSoundTests
 {
-    private const int WarpIn = 0x12;
     private const int ClearTheSystem = 0x13;
+    private const int WarpIn = 0x12;
 
     [Fact]
     public void ItClearsTheSystemFirst()

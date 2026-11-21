@@ -11,26 +11,10 @@ public sealed class SparkLimitTests
 {
     private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static int GetMostSparksAtOnce(int fireDelay, int seed)
-    {
-        var playField = new PlayFieldBuilder().WithParameters(new WaveParams(1, EnforcerFireDelay: fireDelay)).WithSeed(seed).Build();
-        for (var enforcer = 0; enforcer < 8; enforcer++)
-            playField.SpawnEnforcer(new IntVector2(300 + enforcer * 40, 300 + (enforcer % 3) * 60));
-
-        var mostSparks = 0;
-        for (var tick = 0; tick < 6000; tick++)
-        {
-            playField.Update(new GameTime(TimeSpan.Zero, OneTickSpan));
-            mostSparks = Math.Max(mostSparks, playField.FieldEntities.Sparks.CountAlive());
-        }
-
-        return mostSparks;
-    }
-
     [Fact]
-    public void TheLimitIsTen()
+    public void AtTheFastestFire_TheFieldFillsTheLimitAndNoMore()
     {
-        Assert.Equal(10, SparkTuning.MaxActiveSparks);
+        Assert.Equal(SparkTuning.MaxActiveSparks, GetMostSparksAtOnce(1, 4));
     }
 
     [Theory]
@@ -47,8 +31,24 @@ public sealed class SparkLimitTests
     }
 
     [Fact]
-    public void AtTheFastestFire_TheFieldFillsTheLimitAndNoMore()
+    public void TheLimitIsTen()
     {
-        Assert.Equal(SparkTuning.MaxActiveSparks, GetMostSparksAtOnce(1, 4));
+        Assert.Equal(10, SparkTuning.MaxActiveSparks);
+    }
+
+    private static int GetMostSparksAtOnce(int fireDelay, int seed)
+    {
+        var playField = new PlayFieldBuilder().WithParameters(new WaveParams(1, EnforcerFireDelay: fireDelay)).WithSeed(seed).Build();
+        for (var enforcer = 0; enforcer < 8; enforcer++)
+            playField.SpawnEnforcer(new IntVector2(300 + enforcer * 40, 300 + (enforcer % 3) * 60));
+
+        var mostSparks = 0;
+        for (var tick = 0; tick < 6000; tick++)
+        {
+            playField.Update(new GameTime(TimeSpan.Zero, OneTickSpan));
+            mostSparks = Math.Max(mostSparks, playField.FieldEntities.Sparks.CountAlive());
+        }
+
+        return mostSparks;
     }
 }

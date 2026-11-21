@@ -14,11 +14,11 @@ internal sealed class TransporterRequest : ISoundRequest
 {
     private readonly TransporterSound _transporterSound = new();
 
-    /// <summary>The name the user picks it by.</summary>
-    public string Name => "Transporter";
-
     /// <summary>Says what it is.</summary>
     public string Description => "BRAIN WAVE: a brain wave's robots beaming in (sends $12 over and over)";
+
+    /// <summary>The name the user picks it by.</summary>
+    public string Name => "Transporter";
 
     /// <summary>Clears the board and starts the warp-in.</summary>
     /// <param name="soundEngine">The sequencer that sends sound numbers to the board.</param>

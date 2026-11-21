@@ -10,17 +10,6 @@ internal sealed class FlatMemoryBus : IMc6800Bus
     /// <summary>Every address written, in order.</summary>
     public List<ushort> Writes { get; } = [];
 
-    public byte ReadByte(ushort address)
-    {
-        return _memory[address];
-    }
-
-    public void WriteByte(ushort address, byte value)
-    {
-        Writes.Add(address);
-        _memory[address] = value;
-    }
-
     /// <summary>Loads bytes into memory without recording them as writes.</summary>
     public void Load(ushort address, params byte[] bytes)
     {
@@ -32,5 +21,16 @@ internal sealed class FlatMemoryBus : IMc6800Bus
     {
         Load(0xFFFE, (byte)(address >> 8), (byte)address);
         Load(address, program);
+    }
+
+    public byte ReadByte(ushort address)
+    {
+        return _memory[address];
+    }
+
+    public void WriteByte(ushort address, byte value)
+    {
+        Writes.Add(address);
+        _memory[address] = value;
     }
 }

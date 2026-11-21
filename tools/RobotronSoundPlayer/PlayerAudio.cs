@@ -3,11 +3,11 @@ namespace RobotronSoundPlayer;
 /// <summary>The player's sound format: the same rate and port tick the game plays at.</summary>
 internal static class PlayerAudio
 {
-    /// <summary>Samples a second.</summary>
-    public const int SampleRate = 44_100;
-
     /// <summary>The game's fixed update rate: port ticks a second.</summary>
     public const int PortTicksPerSecond = 60;
+
+    /// <summary>Samples a second.</summary>
+    public const int SampleRate = 44_100;
 
     /// <summary>Samples in one port tick.</summary>
     public const int SamplesPerPortTick = SampleRate / PortTicksPerSecond;

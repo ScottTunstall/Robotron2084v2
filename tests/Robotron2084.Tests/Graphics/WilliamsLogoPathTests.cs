@@ -6,17 +6,23 @@ namespace Robotron2084.Tests.Graphics;
 /// <summary>The walk of the Williams "W"s round the attract page's border (ROM <c>$896C</c>).</summary>
 public sealed class WilliamsLogoPathTests
 {
-    private static List<(int Column, int Row, int PaletteIndex)> Walk(int count)
+    [Fact]
+    public void ResetGoesBackToTheFirstW()
     {
         var williamsLogoPath = new WilliamsLogoPath();
-        var places = new List<(int Column, int Row, int PaletteIndex)>();
-        for (var i = 0; i < count; i++)
-        {
-            places.Add((williamsLogoPath.Column, williamsLogoPath.Row, PaletteIndex: williamsLogoPath.GetPaletteIndex()));
-            williamsLogoPath.Step();
-        }
+        for (var i = 0; i < 40; i++) williamsLogoPath.Step();
 
-        return places;
+        williamsLogoPath.Reset();
+
+        Assert.Equal((5, 0x0F, 7), (williamsLogoPath.Column, williamsLogoPath.Row, williamsLogoPath.GetPaletteIndex()));
+    }
+
+    [Fact]
+    public void TheColoursStepDownThroughSevenPaletteIndicesAndRoundAgain()
+    {
+        var places = Walk(9);
+
+        Assert.Equal([7, 6, 5, 4, 3, 2, 1, 7, 6], places.Select(p => p.PaletteIndex));
     }
 
     [Fact]
@@ -46,22 +52,16 @@ public sealed class WilliamsLogoPathTests
         Assert.Equal((7, 0x0F), (places[28].Column, places[28].Row));
     }
 
-    [Fact]
-    public void TheColoursStepDownThroughSevenPaletteIndicesAndRoundAgain()
-    {
-        var places = Walk(9);
-
-        Assert.Equal([7, 6, 5, 4, 3, 2, 1, 7, 6], places.Select(p => p.PaletteIndex));
-    }
-
-    [Fact]
-    public void ResetGoesBackToTheFirstW()
+    private static List<(int Column, int Row, int PaletteIndex)> Walk(int count)
     {
         var williamsLogoPath = new WilliamsLogoPath();
-        for (var i = 0; i < 40; i++) williamsLogoPath.Step();
+        var places = new List<(int Column, int Row, int PaletteIndex)>();
+        for (var i = 0; i < count; i++)
+        {
+            places.Add((williamsLogoPath.Column, williamsLogoPath.Row, PaletteIndex: williamsLogoPath.GetPaletteIndex()));
+            williamsLogoPath.Step();
+        }
 
-        williamsLogoPath.Reset();
-
-        Assert.Equal((5, 0x0F, 7), (williamsLogoPath.Column, williamsLogoPath.Row, williamsLogoPath.GetPaletteIndex()));
+        return places;
     }
 }

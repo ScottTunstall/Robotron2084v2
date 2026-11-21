@@ -1,12 +1,9 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Audio;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
 using Robotron2084.Entities;
 using Robotron2084.Input.Models;
-using Robotron2084.Input;
 using Robotron2084.Level.Models;
-using Robotron2084.Level;
 using Xunit;
 
 namespace Robotron2084.Tests.Audio;
@@ -24,6 +21,27 @@ public sealed class SoundWiringTests : IDisposable
         Sound.AttractMuted = false;
         Sound.Enabled = true;
         Sound.Initialise(_recordingSink);
+    }
+
+    [Fact]
+    public void AGameStart_SendsTheStartSoundForItsNumberOfPlayers()
+    {
+        Sound.Play(SoundTables.StartOnePlayer);
+        Sound.Tick();
+
+        Assert.Equal(0x28, _recordingSink.Sends[0].SoundNumber);
+    }
+
+    [Fact]
+    public void ASoundFromTheLeftOfThePlayfield_IsHeardOnTheLeft()
+    {
+        var playField = new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithSeed(99).Build();
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
+
+        playField.PlaySoundFrom(SoundTables.TankFire, new Rectangle(inner.X, inner.Center.Y, 8, 8));
+        Sound.Tick();
+
+        Assert.True(_recordingSink.Sends[0].Pan < 0f);
     }
 
     public void Dispose()
@@ -61,26 +79,5 @@ public sealed class SoundWiringTests : IDisposable
         Sound.Tick();
 
         Assert.Equal(SoundTables.CruiseMissileKill.Entries[0].SoundNumber, _recordingSink.Sends[0].SoundNumber);
-    }
-
-    [Fact]
-    public void ASoundFromTheLeftOfThePlayfield_IsHeardOnTheLeft()
-    {
-        var playField = new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithSeed(99).Build();
-        var inner = playField.PlayfieldWall.PlayfieldBounds;
-
-        playField.PlaySoundFrom(SoundTables.TankFire, new Rectangle(inner.X, inner.Center.Y, 8, 8));
-        Sound.Tick();
-
-        Assert.True(_recordingSink.Sends[0].Pan < 0f);
-    }
-
-    [Fact]
-    public void AGameStart_SendsTheStartSoundForItsNumberOfPlayers()
-    {
-        Sound.Play(SoundTables.StartOnePlayer);
-        Sound.Tick();
-
-        Assert.Equal(0x28, _recordingSink.Sends[0].SoundNumber);
     }
 }

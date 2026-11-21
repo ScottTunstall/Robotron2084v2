@@ -1,8 +1,8 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Core;
-using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
+using Robotron2084.Entities.Models;
 using Robotron2084.Graphics;
 
 namespace Robotron2084.Level;
@@ -135,11 +135,11 @@ public sealed class WaveMaterialisation
     /// <summary>The robot that has each place in the order, for the robots the loop has not drawn whole yet.</summary>
     private readonly Dictionary<int, IEntity> _robotsByAppearNumber = [];
 
-    /// <summary>The robots being beamed in.</summary>
-    private readonly HashSet<IEntity> _transported = [];
-
     /// <summary>The transporter that beams the robots in, or null when the wave is not a brain wave.</summary>
     private readonly RobotTransporter? _robotTransporter;
+
+    /// <summary>The robots being beamed in.</summary>
+    private readonly HashSet<IEntity> _transported = [];
 
     /// <summary>
     ///     The robots waiting to be beamed in together, when the wave is a brain wave. "Transport" is the arcade's own

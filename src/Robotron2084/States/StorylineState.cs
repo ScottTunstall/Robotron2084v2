@@ -1,12 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.AttractMode.Models;
 using Robotron2084.AttractMode;
-using Robotron2084.Core.Models;
+using Robotron2084.AttractMode.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
 using Robotron2084.Graphics;
 using Robotron2084.Hud;
 using Robotron2084.Input;
@@ -38,14 +38,14 @@ public sealed class StorylineState : IGameState, IAttractState
     /// <summary>ROM string 128, printed by `SPGSUB` and never cleared by the page script.</summary>
     internal const string TitleText = "ROBOTRON 2084";
 
-    private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
-    private readonly List<StripEffect> _stripEffects = [];
-    private readonly IPlayerInputSource _humanPlayerInputSource;
     private readonly AttractMovie _attractMovie;
-    private readonly GameStateParams _gameStateParams;
+    private readonly ButtonEdgeDetector _buttonEdgeDetector = new();
     private readonly GameSession _gameSession;
-    private readonly TextureSet _textureSet;
+    private readonly GameStateParams _gameStateParams;
+    private readonly IPlayerInputSource _humanPlayerInputSource;
     private readonly PlayfieldWall _playfieldWall;
+    private readonly List<StripEffect> _stripEffects = [];
+    private readonly TextureSet _textureSet;
 
     /// <summary>Opens the story at its start, or at the start of a page of it.</summary>
     /// <param name="gameStateParams">The attract screens' shared dependencies.</param>
@@ -61,12 +61,6 @@ public sealed class StorylineState : IGameState, IAttractState
         var storylineScript = AttractStoryline.Create(AttractMovieData.Rom.Histo);
         _attractMovie = new AttractMovie(AttractMovieData.Rom, storylineScript, gameStateParams.Random);
         if (startPage is { } page) _attractMovie = AttractMovie.CreateAtPage(AttractMovieData.Rom, storylineScript, gameStateParams.Random, page);
-    }
-
-    /// <summary>Gets the page of the story the movie is on, counted from 1. The very start counts as the first page.</summary>
-    internal int GetPage()
-    {
-        return Math.Max(1, _attractMovie.AttractPageMachine.PagesStarted);
     }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -158,6 +152,12 @@ public sealed class StorylineState : IGameState, IAttractState
         // HISTO ends with DONE2, which the ROM answers with RUNIT: the machine
         // starts its phony-player game.
         if (_attractMovie.IsFinished()) gameStateManager.TransitionTo(new AttractState(_gameStateParams));
+    }
+
+    /// <summary>Gets the page of the story the movie is on, counted from 1. The very start counts as the first page.</summary>
+    internal int GetPage()
+    {
+        return Math.Max(1, _attractMovie.AttractPageMachine.PagesStarted);
     }
 
     /// <summary>The movie interior, in canvas pixels: a strip that falls outside it is dropped (the ROM's clip).</summary>

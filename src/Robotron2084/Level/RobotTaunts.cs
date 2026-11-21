@@ -1,5 +1,5 @@
-using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
+using Robotron2084.Audio.Models;
 using Robotron2084.Core;
 using Robotron2084.Level.Models;
 
@@ -41,12 +41,15 @@ namespace Robotron2084.Level;
 /// </remarks>
 public sealed class RobotTaunts
 {
-    /// <summary>The talk timer when a game starts, in seconds: the robots may taunt on the game's first second.</summary>
-    /// <remarks>
-    ///     Original source: the author's Berzerk disassembly, <c>berzerk.asm</c>, the game start code that sets
-    ///     <c>TALK_TIMER</c> to 1 (<c>INC A / LD ($089B),A</c>). Disassembly: <c>$17E6</c>.
-    /// </remarks>
-    public const int TalkTimerStartSeconds = 1;
+    /// <summary>
+    ///     How rarely a chicken is called a chicken: one taunt in this many, on average. Port only: the author asked for a
+    ///     chicken to be called one regularly.
+    /// </summary>
+    public const int ChickenCallRandomRange = 2;
+
+    /// <summary>The longest the talk timer starts again from after a taunt, in seconds.</summary>
+    public const int LongestTalkTimerSeconds =
+        ShortestTalkTimerSeconds + (TalkTimerRandomRange - 1) * TalkTimerStepSeconds;
 
     /// <summary>The shortest the talk timer starts again from after a taunt, in seconds.</summary>
     /// <remarks>
@@ -55,9 +58,15 @@ public sealed class RobotTaunts
     /// </remarks>
     public const int ShortestTalkTimerSeconds = 4;
 
-    /// <summary>The longest the talk timer starts again from after a taunt, in seconds.</summary>
-    public const int LongestTalkTimerSeconds =
-        ShortestTalkTimerSeconds + (TalkTimerRandomRange - 1) * TalkTimerStepSeconds;
+    /// <summary>The talk timer when a game starts, in seconds: the robots may taunt on the game's first second.</summary>
+    /// <remarks>
+    ///     Original source: the author's Berzerk disassembly, <c>berzerk.asm</c>, the game start code that sets
+    ///     <c>TALK_TIMER</c> to 1 (<c>INC A / LD ($089B),A</c>). Disassembly: <c>$17E6</c>.
+    /// </remarks>
+    public const int TalkTimerStartSeconds = 1;
+
+    /// <summary>How many lengths of talk timer there are to pick from: the four values of two random bits.</summary>
+    private const int TalkTimerRandomRange = 4;
 
     /// <summary>The gap between one length of talk timer and the next, in seconds: 4, 8, 12 or 16.</summary>
     /// <remarks>
@@ -66,15 +75,6 @@ public sealed class RobotTaunts
     /// </remarks>
     private const int TalkTimerStepSeconds = 4;
 
-    /// <summary>How many lengths of talk timer there are to pick from: the four values of two random bits.</summary>
-    private const int TalkTimerRandomRange = 4;
-
-    /// <summary>
-    ///     How many values the random part of a taunt's control byte can take: 0 to <c>$1F</c>, the pitch and the low two
-    ///     bits of the volume (<c>berzerk.asm</c> <c>GENERATE_ROBOT_SPEECH</c>, <c>AND $1F</c> at <c>$2BB2</c>).
-    /// </summary>
-    private const int TauntControlByteRandomRange = 0x20;
-
     /// <summary>
     ///     The bits always set in a taunt's control byte: the top bit of the volume, so it is never below 4, and the bit
     ///     that marks a control byte (<c>berzerk.asm</c> <c>GENERATE_ROBOT_SPEECH</c>, <c>OR $60</c> at <c>$2BB4</c>).
@@ -82,14 +82,14 @@ public sealed class RobotTaunts
     private const int TauntControlByteFixedBits = 0x60;
 
     /// <summary>
-    ///     How rarely a chicken is called a chicken: one taunt in this many, on average. Port only: the author asked for a
-    ///     chicken to be called one regularly.
+    ///     How many values the random part of a taunt's control byte can take: 0 to <c>$1F</c>, the pitch and the low two
+    ///     bits of the volume (<c>berzerk.asm</c> <c>GENERATE_ROBOT_SPEECH</c>, <c>AND $1F</c> at <c>$2BB2</c>).
     /// </summary>
-    public const int ChickenCallRandomRange = 2;
+    private const int TauntControlByteRandomRange = 0x20;
 
-    private readonly Random _random;
     private readonly Func<bool> _isSpeechBusy;
     private readonly Func<bool> _isWaveEndMusicPlaying;
+    private readonly Random _random;
     private readonly Action<BerzerkVoiceSetting, IReadOnlyList<BerzerkWord>> _sayBerzerkWords;
 
     /// <summary>
@@ -138,15 +138,33 @@ public sealed class RobotTaunts
             (berzerkVoiceSetting, berzerkWords) => Speech.SayBerzerk(berzerkVoiceSetting, [.. berzerkWords]));
     }
 
-    /// <summary>
-    ///     Says whether the robots may taunt just now: the wave has Berzerk speech on, the robots may move, the wave-end
-    ///     music has finished, and nothing is being said or waiting to be said.
-    /// </summary>
-    /// <param name="playField">The field being played.</param>
-    public bool IsAllowedToTaunt(PlayField playField)
+    /// <summary>Says whether a sentence calls a player a chicken: it has CHICKEN or CHICKENS in it.</summary>
+    /// <param name="berzerkWords">The sentence's words.</param>
+    public static bool IsChickenCall(IReadOnlyList<BerzerkWord> berzerkWords)
     {
-        return playField.WaveParams.EnableBerzerkSpeak && !playField.RobotsFrozen() && !_isWaveEndMusicPlaying() &&
-               !_isSpeechBusy();
+        return berzerkWords.Contains(BerzerkWord.Chicken) || berzerkWords.Contains(BerzerkWord.Chickens);
+    }
+
+    /// <summary>Gets a sentence for the robots to say, picked at random from those that fit the game just now.</summary>
+    /// <param name="gameSession">The game, which says the game mode and who is a chicken.</param>
+    /// <param name="playField">The field being played, which says whether the family is there with a hulk or a brain.</param>
+    /// <returns>The sentence's words, in order.</returns>
+    /// <remarks>
+    ///     When a player is a chicken, one taunt in <see cref="ChickenCallRandomRange" /> on average calls them a chicken,
+    ///     picked from the sentences that do; the rest are picked from the sentences that do not.
+    /// </remarks>
+    public IReadOnlyList<BerzerkWord> GetRandomSentence(GameSession gameSession, PlayField playField)
+    {
+        IReadOnlyList<IReadOnlyList<BerzerkWord>> familySentences =
+            IsFamilyWithHulksOrBrains(playField) ? RobotTauntSentences.FamilyWithHulksOrBrains : [];
+        IReadOnlyList<IReadOnlyList<BerzerkWord>> sentences = [.. GetPlayerSentences(gameSession), .. familySentences];
+        if (IsChickenTaunted(gameSession))
+        {
+            var isChickenCallPicked = _random.Next(ChickenCallRandomRange) == 0;
+            sentences = [.. sentences.Where(sentence => IsChickenCall(sentence) == isChickenCallPicked)];
+        }
+
+        return sentences[_random.Next(sentences.Count)];
     }
 
     /// <summary>
@@ -179,33 +197,15 @@ public sealed class RobotTaunts
         return BerzerkVoiceSetting.CreateFromControlByte(controlByte);
     }
 
-    /// <summary>Gets a sentence for the robots to say, picked at random from those that fit the game just now.</summary>
-    /// <param name="gameSession">The game, which says the game mode and who is a chicken.</param>
-    /// <param name="playField">The field being played, which says whether the family is there with a hulk or a brain.</param>
-    /// <returns>The sentence's words, in order.</returns>
-    /// <remarks>
-    ///     When a player is a chicken, one taunt in <see cref="ChickenCallRandomRange" /> on average calls them a chicken,
-    ///     picked from the sentences that do; the rest are picked from the sentences that do not.
-    /// </remarks>
-    public IReadOnlyList<BerzerkWord> GetRandomSentence(GameSession gameSession, PlayField playField)
+    /// <summary>
+    ///     Says whether the robots may taunt just now: the wave has Berzerk speech on, the robots may move, the wave-end
+    ///     music has finished, and nothing is being said or waiting to be said.
+    /// </summary>
+    /// <param name="playField">The field being played.</param>
+    public bool IsAllowedToTaunt(PlayField playField)
     {
-        IReadOnlyList<IReadOnlyList<BerzerkWord>> familySentences =
-            IsFamilyWithHulksOrBrains(playField) ? RobotTauntSentences.FamilyWithHulksOrBrains : [];
-        IReadOnlyList<IReadOnlyList<BerzerkWord>> sentences = [.. GetPlayerSentences(gameSession), .. familySentences];
-        if (IsChickenTaunted(gameSession))
-        {
-            var isChickenCallPicked = _random.Next(ChickenCallRandomRange) == 0;
-            sentences = [.. sentences.Where(sentence => IsChickenCall(sentence) == isChickenCallPicked)];
-        }
-
-        return sentences[_random.Next(sentences.Count)];
-    }
-
-    /// <summary>Says whether a sentence calls a player a chicken: it has CHICKEN or CHICKENS in it.</summary>
-    /// <param name="berzerkWords">The sentence's words.</param>
-    public static bool IsChickenCall(IReadOnlyList<BerzerkWord> berzerkWords)
-    {
-        return berzerkWords.Contains(BerzerkWord.Chicken) || berzerkWords.Contains(BerzerkWord.Chickens);
+        return playField.WaveParams.EnableBerzerkSpeak && !playField.RobotsFrozen() && !_isWaveEndMusicPlaying() &&
+               !_isSpeechBusy();
     }
 
     /// <summary>
@@ -244,17 +244,6 @@ public sealed class RobotTaunts
     }
 
     /// <summary>
-    ///     Says whether two players are on the field at once: a two-player simultaneous game in which both players still
-    ///     have lives. When only one is left, the robots taunt that one player alone.
-    /// </summary>
-    /// <param name="gameSession">The game.</param>
-    private static bool IsTwoPlayersOnField(GameSession gameSession)
-    {
-        return gameSession.GameMode == GameMode.TwoPlayerSimultaneous &&
-               gameSession.PlayerSlots.All(playerSlot => playerSlot.HasLives());
-    }
-
-    /// <summary>
     ///     Says whether the robots taunt a chicken: with two players on the field at once, either of them is a chicken;
     ///     otherwise the current player is.
     /// </summary>
@@ -273,5 +262,16 @@ public sealed class RobotTaunts
         var fieldEntities = playField.FieldEntities;
         return fieldEntities.FamilyList.AnyAlive() &&
                (fieldEntities.Hulks.AnyAlive() || fieldEntities.Brains.AnyAlive());
+    }
+
+    /// <summary>
+    ///     Says whether two players are on the field at once: a two-player simultaneous game in which both players still
+    ///     have lives. When only one is left, the robots taunt that one player alone.
+    /// </summary>
+    /// <param name="gameSession">The game.</param>
+    private static bool IsTwoPlayersOnField(GameSession gameSession)
+    {
+        return gameSession.GameMode == GameMode.TwoPlayerSimultaneous &&
+               gameSession.PlayerSlots.All(playerSlot => playerSlot.HasLives());
     }
 }

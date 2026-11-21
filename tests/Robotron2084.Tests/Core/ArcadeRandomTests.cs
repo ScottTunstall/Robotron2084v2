@@ -6,20 +6,6 @@ namespace Robotron2084.Tests.Core;
 /// <summary>The arcade's pick up to a limit, which halves a random byte until it fits (disassembly <c>$D6B6</c>).</summary>
 public sealed class ArcadeRandomTests
 {
-    [Theory]
-    [InlineData(1)]
-    [InlineData(14)]
-    [InlineData(30)]
-    public void APick_IsAlwaysFromOneUpToTheLimit(int limit)
-    {
-        var random = new Random(7);
-        for (var i = 0; i < 20000; i++)
-        {
-            var value = ArcadeRandom.PickUpTo(random, limit);
-            Assert.InRange(value, 1, limit);
-        }
-    }
-
     [Fact]
     public void APick_FavoursLongerWaitsThanAnEvenSpreadWould()
     {
@@ -32,5 +18,19 @@ public sealed class ArcadeRandomTests
         // An even spread from 1 to 30 averages 15.5. The arcade's halving averages about 21.5.
         var mean = (double)total / Samples;
         Assert.InRange(mean, 20.5, 22.5);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(14)]
+    [InlineData(30)]
+    public void APick_IsAlwaysFromOneUpToTheLimit(int limit)
+    {
+        var random = new Random(7);
+        for (var i = 0; i < 20000; i++)
+        {
+            var value = ArcadeRandom.PickUpTo(random, limit);
+            Assert.InRange(value, 1, limit);
+        }
     }
 }

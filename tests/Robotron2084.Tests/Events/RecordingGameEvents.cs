@@ -1,5 +1,5 @@
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 
 namespace Robotron2084.Tests.Events;
 
@@ -13,14 +13,14 @@ public sealed class RecordingGameEvents : IGameEvents, IGameEventListener
 
     /// <summary>Writes the event down.</summary>
     /// <param name="gameEvent">The event.</param>
-    public void Raise(GameEvent gameEvent)
+    public void Handle(GameEvent gameEvent)
     {
         _events.Add(gameEvent);
     }
 
     /// <summary>Writes the event down.</summary>
     /// <param name="gameEvent">The event.</param>
-    public void Handle(GameEvent gameEvent)
+    public void Raise(GameEvent gameEvent)
     {
         _events.Add(gameEvent);
     }

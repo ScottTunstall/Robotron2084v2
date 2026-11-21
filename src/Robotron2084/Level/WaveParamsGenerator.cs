@@ -79,29 +79,6 @@ public sealed class WaveParamsGenerator
         return classicWaveParams with { EnableBerzerkSpeak = isBerzerkSpeakWave, EnableGorfSpeak = false };
     }
 
-    /// <summary>Works out what a wave contains in the arcade's game.</summary>
-    /// <param name="waveNumber">The wave number, starting at 1.</param>
-    /// <returns>The arcade's wave, or the replacement table's row for it.</returns>
-    private WaveParams GenerateClassic(int waveNumber)
-    {
-        if (_customWaveTable is { Length: > 0 } table)
-        {
-            var customWaveTableRow = table[(waveNumber - 1) % table.Length];
-            return new WaveParams(
-                waveNumber,
-                customWaveTableRow.GruntCount,
-                HulkCount: customWaveTableRow.HulkCount,
-                SpheroidCount: customWaveTableRow.SpheroidCount,
-                QuarkCount: customWaveTableRow.QuarkCount,
-                ElectrodeCount: customWaveTableRow.ElectrodeCount,
-                MaxEnforcersPerSpheroid: customWaveTableRow.MaxEnforcersPerSpheroid,
-                MaxTanksPerQuark: customWaveTableRow.MaxTanksPerQuark,
-                EnemySpeedBonus: Math.Min(waveNumber - 1, SpawnTuning.EnemySpeedBonusMaxPerWave));
-        }
-
-        return WaveParams.CreateFromWave(waveNumber, WaveTable.GetParameters(waveNumber));
-    }
-
     /// <summary>Reads the replacement table.</summary>
     /// <param name="path">The CSV file's path, or null for the one in the game's <c>Content</c> folder.</param>
     /// <returns>The rows, or null when there is no file, it is damaged or it has no rows.</returns>
@@ -149,5 +126,28 @@ public sealed class WaveParamsGenerator
 
         customWaveTableRow = new CustomWaveTableRow(counts[0], counts[1], counts[2], counts[3], counts[4], counts[5], counts[6]);
         return true;
+    }
+
+    /// <summary>Works out what a wave contains in the arcade's game.</summary>
+    /// <param name="waveNumber">The wave number, starting at 1.</param>
+    /// <returns>The arcade's wave, or the replacement table's row for it.</returns>
+    private WaveParams GenerateClassic(int waveNumber)
+    {
+        if (_customWaveTable is { Length: > 0 } table)
+        {
+            var customWaveTableRow = table[(waveNumber - 1) % table.Length];
+            return new WaveParams(
+                waveNumber,
+                customWaveTableRow.GruntCount,
+                HulkCount: customWaveTableRow.HulkCount,
+                SpheroidCount: customWaveTableRow.SpheroidCount,
+                QuarkCount: customWaveTableRow.QuarkCount,
+                ElectrodeCount: customWaveTableRow.ElectrodeCount,
+                MaxEnforcersPerSpheroid: customWaveTableRow.MaxEnforcersPerSpheroid,
+                MaxTanksPerQuark: customWaveTableRow.MaxTanksPerQuark,
+                EnemySpeedBonus: Math.Min(waveNumber - 1, SpawnTuning.EnemySpeedBonusMaxPerWave));
+        }
+
+        return WaveParams.CreateFromWave(waveNumber, WaveTable.GetParameters(waveNumber));
     }
 }

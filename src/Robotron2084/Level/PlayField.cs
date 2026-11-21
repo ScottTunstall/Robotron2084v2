@@ -1,20 +1,20 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
-using Robotron2084.Core.Models;
+using Robotron2084.Audio.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
 using Robotron2084.Input;
 using Robotron2084.Level.Collisions;
 using Robotron2084.Level.Models;
-using Robotron2084.Level.Spawning.Models;
 using Robotron2084.Level.Spawning;
+using Robotron2084.Level.Spawning.Models;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
 using Robotron2084.Score;
@@ -60,24 +60,26 @@ public sealed class PlayField : ICollisionScene
 {
     private readonly CollisionResponder _collisionResponder;
     private readonly IContactTest _contactTest;
-    private readonly GruntSpeedProgression _gruntSpeedProgression;
-    private readonly LaserWallFlares _laserWallFlares = new();
-    private readonly WaveMaterialisation _waveMaterialisation;
-    private readonly MidWaveSpawner _midWaveSpawner;
+
     /// <summary>How many family members were on the field when it was set up.</summary>
     private readonly int _familyMembersAtStart;
 
-    private Action<GorfLine> _gorfLineSayer = static gorfLine => Speech.SayGorf(gorfLine);
     private readonly List<GorfReturn> _gorfReturns = [];
+    private readonly GruntSpeedProgression _gruntSpeedProgression;
+    private readonly LaserWallFlares _laserWallFlares = new();
+    private readonly MidWaveSpawner _midWaveSpawner;
     private readonly PlayerAppear _playerAppear = new();
 
     /// <summary>True when a fizzled shell stays on the wave's shell count, as in the arcade.</summary>
     private readonly bool _tankShellBugEnabled;
 
+    private readonly WaveMaterialisation _waveMaterialisation;
     private readonly WaveStartSequence _waveStartSequence;
+    private Action<GorfLine> _gorfLineSayer = static gorfLine => Speech.SayGorf(gorfLine);
 
     /// <summary>Ticks left of the freeze that follows the player's death.</summary>
     private bool _hasRaisedWaveStarted;
+
     private int _hitStopTicksRemaining;
 
     /// <summary>
@@ -169,17 +171,17 @@ public sealed class PlayField : ICollisionScene
                 brain.Retarget(FieldEntities.FamilyList.GetNearestSlot(brain.Position));
     }
 
-    /// <summary>Where the player's moves come from.</summary>
-    public IPlayerInputSource PlayerInputSource { get; }
-
-    /// <summary>The wave's numbers: how many of each kind, and how fast.</summary>
-    public WaveParams WaveParams { get; }
-
     /// <summary>The player.</summary>
     public Player Player { get; }
 
+    /// <summary>Where the player's moves come from.</summary>
+    public IPlayerInputSource PlayerInputSource { get; }
+
     /// <summary>The player's lasers in flight.</summary>
     public LaserSlots PlayerLaserSlots { get; }
+
+    /// <summary>The wall round the playfield.</summary>
+    public PlayfieldWall PlayfieldWall { get; }
 
     /// <summary>How many family members the player has rescued so far on this wave. Every wave starts at none.</summary>
     /// <remarks>
@@ -193,30 +195,20 @@ public sealed class PlayField : ICollisionScene
     /// </remarks>
     public int RescuesThisLife { get; private set; }
 
-    /// <summary>
-    ///     Counts the family members lost on this field so far: killed by a hulk, turned into a prog, or gone any other way
-    ///     but rescued.
-    /// </summary>
-    /// <returns>The family members the field started with, less those rescued and those still on the field.</returns>
-    public int GetFamilyMembersLost()
-    {
-        return _familyMembersAtStart - RescuesThisLife - FieldEntities.FamilyList.CountAlive();
-    }
-
     /// <summary>The score board of the player on the field.</summary>
     public ScoreBoard ScoreBoard { get; }
 
-    /// <summary>The wall round the playfield.</summary>
-    public PlayfieldWall PlayfieldWall { get; }
+    /// <summary>The wave's numbers: how many of each kind, and how fast.</summary>
+    public WaveParams WaveParams { get; }
+
+    /// <summary>What every entity this field builds shares with the rest of the game: sprites, where it announces events, and random numbers.</summary>
+    internal EntityParams EntityParams { get; }
 
     /// <summary>Everything on the field apart from the player, kind by kind.</summary>
     internal FieldEntities FieldEntities { get; } = new();
 
     /// <summary>Where the player and the field's entities announce what happens to them.</summary>
     internal IGameEvents GameEvents { get; }
-
-    /// <summary>What every entity this field builds shares with the rest of the game: sprites, where it announces events, and random numbers.</summary>
-    internal EntityParams EntityParams { get; }
 
     /// <summary>The live palette, or null in a test. The player's death fade writes to it (notes §66).</summary>
     internal GamePalette? GamePalette { get; }
@@ -320,6 +312,16 @@ public sealed class PlayField : ICollisionScene
         return PlayerLaserSlots.GetActiveLasers();
     }
 
+    /// <summary>
+    ///     Counts the family members lost on this field so far: killed by a hulk, turned into a prog, or gone any other way
+    ///     but rescued.
+    /// </summary>
+    /// <returns>The family members the field started with, less those rescued and those still on the field.</returns>
+    public int GetFamilyMembersLost()
+    {
+        return _familyMembersAtStart - RescuesThisLife - FieldEntities.FamilyList.CountAlive();
+    }
+
     /// <summary>Where the player's top-left corner is.</summary>
     public IntVector2 GetPlayerPosition()
     {
@@ -330,23 +332,6 @@ public sealed class PlayField : ICollisionScene
     public Rectangle GetPlayfieldBounds()
     {
         return PlayfieldWall.PlayfieldBounds;
-    }
-
-    /// <summary>Says whether a box touches the wall.</summary>
-    /// <param name="bounds">The box to test, in port pixels.</param>
-    public bool HitsWall(Rectangle bounds)
-    {
-        return PlayfieldWall.Intersects(bounds);
-    }
-
-    /// <summary>
-    ///     Says whether the wave is won: every enemy that can be killed is gone. Hulks and electrodes do not count. A wave
-    ///     with doors in its walls is not won until they have let all their grunts in and shut.
-    /// </summary>
-    public bool IsWaveCleared()
-    {
-        var isNoGorfToReturn = _gorfReturns.Count == 0;
-        return FieldEntities.AreEnemiesGone() && isNoGorfToReturn;
     }
 
     /// <summary>Gets the wave the next life starts with: this wave, with only what is still on the field.</summary>
@@ -387,6 +372,13 @@ public sealed class PlayField : ICollisionScene
         };
     }
 
+    /// <summary>Says whether a box touches the wall.</summary>
+    /// <param name="bounds">The box to test, in port pixels.</param>
+    public bool HitsWall(Rectangle bounds)
+    {
+        return PlayfieldWall.Intersects(bounds);
+    }
+
     /// <summary>
     ///     Says whether the game is live: the start of the wave is over, so the player can move and fire, things can
     ///     touch the player, and the robots act.
@@ -414,6 +406,16 @@ public sealed class PlayField : ICollisionScene
         return Player.IsDead();
     }
 
+    /// <summary>
+    ///     Says whether the wave is won: every enemy that can be killed is gone. Hulks and electrodes do not count. A wave
+    ///     with doors in its walls is not won until they have let all their grunts in and shut.
+    /// </summary>
+    public bool IsWaveCleared()
+    {
+        var isNoGorfToReturn = _gorfReturns.Count == 0;
+        return FieldEntities.AreEnemiesGone() && isNoGorfToReturn;
+    }
+
     /// <summary>Kills the player.</summary>
     public void KillPlayer()
     {
@@ -438,11 +440,25 @@ public sealed class PlayField : ICollisionScene
         return !IsLive() || Player.IsDying();
     }
 
+    /// <summary>Has one of Gorf's lines said, on the speech voice that nothing on the sound board can cut off (port only, notes §153).</summary>
+    /// <param name="gorfLine">The line.</param>
+    public void SayGorfLine(GorfLine gorfLine)
+    {
+        _gorfLineSayer(gorfLine);
+    }
+
     /// <summary>A brain fires a cruise missile at the player.</summary>
     /// <param name="origin">Where the missile starts.</param>
     public void SpawnCruiseMissile(IntVector2 origin)
     {
         _midWaveSpawner.SpawnCruiseMissile(origin);
+    }
+
+    /// <summary>A grunt comes through a door in the wall (port only, notes §151).</summary>
+    /// <param name="position">Where the grunt's top-left corner is.</param>
+    public void SpawnDoorwayGrunt(IntVector2 position)
+    {
+        _midWaveSpawner.SpawnDoorwayGrunt(position);
     }
 
     /// <summary>A spheroid drops an enforcer.</summary>
@@ -458,37 +474,6 @@ public sealed class PlayField : ICollisionScene
     public void SpawnGrunt(IntVector2 from, IntVector2 landing)
     {
         _midWaveSpawner.SpawnGrunt(from, landing);
-    }
-
-    /// <summary>Has one of Gorf's lines said, on the speech voice that nothing on the sound board can cut off (port only, notes §153).</summary>
-    /// <param name="gorfLine">The line.</param>
-    public void SayGorfLine(GorfLine gorfLine)
-    {
-        _gorfLineSayer(gorfLine);
-    }
-
-    /// <summary>Changes what has Gorf's lines said. It is what a test uses to hear the lines without a speech voice.</summary>
-    /// <param name="gorfLineSayer">What to call with each line.</param>
-    internal void SetGorfLineSayer(Action<GorfLine> gorfLineSayer)
-    {
-        _gorfLineSayer = gorfLineSayer;
-    }
-
-    /// <summary>
-    ///     A Gorf was shot with grunts still to drop: a new one comes on a little later to drop them (port only, notes §152).
-    /// </summary>
-    /// <param name="gruntsOwed">How many grunts the new Gorf drops.</param>
-    /// <param name="dropIntervalSteps">How many steps there are between its drops.</param>
-    internal void ScheduleGorfReturn(int gruntsOwed, int dropIntervalSteps)
-    {
-        _gorfReturns.Add(new GorfReturn(gruntsOwed, dropIntervalSteps, GorfTuning.ReturnDelayTicks));
-    }
-
-    /// <summary>A grunt comes through a door in the wall (port only, notes §151).</summary>
-    /// <param name="position">Where the grunt's top-left corner is.</param>
-    public void SpawnDoorwayGrunt(IntVector2 position)
-    {
-        _midWaveSpawner.SpawnDoorwayGrunt(position);
     }
 
     /// <summary>A brain's touch turns a family member into a prog where they stand.</summary>
@@ -576,16 +561,6 @@ public sealed class PlayField : ICollisionScene
 
         // Prune: remove Dead entries from every list (pruning = count decrement, spec).
         FieldEntities.PruneDead();
-    }
-
-    /// <summary>Counts down to each Gorf that is to come back, and puts it on the field when its time is up.</summary>
-    private void LetGorfsReturn()
-    {
-        foreach (var gorfReturn in _gorfReturns) gorfReturn.Tick();
-
-        var due = _gorfReturns.Where(gorfReturn => gorfReturn.IsDue()).ToList();
-        _gorfReturns.RemoveAll(gorfReturn => gorfReturn.IsDue());
-        foreach (var gorfReturn in due) _midWaveSpawner.SpawnReturningGorf(gorfReturn.GruntsOwed, gorfReturn.DropIntervalSteps);
     }
 
     /// <summary>Adds a rescue's bonus to the score, and gives the player a spare life if it earns one.</summary>
@@ -781,6 +756,23 @@ public sealed class PlayField : ICollisionScene
         Sound.Play(soundSequence, pan);
     }
 
+    /// <summary>
+    ///     A Gorf was shot with grunts still to drop: a new one comes on a little later to drop them (port only, notes §152).
+    /// </summary>
+    /// <param name="gruntsOwed">How many grunts the new Gorf drops.</param>
+    /// <param name="dropIntervalSteps">How many steps there are between its drops.</param>
+    internal void ScheduleGorfReturn(int gruntsOwed, int dropIntervalSteps)
+    {
+        _gorfReturns.Add(new GorfReturn(gruntsOwed, dropIntervalSteps, GorfTuning.ReturnDelayTicks));
+    }
+
+    /// <summary>Changes what has Gorf's lines said. It is what a test uses to hear the lines without a speech voice.</summary>
+    /// <param name="gorfLineSayer">What to call with each line.</param>
+    internal void SetGorfLineSayer(Action<GorfLine> gorfLineSayer)
+    {
+        _gorfLineSayer = gorfLineSayer;
+    }
+
     /// <summary>Shows the bonus for the latest rescue where the family member stood.</summary>
     /// <param name="position">Where the family member stood.</param>
     internal void ShowRescueBonus(IntVector2 position)
@@ -883,6 +875,16 @@ public sealed class PlayField : ICollisionScene
             .SelectMany(kind => FieldEntities.GetList(kind.Kind).FieldEntities.Reverse());
     }
 
+    /// <summary>Counts down to each Gorf that is to come back, and puts it on the field when its time is up.</summary>
+    private void LetGorfsReturn()
+    {
+        foreach (var gorfReturn in _gorfReturns) gorfReturn.Tick();
+
+        var due = _gorfReturns.Where(gorfReturn => gorfReturn.IsDue()).ToList();
+        _gorfReturns.RemoveAll(gorfReturn => gorfReturn.IsDue());
+        foreach (var gorfReturn in due) _midWaveSpawner.SpawnReturningGorf(gorfReturn.GruntsOwed, gorfReturn.DropIntervalSteps);
+    }
+
     /// <summary>
     ///     Plays the sounds that things make just by moving: a bounce for each tank shell that bounced, and one step for
     ///     all the grunts together if any of them moved.
@@ -902,6 +904,15 @@ public sealed class PlayField : ICollisionScene
             PlaySoundFrom(SoundTables.ShellRebound, shell.GetBounds());
 
         if (FieldEntities.Grunts.HasAnyStepped()) Sound.Play(SoundTables.RobotMove);
+    }
+
+    /// <summary>Announces that the wave has started, on the field's first tick and never again.</summary>
+    private void RaiseWaveStartedOnce()
+    {
+        if (_hasRaisedWaveStarted) return;
+
+        _hasRaisedWaveStarted = true;
+        GameEvents.Raise(new GameEvent(GameEventKind.WaveStarted, IntVector2.Zero));
     }
 
     /// <summary>
@@ -939,15 +950,6 @@ public sealed class PlayField : ICollisionScene
             // R5 $30EF (KILL_PLAYER): the death sound ($26D9, p238).
             PlaySoundFrom(SoundTables.PlayerDeath, Player.GetBounds());
         }
-    }
-
-    /// <summary>Announces that the wave has started, on the field's first tick and never again.</summary>
-    private void RaiseWaveStartedOnce()
-    {
-        if (_hasRaisedWaveStarted) return;
-
-        _hasRaisedWaveStarted = true;
-        GameEvents.Raise(new GameEvent(GameEventKind.WaveStarted, IntVector2.Zero));
     }
 
     /// <summary>

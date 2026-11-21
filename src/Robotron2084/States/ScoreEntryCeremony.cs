@@ -1,7 +1,5 @@
-using Robotron2084.Level.Models;
-using Robotron2084.Level;
-using Robotron2084.Persistence.Models;
 using Robotron2084.Persistence;
+using Robotron2084.Persistence.Models;
 using Robotron2084.Score.Models;
 using Robotron2084.States.Models;
 
@@ -17,10 +15,10 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class ScoreEntryCeremony
 {
+    private readonly GameStateParams _gameStateParams;
     private readonly HighScoreStore _highScoreStore;
     private readonly HighScoreTable _highScoreTable;
     private readonly Queue<FinalScore> _pendingScores;
-    private readonly GameStateParams _gameStateParams;
     private readonly int[] _sessionScores;
 
     /// <summary>Builds the ceremony for a finished game, loading the table the scores are offered to.</summary>

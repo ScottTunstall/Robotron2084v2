@@ -16,6 +16,15 @@ public sealed class QuarkWaveParamsTests
         Assert.Equal(30, settings.MaxSpeed);
     }
 
+    [Theory]
+    [InlineData(-1, 0, 0)]
+    [InlineData(0, -1, 0)]
+    [InlineData(0, 0, -1)]
+    public void RefusesANumberBelowZero(int maxDropsX2, int dropIntervalMaxBeats, int maxSpeed)
+    {
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new QuarkWaveParams(maxDropsX2, dropIntervalMaxBeats, maxSpeed));
+    }
+
     [Fact]
     public void UsesTheDefaultsForWhatIsNotGiven()
     {
@@ -24,14 +33,5 @@ public sealed class QuarkWaveParamsTests
         Assert.Equal(QuarkWaveParams.DefaultMaxDropsX2, settings.MaxDropsX2);
         Assert.Equal(QuarkWaveParams.DefaultDropIntervalMaxBeats, settings.DropIntervalMaxBeats);
         Assert.Equal(QuarkWaveParams.DefaultMaxSpeed, settings.MaxSpeed);
-    }
-
-    [Theory]
-    [InlineData(-1, 0, 0)]
-    [InlineData(0, -1, 0)]
-    [InlineData(0, 0, -1)]
-    public void RefusesANumberBelowZero(int maxDropsX2, int dropIntervalMaxBeats, int maxSpeed)
-    {
-        _ = Assert.Throws<ArgumentOutOfRangeException>(() => new QuarkWaveParams(maxDropsX2, dropIntervalMaxBeats, maxSpeed));
     }
 }

@@ -87,14 +87,14 @@ public static class SoundTables
     /// </summary>
     public static readonly SoundSequence EnforcerShoot = new(0xD0, 0x1156, [new SoundTableRow(1, 8, 0x1D)]);
 
+    /// <summary><c>HPSND</c> "HUMAN-PROG FINAL CONVERSION" (<c>RRB10.ASM</c>); R5 <c>$1AEF</c>, asked for at <c>$1D7E</c>.</summary>
+    public static readonly SoundSequence FamilyMemberProgFinalConversion = new(0xD8, 0x1AEF, [new SoundTableRow(1, 8, 0x11)]);
+
     /// <summary>
     ///     <c>HKHSND</c> "HULK HIT": a laser knocks a hulk back (<c>RRH11.ASM</c>); R5 <c>$001C</c>, asked for at
     ///     <c>$00FC</c>.
     /// </summary>
     public static readonly SoundSequence HulkHit = new(0xD0, 0x001C, [new SoundTableRow(1, 16, 0x06)]);
-
-    /// <summary><c>HPSND</c> "HUMAN-PROG FINAL CONVERSION" (<c>RRB10.ASM</c>); R5 <c>$1AEF</c>, asked for at <c>$1D7E</c>.</summary>
-    public static readonly SoundSequence FamilyMemberProgFinalConversion = new(0xD8, 0x1AEF, [new SoundTableRow(1, 8, 0x11)]);
 
     /// <summary>
     ///     <c>HKSND</c> "KILL A HUMAN": a member of the family dies and leaves a skull (<c>RRH11.ASM</c>); R5
@@ -102,12 +102,12 @@ public static class SoundTables
     /// </summary>
     public static readonly SoundSequence KillAHuman = new(0xE0, 0x002B, [new SoundTableRow(1, 24, 0x1A)]);
 
-    /// <summary><c>LASSND</c> "LASER SOUND": the player fires (<c>RRG23.ASM</c>); R5 <c>$26F0</c>, asked for at <c>$3221</c>.</summary>
-    public static readonly SoundSequence PlayerLaser = new(0xD0, 0x26F0, [new SoundTableRow(1, 8, 0x01)]);
-
     /// <summary><c>PDSND</c> "PLAYER DEATH" (<c>RRG23.ASM</c>); R5 <c>$26D9</c>, asked for at <c>$30EF</c>.</summary>
     public static readonly SoundSequence PlayerDeath =
         new(0xEE, 0x26D9, [new SoundTableRow(2, 8, 0x11), new SoundTableRow(1, 32, 0x17)]);
+
+    /// <summary><c>LASSND</c> "LASER SOUND": the player fires (<c>RRG23.ASM</c>); R5 <c>$26F0</c>, asked for at <c>$3221</c>.</summary>
+    public static readonly SoundSequence PlayerLaser = new(0xD0, 0x26F0, [new SoundTableRow(1, 8, 0x01)]);
 
     /// <summary>
     ///     <c>PSKSND</c> "POST KILL": an electrode is destroyed (<c>RRP8.ASM</c>); R5 <c>$38A5</c>, asked for at

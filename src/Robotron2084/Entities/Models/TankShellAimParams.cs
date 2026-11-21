@@ -1,5 +1,4 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core;
 using Robotron2084.Core.Models;
 
 namespace Robotron2084.Entities.Models;

@@ -1,9 +1,9 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -16,10 +16,48 @@ namespace Robotron2084.Tests.Entities;
 /// </summary>
 public sealed class TankShellTests
 {
-    private const int ShellSpeed = 176;
     private const int AimedRandom = 0;
-    private const int ReboundRandom = 0x80;
     private const int NoMiss = 16;
+    private const int ReboundRandom = 0x80;
+    private const int ShellSpeed = 176;
+
+    [Fact]
+    public void AnAimedShotAimsAtThePlayer_WithASpeedThatGrowsWithTheGap()
+    {
+        var playField = new PlayFieldBuilder().Build();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
+        IntVector2 tank = new(bounds.X + 100, bounds.Y + 100);
+        var start = tank + new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
+        var player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(40), 0);
+
+        var tankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0)), tank, new TankShellAimParams(player, ShellSpeed, bounds));
+
+        Assert.Equal(216, tankShell.VelocityX);
+        Assert.Equal(0, tankShell.VelocityY);
+    }
+
+    [Fact]
+    public void AnAimedShotAtTheSpotItStartsOn_DoesNotMove_AndFizzlesAfterFortyEightBeatsOfTwoArcadeFrames()
+    {
+        var playField = new PlayFieldBuilder().Build();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
+        IntVector2 tank = new(bounds.X + 200, bounds.Y + 100);
+        var player = tank + new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
+        var tankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0)), tank, new TankShellAimParams(player, ShellSpeed, bounds));
+
+        var ticks = 0;
+        while (tankShell.IsAlive() && ticks < 1000)
+        {
+            tankShell.Update(new GameTime(), playField);
+            ticks++;
+        }
+
+        Assert.Equal(0, tankShell.VelocityX);
+        Assert.Equal(0, tankShell.VelocityY);
+        Assert.Equal(
+            ArcadeClock.ToPortTicksRoundedUp(TankShellTuning.LifeBaseBeats * TankShellTuning.BeatIntervalArcadeFrames),
+            ticks);
+    }
 
     [Theory]
     [InlineData(0, 0)]
@@ -33,6 +71,22 @@ public sealed class TankShellTests
         Assert.Equal(expectedSpeed, TankShell.GetAimedSpeed(gap, ShellSpeed));
     }
 
+    [Fact]
+    public void AReboundShotGoesForTheWallOnThePlayersSide_SevenTimesInEight()
+    {
+        var playField = new PlayFieldBuilder().Build();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
+        IntVector2 tank = new(bounds.X + bounds.Width * 3 / 4, bounds.Y + 100);
+        IntVector2 playerOnTheLeft = new(bounds.X + bounds.Width / 4, bounds.Y + 100);
+
+        // Not the top-or-bottom kind (a coin of 0), the near side (a random number of 1), no miss.
+        var nearSideTankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(ReboundRandom, 0, 1, NoMiss, 0)), tank, new TankShellAimParams(playerOnTheLeft, ShellSpeed, bounds));
+        var farSideTankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(ReboundRandom, 0, TankShellTuning.ReboundFarSideRandom, NoMiss, 0)), tank, new TankShellAimParams(playerOnTheLeft, ShellSpeed, bounds));
+
+        Assert.True(nearSideTankShell.VelocityX < 0, "a player on the left sends the shell to the left wall");
+        Assert.True(farSideTankShell.VelocityX > 0, "the one random number in eight sends it to the far wall");
+    }
+
     [Theory]
     [InlineData(3, 1, 192, 64)]
     [InlineData(-3, 1, -192, 64)]
@@ -44,6 +98,42 @@ public sealed class TankShellTests
         // With a setting of 176 the floor is 176 sideways and 353 up and down (R5 $4F3F to $4F7E).
         var boosted = TankShell.GetBoostedVelocity(new IntVector2(sideways, upAndDown), ShellSpeed);
         Assert.Equal(new IntVector2(expectedSideways, expectedUpAndDown), boosted);
+    }
+
+    [Fact]
+    public void AShellThatReachesAWall_BouncesBackOnItsOwnAxis_AndStaysInsideThePlayfield()
+    {
+        var playField = new PlayFieldBuilder().Build();
+        var bounds = playField.PlayfieldWall.PlayfieldBounds;
+        var boxWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankShellCollisionSize.Width);
+
+        // 12 port pixels from the right wall, aimed at a spot 20 columns further right: it flies right, then must bounce.
+        var startOffset = ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns);
+        IntVector2 tank = new(bounds.Right - boxWidth - 12 - startOffset, bounds.Y + 100);
+        var start = tank + new IntVector2(startOffset, 0);
+        var player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(20), 0);
+        var tankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, TankShellTuning.LifeExtraBeatsMaxExclusive - 1)), tank, new TankShellAimParams(player, ShellSpeed, bounds));
+        var sidewaysBefore = tankShell.VelocityX;
+        Assert.True(sidewaysBefore > 0);
+
+        var bounces = 0;
+        var lastTickBounced = false;
+        for (var tick = 0; tick < 200 && tankShell.IsAlive(); tick++)
+        {
+            tankShell.Update(new GameTime(), playField);
+            Assert.True(tankShell.GetBounds().Right <= bounds.Right, $"the shell crossed the right wall on tick {tick}");
+            Assert.False(lastTickBounced && tankShell.BouncedThisUpdate, "a bounce was reported on two ticks running");
+            lastTickBounced = tankShell.BouncedThisUpdate;
+            if (tankShell.BouncedThisUpdate)
+            {
+                bounces++;
+                Assert.Equal(~sidewaysBefore, tankShell.VelocityX);
+                Assert.Equal(0, tankShell.VelocityY);
+                break;
+            }
+        }
+
+        Assert.Equal(1, bounces);
     }
 
     [Fact]
@@ -98,95 +188,5 @@ public sealed class TankShellTests
                 tankShell.Update(new GameTime(), playField);
 
         Assert.True(playField.CanFireShell());
-    }
-
-    [Fact]
-    public void AnAimedShotAtTheSpotItStartsOn_DoesNotMove_AndFizzlesAfterFortyEightBeatsOfTwoArcadeFrames()
-    {
-        var playField = new PlayFieldBuilder().Build();
-        var bounds = playField.PlayfieldWall.PlayfieldBounds;
-        IntVector2 tank = new(bounds.X + 200, bounds.Y + 100);
-        var player = tank + new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
-        var tankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0)), tank, new TankShellAimParams(player, ShellSpeed, bounds));
-
-        var ticks = 0;
-        while (tankShell.IsAlive() && ticks < 1000)
-        {
-            tankShell.Update(new GameTime(), playField);
-            ticks++;
-        }
-
-        Assert.Equal(0, tankShell.VelocityX);
-        Assert.Equal(0, tankShell.VelocityY);
-        Assert.Equal(
-            ArcadeClock.ToPortTicksRoundedUp(TankShellTuning.LifeBaseBeats * TankShellTuning.BeatIntervalArcadeFrames),
-            ticks);
-    }
-
-    [Fact]
-    public void AnAimedShotAimsAtThePlayer_WithASpeedThatGrowsWithTheGap()
-    {
-        var playField = new PlayFieldBuilder().Build();
-        var bounds = playField.PlayfieldWall.PlayfieldBounds;
-        IntVector2 tank = new(bounds.X + 100, bounds.Y + 100);
-        var start = tank + new IntVector2(ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns), 0);
-        var player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(40), 0);
-
-        var tankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, 0)), tank, new TankShellAimParams(player, ShellSpeed, bounds));
-
-        Assert.Equal(216, tankShell.VelocityX);
-        Assert.Equal(0, tankShell.VelocityY);
-    }
-
-    [Fact]
-    public void AReboundShotGoesForTheWallOnThePlayersSide_SevenTimesInEight()
-    {
-        var playField = new PlayFieldBuilder().Build();
-        var bounds = playField.PlayfieldWall.PlayfieldBounds;
-        IntVector2 tank = new(bounds.X + bounds.Width * 3 / 4, bounds.Y + 100);
-        IntVector2 playerOnTheLeft = new(bounds.X + bounds.Width / 4, bounds.Y + 100);
-
-        // Not the top-or-bottom kind (a coin of 0), the near side (a random number of 1), no miss.
-        var nearSideTankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(ReboundRandom, 0, 1, NoMiss, 0)), tank, new TankShellAimParams(playerOnTheLeft, ShellSpeed, bounds));
-        var farSideTankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(ReboundRandom, 0, TankShellTuning.ReboundFarSideRandom, NoMiss, 0)), tank, new TankShellAimParams(playerOnTheLeft, ShellSpeed, bounds));
-
-        Assert.True(nearSideTankShell.VelocityX < 0, "a player on the left sends the shell to the left wall");
-        Assert.True(farSideTankShell.VelocityX > 0, "the one random number in eight sends it to the far wall");
-    }
-
-    [Fact]
-    public void AShellThatReachesAWall_BouncesBackOnItsOwnAxis_AndStaysInsideThePlayfield()
-    {
-        var playField = new PlayFieldBuilder().Build();
-        var bounds = playField.PlayfieldWall.PlayfieldBounds;
-        var boxWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.TankShellCollisionSize.Width);
-
-        // 12 port pixels from the right wall, aimed at a spot 20 columns further right: it flies right, then must bounce.
-        var startOffset = ScreenSize.ToPortPixelsFromColumns(TankShellTuning.StartOffsetColumns);
-        IntVector2 tank = new(bounds.Right - boxWidth - 12 - startOffset, bounds.Y + 100);
-        var start = tank + new IntVector2(startOffset, 0);
-        var player = start + new IntVector2(ScreenSize.ToPortPixelsFromColumns(20), 0);
-        var tankShell = new TankShell(TestEntityParams.Create(new ScriptedRandom(AimedRandom, NoMiss, NoMiss, TankShellTuning.LifeExtraBeatsMaxExclusive - 1)), tank, new TankShellAimParams(player, ShellSpeed, bounds));
-        var sidewaysBefore = tankShell.VelocityX;
-        Assert.True(sidewaysBefore > 0);
-
-        var bounces = 0;
-        var lastTickBounced = false;
-        for (var tick = 0; tick < 200 && tankShell.IsAlive(); tick++)
-        {
-            tankShell.Update(new GameTime(), playField);
-            Assert.True(tankShell.GetBounds().Right <= bounds.Right, $"the shell crossed the right wall on tick {tick}");
-            Assert.False(lastTickBounced && tankShell.BouncedThisUpdate, "a bounce was reported on two ticks running");
-            lastTickBounced = tankShell.BouncedThisUpdate;
-            if (tankShell.BouncedThisUpdate)
-            {
-                bounces++;
-                Assert.Equal(~sidewaysBefore, tankShell.VelocityX);
-                Assert.Equal(0, tankShell.VelocityY);
-                break;
-            }
-        }
-
-        Assert.Equal(1, bounces);
     }
 }

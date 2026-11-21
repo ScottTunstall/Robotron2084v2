@@ -1,11 +1,11 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -19,18 +19,6 @@ namespace Robotron2084.Tests.Entities;
 public sealed class QuarkDropTimerTests
 {
     private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
-
-    private static GameTime OneTick()
-    {
-        return new GameTime(TimeSpan.Zero, OneTickSpan);
-    }
-
-    private static PlayField CreateField(int seed)
-    {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(7, SpheroidCount: 0, MaxDropsX2: 10,
-            SpheroidDropDelay: 18,
-            QuarkDropDelay: 16)).WithRandom(new Random(seed)).Build();
-    }
 
     [Fact]
     public void TheFirstTankWaitsForWholeIdleAnimationCycles()
@@ -76,5 +64,17 @@ public sealed class QuarkDropTimerTests
 
         Assert.Equal(0, playField.FieldEntities.Tanks.Count(entity => !entity.IsDead()));
         Assert.Equal(EntityLifeState.Alive, quark.LifeState);
+    }
+
+    private static PlayField CreateField(int seed)
+    {
+        return new PlayFieldBuilder().WithParameters(new WaveParams(7, SpheroidCount: 0, MaxDropsX2: 10,
+            SpheroidDropDelay: 18,
+            QuarkDropDelay: 16)).WithRandom(new Random(seed)).Build();
+    }
+
+    private static GameTime OneTick()
+    {
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 }

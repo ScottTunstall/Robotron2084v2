@@ -31,7 +31,7 @@ namespace Robotron2084.Core;
 ///             <item>
 ///                 It keeps the time left over past that moment, and counts it towards the next wait. So the owner never
 ///                 drifts out of step.
-///             
+///
 ///     </para>
 ///     <para>How to use it:</para>
 ///     <list type="bullet">
@@ -53,7 +53,7 @@ namespace Robotron2084.Core;
 ///             <item>
 ///                 An entity that has beats keeps a <see cref="ArcadeFrameTimer" /> for them, and passes it the time between
 ///                 beats, in <see cref="ArcadeClock.ArcadeFramesPerSecond">fiftieths of a second</see>.
-///             
+///
 ///     </para>
 ///     <code>if (_beatTimer.Tick(BeatIntervalArcadeFrames)) ActOnBeat(field);</code>
 /// </remarks>

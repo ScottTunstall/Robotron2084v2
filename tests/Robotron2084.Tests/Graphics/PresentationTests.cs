@@ -1,6 +1,6 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Graphics;
 using Xunit;
 
@@ -33,37 +33,17 @@ public sealed class PresentationTests
         };
     }
 
-    private static bool Fits(int scale, int width, int height)
+    [Fact]
+    public void BothModesAgreeWhenTheScreenIsAWholeMultiple()
     {
-        return ScreenSize.Width * scale <= width && ScreenSize.Height * scale <= height;
-    }
+        // Three canvases exactly: the whole multiple and the exact fraction are the same fit.
+        var width = ScreenSize.Width * 3;
+        var height = ScreenSize.Height * 3;
 
-    [Theory]
-    [MemberData(nameof(ClientAreas))]
-    public void IntegerModeIsAWholeMultipleAndTheLargestOneThatFits(int width, int height)
-    {
-        var scale = Presentation.GetScale(width, height, ScaleMode.Integer);
-
-        Assert.True(scale >= 1f, "the canvas is never scaled below 1x");
-        Assert.Equal(MathF.Floor(scale), scale);
-        Assert.False(Fits((int)scale + 1, width, height),
-            $"scale {(int)scale + 1} would also have fitted {width}x{height}");
-    }
-
-    [Theory]
-    [MemberData(nameof(ClientAreas))]
-    public void FillModeUsesTheWholeOfTheLimitingAxis(int width, int height)
-    {
-        if (width <= 0 || height <= 0) return; // the empty client area is covered by the centring test
-
-        var canvas = Presentation.CanvasDestination(width, height, ScaleMode.Fill);
-        var widthLimited = (long)width * ScreenSize.Height <= (long)height * ScreenSize.Width;
-
-        // Rounded to whole pixels, so the filled axis can fall one short.
-        if (widthLimited)
-            Assert.InRange(canvas.Width, width - 1, width);
-        else
-            Assert.InRange(canvas.Height, height - 1, height);
+        Assert.Equal(3f, Presentation.GetScale(width, height, ScaleMode.Integer));
+        Assert.Equal(
+            Presentation.CanvasDestination(width, height, ScaleMode.Integer),
+            Presentation.CanvasDestination(width, height, ScaleMode.Fill));
     }
 
     [Theory]
@@ -92,6 +72,34 @@ public sealed class PresentationTests
         }
     }
 
+    [Theory]
+    [MemberData(nameof(ClientAreas))]
+    public void FillModeUsesTheWholeOfTheLimitingAxis(int width, int height)
+    {
+        if (width <= 0 || height <= 0) return; // the empty client area is covered by the centring test
+
+        var canvas = Presentation.CanvasDestination(width, height, ScaleMode.Fill);
+        var widthLimited = (long)width * ScreenSize.Height <= (long)height * ScreenSize.Width;
+
+        // Rounded to whole pixels, so the filled axis can fall one short.
+        if (widthLimited)
+            Assert.InRange(canvas.Width, width - 1, width);
+        else
+            Assert.InRange(canvas.Height, height - 1, height);
+    }
+
+    [Theory]
+    [MemberData(nameof(ClientAreas))]
+    public void IntegerModeIsAWholeMultipleAndTheLargestOneThatFits(int width, int height)
+    {
+        var scale = Presentation.GetScale(width, height, ScaleMode.Integer);
+
+        Assert.True(scale >= 1f, "the canvas is never scaled below 1x");
+        Assert.Equal(MathF.Floor(scale), scale);
+        Assert.False(Fits((int)scale + 1, width, height),
+            $"scale {(int)scale + 1} would also have fitted {width}x{height}");
+    }
+
     [Fact]
     public void IntegerModeLetterboxesWhereFillModeWouldFitExactly()
     {
@@ -115,16 +123,8 @@ public sealed class PresentationTests
         Assert.InRange(squashedFill.Height, 1, 720);
     }
 
-    [Fact]
-    public void BothModesAgreeWhenTheScreenIsAWholeMultiple()
+    private static bool Fits(int scale, int width, int height)
     {
-        // Three canvases exactly: the whole multiple and the exact fraction are the same fit.
-        var width = ScreenSize.Width * 3;
-        var height = ScreenSize.Height * 3;
-
-        Assert.Equal(3f, Presentation.GetScale(width, height, ScaleMode.Integer));
-        Assert.Equal(
-            Presentation.CanvasDestination(width, height, ScaleMode.Integer),
-            Presentation.CanvasDestination(width, height, ScaleMode.Fill));
+        return ScreenSize.Width * scale <= width && ScreenSize.Height * scale <= height;
     }
 }

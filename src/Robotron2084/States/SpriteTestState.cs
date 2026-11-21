@@ -1,16 +1,16 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Robotron2084.Core;
 using Robotron2084.Core.Extensions;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
 using Robotron2084.Graphics;
-using Robotron2084.Input.Models;
 using Robotron2084.Input;
+using Robotron2084.Input.Models;
 using Robotron2084.Palette;
 using Robotron2084.States.Models;
-using Robotron2084.States.SpriteTest.Models;
 using Robotron2084.States.SpriteTest;
+using Robotron2084.States.SpriteTest.Models;
 
 namespace Robotron2084.States;
 
@@ -44,29 +44,22 @@ namespace Robotron2084.States;
 /// </remarks>
 public sealed class SpriteTestState : IGameState
 {
-    /// <summary>The page's heading.</summary>
-    private const string Title = "SPRITE TEST";
-
-    /// <summary>Where the heading is, in port pixels from the top.</summary>
-    private const int TitleRow = 12;
-
     /// <summary>Where the cursor is drawn, in port pixels from the left: just left of the names.</summary>
     private const int CursorColumn = 24;
 
-    /// <summary>Where the names in the list start, in port pixels from the left.</summary>
-    private const int NameColumn = 42;
+    /// <summary>Where the way held and the frame showing are, in port pixels from the top.</summary>
+    private const int DetailsRow = 230;
+
+    private const string ExitLine = "F10 - DEVELOPER TOOLS";
+
+    private const int ExitRow = 342;
 
     /// <summary>Where the first name shown in the list is, in port pixels from the top.</summary>
     private const int FirstListRow = 58;
 
-    /// <summary>The gap from one name in the list to the next, in port pixels.</summary>
-    private const int ListRowStep = 18;
+    private const string IdleLine = "LEAVE ALONE 10 SECONDS - WATCH IT WALK ON";
 
-    /// <summary>How many names the list shows at once. The list scrolls to keep the cursor in it.</summary>
-    private const int VisibleListRows = 11;
-
-    /// <summary>How many sprites Page Up and Page Down move.</summary>
-    private const int PageStep = 5;
+    private const int IdleLineRow = 312;
 
     /// <summary>
     ///     How long the keyboard and the controllers must be left alone before the sprite walks on, in
@@ -74,8 +67,24 @@ public sealed class SpriteTestState : IGameState
     /// </summary>
     private const int IdleTicksBeforeWalkOn = 10 * ArcadeClock.PortTicksPerSecond;
 
-    /// <summary>How far a controller's trigger must be pulled before it counts as touched, from 0 to 1.</summary>
-    private const float TriggerTouchedAt = 0.25f;
+    /// <summary>The palette index of the names in the list: green. It is one of <see cref="OwnedPaletteIndices" />.</summary>
+    private const int ListPaletteIndex = 6;
+
+    /// <summary>The gap from one name in the list to the next, in port pixels.</summary>
+    private const int ListRowStep = 18;
+
+    /// <summary>Where the names in the list start, in port pixels from the left.</summary>
+    private const int NameColumn = 42;
+
+    /// <summary>Where the sprite's name is, in port pixels from the top.</summary>
+    private const int NameRow = 58;
+
+    private const string PageLine = "PAGE DOWN - 5 ON   PAGE UP - 5 BACK";
+
+    private const int PageLineRow = 294;
+
+    /// <summary>How many sprites Page Up and Page Down move.</summary>
+    private const int PageStep = 5;
 
     /// <summary>
     ///     Where the middle of the sprite is when it is in its place, and of its name and details, in port pixels from the
@@ -86,22 +95,9 @@ public sealed class SpriteTestState : IGameState
     /// <summary>Where the middle of the sprite is, in port pixels from the top, when it is on the ground.</summary>
     private const int SpriteCentreRow = 140;
 
-    /// <summary>Where the sprite's name is, in port pixels from the top.</summary>
-    private const int NameRow = 58;
-
-    /// <summary>Where the way held and the frame showing are, in port pixels from the top.</summary>
-    private const int DetailsRow = 230;
-
-    private const string WayLine = "ARROWS OR STICK - WALK THAT WAY";
-    private const int WayLineRow = 258;
     private const string StepLine = "ENTER - NEXT   BACKSPACE - BACK";
+
     private const int StepLineRow = 276;
-    private const string PageLine = "PAGE DOWN - 5 ON   PAGE UP - 5 BACK";
-    private const int PageLineRow = 294;
-    private const string IdleLine = "LEAVE ALONE 10 SECONDS - WATCH IT WALK ON";
-    private const int IdleLineRow = 312;
-    private const string ExitLine = "F10 - DEVELOPER TOOLS";
-    private const int ExitRow = 342;
 
     /// <summary>
     ///     The palette index of the heading, the instructions, the cursor and the details: white. It is one of
@@ -109,8 +105,20 @@ public sealed class SpriteTestState : IGameState
     /// </summary>
     private const int TextPaletteIndex = 9;
 
-    /// <summary>The palette index of the names in the list: green. It is one of <see cref="OwnedPaletteIndices" />.</summary>
-    private const int ListPaletteIndex = 6;
+    /// <summary>The page's heading.</summary>
+    private const string Title = "SPRITE TEST";
+
+    /// <summary>Where the heading is, in port pixels from the top.</summary>
+    private const int TitleRow = 12;
+
+    /// <summary>How far a controller's trigger must be pulled before it counts as touched, from 0 to 1.</summary>
+    private const float TriggerTouchedAt = 0.25f;
+
+    /// <summary>How many names the list shows at once. The list scrolls to keep the cursor in it.</summary>
+    private const int VisibleListRows = 11;
+
+    private const string WayLine = "ARROWS OR STICK - WALK THAT WAY";
+    private const int WayLineRow = 258;
 
     /// <summary>
     ///     The palette indices the page draws its words in, put back on their usual values when the page opens, since the
@@ -206,31 +214,29 @@ public sealed class SpriteTestState : IGameState
         _walkOnRun = null;
     }
 
-    /// <summary>
-    ///     Takes the sprite off the page, to walk on again from beyond the right-hand edge of the screen. A sprite that
-    ///     does not walk in the game stays where it is, and is tried again after another wait.
-    /// </summary>
-    private void StartWalkOn()
+    /// <summary>Adds what one control is holding to the sideways and up-and-down totals.</summary>
+    private static void AddHeld(bool isLeft, bool isRight, bool isUp, bool isDown, ref int x, ref int y)
     {
-        _idleTicks = 0;
-        if (_entries[Index].WalkOn is not { } walkOn) return;
-
-        _animator = new SpriteTestAnimator(_entries[Index], _random);
-        _walkOnRun = new SpriteTestWalkOnRun(walkOn, ScreenSize.Width, _animator);
+        if (isLeft) x--;
+        if (isRight) x++;
+        if (isUp) y--;
+        if (isDown) y++;
     }
 
-    /// <summary>Moves the walk on by one tick: the sprite walks left, and stops when it reaches its place.</summary>
-    /// <param name="walkOnRun">The walk.</param>
-    private void TickWalkOn(SpriteTestWalkOnRun walkOnRun)
+    /// <summary>Gets the name of a way, in characters the small font has.</summary>
+    private static string GetWayName(Direction8 direction)
     {
-        _heldDirection = Direction8.Left;
-        _animator.Tick(_heldDirection);
-        walkOnRun.Tick(_animator);
-        if (walkOnRun.X > GetHomeBounds().X) return;
-
-        // It has arrived. It stands in its place, and the wait for the next walk starts again.
-        _walkOnRun = null;
-        _idleTicks = 0;
+        return direction switch
+        {
+            Direction8.Up => "UP",
+            Direction8.UpRight => "UP RIGHT",
+            Direction8.Right => "RIGHT",
+            Direction8.DownRight => "DOWN RIGHT",
+            Direction8.Down => "DOWN",
+            Direction8.DownLeft => "DOWN LEFT",
+            Direction8.Left => "LEFT",
+            _ => "UP LEFT"
+        };
     }
 
     /// <summary>Says whether any key is down, or any button, pad, stick or trigger on either controller is in use.</summary>
@@ -250,15 +256,6 @@ public sealed class SpriteTestState : IGameState
         }
 
         return false;
-    }
-
-    /// <summary>Gets the box the sprite showing takes up when it is in its place, at its size in the game.</summary>
-    private Rectangle GetHomeBounds()
-    {
-        var texture = _animator.GetCurrentAnimationFrameTexture();
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(texture.Width);
-        var height = ScreenSize.ToPortPixelsFromArcadePixels(texture.Height);
-        return new Rectangle(SpriteCentreColumn - width / 2, SpriteCentreRow - height / 2, width, height);
     }
 
     /// <summary>Reads the way held on the arrow keys, either controller's pad, or either controller's left stick.</summary>
@@ -281,42 +278,11 @@ public sealed class SpriteTestState : IGameState
         return Direction8Extensions.CreateFromDelta(new IntVector2(Math.Sign(x), Math.Sign(y)));
     }
 
-    /// <summary>Adds what one control is holding to the sideways and up-and-down totals.</summary>
-    private static void AddHeld(bool isLeft, bool isRight, bool isUp, bool isDown, ref int x, ref int y)
+    /// <summary>Draws a line in the large font, centred on a column.</summary>
+    private void DrawLargeCentred(SpriteBatch spriteBatch, string text, int centreColumn, int y)
     {
-        if (isLeft) x--;
-        if (isRight) x++;
-        if (isUp) y--;
-        if (isDown) y++;
-    }
-
-    /// <summary>Gets the line under the sprite: the way held, if the sprite can be steered, and the frame showing.</summary>
-    /// <param name="entry">The sprite showing.</param>
-    private string GetDetails(SpriteTestEntry entry)
-    {
-        var frame = $"FRAME {_animator.FrameIndex + 1} OF {_animator.FrameCount}";
-        if (!entry.IsSteerable) return frame;
-
-        var way = "NONE";
-        if (_heldDirection is { } held) way = GetWayName(held);
-
-        return $"{way}   {frame}";
-    }
-
-    /// <summary>Gets the name of a way, in characters the small font has.</summary>
-    private static string GetWayName(Direction8 direction)
-    {
-        return direction switch
-        {
-            Direction8.Up => "UP",
-            Direction8.UpRight => "UP RIGHT",
-            Direction8.Right => "RIGHT",
-            Direction8.DownRight => "DOWN RIGHT",
-            Direction8.Down => "DOWN",
-            Direction8.DownLeft => "DOWN LEFT",
-            Direction8.Left => "LEFT",
-            _ => "UP LEFT"
-        };
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.ArcadeText.MeasureLargeText(text));
+        _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, text, centreColumn - width / 2, y, TextPaletteIndex);
     }
 
     /// <summary>
@@ -339,6 +305,13 @@ public sealed class SpriteTestState : IGameState
 
             _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, _entries[index].Name, NameColumn, y, paletteIndex);
         }
+    }
+
+    /// <summary>Draws a line in the small font, centred on a column.</summary>
+    private void DrawSmallCentred(SpriteBatch spriteBatch, string text, int centreColumn, int y, int paletteIndex)
+    {
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.ArcadeText.MeasureSmallText(text));
+        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, centreColumn - width / 2, y, paletteIndex);
     }
 
     /// <summary>
@@ -374,18 +347,26 @@ public sealed class SpriteTestState : IGameState
         }
     }
 
-    /// <summary>Draws a line in the large font, centred on a column.</summary>
-    private void DrawLargeCentred(SpriteBatch spriteBatch, string text, int centreColumn, int y)
+    /// <summary>Gets the line under the sprite: the way held, if the sprite can be steered, and the frame showing.</summary>
+    /// <param name="entry">The sprite showing.</param>
+    private string GetDetails(SpriteTestEntry entry)
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.ArcadeText.MeasureLargeText(text));
-        _textureSet.ArcadeText.DrawLargeFontText(spriteBatch, text, centreColumn - width / 2, y, TextPaletteIndex);
+        var frame = $"FRAME {_animator.FrameIndex + 1} OF {_animator.FrameCount}";
+        if (!entry.IsSteerable) return frame;
+
+        var way = "NONE";
+        if (_heldDirection is { } held) way = GetWayName(held);
+
+        return $"{way}   {frame}";
     }
 
-    /// <summary>Draws a line in the small font, centred on a column.</summary>
-    private void DrawSmallCentred(SpriteBatch spriteBatch, string text, int centreColumn, int y, int paletteIndex)
+    /// <summary>Gets the box the sprite showing takes up when it is in its place, at its size in the game.</summary>
+    private Rectangle GetHomeBounds()
     {
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(_textureSet.ArcadeText.MeasureSmallText(text));
-        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, centreColumn - width / 2, y, paletteIndex);
+        var texture = _animator.GetCurrentAnimationFrameTexture();
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(texture.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(texture.Height);
+        return new Rectangle(SpriteCentreColumn - width / 2, SpriteCentreRow - height / 2, width, height);
     }
 
     /// <summary>Puts the page's own palette indices back on their usual values.</summary>
@@ -395,6 +376,33 @@ public sealed class SpriteTestState : IGameState
 
         foreach (var paletteIndex in OwnedPaletteIndices)
             palette.SetPaletteIndexValue(paletteIndex, GamePalette.DefaultPaletteValues[paletteIndex]);
+    }
+
+    /// <summary>
+    ///     Takes the sprite off the page, to walk on again from beyond the right-hand edge of the screen. A sprite that
+    ///     does not walk in the game stays where it is, and is tried again after another wait.
+    /// </summary>
+    private void StartWalkOn()
+    {
+        _idleTicks = 0;
+        if (_entries[Index].WalkOn is not { } walkOn) return;
+
+        _animator = new SpriteTestAnimator(_entries[Index], _random);
+        _walkOnRun = new SpriteTestWalkOnRun(walkOn, ScreenSize.Width, _animator);
+    }
+
+    /// <summary>Moves the walk on by one tick: the sprite walks left, and stops when it reaches its place.</summary>
+    /// <param name="walkOnRun">The walk.</param>
+    private void TickWalkOn(SpriteTestWalkOnRun walkOnRun)
+    {
+        _heldDirection = Direction8.Left;
+        _animator.Tick(_heldDirection);
+        walkOnRun.Tick(_animator);
+        if (walkOnRun.X > GetHomeBounds().X) return;
+
+        // It has arrived. It stands in its place, and the wait for the next walk starts again.
+        _walkOnRun = null;
+        _idleTicks = 0;
     }
 
     /// <summary>True on the tick a key goes down.</summary>

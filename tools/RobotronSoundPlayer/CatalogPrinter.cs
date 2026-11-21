@@ -3,11 +3,11 @@ namespace RobotronSoundPlayer;
 /// <summary>Prints the catalog: the game's sounds, numbered, and the board's sound numbers in rows.</summary>
 internal static class CatalogPrinter
 {
-    /// <summary>Sound numbers printed on each row.</summary>
-    private const int SoundNumbersPerRow = 16;
-
     /// <summary>The width the game sounds' names are padded to.</summary>
     private const int NameWidth = 26;
+
+    /// <summary>Sound numbers printed on each row.</summary>
+    private const int SoundNumbersPerRow = 16;
 
     /// <summary>Prints the catalog to the console.</summary>
     /// <param name="soundCatalog">The catalog.</param>

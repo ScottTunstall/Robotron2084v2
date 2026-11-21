@@ -1,11 +1,11 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -31,18 +31,118 @@ public sealed class SpheroidEnforcerTimingTests
     /// </summary>
     private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime OneTick()
+    [Fact]
+    public void Enforcer_FireGaps_MatchTheArcadeRate()
     {
-        return new GameTime(TimeSpan.Zero, OneTickSpan);
+        // Fire countdown = RND(1..ENSTIM) BEATS, a beat being NAP 3 + 1 = 4 ROM
+        // frames (notes §43/§55), so with ENSTIM = 30 every gap sits in
+        // [PortTicks(4), PortTicks(120)] = [4, 144] port ticks (allow a tick of
+        // slack for the 6/5 beat accumulator), and (seeded, deterministic) at least
+        // one gap must exceed the old model's maximum of PortTicks(30) = 36.
+        var playField = CreateField(11);
+        Enforcer enforcer = new(TestEntityParams.Create(new Random(1234)), new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), 30);
+
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
+
+        var seen = new HashSet<Spark>();
+        var fireTicks = new List<int>();
+
+        for (var tick = 1; tick <= 3000 && fireTicks.Count < 10; tick++)
+        {
+            enforcer.Update(OneTick(), playField);
+            foreach (var spark in playField.FieldEntities.Sparks)
+                if (seen.Add(spark) && spark.IsAlive() && fireTicks.Count < 10)
+                    fireTicks.Add(tick);
+        }
+
+        Assert.True(fireTicks.Count >= 4, $"only {fireTicks.Count} sparks observed in 3000 ticks");
+        for (var i = 1; i < fireTicks.Count; i++)
+        {
+            var gap = fireTicks[i] - fireTicks[i - 1];
+            Assert.InRange(
+                gap,
+                ArcadeClock.ToPortTicks(EnforcerTuning.BeatIntervalArcadeFrames) - 1,
+                ArcadeClock.ToPortTicks(EnforcerTuning.BeatIntervalArcadeFrames * 30) + 1);
+        }
+
+        var maxGap = fireTicks.Zip(fireTicks.Skip(1), (a, b) => b - a).Max();
+        Assert.True(maxGap > ArcadeClock.ToPortTicks(30), $"max gap {maxGap} never exceeded the pre-fix maximum");
     }
 
-    private static PlayField CreateField(int seed, int spheroids = 0, int enfnum = 10, int cdpTim = 30)
+    [Fact]
+    public void Enforcer_GrowFrames_ChangeOnTheRomsNineFrameBoundaries()
     {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(
-            1,
-            SpheroidCount: spheroids,
-            MaxDropsX2: enfnum,
-            SpheroidDropDelay: cdpTim)).WithRandom(new Random(seed)).Build();
+        // FIVE grow animation frames over 45 fiftieths of a second = 9 frames each, on the clock-unit
+        // clock, so animation frame n starts on the first tick where 5t >= 9n x 6 — i.e.
+        // ticks 1, 11, 22, 33, 44. The old PortTicks(9) = 10 switched every 10 ticks
+        // and ran out early inside a correctly-timed growth (notes §65.3).
+        var playField = CreateField(7);
+        Enforcer enforcer = new(TestEntityParams.Create(new Random(42)), new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), 30);
+
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
+
+        int[] expectedStarts = { 1, 11, 22, 33, 44 };
+        var growTicks = ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalArcadeFrames); // 54
+
+        for (var tick = 1; tick < growTicks; tick++)
+        {
+            enforcer.Update(OneTick(), playField);
+            var expected = Array.FindLastIndex(expectedStarts, s => s <= tick);
+            Assert.Equal(expected, enforcer.GetGrowAnimationFrameIndex());
+        }
+
+        enforcer.Update(OneTick(), playField); // tick 54: the grow-up ends, ENFR10 runs
+        Assert.Equal(-1, enforcer.GetGrowAnimationFrameIndex());
+    }
+
+    [Fact]
+    public void Enforcer_IsImmobileAndSilentDuringGrowUp()
+    {
+        var playField = CreateField(7);
+        Enforcer enforcer = new(TestEntityParams.Create(new Random(42)), new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), 30);
+        var start = enforcer.Position;
+
+        // Run through the start of the wave so RobotsFrozen() is false for the enforcer.
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
+
+        // The ROM grow-up is 45 frames = 54 port ticks (notes §65; the old model said
+        // 40 frames, which is why this used to stop at PortTicks(40) = 48). The last
+        // of those ticks is the one ENFR10 runs on, so immobility covers 1..53.
+        for (var tick = 1; tick < ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalArcadeFrames); tick++)
+        {
+            enforcer.Update(OneTick(), playField);
+            Assert.True(enforcer.Position == start, $"moved during grow-up at tick {tick}");
+            Assert.True(playField.FieldEntities.Sparks.CountAlive() == 0, $"fired during grow-up at tick {tick}");
+        }
+
+        for (var tick = 1; tick <= 160 && enforcer.Position == start; tick++) enforcer.Update(OneTick(), playField);
+
+        Assert.True(enforcer.Position != start, "enforcer never left the grow-up spot");
+    }
+
+    [Fact]
+    public void Enforcer_LoiterCirclesNearThePlayer()
+    {
+        // The destination zone is a 32x32 arcade pixel (64 port pixel) box
+        // down-right of the player; over a long run the enforcer must
+        // spend time close to the player, not wander the whole field.
+        var playField = CreateField(11);
+        Enforcer enforcer = new(TestEntityParams.Create(new Random(1234)), new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), 30);
+
+        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
+
+        var player = playField.Player.Position;
+
+        var closest = int.MaxValue;
+        for (var tick = 1; tick <= 3000; tick++)
+        {
+            enforcer.Update(OneTick(), playField);
+            closest = Math.Min(closest, (int)IntVector2.ComputeDistanceSquared(enforcer.Position, player));
+        }
+
+        var reach = ScreenSize.ToPortPixelsFromArcadePixels(65);
+        Assert.True(closest < reach * reach,
+            $"enforcer never came within {reach} port px of the player (closest^2 = {closest})");
     }
 
     [Fact]
@@ -94,117 +194,17 @@ public sealed class SpheroidEnforcerTimingTests
         }
     }
 
-    [Fact]
-    public void Enforcer_IsImmobileAndSilentDuringGrowUp()
+    private static PlayField CreateField(int seed, int spheroids = 0, int enfnum = 10, int cdpTim = 30)
     {
-        var playField = CreateField(7);
-        Enforcer enforcer = new(TestEntityParams.Create(new Random(42)), new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), 30);
-        var start = enforcer.Position;
-
-        // Run through the start of the wave so RobotsFrozen() is false for the enforcer.
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
-
-        // The ROM grow-up is 45 frames = 54 port ticks (notes §65; the old model said
-        // 40 frames, which is why this used to stop at PortTicks(40) = 48). The last
-        // of those ticks is the one ENFR10 runs on, so immobility covers 1..53.
-        for (var tick = 1; tick < ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalArcadeFrames); tick++)
-        {
-            enforcer.Update(OneTick(), playField);
-            Assert.True(enforcer.Position == start, $"moved during grow-up at tick {tick}");
-            Assert.True(playField.FieldEntities.Sparks.CountAlive() == 0, $"fired during grow-up at tick {tick}");
-        }
-
-        for (var tick = 1; tick <= 160 && enforcer.Position == start; tick++) enforcer.Update(OneTick(), playField);
-
-        Assert.True(enforcer.Position != start, "enforcer never left the grow-up spot");
+        return new PlayFieldBuilder().WithParameters(new WaveParams(
+            1,
+            SpheroidCount: spheroids,
+            MaxDropsX2: enfnum,
+            SpheroidDropDelay: cdpTim)).WithRandom(new Random(seed)).Build();
     }
 
-    [Fact]
-    public void Enforcer_GrowFrames_ChangeOnTheRomsNineFrameBoundaries()
+    private static GameTime OneTick()
     {
-        // FIVE grow animation frames over 45 fiftieths of a second = 9 frames each, on the clock-unit
-        // clock, so animation frame n starts on the first tick where 5t >= 9n x 6 — i.e.
-        // ticks 1, 11, 22, 33, 44. The old PortTicks(9) = 10 switched every 10 ticks
-        // and ran out early inside a correctly-timed growth (notes §65.3).
-        var playField = CreateField(7);
-        Enforcer enforcer = new(TestEntityParams.Create(new Random(42)), new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), 30);
-
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
-
-        int[] expectedStarts = { 1, 11, 22, 33, 44 };
-        var growTicks = ArcadeClock.ToPortTicksRoundedUp(EnforcerTuning.GrowSteps * EnforcerTuning.GrowIntervalArcadeFrames); // 54
-
-        for (var tick = 1; tick < growTicks; tick++)
-        {
-            enforcer.Update(OneTick(), playField);
-            var expected = Array.FindLastIndex(expectedStarts, s => s <= tick);
-            Assert.Equal(expected, enforcer.GetGrowAnimationFrameIndex());
-        }
-
-        enforcer.Update(OneTick(), playField); // tick 54: the grow-up ends, ENFR10 runs
-        Assert.Equal(-1, enforcer.GetGrowAnimationFrameIndex());
-    }
-
-    [Fact]
-    public void Enforcer_FireGaps_MatchTheArcadeRate()
-    {
-        // Fire countdown = RND(1..ENSTIM) BEATS, a beat being NAP 3 + 1 = 4 ROM
-        // frames (notes §43/§55), so with ENSTIM = 30 every gap sits in
-        // [PortTicks(4), PortTicks(120)] = [4, 144] port ticks (allow a tick of
-        // slack for the 6/5 beat accumulator), and (seeded, deterministic) at least
-        // one gap must exceed the old model's maximum of PortTicks(30) = 36.
-        var playField = CreateField(11);
-        Enforcer enforcer = new(TestEntityParams.Create(new Random(1234)), new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), 30);
-
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
-
-        var seen = new HashSet<Spark>();
-        var fireTicks = new List<int>();
-
-        for (var tick = 1; tick <= 3000 && fireTicks.Count < 10; tick++)
-        {
-            enforcer.Update(OneTick(), playField);
-            foreach (var spark in playField.FieldEntities.Sparks)
-                if (seen.Add(spark) && spark.IsAlive() && fireTicks.Count < 10)
-                    fireTicks.Add(tick);
-        }
-
-        Assert.True(fireTicks.Count >= 4, $"only {fireTicks.Count} sparks observed in 3000 ticks");
-        for (var i = 1; i < fireTicks.Count; i++)
-        {
-            var gap = fireTicks[i] - fireTicks[i - 1];
-            Assert.InRange(
-                gap,
-                ArcadeClock.ToPortTicks(EnforcerTuning.BeatIntervalArcadeFrames) - 1,
-                ArcadeClock.ToPortTicks(EnforcerTuning.BeatIntervalArcadeFrames * 30) + 1);
-        }
-
-        var maxGap = fireTicks.Zip(fireTicks.Skip(1), (a, b) => b - a).Max();
-        Assert.True(maxGap > ArcadeClock.ToPortTicks(30), $"max gap {maxGap} never exceeded the pre-fix maximum");
-    }
-
-    [Fact]
-    public void Enforcer_LoiterCirclesNearThePlayer()
-    {
-        // The destination zone is a 32x32 arcade pixel (64 port pixel) box
-        // down-right of the player; over a long run the enforcer must
-        // spend time close to the player, not wander the whole field.
-        var playField = CreateField(11);
-        Enforcer enforcer = new(TestEntityParams.Create(new Random(1234)), new IntVector2(ScreenSize.ToPortPixelsFromArcadePixels(30), ScreenSize.ToPortPixelsFromArcadePixels(30)), 30);
-
-        for (var tick = 1; tick <= WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
-
-        var player = playField.Player.Position;
-
-        var closest = int.MaxValue;
-        for (var tick = 1; tick <= 3000; tick++)
-        {
-            enforcer.Update(OneTick(), playField);
-            closest = Math.Min(closest, (int)IntVector2.ComputeDistanceSquared(enforcer.Position, player));
-        }
-
-        var reach = ScreenSize.ToPortPixelsFromArcadePixels(65);
-        Assert.True(closest < reach * reach,
-            $"enforcer never came within {reach} port px of the player (closest^2 = {closest})");
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
     }
 }

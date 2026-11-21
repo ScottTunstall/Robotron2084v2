@@ -16,11 +16,11 @@ public sealed class GorfReturn
         _ticksLeft = delayTicks;
     }
 
-    /// <summary>How many grunts the new Gorf drops.</summary>
-    public int GruntsOwed { get; }
-
     /// <summary>How many steps there are between its drops.</summary>
     public int DropIntervalSteps { get; }
+
+    /// <summary>How many grunts the new Gorf drops.</summary>
+    public int GruntsOwed { get; }
 
     /// <summary>Gets whether the wait is over and the new Gorf is to come on.</summary>
     public bool IsDue()

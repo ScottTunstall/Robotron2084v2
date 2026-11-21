@@ -12,43 +12,81 @@ namespace Robotron2084.Tests.Audio.Synthesis;
 /// </summary>
 public class SoundBoardTests
 {
-    private const int SampleRate = 44_100;
-
     /// <summary>The port's fixed update rate, which the wave-clear screen is timed in.</summary>
     private const int PortTicksPerSecond = 60;
+
+    private const int SampleRate = 44_100;
 
     /// <summary>Loudness below which a stretch of sound counts as silence.</summary>
     private const float Silence = 0.01f;
 
-    [Fact]
-    public void TheBoardIsSilent_UntilItIsSentASoundNumber()
-    {
-        var (_, soundBoardRenderer) = StartBoard();
-
-        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence);
-    }
-
-    [Fact]
-    public void TheLaser_IsHeard_ThenDiesAwayWithinThreeSeconds()
-    {
-        var (soundBoard, soundBoardRenderer) = StartBoard();
-
-        soundBoard.SendSoundNumber(0x25);
-
-        Assert.True(Loudness(soundBoardRenderer, 0.25) > 0.3f);
-        Loudness(soundBoardRenderer, 2.75);
-        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence);
-    }
-
-    [Fact]
-    public void TheShellFireSound_KeepsGoing_UntilSomethingReplacesIt()
+    /// <summary>
+    ///     The eight coin sounds (<c>CNSND</c>, notes §130): each is built, is heard, and ends by itself within a few seconds
+    ///     (the board has no loop in any of them, so a run that never ends would be a mistake in the port).
+    /// </summary>
+    [Theory]
+    [InlineData(0x0C)]
+    [InlineData(0x20)]
+    [InlineData(0x24)]
+    [InlineData(0x27)]
+    [InlineData(0x2D)]
+    [InlineData(0x35)]
+    [InlineData(0x3A)]
+    [InlineData(0x3E)]
+    public void EachCoinSound_IsHeard_ThenEndsByItself(int soundNumber)
     {
         var (soundBoard, soundBoardRenderer) = StartBoard();
 
-        soundBoard.SendSoundNumber(0x04);
-        Loudness(soundBoardRenderer, 5);
+        soundBoard.SendSoundNumber(soundNumber);
 
-        Assert.True(Loudness(soundBoardRenderer, 0.5) > 0.3f);
+        Assert.True(soundBoard.CanPlay(soundNumber));
+        var whileItPlays = Loudness(soundBoardRenderer, 1.0);
+        Loudness(soundBoardRenderer, 9.0);
+        Assert.True(whileItPlays > Silence, $"Coin sound ${soundNumber:X2} was silent.");
+        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence,
+            $"Coin sound ${soundNumber:X2} had not ended after ten seconds.");
+    }
+
+    /// <summary>
+    ///     Every one of the board's 63 sounds (<see cref="BoardSounds" />, the sound test page's list) has a routine, and each
+    ///     can be
+    ///     played for three seconds without the board failing or going quiet when it should not: only the three that
+    ///     are silent in the source (<c>BGEND</c>, <c>ORGANT</c>, <c>ORGANN</c>) make no sound.
+    /// </summary>
+    [Fact]
+    public void EveryBoardSound_HasARoutine_AndIsHeardUnlessTheSourceMakesItSilent()
+    {
+        int[] silent = [0x13, 0x1B, 0x1C];
+        foreach (var sound in BoardSounds.All)
+        {
+            var (soundBoard, soundBoardRenderer) = StartBoard();
+            Assert.True(soundBoard.CanPlay(sound.Number), $"{sound.Name} has no routine.");
+
+            soundBoard.SendSoundNumber(sound.Number);
+
+            var loudness = Loudness(soundBoardRenderer, 3);
+            Assert.Equal(silent.Contains(sound.Number), loudness < Silence);
+        }
+    }
+
+    [Fact]
+    public void EverySoundNumberTheGameSends_HasARoutine()
+    {
+        var soundBoard = new SoundBoard();
+        var sent = SoundTables.All.SelectMany(table => table.Entries).Select(entry => (int)entry.SoundNumber);
+
+        Assert.All(sent, soundNumber => Assert.True(soundBoard.CanPlay(soundNumber), $"sound ${soundNumber:X2}"));
+    }
+
+    [Fact]
+    public void SoundNumber0_IsNotASound_AndIsIgnored()
+    {
+        var (soundBoard, soundBoardRenderer) = StartBoard();
+
+        soundBoard.SendSoundNumber(0);
+
+        Assert.False(soundBoard.CanPlay(0));
+        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence);
     }
 
     [Fact]
@@ -61,6 +99,14 @@ public class SoundBoardTests
 
         soundBoard.SendSoundNumber(0x13);
         Loudness(soundBoardRenderer, 0.25);
+
+        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence);
+    }
+
+    [Fact]
+    public void TheBoardIsSilent_UntilItIsSentASoundNumber()
+    {
+        var (_, soundBoardRenderer) = StartBoard();
 
         Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence);
     }
@@ -112,78 +158,26 @@ public class SoundBoardTests
     }
 
     [Fact]
-    public void EverySoundNumberTheGameSends_HasARoutine()
-    {
-        var soundBoard = new SoundBoard();
-        var sent = SoundTables.All.SelectMany(table => table.Entries).Select(entry => (int)entry.SoundNumber);
-
-        Assert.All(sent, soundNumber => Assert.True(soundBoard.CanPlay(soundNumber), $"sound ${soundNumber:X2}"));
-    }
-
-    [Fact]
-    public void SoundNumber0_IsNotASound_AndIsIgnored()
+    public void TheLaser_IsHeard_ThenDiesAwayWithinThreeSeconds()
     {
         var (soundBoard, soundBoardRenderer) = StartBoard();
 
-        soundBoard.SendSoundNumber(0);
+        soundBoard.SendSoundNumber(0x25);
 
-        Assert.False(soundBoard.CanPlay(0));
+        Assert.True(Loudness(soundBoardRenderer, 0.25) > 0.3f);
+        Loudness(soundBoardRenderer, 2.75);
         Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence);
     }
 
-    /// <summary>
-    ///     The eight coin sounds (<c>CNSND</c>, notes §130): each is built, is heard, and ends by itself within a few seconds
-    ///     (the board has no loop in any of them, so a run that never ends would be a mistake in the port).
-    /// </summary>
-    [Theory]
-    [InlineData(0x0C)]
-    [InlineData(0x20)]
-    [InlineData(0x24)]
-    [InlineData(0x27)]
-    [InlineData(0x2D)]
-    [InlineData(0x35)]
-    [InlineData(0x3A)]
-    [InlineData(0x3E)]
-    public void EachCoinSound_IsHeard_ThenEndsByItself(int soundNumber)
+    [Fact]
+    public void TheShellFireSound_KeepsGoing_UntilSomethingReplacesIt()
     {
         var (soundBoard, soundBoardRenderer) = StartBoard();
 
-        soundBoard.SendSoundNumber(soundNumber);
+        soundBoard.SendSoundNumber(0x04);
+        Loudness(soundBoardRenderer, 5);
 
-        Assert.True(soundBoard.CanPlay(soundNumber));
-        var whileItPlays = Loudness(soundBoardRenderer, 1.0);
-        Loudness(soundBoardRenderer, 9.0);
-        Assert.True(whileItPlays > Silence, $"Coin sound ${soundNumber:X2} was silent.");
-        Assert.True(Loudness(soundBoardRenderer, 0.5) < Silence,
-            $"Coin sound ${soundNumber:X2} had not ended after ten seconds.");
-    }
-
-    /// <summary>
-    ///     Every one of the board's 63 sounds (<see cref="BoardSounds" />, the sound test page's list) has a routine, and each
-    ///     can be
-    ///     played for three seconds without the board failing or going quiet when it should not: only the three that
-    ///     are silent in the source (<c>BGEND</c>, <c>ORGANT</c>, <c>ORGANN</c>) make no sound.
-    /// </summary>
-    [Fact]
-    public void EveryBoardSound_HasARoutine_AndIsHeardUnlessTheSourceMakesItSilent()
-    {
-        int[] silent = [0x13, 0x1B, 0x1C];
-        foreach (var sound in BoardSounds.All)
-        {
-            var (soundBoard, soundBoardRenderer) = StartBoard();
-            Assert.True(soundBoard.CanPlay(sound.Number), $"{sound.Name} has no routine.");
-
-            soundBoard.SendSoundNumber(sound.Number);
-
-            var loudness = Loudness(soundBoardRenderer, 3);
-            Assert.Equal(silent.Contains(sound.Number), loudness < Silence);
-        }
-    }
-
-    private static (SoundBoard SoundBoard, SoundBoardRenderer SoundBoardRenderer) StartBoard()
-    {
-        var soundBoard = new SoundBoard();
-        return (soundBoard, new SoundBoardRenderer(soundBoard, SampleRate));
+        Assert.True(Loudness(soundBoardRenderer, 0.5) > 0.3f);
     }
 
     private static float Loudness(SoundBoardRenderer soundBoardRenderer, double seconds)
@@ -192,5 +186,11 @@ public class SoundBoardTests
         soundBoardRenderer.Render(samples);
         var sumOfSquares = samples.Sum(sample => (double)sample * sample);
         return (float)Math.Sqrt(sumOfSquares / samples.Length);
+    }
+
+    private static (SoundBoard SoundBoard, SoundBoardRenderer SoundBoardRenderer) StartBoard()
+    {
+        var soundBoard = new SoundBoard();
+        return (soundBoard, new SoundBoardRenderer(soundBoard, SampleRate));
     }
 }

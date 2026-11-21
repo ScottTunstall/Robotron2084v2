@@ -1,8 +1,7 @@
 using Robotron2084.Graphics;
 using Robotron2084.Level.Models;
-using Robotron2084.Level;
-using Robotron2084.States.Models;
 using Robotron2084.States;
+using Robotron2084.States.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.States;
@@ -11,6 +10,14 @@ namespace Robotron2084.Tests.States;
 public sealed class MainMenuStateTests
 {
     [Theory]
+    [InlineData(MainMenuLine.Settings)]
+    [InlineData(MainMenuLine.DeveloperTools)]
+    public void ARowThatOpensAPageHasNoValue(MainMenuLine line)
+    {
+        Assert.Equal(string.Empty, MainMenuState.GetValue(line, GameMode.OnePlayer, GameStyle.Classic));
+    }
+
+    [Theory]
     [InlineData(MainMenuLine.StartGame, "PLAYER MODE")]
     [InlineData(MainMenuLine.GameStyle, "GAME STYLE")]
     [InlineData(MainMenuLine.Settings, "SETTINGS")]
@@ -18,6 +25,22 @@ public sealed class MainMenuStateTests
     public void EachRowSaysItsShortcutKeysAndWhatItDoes(MainMenuLine line, string text)
     {
         Assert.Equal(text, MainMenuState.GetLabel(line));
+    }
+
+    [Fact]
+    public void EveryRowAndValueIsInTheSmallFontsCharacters()
+    {
+        List<string> texts = [];
+        foreach (var line in Enum.GetValues<MainMenuLine>())
+        {
+            texts.Add(MainMenuState.GetLabel(line));
+            foreach (var gameMode in Enum.GetValues<GameMode>())
+                foreach (var gameStyle in Enum.GetValues<GameStyle>())
+                    texts.Add(MainMenuState.GetValue(line, gameMode, gameStyle));
+        }
+
+        foreach (var character in texts.SelectMany(text => text))
+            Assert.True(character == ' ' || ArcadeText.GetGlyphIndex(character) is >= 0 and < 38 or 43 or 36 or 37, $"'{character}'");
     }
 
     [Theory]
@@ -34,29 +57,5 @@ public sealed class MainMenuStateTests
     {
         Assert.Equal("CLASSIC", MainMenuState.GetValue(MainMenuLine.GameStyle, GameMode.OnePlayer, GameStyle.Classic));
         Assert.Equal("EXTENDED", MainMenuState.GetValue(MainMenuLine.GameStyle, GameMode.OnePlayer, GameStyle.Extended));
-    }
-
-    [Theory]
-    [InlineData(MainMenuLine.Settings)]
-    [InlineData(MainMenuLine.DeveloperTools)]
-    public void ARowThatOpensAPageHasNoValue(MainMenuLine line)
-    {
-        Assert.Equal(string.Empty, MainMenuState.GetValue(line, GameMode.OnePlayer, GameStyle.Classic));
-    }
-
-    [Fact]
-    public void EveryRowAndValueIsInTheSmallFontsCharacters()
-    {
-        List<string> texts = [];
-        foreach (var line in Enum.GetValues<MainMenuLine>())
-        {
-            texts.Add(MainMenuState.GetLabel(line));
-            foreach (var gameMode in Enum.GetValues<GameMode>())
-            foreach (var gameStyle in Enum.GetValues<GameStyle>())
-                texts.Add(MainMenuState.GetValue(line, gameMode, gameStyle));
-        }
-
-        foreach (var character in texts.SelectMany(text => text))
-            Assert.True(character == ' ' || ArcadeText.GetGlyphIndex(character) is >= 0 and < 38 or 43 or 36 or 37, $"'{character}'");
     }
 }

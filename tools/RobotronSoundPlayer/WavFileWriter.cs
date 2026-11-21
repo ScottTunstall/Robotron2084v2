@@ -6,20 +6,20 @@ namespace RobotronSoundPlayer;
 /// <summary>Writes a sound to a 16-bit mono WAV file instead of the speakers.</summary>
 internal static class WavFileWriter
 {
-    /// <summary>Bytes in the header before the samples.</summary>
-    private const int HeaderBytes = 44;
-
-    /// <summary>Bytes in the format chunk's body.</summary>
-    private const int FormatChunkBytes = 16;
-
-    /// <summary>The format code for plain PCM.</summary>
-    private const short PcmFormat = 1;
+    /// <summary>Bits in one sample.</summary>
+    private const short BitsPerSample = 16;
 
     /// <summary>Mono: one channel.</summary>
     private const short Channels = 1;
 
-    /// <summary>Bits in one sample.</summary>
-    private const short BitsPerSample = 16;
+    /// <summary>Bytes in the format chunk's body.</summary>
+    private const int FormatChunkBytes = 16;
+
+    /// <summary>Bytes in the header before the samples.</summary>
+    private const int HeaderBytes = 44;
+
+    /// <summary>The format code for plain PCM.</summary>
+    private const short PcmFormat = 1;
 
     /// <summary>The bytes before the RIFF size that the RIFF size does not count.</summary>
     private const int RiffPreambleBytes = 8;

@@ -3,8 +3,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Graphics;
 using Robotron2084.Hud;
 using Robotron2084.Input;
-using Robotron2084.Level.Models;
-using Robotron2084.Level;
 using Robotron2084.Palette;
 using Robotron2084.Score.Models;
 using Robotron2084.States.Models;
@@ -25,11 +23,11 @@ namespace Robotron2084.States;
 /// </remarks>
 public sealed class InitialsEntryState : IGameState
 {
-    private readonly ScoreEntryCeremony _scoreEntryCeremony;
+    private readonly GameStateParams _gameStateParams;
     private readonly InitialsEditor _initialsEditor = new();
     private readonly IPlayerInputSource _playerInputSource;
     private readonly FinalScore _score;
-    private readonly GameStateParams _gameStateParams;
+    private readonly ScoreEntryCeremony _scoreEntryCeremony;
     private readonly TextureSet _textureSet;
 
     /// <summary>Builds the screen for one qualifying score.</summary>

@@ -14,20 +14,10 @@ namespace Robotron2084.Tests.States;
 /// </summary>
 public sealed class PlayingStateTurnMessageTests
 {
-    private static PlayingState CreateState(int playerCount, bool isStartOfTurn)
-    {
-        return new PlayingState(
-            TestTextures.SharedTextureSet,
-            null!,
-            GameSession.CreateNewGame(new FakeInputSource(), playerCount, new FakeInputSource()),
-            new Random(1),
-            isStartOfTurn);
-    }
-
     [Fact]
-    public void ATwoPlayerGame_ShowsWhoseTurnItIs_WhenATurnStarts()
+    public void AOnePlayerGame_NeverShowsIt()
     {
-        Assert.True(CreateState(2, true).IsAnnouncingTurn());
+        Assert.False(CreateState(1, true).IsAnnouncingTurn());
     }
 
     [Fact]
@@ -37,8 +27,18 @@ public sealed class PlayingStateTurnMessageTests
     }
 
     [Fact]
-    public void AOnePlayerGame_NeverShowsIt()
+    public void ATwoPlayerGame_ShowsWhoseTurnItIs_WhenATurnStarts()
     {
-        Assert.False(CreateState(1, true).IsAnnouncingTurn());
+        Assert.True(CreateState(2, true).IsAnnouncingTurn());
+    }
+
+    private static PlayingState CreateState(int playerCount, bool isStartOfTurn)
+    {
+        return new PlayingState(
+            TestTextures.SharedTextureSet,
+            null!,
+            GameSession.CreateNewGame(new FakeInputSource(), playerCount, new FakeInputSource()),
+            new Random(1),
+            isStartOfTurn);
     }
 }

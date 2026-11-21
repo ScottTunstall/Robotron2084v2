@@ -1,13 +1,13 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
+using Robotron2084.Entities;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Entities;
 using Robotron2084.Events;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -24,10 +24,10 @@ namespace Robotron2084.Tests.Entities;
 /// </summary>
 public sealed class StripEffectTests
 {
-    private const int WidthArcadePixels = 8;
     private const int HeightRows = 12;
     private const int SpriteLeft = 50;
     private const int SpriteTop = 100;
+    private const int WidthArcadePixels = 8;
     private static readonly StripClip Clip = new(20, 300, 20, 180);
 
     /// <summary>An 8x12-arcade-pixel sprite at arcade pixel (50,100); its collision box is the same extent in port px.</summary>
@@ -37,46 +37,363 @@ public sealed class StripEffectTests
         ScreenSize.ToPortPixelsFromArcadePixels(WidthArcadePixels),
         ScreenSize.ToPortPixelsFromArcadePixels(HeightRows));
 
-    private static StripEffect NewExplosion(Direction8? direction = null, Rectangle? sprite = null)
+    [Fact]
+    public void ADiagonalShot_LeansTheTwoHalvesOppositeWays()
     {
-        return StripEffect.CreateExplosion(
-            new FakeDead(sprite ?? Sprite),
-            direction,
-            Clip);
-    }
+        // ROM RRDX2 — the DIAGONAL engine (notes §74). `XSIZE = ±(YSIZE>>1)` in columns
+        // with the sign from SLOPE (`LDB SLOPE,Y / BPL APGG1 / NEGA`), and the strips are
+        // placed from `XCENT − YOFF*XSIZE` adding `XSIZE` each: strip i's lateral is
+        // `(i − YOF) * XSIZE`, measured from the fan's FIXED POINT. The rows above it
+        // lean one way and the rows below it the other — a MIRRORED chevron. Leaning the
+        // whole fan one way sheared it off to one side, which is the author's "one side
+        // of the explosion is not mirrored on the other side".
+        var right = NewExplosion(Direction8.UpRight); // slope +1
 
-    /// <summary>Ticks the record forward one ARCADE FRAME at a time (the clock is 1.2 ticks).</summary>
-    private static void Steps(StripEffect explosionStripEffect, int frames)
-    {
-        var target = explosionStripEffect.GetSpacing() + frames;
-        var guard = 0;
-        while ((explosionStripEffect.GetSpacing() < target || target < 1) && guard++ < 200) explosionStripEffect.Update(new GameTime());
-    }
+        var strips = Strips(right, 3); // spacing 4 -> drift ±4
 
-    /// <summary>Advances whole frames, then lays the strips out.</summary>
-    private static IReadOnlyList<Strip> Strips(StripEffect explosionStripEffect, int frames = 0)
-    {
-        Steps(explosionStripEffect, frames);
-        return explosionStripEffect.GetStrips(WidthArcadePixels, HeightRows);
+        Assert.Equal(HeightRows, strips.Count);
+
+        // split = 12/2 = 6 and drift = +((4>>1) * 2) = 4 arcade px a strip, so the strip AT
+        // the fixed point does not move and its neighbours move opposite ways.
+        Assert.Equal(SpriteLeft - 6 * 4, strips[0].X); // topmost: six steps left
+        Assert.Equal(SpriteLeft, strips[6].X); // the fixed point: no lateral
+        Assert.Equal(SpriteLeft + 5 * 4, strips[11].X); // bottom: five steps right
+
+        Assert.True(strips[0].X < SpriteLeft, "the upper half must lean left");
+        Assert.True(strips[^1].X > SpriteLeft, "the lower half must lean the other way");
+
+        // The other diagonal mirrors it: the same chevron, the other way round.
+        var left = NewExplosion(Direction8.UpLeft); // slope -1
+        var mirrored = Strips(left, 3);
+
+        Assert.Equal(HeightRows, mirrored.Count);
+        Assert.Equal(SpriteLeft + 6 * 4, mirrored[0].X);
+        Assert.Equal(SpriteLeft, mirrored[6].X);
+        Assert.Equal(SpriteLeft - 5 * 4, mirrored[11].X);
     }
 
     [Fact]
-    public void TheFirstFrame_ReconstructsTheSpriteExactly()
+    public void AFullHorizontalRoutine_DoesNotStopADiagonalExplosion()
     {
-        // YSIZER starts at $0100, "1 UNIT IS MIN": spacing 1, so the base is the
-        // sprite's own top row (the YSIZE*YOF term cancels) and the strips ARE the
-        // sprite, row for row — the ROM's own frame-0 sanity check.
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+        for (var i = 0; i < StripEffectTuning.HorizontalPoolSize; i++)
+            playField.SpawnExplosion(new FakeDead(Sprite), Direction8.Up);
+
+        playField.SpawnExplosion(new FakeDead(Sprite), Direction8.DownLeft);
+
+        Assert.Equal(StripEffectTuning.HorizontalPoolSize + 1, playField.FieldEntities.Explosions.Count);
+    }
+
+    [Fact]
+    public void AHorizontalAppear_IsDrawnClosedUp_BeforeItGoes()
+    {
+        var appear = NewAppear(StripFanAxis.Columns, 0);
+        var ticks = 0;
+
+        ticks = UpdateToArcadeFrame(appear, ticks, 28);
+        Assert.Equal(2, appear.GetSpacing());
+
+        ticks = UpdateToArcadeFrame(appear, ticks, 30);
+        Assert.Equal(1, appear.GetSpacing());
+        Assert.True(appear.IsAlive());
+    }
+
+    [Theory]
+    [InlineData(StripFanAxis.Rows, 0,
+        29)] // RRX7 AWRITE: `SUBD #$0080` ($5D4A), and gone when the gap would be 1 ($5D78)
+    [InlineData(StripFanAxis.Columns, 0,
+        31)] // RRHX4 AWRITE: `SUBD #$80`, and drawn closed up before it goes (`TSTA / BHI APGO`)
+    [InlineData(StripFanAxis.Rows, 1, 15)] // RRDX2 AWRITE: `SUBD #$100`, and gone when the gap would be 1
+    public void AnAppear_LastsAsManyArcadeFramesAsItsStripRoutineTakes(StripFanAxis axis, int slope, int arcadeFrames)
+    {
+        var appear = NewAppear(axis, slope);
+        Assert.Equal(StripEffectKind.Appear, appear.Kind);
+
+        var ticks = 0;
+        ticks = UpdateToArcadeFrame(appear, ticks, arcadeFrames - 1);
+        Assert.True(appear.IsAlive());
+
+        ticks = UpdateToArcadeFrame(appear, ticks, arcadeFrames);
+        Assert.Equal(EntityLifeState.Dead, appear.LifeState);
+    }
+
+    [Fact]
+    public void AnAppearGivenACentreStrip_ClosesInOnThatStrip_NotOnTheMiddleOne()
+    {
+        // YOF is the row the others close in on: row i is drawn at YCENT - YSIZE x YOF + YSIZE / 2 + i x YSIZE
+        // (RRX7 APGO, $5D96), and with YOF at nothing the half is left out ("OBSCURE BUG").
+        var sprite = new Rectangle(100, 200, 16, 24);
+        var appear = StripEffect.CreateAppear(new FakeDead(sprite), sprite, StripFanAxis.Rows, 0, Clip, _ => 0);
+        var ticks = 0;
+        ticks = UpdateToArcadeFrame(appear, ticks, 1);
+
+        var strips = appear.GetStrips(8, 12);
+
+        var top = sprite.Y / ScreenSize.PortPixelsPerArcadePixel;
+        Assert.Equal(top, strips[0].Y); // the top row stays where it is
+        Assert.Equal(top + 15, strips[1].Y); // and every other row is below it, a gap apart
+    }
+
+    [Fact]
+    public void AnAppearThatFollowsItsSource_MovesToItEachTimeThePictureChanges()
+    {
+        // AWRIT0 ("SCROLL EM", $5D57): with STATUS clear the routine takes the player's place again before each redraw.
+        var player = new FakeDead(new Rectangle(100, 200, 16, 24));
+        var appear = StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, 0, Clip, 3, 0);
+        var ticks = 0;
+        ticks = UpdateToArcadeFrame(appear, ticks, 1);
+
+        player.MoveTo(new Rectangle(140, 200, 16, 24));
+        ticks = UpdateToArcadeFrame(appear, ticks, 2); // the gap is the same, so nothing is redrawn
+        Assert.Equal(100, appear.GetBounds().X);
+
+        ticks = UpdateToArcadeFrame(appear, ticks, 3);
+        Assert.Equal(140, appear.GetBounds().X);
+    }
+
+    [Fact]
+    public void AStraightHorizontalShot_DoesNotLeanAtAll()
+    {
         var explosionStripEffect = NewExplosion(Direction8.Left);
+
+        Assert.All(Strips(explosionStripEffect, 3), s => Assert.Equal(SpriteLeft, s.X));
+    }
+
+    [Fact]
+    public void AStripOutsideThePlayfield_IsDropped_NotMoved()
+    {
+        // The sprite sits on the TOP wall, so the leading part of the fan leaves the
+        // playfield and those strips are DROPPED (the ROM's clip passes).
+        var onTheWall = new Rectangle(
+            ScreenSize.ToPortPixelsFromArcadePixels(SpriteLeft), ScreenSize.ToPortPixelsFromArcadePixels(20),
+            ScreenSize.ToPortPixelsFromArcadePixels(WidthArcadePixels),
+            ScreenSize.ToPortPixelsFromArcadePixels(HeightRows));
+        var explosionStripEffect = NewExplosion(Direction8.Left, onTheWall);
+
+        var strips = Strips(explosionStripEffect, 2); // spacing 3
+
+        Assert.True(strips.Count < HeightRows, "the strips above the wall should be gone");
+        Assert.All(strips, s => Assert.True(s.Y >= Clip.MinY, $"strip {s.Y} is above the playfield"));
+        Assert.All(strips, s => Assert.True(s.Y < Clip.MaxY, $"strip {s.Y} is below the playfield"));
+    }
+
+    [Theory]
+    [InlineData(Direction8.Up,
+        StripEffectTuning.HorizontalPoolSize)] // RRHX4 HXINV links two records (R5 $F01D to $F038)
+    [InlineData(Direction8.UpLeft,
+        StripEffectTuning.DiagonalPoolSize)] // RRDX2: `RMB ((10-1)*EXSIZE)` after the first (R5 $468C)
+    public void AStripRoutineWithNoRecordFree_MakesNoExplosion(Direction8 shot, int records)
+    {
+        // Each routine has its own records, and one more explosion than it has records is refused outright (the
+        // caller's kill still stands).
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+
+        for (var i = 0; i < records + 4; i++) playField.SpawnExplosion(new FakeDead(Sprite), shot);
+
+        Assert.Equal(records, playField.FieldEntities.Explosions.Count);
+    }
+
+    [Fact]
+    public void AVerticalAppear_ShowsNothingBeforeItsFirstStep_ThenEachGapForTwoArcadeFrames()
+    {
+        // YSIZER starts at $1000 and the routine redraws only when its high byte changes (`CMPA YSIZER,Y`, "CHANGE?",
+        // $5D4D): 15 on frames 1 and 2, 14 on frames 3 and 4, and so on down to 2 on frames 27 and 28.
+        var appear = NewAppear(StripFanAxis.Rows, 0);
+        var ticks = 0;
+        Assert.False(appear.IsVisible());
+
+        ticks = UpdateToArcadeFrame(appear, ticks, 1);
+        Assert.True(appear.IsVisible());
+        Assert.Equal(15, appear.GetSpacing());
+
+        ticks = UpdateToArcadeFrame(appear, ticks, 2);
+        Assert.Equal(15, appear.GetSpacing());
+
+        ticks = UpdateToArcadeFrame(appear, ticks, 3);
+        Assert.Equal(14, appear.GetSpacing());
+
+        ticks = UpdateToArcadeFrame(appear, ticks, 28);
+        Assert.Equal(2, appear.GetSpacing());
+        Assert.True(appear.IsAlive());
+    }
+
+    [Fact]
+    public void AVerticalShot_FansTheColumnsSideways()
+    {
+        // A VERTICAL shot is the H engine (RRHX4 `WRITE`, the exact mirror of RRX7):
+        // the base COLUMN is `XCENT − XSIZE*XOF + XSIZE/2` and the segments step RIGHT
+        // by the spacing, so the base moves left while they march right — the fan opens
+        // left AND right, and every strip keeps the sprite's own row.
+        var explosionStripEffect = NewExplosion(Direction8.Up);
+        var collisionColumn = SpriteLeft + 4; // the sprite's middle (notes §73)
+
+        var strips = Strips(explosionStripEffect, 1); // spacing 2
+
+        Assert.Equal(WidthArcadePixels, strips.Count);
+        Assert.All(strips, s => Assert.Equal(SpriteTop, s.Y)); // no vertical displacement
+
+        // A unit of spacing is ONE PIXEL in this family too (RRHX4 counts pixel
+        // columns: `ASLA` "DOUBLE FOR PIXEL WIDTH", `DECA` "NO NEED TO DO ZEROS ON
+        // LEFT COLUMN" — notes §72), so base = 54 − 2*4 + (2>>1) = 47 and the
+        // segments step one pixel each: 47, 49, 51, …
+        Assert.Equal(collisionColumn - 2 * 4 + (2 >> 1), strips[0].X);
+        for (var i = 1; i < strips.Count; i++) Assert.Equal(strips[i - 1].X + 2, strips[i].X);
+
+        Assert.True(strips[0].X < collisionColumn, "the fan must reach left of the collision");
+        Assert.True(strips[^1].X > collisionColumn, "the fan must reach right of it");
+    }
+
+    [Fact]
+    public void AVerticalShot_IsMirroredLeftAndRightToo()
+    {
+        // The same mirror rule on the column axis (the H family, a vertical shot):
+        // the author's *"the explosion half going LEFT is bigger than ... RIGHT"*.
+        var explosionStripEffect = NewExplosion(Direction8.Up);
+
+        var strips = Strips(explosionStripEffect, 2); // spacing 3
+
+        Assert.Equal(WidthArcadePixels, strips.Count);
+        Assert.All(strips, s => Assert.Equal(SpriteTop, s.Y));
+
+        var reachLeft = SpriteLeft - strips[0].X;
+        var reachRight = strips[^1].X - (SpriteLeft + WidthArcadePixels - 1);
+        Assert.Equal(reachLeft, reachRight);
+    }
+
+    [Fact]
+    public void AVerticalShotAtOneUnit_AlsoReconstructsTheSpriteExactly()
+    {
+        // Both families honour the ROM's "1 UNIT IS MIN": at spacing 1 the fan IS the
+        // sprite, pixel for pixel. The H family only did this once its unit was the
+        // ROM's pixel (notes §72) — with byte columns its first frame was already
+        // twice the sprite's width, and the author saw the fan leave the playfield far
+        // too early ("the vertical explosion works sometimes, but doesn't last very
+        // long").
+        var explosionStripEffect = NewExplosion(Direction8.Up);
 
         var strips = Strips(explosionStripEffect);
 
-        Assert.Equal(HeightRows, strips.Count);
-        for (var row = 0; row < HeightRows; row++)
+        Assert.Equal(WidthArcadePixels, strips.Count);
+        for (var column = 0; column < WidthArcadePixels; column++)
         {
-            Assert.Equal(SpriteLeft, strips[row].X);
-            Assert.Equal(SpriteTop + row, strips[row].Y);
-            Assert.Equal(row, strips[row].SourceIndex);
+            Assert.Equal(SpriteTop, strips[column].Y);
+            Assert.Equal(SpriteLeft + column, strips[column].X);
+            Assert.Equal(column, strips[column].SourceIndex);
         }
+    }
+
+    [Fact]
+    public void CreateExplosion_TakesTheRomsDispatch()
+    {
+        var deadFakeDead = new FakeDead(new Rectangle(100, 200, 16, 24));
+
+        var diagonal = StripEffect.CreateExplosion(deadFakeDead, Direction8.DownRight, Clip);
+        var vertical = StripEffect.CreateExplosion(deadFakeDead, Direction8.Up, Clip);
+        var horizontal = StripEffect.CreateExplosion(deadFakeDead, Direction8.Left, Clip);
+
+        Assert.Equal(StripEffectKind.Explode, diagonal.Kind);
+        Assert.Equal((StripFanAxis.Rows, -1), (diagonal.Axis, diagonal.Slope));
+
+        // A vertical shot is the HORIZONTAL explosion (columns), a horizontal shot the
+        // VERTICAL one (rows) — see StripEffect.GetFanForShot and notes §69.
+        Assert.Equal((StripFanAxis.Columns, 0), (vertical.Axis, vertical.Slope));
+        Assert.Equal((StripFanAxis.Rows, 0), (horizontal.Axis, horizontal.Slope));
+
+        // And every one of them anchors at the sprite's MIDDLE, not at the hit
+        // (the ROM's NWCENT centre invariant — notes §73), which the two mirror
+        // tests above pin from both axes.
+    }
+
+    [Fact]
+    public void Dispatch_MatchesTheArcadeLaserDirectionRules()
+    {
+        // RRX7 `EXSTV`: `LDA LASDIR / BNE EXST1 / JSR HEXST` — a shot with NO
+        // horizontal component (a straight VERTICAL shot) takes the HORIZONTAL
+        // explosion; `EXST1 LDB LASDIR+1 / BEQ EXST1A` — "NO Y COMPONENT, STRAIGHT
+        // VERTICAL" — a straight HORIZONTAL shot takes the VERTICAL explosion; both
+        // components non-zero → the diagonal engine. The name is the axis the pieces
+        // MOVE (across the shot), which is why these look "swapped" at first glance.
+        Assert.Equal((StripFanAxis.Columns, 0), StripEffect.GetFanForShot(Direction8.Up));
+        Assert.Equal((StripFanAxis.Columns, 0), StripEffect.GetFanForShot(Direction8.Down));
+
+        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.GetFanForShot(Direction8.Left));
+        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.GetFanForShot(Direction8.Right));
+
+        // No laser direction at all: the port's non-laser kills, which the ROM sends
+        // through HVEXV with LASDIR = $0100 — that lands on EXST1A, the VERTICAL one.
+        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.GetFanForShot(null));
+
+        // Diagonals: the row split, leaning by SLOPE = ~(vertical ^ horizontal).
+        Assert.Equal((StripFanAxis.Rows, -1), StripEffect.GetFanForShot(Direction8.UpLeft));
+        Assert.Equal((StripFanAxis.Rows, -1), StripEffect.GetFanForShot(Direction8.DownRight));
+        Assert.Equal((StripFanAxis.Rows, 1), StripEffect.GetFanForShot(Direction8.UpRight));
+        Assert.Equal((StripFanAxis.Rows, 1), StripEffect.GetFanForShot(Direction8.DownLeft));
+    }
+
+    [Fact]
+    public void GruntOnElectrode_OnlyTheGruntShatters()
+    {
+        // RRP8 ROBKIL explodes the grunt (`JSR EXST`); the post it walked into
+        // shrivels instead (PSTKIL, above) — one explosion, not two.
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
+        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot);
+        playField.FieldEntities.Electrodes.Add(electrode);
+        playField.FieldEntities.Grunts.Add(new Grunt(TestEntityParams.Create(new Random(1)), spot, 15)); // standing on the electrode
+
+        playField.Update(new GameTime());
+
+        Assert.Single(playField.FieldEntities.Explosions); // the grunt only
+        Assert.Equal(StripFanAxis.Rows, playField.FieldEntities.Explosions[0].Axis);
+        Assert.Equal(0, playField.FieldEntities.Explosions[0].Slope); // non-directional shatter (notes §35)
+        Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
+    }
+
+    [Fact]
+    public void LaserKillsElectrode_SpawnsNOExplosion_ItJustShrivels()
+    {
+        // RRP8 PSTKIL: a non-player kill does `KILPST` + `DMAOFF` + `MAKP
+        // PKPROC` — the post's 3-frame SHRIVEL, with NO `EXST` call, so nothing
+        // bursts. The author reported the port's shatter explosion on 2026-09-16:
+        // "electrodes shouldn't explode when hit, they shrivel."
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
+        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot);
+        playField.FieldEntities.Electrodes.Add(electrode);
+
+        IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
+        playField.PlayerLaserSlots.Fire(laserOrigin, Direction8.Down);
+        playField.Update(new GameTime());
+
+        Assert.Empty(playField.FieldEntities.Explosions);
+        Assert.Equal(EntityLifeState.Dying, electrode.LifeState); // the shrivel is running
+    }
+
+    [Fact]
+    public void LaserKillsEnforcer_SpawnsExplosionImmediately_NoBlink()
+    {
+        // RRC11 ENFKIL: `JSR KILOFP` (object and process gone, image off) then
+        // `JSR EXST` (explode) — the enforcer has NO death animation. The port
+        // used to play a 2-second blink; the author reported it on 2026-09-16
+        // ("enforcers shouldn't flash when hit"), the same defect class as the
+        // grunt in §44.
+        var playField = CreateEmptyField();
+        playField.SkipWaveStart();
+        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
+        playField.SpawnEnforcer(spot);
+        var enforcer = playField.FieldEntities.Enforcers[0];
+
+        IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
+        playField.PlayerLaserSlots.Fire(laserOrigin, Direction8.Down);
+        playField.Update(new GameTime());
+
+        Assert.Equal(EntityLifeState.Dead, enforcer.LifeState); // no Dying state at all
+        Assert.Single(playField.FieldEntities.Explosions);
+        Assert.Equal(0, playField.FieldEntities.Enforcers.Count(entity => !entity.IsDead()));
     }
 
     [Fact]
@@ -117,23 +434,6 @@ public sealed class StripEffectTests
     }
 
     [Fact]
-    public void AVerticalShot_IsMirroredLeftAndRightToo()
-    {
-        // The same mirror rule on the column axis (the H family, a vertical shot):
-        // the author's *"the explosion half going LEFT is bigger than ... RIGHT"*.
-        var explosionStripEffect = NewExplosion(Direction8.Up);
-
-        var strips = Strips(explosionStripEffect, 2); // spacing 3
-
-        Assert.Equal(WidthArcadePixels, strips.Count);
-        Assert.All(strips, s => Assert.Equal(SpriteTop, s.Y));
-
-        var reachLeft = SpriteLeft - strips[0].X;
-        var reachRight = strips[^1].X - (SpriteLeft + WidthArcadePixels - 1);
-        Assert.Equal(reachLeft, reachRight);
-    }
-
-    [Fact]
     public void TheFanStartsFromTheCentredArt_NotTheBoundsCorner()
     {
         // A sprite smaller than its collision box is drawn CENTRED in it
@@ -166,6 +466,25 @@ public sealed class StripEffectTests
     }
 
     [Fact]
+    public void TheFirstFrame_ReconstructsTheSpriteExactly()
+    {
+        // YSIZER starts at $0100, "1 UNIT IS MIN": spacing 1, so the base is the
+        // sprite's own top row (the YSIZE*YOF term cancels) and the strips ARE the
+        // sprite, row for row — the ROM's own frame-0 sanity check.
+        var explosionStripEffect = NewExplosion(Direction8.Left);
+
+        var strips = Strips(explosionStripEffect);
+
+        Assert.Equal(HeightRows, strips.Count);
+        for (var row = 0; row < HeightRows; row++)
+        {
+            Assert.Equal(SpriteLeft, strips[row].X);
+            Assert.Equal(SpriteTop + row, strips[row].Y);
+            Assert.Equal(row, strips[row].SourceIndex);
+        }
+    }
+
+    [Fact]
     public void TheSpacingGrowsOnTheRomsAccumulator_NotALinearGuess()
     {
         // ROM WRITE: YSIZER += $100 a frame, so the gap between neighbouring segments
@@ -182,357 +501,6 @@ public sealed class StripEffectTests
     }
 
     [Fact]
-    public void ADiagonalShot_LeansTheTwoHalvesOppositeWays()
-    {
-        // ROM RRDX2 — the DIAGONAL engine (notes §74). `XSIZE = ±(YSIZE>>1)` in columns
-        // with the sign from SLOPE (`LDB SLOPE,Y / BPL APGG1 / NEGA`), and the strips are
-        // placed from `XCENT − YOFF*XSIZE` adding `XSIZE` each: strip i's lateral is
-        // `(i − YOF) * XSIZE`, measured from the fan's FIXED POINT. The rows above it
-        // lean one way and the rows below it the other — a MIRRORED chevron. Leaning the
-        // whole fan one way sheared it off to one side, which is the author's "one side
-        // of the explosion is not mirrored on the other side".
-        var right = NewExplosion(Direction8.UpRight); // slope +1
-
-        var strips = Strips(right, 3); // spacing 4 -> drift ±4
-
-        Assert.Equal(HeightRows, strips.Count);
-
-        // split = 12/2 = 6 and drift = +((4>>1) * 2) = 4 arcade px a strip, so the strip AT
-        // the fixed point does not move and its neighbours move opposite ways.
-        Assert.Equal(SpriteLeft - 6 * 4, strips[0].X); // topmost: six steps left
-        Assert.Equal(SpriteLeft, strips[6].X); // the fixed point: no lateral
-        Assert.Equal(SpriteLeft + 5 * 4, strips[11].X); // bottom: five steps right
-
-        Assert.True(strips[0].X < SpriteLeft, "the upper half must lean left");
-        Assert.True(strips[^1].X > SpriteLeft, "the lower half must lean the other way");
-
-        // The other diagonal mirrors it: the same chevron, the other way round.
-        var left = NewExplosion(Direction8.UpLeft); // slope -1
-        var mirrored = Strips(left, 3);
-
-        Assert.Equal(HeightRows, mirrored.Count);
-        Assert.Equal(SpriteLeft + 6 * 4, mirrored[0].X);
-        Assert.Equal(SpriteLeft, mirrored[6].X);
-        Assert.Equal(SpriteLeft - 5 * 4, mirrored[11].X);
-    }
-
-    [Fact]
-    public void AStraightHorizontalShot_DoesNotLeanAtAll()
-    {
-        var explosionStripEffect = NewExplosion(Direction8.Left);
-
-        Assert.All(Strips(explosionStripEffect, 3), s => Assert.Equal(SpriteLeft, s.X));
-    }
-
-    [Fact]
-    public void AStripOutsideThePlayfield_IsDropped_NotMoved()
-    {
-        // The sprite sits on the TOP wall, so the leading part of the fan leaves the
-        // playfield and those strips are DROPPED (the ROM's clip passes).
-        var onTheWall = new Rectangle(
-            ScreenSize.ToPortPixelsFromArcadePixels(SpriteLeft), ScreenSize.ToPortPixelsFromArcadePixels(20),
-            ScreenSize.ToPortPixelsFromArcadePixels(WidthArcadePixels),
-            ScreenSize.ToPortPixelsFromArcadePixels(HeightRows));
-        var explosionStripEffect = NewExplosion(Direction8.Left, onTheWall);
-
-        var strips = Strips(explosionStripEffect, 2); // spacing 3
-
-        Assert.True(strips.Count < HeightRows, "the strips above the wall should be gone");
-        Assert.All(strips, s => Assert.True(s.Y >= Clip.MinY, $"strip {s.Y} is above the playfield"));
-        Assert.All(strips, s => Assert.True(s.Y < Clip.MaxY, $"strip {s.Y} is below the playfield"));
-    }
-
-    [Fact]
-    public void AVerticalShot_FansTheColumnsSideways()
-    {
-        // A VERTICAL shot is the H engine (RRHX4 `WRITE`, the exact mirror of RRX7):
-        // the base COLUMN is `XCENT − XSIZE*XOF + XSIZE/2` and the segments step RIGHT
-        // by the spacing, so the base moves left while they march right — the fan opens
-        // left AND right, and every strip keeps the sprite's own row.
-        var explosionStripEffect = NewExplosion(Direction8.Up);
-        var collisionColumn = SpriteLeft + 4; // the sprite's middle (notes §73)
-
-        var strips = Strips(explosionStripEffect, 1); // spacing 2
-
-        Assert.Equal(WidthArcadePixels, strips.Count);
-        Assert.All(strips, s => Assert.Equal(SpriteTop, s.Y)); // no vertical displacement
-
-        // A unit of spacing is ONE PIXEL in this family too (RRHX4 counts pixel
-        // columns: `ASLA` "DOUBLE FOR PIXEL WIDTH", `DECA` "NO NEED TO DO ZEROS ON
-        // LEFT COLUMN" — notes §72), so base = 54 − 2*4 + (2>>1) = 47 and the
-        // segments step one pixel each: 47, 49, 51, …
-        Assert.Equal(collisionColumn - 2 * 4 + (2 >> 1), strips[0].X);
-        for (var i = 1; i < strips.Count; i++) Assert.Equal(strips[i - 1].X + 2, strips[i].X);
-
-        Assert.True(strips[0].X < collisionColumn, "the fan must reach left of the collision");
-        Assert.True(strips[^1].X > collisionColumn, "the fan must reach right of it");
-    }
-
-    [Fact]
-    public void AVerticalShotAtOneUnit_AlsoReconstructsTheSpriteExactly()
-    {
-        // Both families honour the ROM's "1 UNIT IS MIN": at spacing 1 the fan IS the
-        // sprite, pixel for pixel. The H family only did this once its unit was the
-        // ROM's pixel (notes §72) — with byte columns its first frame was already
-        // twice the sprite's width, and the author saw the fan leave the playfield far
-        // too early ("the vertical explosion works sometimes, but doesn't last very
-        // long").
-        var explosionStripEffect = NewExplosion(Direction8.Up);
-
-        var strips = Strips(explosionStripEffect);
-
-        Assert.Equal(WidthArcadePixels, strips.Count);
-        for (var column = 0; column < WidthArcadePixels; column++)
-        {
-            Assert.Equal(SpriteTop, strips[column].Y);
-            Assert.Equal(SpriteLeft + column, strips[column].X);
-            Assert.Equal(column, strips[column].SourceIndex);
-        }
-    }
-
-    [Fact]
-    public void Dispatch_MatchesTheArcadeLaserDirectionRules()
-    {
-        // RRX7 `EXSTV`: `LDA LASDIR / BNE EXST1 / JSR HEXST` — a shot with NO
-        // horizontal component (a straight VERTICAL shot) takes the HORIZONTAL
-        // explosion; `EXST1 LDB LASDIR+1 / BEQ EXST1A` — "NO Y COMPONENT, STRAIGHT
-        // VERTICAL" — a straight HORIZONTAL shot takes the VERTICAL explosion; both
-        // components non-zero → the diagonal engine. The name is the axis the pieces
-        // MOVE (across the shot), which is why these look "swapped" at first glance.
-        Assert.Equal((StripFanAxis.Columns, 0), StripEffect.GetFanForShot(Direction8.Up));
-        Assert.Equal((StripFanAxis.Columns, 0), StripEffect.GetFanForShot(Direction8.Down));
-
-        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.GetFanForShot(Direction8.Left));
-        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.GetFanForShot(Direction8.Right));
-
-        // No laser direction at all: the port's non-laser kills, which the ROM sends
-        // through HVEXV with LASDIR = $0100 — that lands on EXST1A, the VERTICAL one.
-        Assert.Equal((StripFanAxis.Rows, 0), StripEffect.GetFanForShot(null));
-
-        // Diagonals: the row split, leaning by SLOPE = ~(vertical ^ horizontal).
-        Assert.Equal((StripFanAxis.Rows, -1), StripEffect.GetFanForShot(Direction8.UpLeft));
-        Assert.Equal((StripFanAxis.Rows, -1), StripEffect.GetFanForShot(Direction8.DownRight));
-        Assert.Equal((StripFanAxis.Rows, 1), StripEffect.GetFanForShot(Direction8.UpRight));
-        Assert.Equal((StripFanAxis.Rows, 1), StripEffect.GetFanForShot(Direction8.DownLeft));
-    }
-
-    private static StripEffect NewAppear(StripFanAxis axis, int slope)
-    {
-        return StripEffect.CreateAppear(
-            new FakeDead(new Rectangle(100, 200, 16, 24)),
-            new Rectangle(100, 200, 16, 24),
-            axis,
-            slope,
-            Clip);
-    }
-
-    /// <summary>Runs an effect on to the tick a fiftieth of a second falls on, counted from when the effect was made.</summary>
-    private static int UpdateToArcadeFrame(StripEffect stripEffect, int ticks, int arcadeFrame)
-    {
-        while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
-        {
-            stripEffect.Update(new GameTime());
-            ticks++;
-        }
-
-        return ticks;
-    }
-
-    [Theory]
-    [InlineData(StripFanAxis.Rows, 0,
-        29)] // RRX7 AWRITE: `SUBD #$0080` ($5D4A), and gone when the gap would be 1 ($5D78)
-    [InlineData(StripFanAxis.Columns, 0,
-        31)] // RRHX4 AWRITE: `SUBD #$80`, and drawn closed up before it goes (`TSTA / BHI APGO`)
-    [InlineData(StripFanAxis.Rows, 1, 15)] // RRDX2 AWRITE: `SUBD #$100`, and gone when the gap would be 1
-    public void AnAppear_LastsAsManyArcadeFramesAsItsStripRoutineTakes(StripFanAxis axis, int slope, int arcadeFrames)
-    {
-        var appear = NewAppear(axis, slope);
-        Assert.Equal(StripEffectKind.Appear, appear.Kind);
-
-        var ticks = 0;
-        ticks = UpdateToArcadeFrame(appear, ticks, arcadeFrames - 1);
-        Assert.True(appear.IsAlive());
-
-        ticks = UpdateToArcadeFrame(appear, ticks, arcadeFrames);
-        Assert.Equal(EntityLifeState.Dead, appear.LifeState);
-    }
-
-    [Fact]
-    public void AVerticalAppear_ShowsNothingBeforeItsFirstStep_ThenEachGapForTwoArcadeFrames()
-    {
-        // YSIZER starts at $1000 and the routine redraws only when its high byte changes (`CMPA YSIZER,Y`, "CHANGE?",
-        // $5D4D): 15 on frames 1 and 2, 14 on frames 3 and 4, and so on down to 2 on frames 27 and 28.
-        var appear = NewAppear(StripFanAxis.Rows, 0);
-        var ticks = 0;
-        Assert.False(appear.IsVisible());
-
-        ticks = UpdateToArcadeFrame(appear, ticks, 1);
-        Assert.True(appear.IsVisible());
-        Assert.Equal(15, appear.GetSpacing());
-
-        ticks = UpdateToArcadeFrame(appear, ticks, 2);
-        Assert.Equal(15, appear.GetSpacing());
-
-        ticks = UpdateToArcadeFrame(appear, ticks, 3);
-        Assert.Equal(14, appear.GetSpacing());
-
-        ticks = UpdateToArcadeFrame(appear, ticks, 28);
-        Assert.Equal(2, appear.GetSpacing());
-        Assert.True(appear.IsAlive());
-    }
-
-    [Fact]
-    public void AHorizontalAppear_IsDrawnClosedUp_BeforeItGoes()
-    {
-        var appear = NewAppear(StripFanAxis.Columns, 0);
-        var ticks = 0;
-
-        ticks = UpdateToArcadeFrame(appear, ticks, 28);
-        Assert.Equal(2, appear.GetSpacing());
-
-        ticks = UpdateToArcadeFrame(appear, ticks, 30);
-        Assert.Equal(1, appear.GetSpacing());
-        Assert.True(appear.IsAlive());
-    }
-
-    [Fact]
-    public void AnAppearGivenACentreStrip_ClosesInOnThatStrip_NotOnTheMiddleOne()
-    {
-        // YOF is the row the others close in on: row i is drawn at YCENT - YSIZE x YOF + YSIZE / 2 + i x YSIZE
-        // (RRX7 APGO, $5D96), and with YOF at nothing the half is left out ("OBSCURE BUG").
-        var sprite = new Rectangle(100, 200, 16, 24);
-        var appear = StripEffect.CreateAppear(new FakeDead(sprite), sprite, StripFanAxis.Rows, 0, Clip, _ => 0);
-        var ticks = 0;
-        ticks = UpdateToArcadeFrame(appear, ticks, 1);
-
-        var strips = appear.GetStrips(8, 12);
-
-        var top = sprite.Y / ScreenSize.PortPixelsPerArcadePixel;
-        Assert.Equal(top, strips[0].Y); // the top row stays where it is
-        Assert.Equal(top + 15, strips[1].Y); // and every other row is below it, a gap apart
-    }
-
-    [Fact]
-    public void AnAppearThatFollowsItsSource_MovesToItEachTimeThePictureChanges()
-    {
-        // AWRIT0 ("SCROLL EM", $5D57): with STATUS clear the routine takes the player's place again before each redraw.
-        var player = new FakeDead(new Rectangle(100, 200, 16, 24));
-        var appear = StripEffect.CreateFollowingAppear(player, StripFanAxis.Rows, 0, Clip, 3, 0);
-        var ticks = 0;
-        ticks = UpdateToArcadeFrame(appear, ticks, 1);
-
-        player.MoveTo(new Rectangle(140, 200, 16, 24));
-        ticks = UpdateToArcadeFrame(appear, ticks, 2); // the gap is the same, so nothing is redrawn
-        Assert.Equal(100, appear.GetBounds().X);
-
-        ticks = UpdateToArcadeFrame(appear, ticks, 3);
-        Assert.Equal(140, appear.GetBounds().X);
-    }
-
-    [Fact]
-    public void CreateExplosion_TakesTheRomsDispatch()
-    {
-        var deadFakeDead = new FakeDead(new Rectangle(100, 200, 16, 24));
-
-        var diagonal = StripEffect.CreateExplosion(deadFakeDead, Direction8.DownRight, Clip);
-        var vertical = StripEffect.CreateExplosion(deadFakeDead, Direction8.Up, Clip);
-        var horizontal = StripEffect.CreateExplosion(deadFakeDead, Direction8.Left, Clip);
-
-        Assert.Equal(StripEffectKind.Explode, diagonal.Kind);
-        Assert.Equal((StripFanAxis.Rows, -1), (diagonal.Axis, diagonal.Slope));
-
-        // A vertical shot is the HORIZONTAL explosion (columns), a horizontal shot the
-        // VERTICAL one (rows) — see StripEffect.GetFanForShot and notes §69.
-        Assert.Equal((StripFanAxis.Columns, 0), (vertical.Axis, vertical.Slope));
-        Assert.Equal((StripFanAxis.Rows, 0), (horizontal.Axis, horizontal.Slope));
-
-        // And every one of them anchors at the sprite's MIDDLE, not at the hit
-        // (the ROM's NWCENT centre invariant — notes §73), which the two mirror
-        // tests above pin from both axes.
-    }
-
-    [Fact]
-    public void LaserKillsEnforcer_SpawnsExplosionImmediately_NoBlink()
-    {
-        // RRC11 ENFKIL: `JSR KILOFP` (object and process gone, image off) then
-        // `JSR EXST` (explode) — the enforcer has NO death animation. The port
-        // used to play a 2-second blink; the author reported it on 2026-09-16
-        // ("enforcers shouldn't flash when hit"), the same defect class as the
-        // grunt in §44.
-        var playField = CreateEmptyField();
-        playField.SkipWaveStart();
-        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        playField.SpawnEnforcer(spot);
-        var enforcer = playField.FieldEntities.Enforcers[0];
-
-        IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
-        playField.PlayerLaserSlots.Fire(laserOrigin, Direction8.Down);
-        playField.Update(new GameTime());
-
-        Assert.Equal(EntityLifeState.Dead, enforcer.LifeState); // no Dying state at all
-        Assert.Single(playField.FieldEntities.Explosions);
-        Assert.Equal(0, playField.FieldEntities.Enforcers.Count(entity => !entity.IsDead()));
-    }
-
-    [Fact]
-    public void LaserKillsElectrode_SpawnsNOExplosion_ItJustShrivels()
-    {
-        // RRP8 PSTKIL: a non-player kill does `KILPST` + `DMAOFF` + `MAKP
-        // PKPROC` — the post's 3-frame SHRIVEL, with NO `EXST` call, so nothing
-        // bursts. The author reported the port's shatter explosion on 2026-09-16:
-        // "electrodes shouldn't explode when hit, they shrivel."
-        var playField = CreateEmptyField();
-        playField.SkipWaveStart();
-        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot);
-        playField.FieldEntities.Electrodes.Add(electrode);
-
-        IntVector2 laserOrigin = new(spot.X + 6, spot.Y - 12);
-        playField.PlayerLaserSlots.Fire(laserOrigin, Direction8.Down);
-        playField.Update(new GameTime());
-
-        Assert.Empty(playField.FieldEntities.Explosions);
-        Assert.Equal(EntityLifeState.Dying, electrode.LifeState); // the shrivel is running
-    }
-
-    [Fact]
-    public void GruntOnElectrode_OnlyTheGruntShatters()
-    {
-        // RRP8 ROBKIL explodes the grunt (`JSR EXST`); the post it walked into
-        // shrivels instead (PSTKIL, above) — one explosion, not two.
-        var playField = CreateEmptyField();
-        playField.SkipWaveStart();
-        IntVector2 spot = new(playField.PlayfieldWall.PlayfieldBounds.X + 100, playField.PlayfieldWall.PlayfieldBounds.Y + 100);
-        var electrode = new Electrode(TestTextures.SharedTextureSet, NullGameEvents.Instance, spot);
-        playField.FieldEntities.Electrodes.Add(electrode);
-        playField.FieldEntities.Grunts.Add(new Grunt(TestEntityParams.Create(new Random(1)), spot, 15)); // standing on the electrode
-
-        playField.Update(new GameTime());
-
-        Assert.Single(playField.FieldEntities.Explosions); // the grunt only
-        Assert.Equal(StripFanAxis.Rows, playField.FieldEntities.Explosions[0].Axis);
-        Assert.Equal(0, playField.FieldEntities.Explosions[0].Slope); // non-directional shatter (notes §35)
-        Assert.Equal(EntityLifeState.Dying, electrode.LifeState);
-    }
-
-    [Theory]
-    [InlineData(Direction8.Up,
-        StripEffectTuning.HorizontalPoolSize)] // RRHX4 HXINV links two records (R5 $F01D to $F038)
-    [InlineData(Direction8.UpLeft,
-        StripEffectTuning.DiagonalPoolSize)] // RRDX2: `RMB ((10-1)*EXSIZE)` after the first (R5 $468C)
-    public void AStripRoutineWithNoRecordFree_MakesNoExplosion(Direction8 shot, int records)
-    {
-        // Each routine has its own records, and one more explosion than it has records is refused outright (the
-        // caller's kill still stands).
-        var playField = CreateEmptyField();
-        playField.SkipWaveStart();
-
-        for (var i = 0; i < records + 4; i++) playField.SpawnExplosion(new FakeDead(Sprite), shot);
-
-        Assert.Equal(records, playField.FieldEntities.Explosions.Count);
-    }
-
-    [Fact]
     public void TheVerticalRoutine_TakesItsRecordsFromTheArcadesObjectList_WhichThePortDoesNotKeep()
     {
         // RRX7 GETBLK: `LDU OFREE` ($5B6E). The port has no object list to run out of, so every one is made.
@@ -542,19 +510,6 @@ public sealed class StripEffectTests
         for (var i = 0; i < 20; i++) playField.SpawnExplosion(new FakeDead(Sprite), Direction8.Left);
 
         Assert.Equal(20, playField.FieldEntities.Explosions.Count);
-    }
-
-    [Fact]
-    public void AFullHorizontalRoutine_DoesNotStopADiagonalExplosion()
-    {
-        var playField = CreateEmptyField();
-        playField.SkipWaveStart();
-        for (var i = 0; i < StripEffectTuning.HorizontalPoolSize; i++)
-            playField.SpawnExplosion(new FakeDead(Sprite), Direction8.Up);
-
-        playField.SpawnExplosion(new FakeDead(Sprite), Direction8.DownLeft);
-
-        Assert.Equal(StripEffectTuning.HorizontalPoolSize + 1, playField.FieldEntities.Explosions.Count);
     }
 
     private static PlayField CreateEmptyField()
@@ -572,6 +527,51 @@ public sealed class StripEffectTests
         return new PlayFieldBuilder().WithParameters(waveParams).WithSeed(99).Build();
     }
 
+    private static StripEffect NewAppear(StripFanAxis axis, int slope)
+    {
+        return StripEffect.CreateAppear(
+            new FakeDead(new Rectangle(100, 200, 16, 24)),
+            new Rectangle(100, 200, 16, 24),
+            axis,
+            slope,
+            Clip);
+    }
+
+    private static StripEffect NewExplosion(Direction8? direction = null, Rectangle? sprite = null)
+    {
+        return StripEffect.CreateExplosion(
+            new FakeDead(sprite ?? Sprite),
+            direction,
+            Clip);
+    }
+
+    /// <summary>Ticks the record forward one ARCADE FRAME at a time (the clock is 1.2 ticks).</summary>
+    private static void Steps(StripEffect explosionStripEffect, int frames)
+    {
+        var target = explosionStripEffect.GetSpacing() + frames;
+        var guard = 0;
+        while ((explosionStripEffect.GetSpacing() < target || target < 1) && guard++ < 200) explosionStripEffect.Update(new GameTime());
+    }
+
+    /// <summary>Advances whole frames, then lays the strips out.</summary>
+    private static IReadOnlyList<Strip> Strips(StripEffect explosionStripEffect, int frames = 0)
+    {
+        Steps(explosionStripEffect, frames);
+        return explosionStripEffect.GetStrips(WidthArcadePixels, HeightRows);
+    }
+
+    /// <summary>Runs an effect on to the tick a fiftieth of a second falls on, counted from when the effect was made.</summary>
+    private static int UpdateToArcadeFrame(StripEffect stripEffect, int ticks, int arcadeFrame)
+    {
+        while (ticks < ArcadeClock.ToPortTicksRoundedUp(arcadeFrame))
+        {
+            stripEffect.Update(new GameTime());
+            ticks++;
+        }
+
+        return ticks;
+    }
+
     private sealed class FakeDead : IExplodable
     {
         private Rectangle _bounds;
@@ -581,33 +581,22 @@ public sealed class StripEffectTests
             _bounds = bounds;
         }
 
-        public Rectangle GetBounds()
-        {
-            return _bounds;
-        }
-
-        public IntVector2 Position => new(GetBounds().X, GetBounds().Y);
-
         public EntityLifeState LifeState => EntityLifeState.Dead;
 
-        public void Update(GameTime gameTime, PlayField playField)
-        {
-        }
+        public IntVector2 Position => new(GetBounds().X, GetBounds().Y);
 
         public void Draw(SpriteBatch spriteBatch)
         {
         }
 
-        // Draw-time only; the lifecycle/geometry tests never draw.
+        public Rectangle GetBounds()
+        {
+            return _bounds;
+        }
 
         public Texture2D GetCurrentAnimationFrameTexture()
         {
             throw new NotSupportedException("no texture in unit tests");
-        }
-
-        public Rectangle GetExplosionBounds()
-        {
-            return GetBounds();
         }
 
         public Texture2D GetExplosionAnimationFrameTexture()
@@ -615,9 +604,19 @@ public sealed class StripEffectTests
             return GetCurrentAnimationFrameTexture();
         }
 
+        // Draw-time only; the lifecycle/geometry tests never draw.
+        public Rectangle GetExplosionBounds()
+        {
+            return GetBounds();
+        }
+
         public void MoveTo(Rectangle bounds)
         {
             _bounds = bounds;
+        }
+
+        public void Update(GameTime gameTime, PlayField playField)
+        {
         }
     }
 }

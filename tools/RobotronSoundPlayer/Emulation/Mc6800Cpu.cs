@@ -17,26 +17,26 @@ namespace RobotronSoundPlayer.Emulation;
 /// </remarks>
 public sealed class Mc6800Cpu
 {
-    /// <summary>Where the address of the interrupt routine is kept.</summary>
-    private const ushort InterruptVector = 0xFFF8;
-
-    /// <summary>Where the address of the software-interrupt routine is kept.</summary>
-    private const ushort SoftwareInterruptVector = 0xFFFA;
-
-    /// <summary>Where the address of the start-up routine is kept.</summary>
-    private const ushort ResetVector = 0xFFFE;
+    /// <summary>Bits in a byte, used to split and join 16-bit words.</summary>
+    private const int BitsPerByte = 8;
 
     /// <summary>Clock cycles it takes to answer an interrupt: save every register, then jump.</summary>
     private const int InterruptCycles = 12;
 
-    /// <summary>Clock cycles that pass on each step while the processor waits for an interrupt.</summary>
-    private const int WaitCycles = 1;
+    /// <summary>Where the address of the interrupt routine is kept.</summary>
+    private const ushort InterruptVector = 0xFFF8;
+
+    /// <summary>Where the address of the start-up routine is kept.</summary>
+    private const ushort ResetVector = 0xFFFE;
+
+    /// <summary>Where the address of the software-interrupt routine is kept.</summary>
+    private const ushort SoftwareInterruptVector = 0xFFFA;
 
     /// <summary>The top two bits of the condition codes, which always read as ones.</summary>
     private const byte UnusedConditionCodeBits = 0xC0;
 
-    /// <summary>Bits in a byte, used to split and join 16-bit words.</summary>
-    private const int BitsPerByte = 8;
+    /// <summary>Clock cycles that pass on each step while the processor waits for an interrupt.</summary>
+    private const int WaitCycles = 1;
 
     private readonly IMc6800Bus _mc6800Bus;
     private bool _isWaitingForInterrupt;

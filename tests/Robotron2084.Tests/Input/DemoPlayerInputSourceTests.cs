@@ -1,10 +1,10 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
-using Robotron2084.Input.Models;
+using Robotron2084.Core.Models;
 using Robotron2084.Input;
-using Robotron2084.Level.Models;
+using Robotron2084.Input.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 using Xunit;
 
@@ -23,91 +23,6 @@ public sealed class DemoPlayerInputSourceTests
         new(ScreenSize.ToPortPixelsFromArcadePixels(20), ScreenSize.ToPortPixelsFromArcadePixels(20),
             ScreenSize.Width - ScreenSize.ToPortPixelsFromArcadePixels(40),
             ScreenSize.Height - ScreenSize.ToPortPixelsFromArcadePixels(40));
-
-    private static PlayField EmptyField(Rectangle bounds)
-    {
-        return EmptyFieldWithInput(bounds, new FakeInputSource());
-    }
-
-    private static PlayField EmptyFieldWithInput(Rectangle bounds, IPlayerInputSource playerInputSource)
-    {
-        var waveParams = new WaveParams(1);
-        return new PlayFieldBuilder().WithParameters(waveParams).WithInput(playerInputSource).WithBounds(bounds).WithSeed(1234)
-            .Build();
-    }
-
-    [Fact]
-    public void Poll_WithoutABoundField_IsIdle()
-    {
-        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
-
-        var playerInputState = demoPlayerInputSource.Poll();
-
-        Assert.Equal(IntVector2.Zero, playerInputState.MoveDirection);
-        Assert.False(playerInputState.FireHeld);
-    }
-
-    [Fact]
-    public void Poll_WithACloseRobot_FleesItAndFiresAtIt()
-    {
-        var playField = EmptyField(FullBounds);
-        var player = playField.Player.Position;
-        playField.SpawnEnforcer(player +
-                            new IntVector2(0,
-                                -ScreenSize.ToPortPixelsFromArcadePixels(
-                                    30))); // straight above, inside the threat distance
-
-        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
-        demoPlayerInputSource.Bind(playField);
-
-        var playerInputState = demoPlayerInputSource.Poll();
-
-        // Running straight down, away from it, and firing up at it.
-        Assert.Equal(new IntVector2(0, 1), playerInputState.MoveDirection);
-        Assert.Equal(new IntVector2(0, -1), playerInputState.ShootDirection);
-        Assert.True(playerInputState.FireHeld);
-    }
-
-    [Fact]
-    public void Poll_WithNoRobots_IsIdleAndNotFiring()
-    {
-        var playField = EmptyField(FullBounds); // the player starts exactly at the centre
-
-        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
-        demoPlayerInputSource.Bind(playField);
-
-        var playerInputState = demoPlayerInputSource.Poll();
-
-        Assert.Equal(IntVector2.Zero, playerInputState.MoveDirection); // nothing to flee, and the centre is where it is
-        Assert.False(playerInputState.FireHeld);
-    }
-
-    [Fact]
-    public void Poll_WithARobotOutOfRange_DriftsToCentreAndDoesNotFire()
-    {
-        var playField = EmptyField(FullBounds);
-        playField.SkipWaveStart();
-
-        // Walk the player off-centre with a plain fake stick, then hand the wheel to the demo.
-        var leftMutableStick = new MutableStick { State = new PlayerInputState(new IntVector2(-1, 0), false) };
-        playField = EmptyFieldWithInput(FullBounds, leftMutableStick);
-        playField.SkipWaveStart();
-        for (var i = 0; i < 40; i++) playField.Update(new GameTime());
-
-        IntVector2 centre = new(playField.PlayfieldWall.PlayfieldBounds.X + playField.PlayfieldWall.PlayfieldBounds.Width / 2,
-            playField.PlayfieldWall.PlayfieldBounds.Y + playField.PlayfieldWall.PlayfieldBounds.Height / 2);
-        playField.SpawnEnforcer(new IntVector2(centre.X + ScreenSize.ToPortPixelsFromArcadePixels(120),
-            centre.Y)); // well past the fire range
-
-        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
-        demoPlayerInputSource.Bind(playField);
-
-        var playerInputState = demoPlayerInputSource.Poll();
-
-        Assert.Equal(1, playerInputState.MoveDirection.X); // back toward the centre
-        Assert.Equal(0, playerInputState.MoveDirection.Y);
-        Assert.False(playerInputState.FireHeld);
-    }
 
     [Fact]
     public void Poll_HoldsItsDirectionBeforeFollowingANewThreat()
@@ -167,6 +82,91 @@ public sealed class DemoPlayerInputSourceTests
         Assert.NotEqual(-1, playerInputState.MoveDirection.X);
         Assert.InRange(playerInputState.MoveDirection.X, -1, 1);
         Assert.InRange(playerInputState.MoveDirection.Y, -1, 1);
+    }
+
+    [Fact]
+    public void Poll_WithACloseRobot_FleesItAndFiresAtIt()
+    {
+        var playField = EmptyField(FullBounds);
+        var player = playField.Player.Position;
+        playField.SpawnEnforcer(player +
+                            new IntVector2(0,
+                                -ScreenSize.ToPortPixelsFromArcadePixels(
+                                    30))); // straight above, inside the threat distance
+
+        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
+        demoPlayerInputSource.Bind(playField);
+
+        var playerInputState = demoPlayerInputSource.Poll();
+
+        // Running straight down, away from it, and firing up at it.
+        Assert.Equal(new IntVector2(0, 1), playerInputState.MoveDirection);
+        Assert.Equal(new IntVector2(0, -1), playerInputState.ShootDirection);
+        Assert.True(playerInputState.FireHeld);
+    }
+
+    [Fact]
+    public void Poll_WithARobotOutOfRange_DriftsToCentreAndDoesNotFire()
+    {
+        var playField = EmptyField(FullBounds);
+        playField.SkipWaveStart();
+
+        // Walk the player off-centre with a plain fake stick, then hand the wheel to the demo.
+        var leftMutableStick = new MutableStick { State = new PlayerInputState(new IntVector2(-1, 0), false) };
+        playField = EmptyFieldWithInput(FullBounds, leftMutableStick);
+        playField.SkipWaveStart();
+        for (var i = 0; i < 40; i++) playField.Update(new GameTime());
+
+        IntVector2 centre = new(playField.PlayfieldWall.PlayfieldBounds.X + playField.PlayfieldWall.PlayfieldBounds.Width / 2,
+            playField.PlayfieldWall.PlayfieldBounds.Y + playField.PlayfieldWall.PlayfieldBounds.Height / 2);
+        playField.SpawnEnforcer(new IntVector2(centre.X + ScreenSize.ToPortPixelsFromArcadePixels(120),
+            centre.Y)); // well past the fire range
+
+        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
+        demoPlayerInputSource.Bind(playField);
+
+        var playerInputState = demoPlayerInputSource.Poll();
+
+        Assert.Equal(1, playerInputState.MoveDirection.X); // back toward the centre
+        Assert.Equal(0, playerInputState.MoveDirection.Y);
+        Assert.False(playerInputState.FireHeld);
+    }
+
+    [Fact]
+    public void Poll_WithNoRobots_IsIdleAndNotFiring()
+    {
+        var playField = EmptyField(FullBounds); // the player starts exactly at the centre
+
+        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
+        demoPlayerInputSource.Bind(playField);
+
+        var playerInputState = demoPlayerInputSource.Poll();
+
+        Assert.Equal(IntVector2.Zero, playerInputState.MoveDirection); // nothing to flee, and the centre is where it is
+        Assert.False(playerInputState.FireHeld);
+    }
+
+    [Fact]
+    public void Poll_WithoutABoundField_IsIdle()
+    {
+        var demoPlayerInputSource = new DemoPlayerInputSource(new Random(7));
+
+        var playerInputState = demoPlayerInputSource.Poll();
+
+        Assert.Equal(IntVector2.Zero, playerInputState.MoveDirection);
+        Assert.False(playerInputState.FireHeld);
+    }
+
+    private static PlayField EmptyField(Rectangle bounds)
+    {
+        return EmptyFieldWithInput(bounds, new FakeInputSource());
+    }
+
+    private static PlayField EmptyFieldWithInput(Rectangle bounds, IPlayerInputSource playerInputSource)
+    {
+        var waveParams = new WaveParams(1);
+        return new PlayFieldBuilder().WithParameters(waveParams).WithInput(playerInputSource).WithBounds(bounds).WithSeed(1234)
+            .Build();
     }
 
     /// <summary>A stick the test can flip (PlayField's input reference is fixed at construction).</summary>

@@ -13,39 +13,16 @@ namespace Robotron2084.Tests.Core;
 public sealed class ScreenSizeTests
 {
     [Fact]
-    public void ScreenSizeInArcadePixels_IsTheGameLayout_320x200()
-    {
-        Assert.Equal(320, ScreenSize.WidthInArcadePixels);
-        Assert.Equal(200, ScreenSize.HeightInArcadePixels);
-    }
-
-    [Fact]
     public void InternalResolution_DerivesFromScreenSizeInArcadePixels()
     {
         Assert.Equal(ScreenSize.WidthInArcadePixels * ScreenSize.PortPixelsPerArcadePixel, ScreenSize.Width);
         Assert.Equal(ScreenSize.HeightInArcadePixels * ScreenSize.PortPixelsPerArcadePixel, ScreenSize.Height);
     }
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(16)]
-    public void ToPortPixelsFromArcadePixels_MultipliesArcadePixelsByPortPixelsPerArcadePixel(int arcadePixels)
-    {
-        Assert.Equal(arcadePixels * ScreenSize.PortPixelsPerArcadePixel,
-            ScreenSize.ToPortPixelsFromArcadePixels(arcadePixels));
-    }
-
     [Fact]
     public void MaxIntegerScale_FitsThreeTimesThePlayfield_At3x()
     {
         Assert.Equal(3, ScreenSize.ComputeMaxIntegerScale(ScreenSize.Width * 3, ScreenSize.Height * 3));
-    }
-
-    [Fact]
-    public void MaxIntegerScale_WidthLimitsWhenHeightHasRoom()
-    {
-        Assert.Equal(1, ScreenSize.ComputeMaxIntegerScale(ScreenSize.Width, ScreenSize.Height * 2));
     }
 
     [Fact]
@@ -61,5 +38,28 @@ public sealed class ScreenSizeTests
     public void MaxIntegerScale_NeverDownscales(int width, int height)
     {
         Assert.Equal(1, ScreenSize.ComputeMaxIntegerScale(width, height));
+    }
+
+    [Fact]
+    public void MaxIntegerScale_WidthLimitsWhenHeightHasRoom()
+    {
+        Assert.Equal(1, ScreenSize.ComputeMaxIntegerScale(ScreenSize.Width, ScreenSize.Height * 2));
+    }
+
+    [Fact]
+    public void ScreenSizeInArcadePixels_IsTheGameLayout_320x200()
+    {
+        Assert.Equal(320, ScreenSize.WidthInArcadePixels);
+        Assert.Equal(200, ScreenSize.HeightInArcadePixels);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(16)]
+    public void ToPortPixelsFromArcadePixels_MultipliesArcadePixelsByPortPixelsPerArcadePixel(int arcadePixels)
+    {
+        Assert.Equal(arcadePixels * ScreenSize.PortPixelsPerArcadePixel,
+            ScreenSize.ToPortPixelsFromArcadePixels(arcadePixels));
     }
 }

@@ -203,14 +203,6 @@ public static class WaveTable
         14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14
     ];
 
-    /// <summary>How many quarks each wave has.</summary>
-    /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
-    public static readonly int[] Quarks =
-    [
-        0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 12, 0, 0, 0, 0, 12, 0, 0, 0, 0, 12, 0, 7, 0, 0, 12, 1, 1, 1, 1, 13, 1, 2, 2,
-        2, 14, 2, 1, 1
-    ];
-
     /// <summary>How fast a quark may drift, for each wave. A bigger number is a faster quark.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -222,6 +214,14 @@ public static class WaveTable
     [
         50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56, 56,
         60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60, 60
+    ];
+
+    /// <summary>How many quarks each wave has.</summary>
+    /// <remarks>Disassembly: the counts at <c>$2E24</c>.</remarks>
+    public static readonly int[] Quarks =
+    [
+        0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 12, 0, 0, 0, 0, 12, 0, 0, 0, 0, 12, 0, 7, 0, 0, 12, 1, 1, 1, 1, 13, 1, 2, 2,
+        2, 14, 2, 1, 1
     ];
 
     /// <summary>

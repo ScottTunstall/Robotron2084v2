@@ -10,11 +10,11 @@ namespace RobotronSoundPlayer.Tests;
 /// <param name="soundBoard">The board.</param>
 internal sealed class TickedBoardRecorder(ISoundBoard soundBoard) : IAudioSink
 {
-    /// <summary>The game's fixed update rate: port ticks a second.</summary>
-    private const double PortTicksPerSecond = 60;
-
     /// <summary>Clock cycles in one port tick.</summary>
     private const double CyclesPerPortTick = SoundBoard.ClockHertz / PortTicksPerSecond;
+
+    /// <summary>The game's fixed update rate: port ticks a second.</summary>
+    private const double PortTicksPerSecond = 60;
 
     private double _overrunCycles;
 

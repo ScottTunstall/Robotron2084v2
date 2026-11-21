@@ -1,14 +1,12 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Robotron2084.Audio.Models;
 using Robotron2084.Audio;
+using Robotron2084.Audio.Models;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Input.Models;
-using Robotron2084.Input;
 using Robotron2084.Level.Models;
-using Robotron2084.Level;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
 using Robotron2084.States.Models;
@@ -49,12 +47,76 @@ namespace Robotron2084.States;
 /// </remarks>
 public sealed class MainMenuState : IGameState
 {
+    private const string ChooseLine = "ENTER - DO IT";
+
+    private const int ChooseLineRow = 348;
+
+    /// <summary>The gap between the cursor and the start of its row, in port pixels.</summary>
+    private const int CursorGap = 18;
+
+    /// <summary>Where the first row of the menu is, in port pixels from the top.</summary>
+    private const int FirstLineRow = 190;
+
     /// <summary>How long the page waits with no key or button pressed before going back to the title, in seconds.</summary>
     private const int IdleSeconds = 30;
+
+    /// <summary>The gap from one row of the menu to the next, in port pixels.</summary>
+    private const int LineStep = 26;
 
     /// <summary>How long the page waits with no key or button pressed before the Berzerk robot speaks, in seconds, in EXTENDED.</summary>
     /// <remarks>Port only: the author's choice.</remarks>
     private const int NoCoinsIdleSeconds = 10;
+
+    private const string SelectLine = "UP DOWN - SELECT   LEFT RIGHT - CHANGE";
+
+    private const int SelectLineRow = 330;
+
+    /// <summary>
+    ///     The sound board's number for the sound played whenever an option on the page is selected: ED12 (see
+    ///     <see cref="BoardSounds" />).
+    /// </summary>
+    /// <remarks>Port only: the author's choice.</remarks>
+    private const int SelectSoundNumber = 0x0C;
+
+    /// <summary>How dark the box behind the words is: 0 lets all of the picture show through, 1 hides it.</summary>
+    private const float ShadeOpacity = 0.65f;
+
+    /// <summary>The gap between the words and the edge of the dark box behind them, in port pixels.</summary>
+    private const int ShadePadding = 8;
+
+    /// <summary>
+    ///     The palette index of the rows, the cursor and the instructions: white. The page puts it back on its usual value
+    ///     when it opens, since the screen it came from may have left it holding anything.
+    /// </summary>
+    private const int TextPaletteIndex = 9;
+
+    /// <summary>The gap between the longest label and the values, in port pixels.</summary>
+    private const int ValueGap = 24;
+
+    /// <summary>The function keys that start a game at once, each with the game it starts.</summary>
+    private static readonly (Keys Key, GameMode GameMode)[] GameModeKeys =
+    [
+        (Keys.F1, GameMode.OnePlayer),
+        (Keys.F2, GameMode.TwoPlayerAlternate),
+        (Keys.F3, GameMode.TwoPlayerSimultaneous)
+    ];
+
+    /// <summary>The games LEFT and RIGHT step through, in order.</summary>
+    private static readonly GameMode[] GameModes =
+    [
+        GameMode.OnePlayer,
+        GameMode.TwoPlayerAlternate,
+        GameMode.TwoPlayerSimultaneous
+    ];
+
+    /// <summary>The menu's rows, in order.</summary>
+    private static readonly MainMenuLine[] Lines =
+    [
+        MainMenuLine.StartGame,
+        MainMenuLine.GameStyle,
+        MainMenuLine.Settings,
+        MainMenuLine.DeveloperTools
+    ];
 
     /// <summary>The words the Berzerk robot says when the page is left alone: "NO COINS DETECTED IN POCKET".</summary>
     /// <remarks>
@@ -70,77 +132,17 @@ public sealed class MainMenuState : IGameState
     /// </summary>
     private static readonly BerzerkVoiceSetting NoCoinsVoiceSetting = BerzerkVoiceSetting.CreateFromControlByte(0x65);
 
-    /// <summary>The gap between the words and the edge of the dark box behind them, in port pixels.</summary>
-    private const int ShadePadding = 8;
-
-    /// <summary>How dark the box behind the words is: 0 lets all of the picture show through, 1 hides it.</summary>
-    private const float ShadeOpacity = 0.65f;
-
-    /// <summary>Where the first row of the menu is, in port pixels from the top.</summary>
-    private const int FirstLineRow = 190;
-
-    /// <summary>The gap from one row of the menu to the next, in port pixels.</summary>
-    private const int LineStep = 26;
-
-    /// <summary>
-    ///     The sound board's number for the sound played whenever an option on the page is selected: ED12 (see
-    ///     <see cref="BoardSounds" />).
-    /// </summary>
-    /// <remarks>Port only: the author's choice.</remarks>
-    private const int SelectSoundNumber = 0x0C;
-
-    /// <summary>The gap between the cursor and the start of its row, in port pixels.</summary>
-    private const int CursorGap = 18;
-
-    /// <summary>The gap between the longest label and the values, in port pixels.</summary>
-    private const int ValueGap = 24;
-
-    private const string SelectLine = "UP DOWN - SELECT   LEFT RIGHT - CHANGE";
-    private const int SelectLineRow = 330;
-    private const string ChooseLine = "ENTER - DO IT";
-    private const int ChooseLineRow = 348;
-
-    /// <summary>
-    ///     The palette index of the rows, the cursor and the instructions: white. The page puts it back on its usual value
-    ///     when it opens, since the screen it came from may have left it holding anything.
-    /// </summary>
-    private const int TextPaletteIndex = 9;
-
-    /// <summary>The menu's rows, in order.</summary>
-    private static readonly MainMenuLine[] Lines =
-    [
-        MainMenuLine.StartGame,
-        MainMenuLine.GameStyle,
-        MainMenuLine.Settings,
-        MainMenuLine.DeveloperTools
-    ];
-
-    /// <summary>The games LEFT and RIGHT step through, in order.</summary>
-    private static readonly GameMode[] GameModes =
-    [
-        GameMode.OnePlayer,
-        GameMode.TwoPlayerAlternate,
-        GameMode.TwoPlayerSimultaneous
-    ];
-
-    /// <summary>The function keys that start a game at once, each with the game it starts.</summary>
-    private static readonly (Keys Key, GameMode GameMode)[] GameModeKeys =
-    [
-        (Keys.F1, GameMode.OnePlayer),
-        (Keys.F2, GameMode.TwoPlayerAlternate),
-        (Keys.F3, GameMode.TwoPlayerSimultaneous)
-    ];
-
     private readonly DefineInputsHighlight _defineInputsHighlight = new();
-    private readonly GameStateParams _gameStateParams;
     private readonly GameSettingsStore _gameSettingsStore;
+    private readonly GameStateParams _gameStateParams;
     private readonly TimeSpan _idleDuration = TimeSpan.FromSeconds(IdleSeconds);
     private readonly TextureSet _textureSet;
     private GameMode _gameMode = GameMode.OnePlayer;
-    private TimeSpan _idleElapsed;
 
     /// <summary>True once the robot has spoken for the spell of being left alone that is going on.</summary>
     private bool _hasSpokenThisIdleSpell;
+
+    private TimeSpan _idleElapsed;
     private InputSnapshot _previousSnapshot;
 
     /// <summary>Opens the page with the cursor on its first row.</summary>
@@ -161,53 +163,6 @@ public sealed class MainMenuState : IGameState
 
     /// <summary>The place in the menu of the row the cursor is on, counting from 0.</summary>
     internal int Line { get; private set; }
-
-    /// <summary>Gets the words at the left of a row: what it is, and the function keys that are its shortcuts.</summary>
-    /// <param name="line">The row.</param>
-    /// <returns>The words, in characters the small font has.</returns>
-    internal static string GetLabel(MainMenuLine line)
-    {
-        return line switch
-        {
-            MainMenuLine.StartGame => "PLAYER MODE",
-            MainMenuLine.GameStyle => "GAME STYLE",
-            MainMenuLine.Settings => "SETTINGS",
-            _ => "F10 - DEVELOPER TOOLS"
-        };
-    }
-
-    /// <summary>Gets the words of a row's value, which LEFT and RIGHT change; nothing for a row that has no value.</summary>
-    /// <param name="line">The row.</param>
-    /// <param name="gameMode">The game shown on the first row.</param>
-    /// <param name="gameStyle">The game style chosen now.</param>
-    /// <returns>The words, in characters the small font has, or an empty string.</returns>
-    internal static string GetValue(MainMenuLine line, GameMode gameMode, GameStyle gameStyle)
-    {
-        if (line == MainMenuLine.StartGame) return GetGameModeName(gameMode);
-
-        if (line == MainMenuLine.GameStyle) return GetGameStyleName(gameStyle);
-
-        return string.Empty;
-    }
-
-    /// <summary>Gets the name of a game, as the first row shows it.</summary>
-    internal static string GetGameModeName(GameMode gameMode)
-    {
-        return gameMode switch
-        {
-            GameMode.OnePlayer => "START ONE PLAYER GAME (F1)",
-            GameMode.TwoPlayerAlternate => "START TWO PLAYER ALTERNATE (F2)",
-            _ => "START TWO PLAYER SIMULTANEOUS (F3)"
-        };
-    }
-
-    /// <summary>Gets the name of a game style, as the second row shows it.</summary>
-    internal static string GetGameStyleName(GameStyle gameStyle)
-    {
-        if (gameStyle == GameStyle.Extended) return "EXTENDED";
-
-        return "CLASSIC";
-    }
 
     /// <inheritdoc />
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
@@ -265,73 +220,51 @@ public sealed class MainMenuState : IGameState
         if (_idleElapsed >= _idleDuration) gameStateManager.TransitionTo(new TitleScreenState(_gameStateParams));
     }
 
-    /// <summary>
-    ///     In EXTENDED, once the page has been left alone for <see cref="NoCoinsIdleSeconds" />, has the Berzerk robot say
-    ///     "NO COINS DETECTED IN POCKET". It says it once for each spell of being left alone, not again every
-    ///     <see cref="NoCoinsIdleSeconds" />.
-    /// </summary>
-    private void SayNoCoinsIfLeftAlone()
+    /// <summary>Gets the name of a game, as the first row shows it.</summary>
+    internal static string GetGameModeName(GameMode gameMode)
     {
-        var isLeftAlone = _idleElapsed >= TimeSpan.FromSeconds(NoCoinsIdleSeconds);
-        var isExtended = _gameStateParams.GameSettings.GameStyle == GameStyle.Extended;
-        if (_hasSpokenThisIdleSpell || !isLeftAlone || !isExtended) return;
-
-        _hasSpokenThisIdleSpell = true;
-        Speech.SayBerzerk(NoCoinsVoiceSetting, NoCoinsSpeech);
-    }
-
-    /// <summary>
-    ///     Starts the game a function key names, if one went down: F1 a one player game, F2 a two player game in turn, F3 a two
-    ///     player game at once.
-    /// </summary>
-    /// <param name="now">This tick's input.</param>
-    /// <param name="gameStateManager">The screens, for the game it starts.</param>
-    /// <returns>True when the page has been left for another.</returns>
-    private bool HandleShortcuts(InputSnapshot now, GameStateManager gameStateManager)
-    {
-        foreach (var (key, gameMode) in GameModeKeys)
+        return gameMode switch
         {
-            if (!WasKeyPressed(now, key)) continue;
-
-            _gameMode = gameMode;
-            return Choose(MainMenuLine.StartGame, gameStateManager);
-        }
-
-        return false;
+            GameMode.OnePlayer => "START ONE PLAYER GAME (F1)",
+            GameMode.TwoPlayerAlternate => "START TWO PLAYER ALTERNATE (F2)",
+            _ => "START TWO PLAYER SIMULTANEOUS (F3)"
+        };
     }
 
-    /// <summary>
-    ///     Moves the cursor on Up and Down, changes the value of its row on Left and Right, and does what its row says on
-    ///     Enter or A.
-    /// </summary>
-    /// <param name="now">This tick's input.</param>
-    /// <param name="gameStateManager">The screens, for a row that opens another.</param>
-    /// <returns>True when the page has been left for another.</returns>
-    private bool HandleCursorKeys(InputSnapshot now, GameStateManager gameStateManager)
+    /// <summary>Gets the name of a game style, as the second row shows it.</summary>
+    internal static string GetGameStyleName(GameStyle gameStyle)
     {
-        if (WasPressed(now, Keys.Up, Buttons.DPadUp) || WasPressed(now, Keys.Up, Buttons.LeftThumbstickUp)) MoveCursor(-1);
+        if (gameStyle == GameStyle.Extended) return "EXTENDED";
 
-        if (WasPressed(now, Keys.Down, Buttons.DPadDown) || WasPressed(now, Keys.Down, Buttons.LeftThumbstickDown)) MoveCursor(1);
-
-        if (WasPressed(now, Keys.Left, Buttons.DPadLeft)) ChangeValue(-1);
-
-        if (WasPressed(now, Keys.Right, Buttons.DPadRight)) ChangeValue(1);
-
-        if (WasPressed(now, Keys.Enter, Buttons.A)) return Choose(Lines[Line], gameStateManager);
-
-        return false;
+        return "CLASSIC";
     }
 
-    /// <summary>Moves the cursor up (-1) or down (1) a row, wrapping at either end. It is silent.</summary>
-    internal void MoveCursor(int step)
+    /// <summary>Gets the words at the left of a row: what it is, and the function keys that are its shortcuts.</summary>
+    /// <param name="line">The row.</param>
+    /// <returns>The words, in characters the small font has.</returns>
+    internal static string GetLabel(MainMenuLine line)
     {
-        Line = (Line + step + Lines.Length) % Lines.Length;
+        return line switch
+        {
+            MainMenuLine.StartGame => "PLAYER MODE",
+            MainMenuLine.GameStyle => "GAME STYLE",
+            MainMenuLine.Settings => "SETTINGS",
+            _ => "F10 - DEVELOPER TOOLS"
+        };
     }
 
-    /// <summary>Plays the sound that tells the player an option has been selected (<see cref="SelectSoundNumber" />).</summary>
-    private static void PlaySelectSound()
+    /// <summary>Gets the words of a row's value, which LEFT and RIGHT change; nothing for a row that has no value.</summary>
+    /// <param name="line">The row.</param>
+    /// <param name="gameMode">The game shown on the first row.</param>
+    /// <param name="gameStyle">The game style chosen now.</param>
+    /// <returns>The words, in characters the small font has, or an empty string.</returns>
+    internal static string GetValue(MainMenuLine line, GameMode gameMode, GameStyle gameStyle)
     {
-        Sound.SendDirect(SelectSoundNumber);
+        if (line == MainMenuLine.StartGame) return GetGameModeName(gameMode);
+
+        if (line == MainMenuLine.GameStyle) return GetGameStyleName(gameStyle);
+
+        return string.Empty;
     }
 
     /// <summary>
@@ -350,13 +283,6 @@ public sealed class MainMenuState : IGameState
         }
 
         if (Lines[Line] == MainMenuLine.GameStyle) SwitchGameStyle();
-    }
-
-    /// <summary>Switches between CLASSIC and EXTENDED, and saves the choice at once.</summary>
-    private void SwitchGameStyle()
-    {
-        _gameStateParams.GameSettings.ToggleGameStyle();
-        _gameSettingsStore.Save(_gameStateParams.GameSettings);
     }
 
     /// <summary>
@@ -391,19 +317,22 @@ public sealed class MainMenuState : IGameState
         }
     }
 
-    /// <summary>Gets the width of the longest label, in port pixels.</summary>
-    private int GetWidestLabelWidth()
+    /// <summary>Moves the cursor up (-1) or down (1) a row, wrapping at either end. It is silent.</summary>
+    internal void MoveCursor(int step)
     {
-        var widest = Lines.Max(line => _textureSet.ArcadeText.MeasureSmallText(GetLabel(line)));
-        return ScreenSize.ToPortPixelsFromArcadePixels(widest);
+        Line = (Line + step + Lines.Length) % Lines.Length;
     }
 
-    /// <summary>Gets where the labels start, so that the labels and the longest value together are in the middle of the screen.</summary>
-    private int GetLabelColumn()
+    /// <summary>Plays the sound that tells the player an option has been selected (<see cref="SelectSoundNumber" />).</summary>
+    private static void PlaySelectSound()
     {
-        var widestValue = GameModes.Max(gameMode => _textureSet.ArcadeText.MeasureSmallText(GetGameModeName(gameMode)));
-        var width = GetWidestLabelWidth() + ValueGap + ScreenSize.ToPortPixelsFromArcadePixels(widestValue);
-        return (ScreenSize.Width - width) / 2;
+        Sound.SendDirect(SelectSoundNumber);
+    }
+
+    /// <summary>Draws a line in the small font, in the middle of the screen.</summary>
+    private void DrawCentredSmallText(SpriteBatch spriteBatch, string text, int y)
+    {
+        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, GetCentredSmallTextColumn(text), y, TextPaletteIndex);
     }
 
     /// <summary>Draws the cursor at the left of the line it is on: the arcade's own "->".</summary>
@@ -438,10 +367,61 @@ public sealed class MainMenuState : IGameState
         return (ScreenSize.Width - width) / 2;
     }
 
-    /// <summary>Draws a line in the small font, in the middle of the screen.</summary>
-    private void DrawCentredSmallText(SpriteBatch spriteBatch, string text, int y)
+    /// <summary>Gets where the labels start, so that the labels and the longest value together are in the middle of the screen.</summary>
+    private int GetLabelColumn()
     {
-        _textureSet.ArcadeText.DrawSmallFontText(spriteBatch, text, GetCentredSmallTextColumn(text), y, TextPaletteIndex);
+        var widestValue = GameModes.Max(gameMode => _textureSet.ArcadeText.MeasureSmallText(GetGameModeName(gameMode)));
+        var width = GetWidestLabelWidth() + ValueGap + ScreenSize.ToPortPixelsFromArcadePixels(widestValue);
+        return (ScreenSize.Width - width) / 2;
+    }
+
+    /// <summary>Gets the width of the longest label, in port pixels.</summary>
+    private int GetWidestLabelWidth()
+    {
+        var widest = Lines.Max(line => _textureSet.ArcadeText.MeasureSmallText(GetLabel(line)));
+        return ScreenSize.ToPortPixelsFromArcadePixels(widest);
+    }
+
+    /// <summary>
+    ///     Moves the cursor on Up and Down, changes the value of its row on Left and Right, and does what its row says on
+    ///     Enter or A.
+    /// </summary>
+    /// <param name="now">This tick's input.</param>
+    /// <param name="gameStateManager">The screens, for a row that opens another.</param>
+    /// <returns>True when the page has been left for another.</returns>
+    private bool HandleCursorKeys(InputSnapshot now, GameStateManager gameStateManager)
+    {
+        if (WasPressed(now, Keys.Up, Buttons.DPadUp) || WasPressed(now, Keys.Up, Buttons.LeftThumbstickUp)) MoveCursor(-1);
+
+        if (WasPressed(now, Keys.Down, Buttons.DPadDown) || WasPressed(now, Keys.Down, Buttons.LeftThumbstickDown)) MoveCursor(1);
+
+        if (WasPressed(now, Keys.Left, Buttons.DPadLeft)) ChangeValue(-1);
+
+        if (WasPressed(now, Keys.Right, Buttons.DPadRight)) ChangeValue(1);
+
+        if (WasPressed(now, Keys.Enter, Buttons.A)) return Choose(Lines[Line], gameStateManager);
+
+        return false;
+    }
+
+    /// <summary>
+    ///     Starts the game a function key names, if one went down: F1 a one player game, F2 a two player game in turn, F3 a two
+    ///     player game at once.
+    /// </summary>
+    /// <param name="now">This tick's input.</param>
+    /// <param name="gameStateManager">The screens, for the game it starts.</param>
+    /// <returns>True when the page has been left for another.</returns>
+    private bool HandleShortcuts(InputSnapshot now, GameStateManager gameStateManager)
+    {
+        foreach (var (key, gameMode) in GameModeKeys)
+        {
+            if (!WasKeyPressed(now, key)) continue;
+
+            _gameMode = gameMode;
+            return Choose(MainMenuLine.StartGame, gameStateManager);
+        }
+
+        return false;
     }
 
     /// <summary>Says whether any key, or any button on either controller, went down this tick.</summary>
@@ -453,6 +433,28 @@ public sealed class MainMenuState : IGameState
         var isPadTwoPressed = now.PlayerTwoGamePadState.Buttons != _previousSnapshot.PlayerTwoGamePadState.Buttons ||
                               now.PlayerTwoGamePadState.DPad != _previousSnapshot.PlayerTwoGamePadState.DPad;
         return isKeyPressed || isPadOnePressed || isPadTwoPressed;
+    }
+
+    /// <summary>
+    ///     In EXTENDED, once the page has been left alone for <see cref="NoCoinsIdleSeconds" />, has the Berzerk robot say
+    ///     "NO COINS DETECTED IN POCKET". It says it once for each spell of being left alone, not again every
+    ///     <see cref="NoCoinsIdleSeconds" />.
+    /// </summary>
+    private void SayNoCoinsIfLeftAlone()
+    {
+        var isLeftAlone = _idleElapsed >= TimeSpan.FromSeconds(NoCoinsIdleSeconds);
+        var isExtended = _gameStateParams.GameSettings.GameStyle == GameStyle.Extended;
+        if (_hasSpokenThisIdleSpell || !isLeftAlone || !isExtended) return;
+
+        _hasSpokenThisIdleSpell = true;
+        Speech.SayBerzerk(NoCoinsVoiceSetting, NoCoinsSpeech);
+    }
+
+    /// <summary>Switches between CLASSIC and EXTENDED, and saves the choice at once.</summary>
+    private void SwitchGameStyle()
+    {
+        _gameStateParams.GameSettings.ToggleGameStyle();
+        _gameSettingsStore.Save(_gameStateParams.GameSettings);
     }
 
     /// <summary>True on the tick a key goes down.</summary>

@@ -1,7 +1,6 @@
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Events;
@@ -12,18 +11,21 @@ public sealed class GameEventHubTests
     private static readonly GameEvent AnEvent = new(GameEventKind.FamilyMemberRescued, new IntVector2(3, 4));
 
     [Fact]
-    public void EverySubscriberIsToldOfAnEvent()
+    public void ANullListenerIsRefused()
     {
         var hub = new GameEventHub();
-        var first = new RecordingGameEvents();
-        var second = new RecordingGameEvents();
-        hub.Subscribe(first);
-        hub.Subscribe(second);
+
+        _ = Assert.Throws<ArgumentNullException>(() => hub.Subscribe(null!));
+    }
+
+    [Fact]
+    public void ARaisedEventWithNobodySubscribedIsLostQuietly()
+    {
+        var hub = new GameEventHub();
 
         hub.Raise(AnEvent);
 
-        Assert.Equal([AnEvent], first.Events);
-        Assert.Equal([AnEvent], second.Events);
+        Assert.Equal(0, hub.ListenerCount);
     }
 
     [Fact]
@@ -41,21 +43,18 @@ public sealed class GameEventHubTests
     }
 
     [Fact]
-    public void ARaisedEventWithNobodySubscribedIsLostQuietly()
+    public void EverySubscriberIsToldOfAnEvent()
     {
         var hub = new GameEventHub();
+        var first = new RecordingGameEvents();
+        var second = new RecordingGameEvents();
+        hub.Subscribe(first);
+        hub.Subscribe(second);
 
         hub.Raise(AnEvent);
 
-        Assert.Equal(0, hub.ListenerCount);
-    }
-
-    [Fact]
-    public void ANullListenerIsRefused()
-    {
-        var hub = new GameEventHub();
-
-        _ = Assert.Throws<ArgumentNullException>(() => hub.Subscribe(null!));
+        Assert.Equal([AnEvent], first.Events);
+        Assert.Equal([AnEvent], second.Events);
     }
 
     [Fact]

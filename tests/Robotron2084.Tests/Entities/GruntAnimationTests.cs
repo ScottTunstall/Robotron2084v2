@@ -1,9 +1,9 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Entities;
@@ -20,22 +20,6 @@ public sealed class GruntAnimationTests
 {
     private static readonly TimeSpan OneTickSpan = TimeSpan.FromTicks(TimeSpan.TicksPerSecond / 60);
 
-    private static GameTime OneTick()
-    {
-        return new GameTime(TimeSpan.Zero, OneTickSpan);
-    }
-
-    private static PlayField CreateField()
-    {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithSeed(1).Build();
-    }
-
-    /// <summary>Drives the field through the start of the wave, until the game is live.</summary>
-    private static void RunUntilLive(PlayField playField)
-    {
-        for (var tick = 0; tick < WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
-    }
-
     [Theory]
     [InlineData(1, 0)] // RWDP1 → RWDD1
     [InlineData(2, 1)] // RWDP2 → RWDD2
@@ -44,36 +28,6 @@ public sealed class GruntAnimationTests
     public void ArcadeAnimationFrameTable_MapsTheFourRWDPFramesOntoThreeRepoFrames(int arcadeFrame, int repoIndex)
     {
         Assert.Equal(repoIndex, Grunt.GetAnimationFrameIndex(arcadeFrame));
-    }
-
-    [Fact]
-    public void Grunt_StepsTwoColumnsSidewaysAndFourRowsUpAndDown_AndBobsWhenLevelWithThePlayer()
-    {
-        var playField = CreateField();
-        RunUntilLive(playField);
-
-        // Lone grunt 200px left of the player on the same row. ROM MOVE_GRUNT: sideways it
-        // steps 2 columns (8 port px) towards the player every time; level with the player
-        // it steps DOWN 4 rows (8 port px), then back up, so it bobs rather than staying put.
-        var player = playField.Player.Position;
-        Grunt grunt = new(TestEntityParams.Create(new Random(3)), new IntVector2(player.X - 200, player.Y), 15);
-        var last = grunt.Position;
-
-        var steps = 0;
-        for (var tick = 0; tick < 600; tick++)
-        {
-            grunt.Update(OneTick(), playField);
-            if (grunt.Position == last) continue;
-
-            var dx = grunt.Position.X - last.X;
-            var dy = grunt.Position.Y - last.Y;
-            Assert.Equal(8, dx);
-            Assert.Equal(8, Math.Abs(dy));
-            last = grunt.Position;
-            steps++;
-        }
-
-        Assert.True(steps >= 8, $"expected a steady stream of 8px steps, saw {steps}");
     }
 
     [Theory]
@@ -140,6 +94,36 @@ public sealed class GruntAnimationTests
     }
 
     [Fact]
+    public void Grunt_StepsTwoColumnsSidewaysAndFourRowsUpAndDown_AndBobsWhenLevelWithThePlayer()
+    {
+        var playField = CreateField();
+        RunUntilLive(playField);
+
+        // Lone grunt 200px left of the player on the same row. ROM MOVE_GRUNT: sideways it
+        // steps 2 columns (8 port px) towards the player every time; level with the player
+        // it steps DOWN 4 rows (8 port px), then back up, so it bobs rather than staying put.
+        var player = playField.Player.Position;
+        Grunt grunt = new(TestEntityParams.Create(new Random(3)), new IntVector2(player.X - 200, player.Y), 15);
+        var last = grunt.Position;
+
+        var steps = 0;
+        for (var tick = 0; tick < 600; tick++)
+        {
+            grunt.Update(OneTick(), playField);
+            if (grunt.Position == last) continue;
+
+            var dx = grunt.Position.X - last.X;
+            var dy = grunt.Position.Y - last.Y;
+            Assert.Equal(8, dx);
+            Assert.Equal(8, Math.Abs(dy));
+            last = grunt.Position;
+            steps++;
+        }
+
+        Assert.True(steps >= 8, $"expected a steady stream of 8px steps, saw {steps}");
+    }
+
+    [Fact]
     public void Grunt_WalkFrameFreezesWhilePaused_AndAdvancesOncePerStep()
     {
         var playField = CreateField();
@@ -171,5 +155,21 @@ public sealed class GruntAnimationTests
         }
 
         Assert.True(advanced, "walk frame never advanced while stepping");
+    }
+
+    private static PlayField CreateField()
+    {
+        return new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithSeed(1).Build();
+    }
+
+    private static GameTime OneTick()
+    {
+        return new GameTime(TimeSpan.Zero, OneTickSpan);
+    }
+
+    /// <summary>Drives the field through the start of the wave, until the game is live.</summary>
+    private static void RunUntilLive(PlayField playField)
+    {
+        for (var tick = 0; tick < WaveStartTicks.UntilLive(playField); tick++) playField.Update(OneTick());
     }
 }

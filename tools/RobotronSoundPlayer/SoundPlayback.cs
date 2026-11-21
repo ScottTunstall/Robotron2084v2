@@ -29,13 +29,6 @@ internal sealed class SoundPlayback(byte[] soundRom)
         Console.WriteLine($"Wrote {soundRequest.Name} to {wavPath}. {DescribeEnding(playbackLength, seconds)}");
     }
 
-    /// <summary>Switches a fresh emulated board on and asks it for the request.</summary>
-    /// <param name="soundRequest">What to play.</param>
-    private BoardSoundSource StartSource(ISoundRequest soundRequest)
-    {
-        return new BoardSoundSource(new EmulatedSoundBoard(soundRom), soundRequest);
-    }
-
     /// <summary>Says why the sound stopped.</summary>
     /// <param name="playbackLength">The length that stopped it.</param>
     /// <param name="seconds">The time the user gave, or null.</param>
@@ -48,5 +41,12 @@ internal sealed class SoundPlayback(byte[] soundRom)
 
         return
             $"Still sounding at the {PlaybackLength.LimitSeconds} s limit: this sound does not stop by itself. Use --seconds to hear more.";
+    }
+
+    /// <summary>Switches a fresh emulated board on and asks it for the request.</summary>
+    /// <param name="soundRequest">What to play.</param>
+    private BoardSoundSource StartSource(ISoundRequest soundRequest)
+    {
+        return new BoardSoundSource(new EmulatedSoundBoard(soundRom), soundRequest);
     }
 }

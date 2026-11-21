@@ -16,23 +16,6 @@ public sealed class TunnelEffectTests
     private static int TicksPerPass => (TunnelEffect.PassClockUnits + 4) / 5;
 
     [Fact]
-    public void TheTunnelStartsAsACentreLineWithTheFirstColourPair()
-    {
-        // $570E: `LDA #$EF`, $5710: `LDX #$3B80`, $5713: `LDY #$5A82`.
-        var tunnelEffect = new TunnelEffect();
-
-        Assert.Equal((0x3B, 0x80, 0x5A, 0x82), tunnelEffect.Corners);
-        Assert.Equal(0xEF, tunnelEffect.PackedColourPair);
-        Assert.False(tunnelEffect.IsFinished);
-    }
-
-    /// <summary>Ticks the effect the way the game does — one call a tick — for <paramref name="ticks" /> ticks.</summary>
-    private static void Ticks(TunnelEffect tunnelEffect, int ticks)
-    {
-        for (var i = 0; i < ticks; i++) tunnelEffect.Update();
-    }
-
-    [Fact]
     public void EachPassDrawsTwoRingsAndStepsTheCornersOut()
     {
         // $572D seeds the counter with 2, and $5756/$575A step the top-left one COLUMN left
@@ -44,80 +27,6 @@ public sealed class TunnelEffectTests
         Assert.Equal(TunnelEffect.RingsPerPass, tunnelEffect.RingsDrawn);
         Assert.Equal((0x39, 0x7C, 0x5C, 0x86), tunnelEffect.Corners);
         Assert.Equal(0xAB, tunnelEffect.PackedColourPair); // $EF -> $CD -> $AB, one step per ring
-    }
-
-    [Fact]
-    public void TheWholeEffectLastsOnePhraseOfTheWaveEndMusic()
-    {
-        // The wave-complete screen is timed by the tunnel, and the board loops the wave-end music
-        // every 183 port ticks (3.05 s, measured through the emulated board — notes §128), so the
-        // 54 passes at PassClockUnits must land on or just past that: the music is never cut
-        // mid-phrase, which is what the author heard before this (notes §83's "~2 s" was a floor).
-        var tunnelEffect = new TunnelEffect();
-
-        var ticks = 0;
-        while (!tunnelEffect.IsFinished && ticks < 1000)
-        {
-            tunnelEffect.Update();
-            ticks++;
-        }
-
-        Assert.True(tunnelEffect.IsFinished);
-        Assert.InRange(ticks, 180, 190); // one phrase of the wave-end music
-        Assert.InRange(ticks / 60.0, 3.0, 3.2);
-    }
-
-    [Fact]
-    public void TheColourPairFollowsTheRomsChain()
-    {
-        // $5737: $12 -> $EF, $573F: $F1 -> $DE, $5747: $23 -> $F1, else $574F: `SUBA #$22`.
-        Assert.Equal(0xEF, TunnelEffect.NextPair(0x12));
-        Assert.Equal(0xDE, TunnelEffect.NextPair(0xF1));
-        Assert.Equal(0xF1, TunnelEffect.NextPair(0x23));
-
-        Assert.Equal(0xCD, TunnelEffect.NextPair(0xEF));
-        Assert.Equal(0xAB, TunnelEffect.NextPair(0xCD));
-
-        // The chain only ever visits the pairs the ROM lists, wrapping rather than running
-        // into a negative nibble.
-        var pair = 0xEF;
-        for (var i = 0; i < 64; i++)
-        {
-            pair = TunnelEffect.NextPair(pair);
-            Assert.InRange(pair, 0x00, 0xFF);
-        }
-    }
-
-    [Fact]
-    public void TheTunnelFinishesAfterTheBlackPass()
-    {
-        // 53 rings of steps to reach $0616 (column 6, row 22), plus the ring drawn at the
-        // start and at the middle: 54 rings a phase, so 108 draws over 54 frames.
-        var tunnelEffect = new TunnelEffect();
-
-        var guard = 0;
-        while (!tunnelEffect.IsFinished && guard++ < 500) tunnelEffect.Update();
-
-        Assert.True(tunnelEffect.IsFinished, "the tunnel must finish");
-        Assert.Equal(108, tunnelEffect.RingsDrawn);
-    }
-
-    [Fact]
-    public void EveryColourTheRingDrawsWithIsAValidPaletteIndex()
-    {
-        // The first cut passed the ROM's `(colour0 << 4) | colour1` — a BLITTER PLANE MASK,
-        // 0-255 — straight to the palette, so a wave clear threw on palette index 239 and the game
-        // ended. Assert the whole chain stays inside 0-15.
-        var pair = 0xEF;
-        for (var i = 0; i < 200; i++)
-        {
-            var (colour0, colour1) = TunnelEffect.GetColourPaletteIndices(pair);
-            Assert.InRange(colour0, 0, 15);
-            Assert.InRange(colour1, 0, 15);
-
-            pair = TunnelEffect.NextPair(pair);
-            if (pair == 0) break; // the erase pass draws in black
-        }
     }
 
     [Fact]
@@ -139,6 +48,24 @@ public sealed class TunnelEffectTests
         Assert.Equal(0, TunnelEffect.GetRowY(0));
         Assert.Equal(ScreenSize.Height, TunnelEffect.GetRowY(256));
         Assert.Equal(ScreenSize.Width, TunnelEffect.ToPixelX(304));
+    }
+
+    [Fact]
+    public void EveryColourTheRingDrawsWithIsAValidPaletteIndex()
+    {
+        // The first cut passed the ROM's `(colour0 << 4) | colour1` — a BLITTER PLANE MASK,
+        // 0-255 — straight to the palette, so a wave clear threw on palette index 239 and the game
+        // ended. Assert the whole chain stays inside 0-15.
+        var pair = 0xEF;
+        for (var i = 0; i < 200; i++)
+        {
+            var (colour0, colour1) = TunnelEffect.GetColourPaletteIndices(pair);
+            Assert.InRange(colour0, 0, 15);
+            Assert.InRange(colour1, 0, 15);
+
+            pair = TunnelEffect.NextPair(pair);
+            if (pair == 0) break; // the erase pass draws in black
+        }
     }
 
     [Fact]
@@ -185,5 +112,78 @@ public sealed class TunnelEffectTests
 
         tunnelEffect.Update();
         Assert.Equal(0, tunnelEffect.PackedColourPair); // still black — the pair never advances again
+    }
+
+    [Fact]
+    public void TheColourPairFollowsTheRomsChain()
+    {
+        // $5737: $12 -> $EF, $573F: $F1 -> $DE, $5747: $23 -> $F1, else $574F: `SUBA #$22`.
+        Assert.Equal(0xEF, TunnelEffect.NextPair(0x12));
+        Assert.Equal(0xDE, TunnelEffect.NextPair(0xF1));
+        Assert.Equal(0xF1, TunnelEffect.NextPair(0x23));
+
+        Assert.Equal(0xCD, TunnelEffect.NextPair(0xEF));
+        Assert.Equal(0xAB, TunnelEffect.NextPair(0xCD));
+
+        // The chain only ever visits the pairs the ROM lists, wrapping rather than running
+        // into a negative nibble.
+        var pair = 0xEF;
+        for (var i = 0; i < 64; i++)
+        {
+            pair = TunnelEffect.NextPair(pair);
+            Assert.InRange(pair, 0x00, 0xFF);
+        }
+    }
+
+    [Fact]
+    public void TheTunnelFinishesAfterTheBlackPass()
+    {
+        // 53 rings of steps to reach $0616 (column 6, row 22), plus the ring drawn at the
+        // start and at the middle: 54 rings a phase, so 108 draws over 54 frames.
+        var tunnelEffect = new TunnelEffect();
+
+        var guard = 0;
+        while (!tunnelEffect.IsFinished && guard++ < 500) tunnelEffect.Update();
+
+        Assert.True(tunnelEffect.IsFinished, "the tunnel must finish");
+        Assert.Equal(108, tunnelEffect.RingsDrawn);
+    }
+
+    [Fact]
+    public void TheTunnelStartsAsACentreLineWithTheFirstColourPair()
+    {
+        // $570E: `LDA #$EF`, $5710: `LDX #$3B80`, $5713: `LDY #$5A82`.
+        var tunnelEffect = new TunnelEffect();
+
+        Assert.Equal((0x3B, 0x80, 0x5A, 0x82), tunnelEffect.Corners);
+        Assert.Equal(0xEF, tunnelEffect.PackedColourPair);
+        Assert.False(tunnelEffect.IsFinished);
+    }
+
+    [Fact]
+    public void TheWholeEffectLastsOnePhraseOfTheWaveEndMusic()
+    {
+        // The wave-complete screen is timed by the tunnel, and the board loops the wave-end music
+        // every 183 port ticks (3.05 s, measured through the emulated board — notes §128), so the
+        // 54 passes at PassClockUnits must land on or just past that: the music is never cut
+        // mid-phrase, which is what the author heard before this (notes §83's "~2 s" was a floor).
+        var tunnelEffect = new TunnelEffect();
+
+        var ticks = 0;
+        while (!tunnelEffect.IsFinished && ticks < 1000)
+        {
+            tunnelEffect.Update();
+            ticks++;
+        }
+
+        Assert.True(tunnelEffect.IsFinished);
+        Assert.InRange(ticks, 180, 190); // one phrase of the wave-end music
+        Assert.InRange(ticks / 60.0, 3.0, 3.2);
+    }
+
+    /// <summary>Ticks the effect the way the game does — one call a tick — for <paramref name="ticks" /> ticks.</summary>
+    private static void Ticks(TunnelEffect tunnelEffect, int ticks)
+    {
+        for (var i = 0; i < ticks; i++) tunnelEffect.Update();
     }
 }

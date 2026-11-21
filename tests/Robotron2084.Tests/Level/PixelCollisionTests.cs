@@ -1,12 +1,12 @@
 using Microsoft.Xna.Framework;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
-using Robotron2084.Entities.Models;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities;
-using Robotron2084.Graphics.Models;
+using Robotron2084.Entities.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
+using Robotron2084.Graphics.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Level;
@@ -20,21 +20,17 @@ public sealed class PixelCollisionTests
     /// <summary>A one-pixel sprite, which is all the stub below needs to describe.</summary>
     private static readonly SpriteMask DotSpriteMask = SpriteMask.CreateFromPixels(1, 1, [(0, 0)]);
 
-    private static WaveParams OneMikey()
+    [Fact]
+    public void AnEntityWithNoSpriteOfItsOwn_FallsBackToItsBox()
     {
-        return new WaveParams(
-            1,
-            0,
-            0,
-            0,
-            0,
-            1,
-            0);
-    }
+        var playField = CreateField(new StubPixelCollision(false, false));
+        playField.SkipWaveStart();
+        var familyMember = playField.FieldEntities.FamilyList[0];
+        familyMember.MoveTo(playField.Player.Position);
 
-    private static PlayField CreateField(IPixelCollision? pixelCollision)
-    {
-        return new PlayFieldBuilder().WithParameters(OneMikey()).WithSeed(99).WithPixelCollision(pixelCollision).Build();
+        playField.Update(new GameTime());
+
+        Assert.Equal(1, playField.RescuesThisLife);
     }
 
     [Fact]
@@ -67,19 +63,6 @@ public sealed class PixelCollisionTests
     }
 
     [Fact]
-    public void AnEntityWithNoSpriteOfItsOwn_FallsBackToItsBox()
-    {
-        var playField = CreateField(new StubPixelCollision(false, false));
-        playField.SkipWaveStart();
-        var familyMember = playField.FieldEntities.FamilyList[0];
-        familyMember.MoveTo(playField.Player.Position);
-
-        playField.Update(new GameTime());
-
-        Assert.Equal(1, playField.RescuesThisLife);
-    }
-
-    [Fact]
     public void WithNoContactTestAtAll_TheBoxesDecide()
     {
         var playField = CreateField(null);
@@ -90,6 +73,23 @@ public sealed class PixelCollisionTests
         playField.Update(new GameTime());
 
         Assert.Equal(1, playField.RescuesThisLife);
+    }
+
+    private static PlayField CreateField(IPixelCollision? pixelCollision)
+    {
+        return new PlayFieldBuilder().WithParameters(OneMikey()).WithSeed(99).WithPixelCollision(pixelCollision).Build();
+    }
+
+    private static WaveParams OneMikey()
+    {
+        return new WaveParams(
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0);
     }
 
     /// <summary>A contact test the test drives: every pair gets the same answer, whatever the boxes say.</summary>

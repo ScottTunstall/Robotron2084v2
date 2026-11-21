@@ -7,14 +7,6 @@ namespace Robotron2084.Tests.Audio;
 public class BoardSoundsTests
 {
     [Fact]
-    public void TheListHasEveryNumberFrom1To63_InOrder_EachWithAName()
-    {
-        Assert.Equal(Enumerable.Range(BoardSounds.First, BoardSounds.Last),
-            BoardSounds.All.Select(sound => sound.Number));
-        Assert.All(BoardSounds.All, sound => Assert.NotEmpty(sound.Name));
-    }
-
-    [Fact]
     public void EverySoundTheGameSends_IsInTheList()
     {
         int[] sent =
@@ -30,5 +22,13 @@ public class BoardSoundsTests
     public void TheDisplayKeepsOnlyWhatTheFontsCanPrint(string source, string shown)
     {
         Assert.Equal(shown, SoundTestState.ToDisplay(source));
+    }
+
+    [Fact]
+    public void TheListHasEveryNumberFrom1To63_InOrder_EachWithAName()
+    {
+        Assert.Equal(Enumerable.Range(BoardSounds.First, BoardSounds.Last),
+            BoardSounds.All.Select(sound => sound.Number));
+        Assert.All(BoardSounds.All, sound => Assert.NotEmpty(sound.Name));
     }
 }

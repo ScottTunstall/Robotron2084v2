@@ -10,6 +10,13 @@ public sealed class GameEventHub : IGameEvents
     /// <summary>How many listeners are subscribed.</summary>
     public int ListenerCount => _listeners.Count;
 
+    /// <summary>Tells every listener what happened.</summary>
+    /// <param name="gameEvent">What happened and where.</param>
+    public void Raise(GameEvent gameEvent)
+    {
+        foreach (var listener in _listeners) listener.Handle(gameEvent);
+    }
+
     /// <summary>Starts telling a listener about every event from now on.</summary>
     /// <param name="listener">The listener.</param>
     /// <exception cref="ArgumentNullException"><paramref name="listener" /> is null.</exception>
@@ -18,12 +25,5 @@ public sealed class GameEventHub : IGameEvents
         ArgumentNullException.ThrowIfNull(listener);
 
         _listeners.Add(listener);
-    }
-
-    /// <summary>Tells every listener what happened.</summary>
-    /// <param name="gameEvent">What happened and where.</param>
-    public void Raise(GameEvent gameEvent)
-    {
-        foreach (var listener in _listeners) listener.Handle(gameEvent);
     }
 }

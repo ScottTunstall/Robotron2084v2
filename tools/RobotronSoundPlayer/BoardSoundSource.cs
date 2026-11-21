@@ -5,9 +5,9 @@ namespace RobotronSoundPlayer;
 /// <summary>Plays a request on a sound board through the game's own sequencer, a port tick at a time.</summary>
 internal sealed class BoardSoundSource : ISoundSource
 {
+    private readonly BoardSink _boardSink;
     private readonly SoundEngine _soundEngine;
     private readonly ISoundRequest _soundRequest;
-    private readonly BoardSink _boardSink;
 
     /// <summary>Asks a board for the request.</summary>
     /// <param name="soundBoard">The sound board.</param>

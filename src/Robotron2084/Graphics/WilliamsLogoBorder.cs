@@ -71,10 +71,10 @@ public sealed class WilliamsLogoBorder
     /// </summary>
     private const int MovingArcadeFrames = 0x02C0;
 
-    private readonly SpriteMask _logoSpriteMask;
     private readonly (int Column, int Row)[] _logoPositions = new (int, int)[LogoCount];
-    private readonly WilliamsLogoPath _williamsLogoPath = new();
+    private readonly SpriteMask _logoSpriteMask;
     private readonly byte[] _paletteIndices = new byte[Width * Height];
+    private readonly WilliamsLogoPath _williamsLogoPath = new();
     private int _clockUnits;
     private int _drawnLogoCount;
     private bool _isFirstMove;

@@ -16,8 +16,8 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public static class XnbSoundEffectReader
 {
-    /// <summary>The first three bytes of every built file.</summary>
-    private const string Signature = "XNB";
+    /// <summary>The only sample size this reader reads, in bits.</summary>
+    private const ushort BitsPerSample = 16;
 
     /// <summary>The flag bits saying the file is compressed (LZX or LZ4), which this reader cannot read.</summary>
     private const byte CompressedFlags = 0xC0;
@@ -25,11 +25,11 @@ public static class XnbSoundEffectReader
     /// <summary>The <c>WAVEFORMATEX</c> format tag of plain samples (PCM).</summary>
     private const ushort PcmFormatTag = 1;
 
-    /// <summary>The only sample size this reader reads, in bits.</summary>
-    private const ushort BitsPerSample = 16;
-
     /// <summary>The bytes in a <c>WAVEFORMATEX</c> header up to and including its bits per sample.</summary>
     private const int ShortestFormatSize = 16;
+
+    /// <summary>The first three bytes of every built file.</summary>
+    private const string Signature = "XNB";
 
     /// <summary>Reads a built sound effect's samples.</summary>
     /// <param name="stream">The built file, from its start.</param>

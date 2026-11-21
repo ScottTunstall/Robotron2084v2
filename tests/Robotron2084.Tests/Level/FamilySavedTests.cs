@@ -1,7 +1,5 @@
-using Robotron2084.Entities;
-using Robotron2084.Input;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Score;
 using Xunit;
 
@@ -10,19 +8,17 @@ namespace Robotron2084.Tests.Level;
 /// <summary>Counting the family members lost on a field, and the player's flag that says the whole family was saved.</summary>
 public sealed class FamilySavedTests
 {
-    private static PlayField CreateFieldWithFamily()
-    {
-        return new PlayFieldBuilder().WithParameters(new WaveParams(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1)).WithSeed(1)
-            .Build();
-    }
-
     [Fact]
-    public void AFreshFieldHasLostNoOne_AndHasTheWholeFamilyLeft()
+    public void AChicken_StaysAChicken_UntilTheyRescueTheWholeFamily()
     {
-        var playField = CreateFieldWithFamily();
+        var playerSlot = CreatePlayerSlot();
 
-        Assert.Equal(0, playField.GetFamilyMembersLost());
-        Assert.True(playField.FieldEntities.FamilyList.AnyAlive());
+        playerSlot.RecordWaveCleared(false);
+        playerSlot.RecordWaveCleared(false);
+        Assert.True(playerSlot.IsChicken);
+
+        playerSlot.RecordWaveCleared(true);
+        Assert.False(playerSlot.IsChicken);
     }
 
     [Fact]
@@ -48,23 +44,12 @@ public sealed class FamilySavedTests
     }
 
     [Fact]
-    public void WhenEveryFamilyMemberIsRescued_NoneIsLeft_AndNoneIsLost()
+    public void AFreshFieldHasLostNoOne_AndHasTheWholeFamilyLeft()
     {
         var playField = CreateFieldWithFamily();
 
-        foreach (var familyMember in playField.FieldEntities.FamilyList.ToList())
-        {
-            familyMember.Rescue();
-            playField.CountRescuedFamilyMembers();
-        }
-
-        Assert.False(playField.FieldEntities.FamilyList.AnyAlive());
         Assert.Equal(0, playField.GetFamilyMembersLost());
-    }
-
-    private static PlayerSlot CreatePlayerSlot()
-    {
-        return new PlayerSlot(1, new FakeInputSource(), new LivesCounter(3), 1, new ScoreBoard(0));
+        Assert.True(playField.FieldEntities.FamilyList.AnyAlive());
     }
 
     [Fact]
@@ -89,15 +74,28 @@ public sealed class FamilySavedTests
     }
 
     [Fact]
-    public void AChicken_StaysAChicken_UntilTheyRescueTheWholeFamily()
+    public void WhenEveryFamilyMemberIsRescued_NoneIsLeft_AndNoneIsLost()
     {
-        var playerSlot = CreatePlayerSlot();
+        var playField = CreateFieldWithFamily();
 
-        playerSlot.RecordWaveCleared(false);
-        playerSlot.RecordWaveCleared(false);
-        Assert.True(playerSlot.IsChicken);
+        foreach (var familyMember in playField.FieldEntities.FamilyList.ToList())
+        {
+            familyMember.Rescue();
+            playField.CountRescuedFamilyMembers();
+        }
 
-        playerSlot.RecordWaveCleared(true);
-        Assert.False(playerSlot.IsChicken);
+        Assert.False(playField.FieldEntities.FamilyList.AnyAlive());
+        Assert.Equal(0, playField.GetFamilyMembersLost());
+    }
+
+    private static PlayField CreateFieldWithFamily()
+    {
+        return new PlayFieldBuilder().WithParameters(new WaveParams(1, MikeyCount: 1, MommyCount: 1, DaddyCount: 1)).WithSeed(1)
+            .Build();
+    }
+
+    private static PlayerSlot CreatePlayerSlot()
+    {
+        return new PlayerSlot(1, new FakeInputSource(), new LivesCounter(3), 1, new ScoreBoard(0));
     }
 }

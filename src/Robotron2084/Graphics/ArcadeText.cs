@@ -99,21 +99,6 @@ public sealed class ArcadeText
     }
 
     /// <summary>
-    ///     Draws the spare-life (LIVES) icon (notes §58.2) at (x, y), PortPixelsPerArcadePixel x its
-    ///     6x8 arcade-pixel size, through the colour-cycle effect so its palette index 11
-    ///     body/arms cycle like the arcade's.
-    /// </summary>
-    public void DrawSpareLife(SpriteBatch spriteBatch, int x, int y)
-    {
-        _blitterDraw.UsePassThrough();
-        spriteBatch.Draw(
-            _spareLifeTexture,
-            new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeTexture.Width),
-                ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeTexture.Height)),
-            Color.White);
-    }
-
-    /// <summary>
     ///     Draws the arcade's rub marker — the ROM's own <c>$5E</c> glyph — at (x, y) in one palette index
     ///     (notes §116): what the initials entry shows when the letter in the cursor's cell is the delete
     ///     marker rather than a character.
@@ -170,6 +155,21 @@ public sealed class ArcadeText
     public int DrawSmallTableNumber(SpriteBatch spriteBatch, int value, int x, int y, int paletteIndex)
     {
         return DrawTableNumber(spriteBatch, _fontSmallTextures, value, x, y, paletteIndex);
+    }
+
+    /// <summary>
+    ///     Draws the spare-life (LIVES) icon (notes §58.2) at (x, y), PortPixelsPerArcadePixel x its
+    ///     6x8 arcade-pixel size, through the colour-cycle effect so its palette index 11
+    ///     body/arms cycle like the arcade's.
+    /// </summary>
+    public void DrawSpareLife(SpriteBatch spriteBatch, int x, int y)
+    {
+        _blitterDraw.UsePassThrough();
+        spriteBatch.Draw(
+            _spareLifeTexture,
+            new Rectangle(x, y, ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeTexture.Width),
+                ScreenSize.ToPortPixelsFromArcadePixels(_spareLifeTexture.Height)),
+            Color.White);
     }
 
     /// <summary>

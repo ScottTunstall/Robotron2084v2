@@ -6,11 +6,20 @@ namespace RobotronSoundPlayer.Emulation;
 /// </summary>
 internal static class Mc6800Alu
 {
-    /// <summary>The top bit of a byte: set when the byte is negative.</summary>
-    private const byte SignBit = 0x80;
+    /// <summary>Bits in one decimal digit of a packed decimal byte.</summary>
+    private const int BitsPerDigit = 4;
 
-    /// <summary>The top bit of a 16-bit word: set when the word is negative.</summary>
-    private const ushort WordSignBit = 0x8000;
+    /// <summary>The smallest sum that no longer fits in a byte.</summary>
+    private const int ByteCarry = 0x100;
+
+    /// <summary>The bit a sum's low four bits carry into.</summary>
+    private const int HalfCarryBit = 0x10;
+
+    /// <summary>What decimal adjust adds to fix the high digit.</summary>
+    private const int HighDigitCorrection = 0x60;
+
+    /// <summary>The largest value a decimal digit may hold.</summary>
+    private const int LargestDigit = 9;
 
     /// <summary>The largest positive signed byte; one more overflows.</summary>
     private const byte LargestPositive = 0x7F;
@@ -18,26 +27,17 @@ internal static class Mc6800Alu
     /// <summary>The bottom bit of a byte.</summary>
     private const byte LowBit = 0x01;
 
-    /// <summary>The bit a sum's low four bits carry into.</summary>
-    private const int HalfCarryBit = 0x10;
-
-    /// <summary>The smallest sum that no longer fits in a byte.</summary>
-    private const int ByteCarry = 0x100;
+    /// <summary>What decimal adjust adds to fix the low digit.</summary>
+    private const int LowDigitCorrection = 0x06;
 
     /// <summary>The low four bits of a byte: one decimal digit.</summary>
     private const byte LowDigitMask = 0x0F;
 
-    /// <summary>Bits in one decimal digit of a packed decimal byte.</summary>
-    private const int BitsPerDigit = 4;
+    /// <summary>The top bit of a byte: set when the byte is negative.</summary>
+    private const byte SignBit = 0x80;
 
-    /// <summary>The largest value a decimal digit may hold.</summary>
-    private const int LargestDigit = 9;
-
-    /// <summary>What decimal adjust adds to fix the low digit.</summary>
-    private const int LowDigitCorrection = 0x06;
-
-    /// <summary>What decimal adjust adds to fix the high digit.</summary>
-    private const int HighDigitCorrection = 0x60;
+    /// <summary>The top bit of a 16-bit word: set when the word is negative.</summary>
+    private const ushort WordSignBit = 0x8000;
 
     /// <summary>Adds two bytes, and the carry flag too when asked (ADD, ADC, ABA).</summary>
     /// <param name="mc6800Cpu">The processor whose flags are set.</param>

@@ -1,6 +1,6 @@
 using Robotron2084.Audio;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tests.Audio;
 using Xunit;
 
@@ -21,50 +21,49 @@ public sealed class WaveStartSpeechTests : IDisposable
         Speech.Initialise(_voice);
     }
 
+    [Fact]
+    public void AClassicWaveSaysNothing()
+    {
+        var gameSession = CreateGame();
+
+        WaveStartSpeech.Say(gameSession, CreateWave(1, GameStyle.Classic));
+        Listen();
+
+        Assert.Empty(_voice.SpokenLineNames);
+        Assert.False(gameSession.HasSaidIntruderAlert);
+    }
+
+    [Fact]
+    public void ANewGameSaysItAgain()
+    {
+        WaveStartSpeech.Say(CreateGame(), CreateWave(1, GameStyle.Extended));
+        Listen();
+        _voice.SpokenLineNames.Clear();
+
+        WaveStartSpeech.Say(CreateGame(), CreateWave(1, GameStyle.Extended));
+        Listen();
+
+        Assert.Equal(["INTRUDER", "ALERT", "INTRUDER", "ALERT"], _voice.SpokenLineNames);
+    }
+
+    [Fact]
+    public void AWaveWithoutBerzerkSpeechSaysNothingAndLeavesItForTheNextWaveThatHasIt()
+    {
+        var gameSession = CreateGame();
+
+        WaveStartSpeech.Say(gameSession, CreateWave(5, GameStyle.Extended)); // a brain wave
+        Listen();
+        Assert.Empty(_voice.SpokenLineNames);
+
+        WaveStartSpeech.Say(gameSession, CreateWave(6, GameStyle.Extended));
+        Listen();
+        Assert.Equal(["INTRUDER", "ALERT", "INTRUDER", "ALERT"], _voice.SpokenLineNames);
+    }
+
     /// <summary>Leaves the shared speech service as it was before each test.</summary>
     public void Dispose()
     {
         Speech.ResetForTesting();
-    }
-
-    private static GameSession CreateGame()
-    {
-        return GameSession.CreateNewGame(new FakeInputSource(), 1);
-    }
-
-    private static WaveParams CreateWave(int waveNumber, GameStyle gameStyle)
-    {
-        return new WaveParamsGenerator().Generate(waveNumber, gameStyle);
-    }
-
-    private void Listen()
-    {
-        for (var tick = 0; tick < MaximumTicks && Speech.IsBusy(); tick++)
-        {
-            Speech.Tick();
-            _voice.Tick();
-        }
-    }
-
-    [Fact]
-    public void TheFirstBerzerkSpeechWaveSaysIntruderAlertTwice()
-    {
-        var gameSession = CreateGame();
-
-        WaveStartSpeech.Say(gameSession, CreateWave(1, GameStyle.Extended));
-        Listen();
-
-        Assert.Equal(["INTRUDER", "ALERT", "INTRUDER", "ALERT"], _voice.SpokenLineNames);
-        Assert.True(gameSession.HasSaidIntruderAlert);
-    }
-
-    [Fact]
-    public void ItIsSaidAtThePitchTheSamplesWereRecordedAt()
-    {
-        WaveStartSpeech.Say(CreateGame(), CreateWave(1, GameStyle.Extended));
-        Listen();
-
-        Assert.All(_voice.SpokenPitchOctaves, pitchOctaves => Assert.Equal(0f, pitchOctaves));
     }
 
     [Fact]
@@ -85,41 +84,42 @@ public sealed class WaveStartSpeechTests : IDisposable
     }
 
     [Fact]
-    public void ANewGameSaysItAgain()
+    public void ItIsSaidAtThePitchTheSamplesWereRecordedAt()
     {
         WaveStartSpeech.Say(CreateGame(), CreateWave(1, GameStyle.Extended));
         Listen();
-        _voice.SpokenLineNames.Clear();
 
-        WaveStartSpeech.Say(CreateGame(), CreateWave(1, GameStyle.Extended));
-        Listen();
-
-        Assert.Equal(["INTRUDER", "ALERT", "INTRUDER", "ALERT"], _voice.SpokenLineNames);
+        Assert.All(_voice.SpokenPitchOctaves, pitchOctaves => Assert.Equal(0f, pitchOctaves));
     }
 
     [Fact]
-    public void AClassicWaveSaysNothing()
+    public void TheFirstBerzerkSpeechWaveSaysIntruderAlertTwice()
     {
         var gameSession = CreateGame();
 
-        WaveStartSpeech.Say(gameSession, CreateWave(1, GameStyle.Classic));
+        WaveStartSpeech.Say(gameSession, CreateWave(1, GameStyle.Extended));
         Listen();
 
-        Assert.Empty(_voice.SpokenLineNames);
-        Assert.False(gameSession.HasSaidIntruderAlert);
+        Assert.Equal(["INTRUDER", "ALERT", "INTRUDER", "ALERT"], _voice.SpokenLineNames);
+        Assert.True(gameSession.HasSaidIntruderAlert);
     }
 
-    [Fact]
-    public void AWaveWithoutBerzerkSpeechSaysNothingAndLeavesItForTheNextWaveThatHasIt()
+    private static GameSession CreateGame()
     {
-        var gameSession = CreateGame();
+        return GameSession.CreateNewGame(new FakeInputSource(), 1);
+    }
 
-        WaveStartSpeech.Say(gameSession, CreateWave(5, GameStyle.Extended)); // a brain wave
-        Listen();
-        Assert.Empty(_voice.SpokenLineNames);
+    private static WaveParams CreateWave(int waveNumber, GameStyle gameStyle)
+    {
+        return new WaveParamsGenerator().Generate(waveNumber, gameStyle);
+    }
 
-        WaveStartSpeech.Say(gameSession, CreateWave(6, GameStyle.Extended));
-        Listen();
-        Assert.Equal(["INTRUDER", "ALERT", "INTRUDER", "ALERT"], _voice.SpokenLineNames);
+    private void Listen()
+    {
+        for (var tick = 0; tick < MaximumTicks && Speech.IsBusy(); tick++)
+        {
+            Speech.Tick();
+            _voice.Tick();
+        }
     }
 }

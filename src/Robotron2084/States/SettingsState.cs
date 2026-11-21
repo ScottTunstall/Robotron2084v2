@@ -3,10 +3,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
-using Robotron2084.Hud.Models;
 using Robotron2084.Hud;
+using Robotron2084.Hud.Models;
 using Robotron2084.Input.Models;
-using Robotron2084.Input;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
 using Robotron2084.States.Models;
@@ -74,12 +73,12 @@ public sealed class SettingsState : IGameState
     /// </summary>
     private static readonly int[] OwnedPaletteIndices = [InputPaletteIndex, HeadingPaletteIndex];
 
+    private readonly DefineInputsHighlight _defineInputsHighlight = new();
     private readonly GameSettings _gameSettings;
     private readonly GameSettingsStore _gameSettingsStore;
-    private readonly DefineInputsHighlight _defineInputsHighlight = new();
+    private readonly GameStateParams _gameStateParams;
     private readonly HighScoreStore _highScoreStore;
     private readonly SettingsMenu _settingsMenu = new();
-    private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
     private InputSnapshot _previousSnapshot;
 

@@ -2,10 +2,9 @@ using Microsoft.Xna.Framework;
 using Robotron2084.Audio;
 using Robotron2084.Input;
 using Robotron2084.Level.Models;
-using Robotron2084.Level;
 using Robotron2084.Persistence;
-using Robotron2084.States.Models;
 using Robotron2084.States;
+using Robotron2084.States.Models;
 using Robotron2084.Tests.Audio;
 using Xunit;
 
@@ -32,6 +31,47 @@ public sealed class MainMenuStateIdleSpeechTests : IDisposable
         Speech.ResetForTesting();
     }
 
+    [Fact]
+    public void InClassic_ItIsQuiet()
+    {
+        LeaveAlone(CreateMenu(GameStyle.Classic), 29);
+
+        Assert.Empty(_voice.SpokenLineNames);
+    }
+
+    [Fact]
+    public void InExtended_AfterTenSecondsAlone_TheRobotSaysNoCoinsDetectedInPocket()
+    {
+        LeaveAlone(CreateMenu(GameStyle.Extended), 10);
+
+        Assert.Equal(["NO", "COINS", "DETECTED", "IN", "POCKET"], _voice.SpokenLineNames);
+    }
+
+    [Fact]
+    public void InExtended_ItIsQuietBeforeTenSeconds()
+    {
+        LeaveAlone(CreateMenu(GameStyle.Extended), 9);
+
+        Assert.Empty(_voice.SpokenLineNames);
+    }
+
+    [Fact]
+    public void ItIsSaidInBerzerksOwnVoiceForIt_PitchFiveAtVolumeFour()
+    {
+        LeaveAlone(CreateMenu(GameStyle.Extended), 10);
+
+        Assert.All(_voice.SpokenPitchOctaves, octaves => Assert.Equal(BerzerkVoice.GetPitchOctaves(5), octaves));
+        Assert.All(_voice.SpokenVolumeShares, volumeShare => Assert.Equal(BerzerkVoice.GetVolumeShare(4), volumeShare));
+    }
+
+    [Fact]
+    public void ItSaysItOnce_NotAgainEveryTenSeconds()
+    {
+        LeaveAlone(CreateMenu(GameStyle.Extended), 29);
+
+        Assert.Equal(5, _voice.SpokenLineNames.Count);
+    }
+
     private static MainMenuState CreateMenu(GameStyle gameStyle)
     {
         var gameSettings = GameSettings.CreateFactoryDefaults();
@@ -54,46 +94,5 @@ public sealed class MainMenuStateIdleSpeechTests : IDisposable
                 _voice.Tick();
             }
         }
-    }
-
-    [Fact]
-    public void InExtended_AfterTenSecondsAlone_TheRobotSaysNoCoinsDetectedInPocket()
-    {
-        LeaveAlone(CreateMenu(GameStyle.Extended), 10);
-
-        Assert.Equal(["NO", "COINS", "DETECTED", "IN", "POCKET"], _voice.SpokenLineNames);
-    }
-
-    [Fact]
-    public void InExtended_ItIsQuietBeforeTenSeconds()
-    {
-        LeaveAlone(CreateMenu(GameStyle.Extended), 9);
-
-        Assert.Empty(_voice.SpokenLineNames);
-    }
-
-    [Fact]
-    public void ItSaysItOnce_NotAgainEveryTenSeconds()
-    {
-        LeaveAlone(CreateMenu(GameStyle.Extended), 29);
-
-        Assert.Equal(5, _voice.SpokenLineNames.Count);
-    }
-
-    [Fact]
-    public void InClassic_ItIsQuiet()
-    {
-        LeaveAlone(CreateMenu(GameStyle.Classic), 29);
-
-        Assert.Empty(_voice.SpokenLineNames);
-    }
-
-    [Fact]
-    public void ItIsSaidInBerzerksOwnVoiceForIt_PitchFiveAtVolumeFour()
-    {
-        LeaveAlone(CreateMenu(GameStyle.Extended), 10);
-
-        Assert.All(_voice.SpokenPitchOctaves, octaves => Assert.Equal(BerzerkVoice.GetPitchOctaves(5), octaves));
-        Assert.All(_voice.SpokenVolumeShares, volumeShare => Assert.Equal(BerzerkVoice.GetVolumeShare(4), volumeShare));
     }
 }

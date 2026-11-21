@@ -1,5 +1,5 @@
-using Robotron2084.Persistence.Models;
 using Robotron2084.Persistence;
+using Robotron2084.Persistence.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.Persistence;
@@ -33,20 +33,69 @@ public sealed class HighScoreTableTests
     }
 
     [Fact]
-    public void Submit_InsertInOrder_AndDropsTheLowest()
+    public void Qualifies_IsTheRomsTodchkAndAllchk()
     {
         var highScoreTable = HighScoreTable.CreateWithFactoryScores();
 
-        var result = highScoreTable.Submit(40000, "ABC");
+        // Zero beats nothing: TODAY's lowest is CJM 24110 and the all-time tail is blank (NULSCR).
+        Assert.False(highScoreTable.Qualifies(0));
+        Assert.False(highScoreTable.QualifiesForToday(HighScoreTable.FactoryToday[^1].Score));
+        Assert.True(highScoreTable.Qualifies(25000));
+        Assert.True(highScoreTable.QualifiesForToday(25000));
+        Assert.True(highScoreTable.QualifiesForAllTime(25000));
 
-        Assert.False(result.BecomesTop);
-        Assert.True(result.EnteredToday);
-        Assert.True(result.EnteredAllTime); // the all-time table's tail is blanks, so 40000 beats its 36th
+        // Beating the top entry counts as qualifying on its own (GODCHK).
+        Assert.True(highScoreTable.QualifiesForAllTime(highScoreTable.TopScoreEntry.Score + 1));
+    }
 
-        // It lands after JER (41250) and before KID (31920): highest first, and the
-        // today's list keeps exactly its ten rows.
-        Assert.Equal(40000, highScoreTable.Today[4].Score);
-        Assert.Equal(10, highScoreTable.Today.Count);
+    [Fact]
+    public void Store_RoundTripsTheAllTimeListAndTheTop_AndSeedsTodayFromTheRom()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"robotron-hs-{Guid.NewGuid():N}.json");
+        try
+        {
+            var saved = HighScoreTable.CreateWithFactoryScores();
+            saved.Submit(200000, "ACE"); // a new top (and the old top drops into the list)
+            saved.Submit(12345, "ABC"); // today's only
+            HighScoreStore.Save(path, saved);
+
+            var loaded = HighScoreStore.Load(path);
+
+            Assert.Equal(200000, loaded.TopScoreEntry.Score);
+            Assert.Contains(loaded.AllTime, e => e.Score == 151782);
+
+            // TODAY'S is not saved: the ROM reloads it from TODTAB at power-up (CKHS).
+            Assert.Equal(HighScoreTable.FactoryToday.Select(e => (e.GetDisplayName(), e.Score)),
+                loaded.Today.Select(e => (e.GetDisplayName(), e.Score)));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Store_WithAnUnreadableJsonFile_ThrowsNamingTheFile()
+    {
+        var broken = Path.Combine(Path.GetTempPath(), $"robotron-hs-{Guid.NewGuid():N}.json");
+        File.WriteAllText(broken, "{ not json at all");
+        try
+        {
+            var exception = Assert.Throws<PersistenceException>(() => HighScoreStore.Load(broken));
+
+            Assert.Contains(broken, exception.Message); // the user must be told WHICH file failed
+        }
+        finally
+        {
+            File.Delete(broken);
+        }
+    }
+
+    [Fact]
+    public void Store_WithNoFile_YieldsTheFactoryTable()
+    {
+        var missing = Path.Combine(Path.GetTempPath(), $"robotron-hs-{Guid.NewGuid():N}.json");
+        Assert.Equal(151782, HighScoreStore.Load(missing).TopScoreEntry.Score);
     }
 
     [Fact]
@@ -69,22 +118,6 @@ public sealed class HighScoreTableTests
     }
 
     [Fact]
-    public void Submit_BeatingTheTop_BecomesTheTopAndPushesTheOldOneDown()
-    {
-        var highScoreTable = HighScoreTable.CreateWithFactoryScores();
-
-        var result = highScoreTable.Submit(200000, "ACE");
-
-        Assert.True(result.BecomesTop);
-        Assert.Equal(200000, highScoreTable.TopScoreEntry.Score);
-        Assert.Equal("ACE", highScoreTable.TopScoreEntry.Name);
-
-        // The old "GOD" entry drops into the all-time list, and the list stays full.
-        Assert.Equal(("WIL", 151782), (highScoreTable.AllTime[0].GetDisplayName(), highScoreTable.AllTime[0].Score));
-        Assert.Equal(36, highScoreTable.AllTime.Count);
-    }
-
-    [Fact]
     public void Submit_AScoreThatBeatsNothing_ChangesNothing()
     {
         var highScoreTable = HighScoreTable.CreateWithFactoryScores();
@@ -98,19 +131,19 @@ public sealed class HighScoreTableTests
     }
 
     [Fact]
-    public void Qualifies_IsTheRomsTodchkAndAllchk()
+    public void Submit_BeatingTheTop_BecomesTheTopAndPushesTheOldOneDown()
     {
         var highScoreTable = HighScoreTable.CreateWithFactoryScores();
 
-        // Zero beats nothing: TODAY's lowest is CJM 24110 and the all-time tail is blank (NULSCR).
-        Assert.False(highScoreTable.Qualifies(0));
-        Assert.False(highScoreTable.QualifiesForToday(HighScoreTable.FactoryToday[^1].Score));
-        Assert.True(highScoreTable.Qualifies(25000));
-        Assert.True(highScoreTable.QualifiesForToday(25000));
-        Assert.True(highScoreTable.QualifiesForAllTime(25000));
+        var result = highScoreTable.Submit(200000, "ACE");
 
-        // Beating the top entry counts as qualifying on its own (GODCHK).
-        Assert.True(highScoreTable.QualifiesForAllTime(highScoreTable.TopScoreEntry.Score + 1));
+        Assert.True(result.BecomesTop);
+        Assert.Equal(200000, highScoreTable.TopScoreEntry.Score);
+        Assert.Equal("ACE", highScoreTable.TopScoreEntry.Name);
+
+        // The old "GOD" entry drops into the all-time list, and the list stays full.
+        Assert.Equal(("WIL", 151782), (highScoreTable.AllTime[0].GetDisplayName(), highScoreTable.AllTime[0].Score));
+        Assert.Equal(36, highScoreTable.AllTime.Count);
     }
 
     [Fact]
@@ -143,52 +176,19 @@ public sealed class HighScoreTableTests
     }
 
     [Fact]
-    public void Store_RoundTripsTheAllTimeListAndTheTop_AndSeedsTodayFromTheRom()
+    public void Submit_InsertInOrder_AndDropsTheLowest()
     {
-        var path = Path.Combine(Path.GetTempPath(), $"robotron-hs-{Guid.NewGuid():N}.json");
-        try
-        {
-            var saved = HighScoreTable.CreateWithFactoryScores();
-            saved.Submit(200000, "ACE"); // a new top (and the old top drops into the list)
-            saved.Submit(12345, "ABC"); // today's only
-            HighScoreStore.Save(path, saved);
+        var highScoreTable = HighScoreTable.CreateWithFactoryScores();
 
-            var loaded = HighScoreStore.Load(path);
+        var result = highScoreTable.Submit(40000, "ABC");
 
-            Assert.Equal(200000, loaded.TopScoreEntry.Score);
-            Assert.Contains(loaded.AllTime, e => e.Score == 151782);
+        Assert.False(result.BecomesTop);
+        Assert.True(result.EnteredToday);
+        Assert.True(result.EnteredAllTime); // the all-time table's tail is blanks, so 40000 beats its 36th
 
-            // TODAY'S is not saved: the ROM reloads it from TODTAB at power-up (CKHS).
-            Assert.Equal(HighScoreTable.FactoryToday.Select(e => (e.GetDisplayName(), e.Score)),
-                loaded.Today.Select(e => (e.GetDisplayName(), e.Score)));
-        }
-        finally
-        {
-            File.Delete(path);
-        }
-    }
-
-    [Fact]
-    public void Store_WithNoFile_YieldsTheFactoryTable()
-    {
-        var missing = Path.Combine(Path.GetTempPath(), $"robotron-hs-{Guid.NewGuid():N}.json");
-        Assert.Equal(151782, HighScoreStore.Load(missing).TopScoreEntry.Score);
-    }
-
-    [Fact]
-    public void Store_WithAnUnreadableJsonFile_ThrowsNamingTheFile()
-    {
-        var broken = Path.Combine(Path.GetTempPath(), $"robotron-hs-{Guid.NewGuid():N}.json");
-        File.WriteAllText(broken, "{ not json at all");
-        try
-        {
-            var exception = Assert.Throws<PersistenceException>(() => HighScoreStore.Load(broken));
-
-            Assert.Contains(broken, exception.Message); // the user must be told WHICH file failed
-        }
-        finally
-        {
-            File.Delete(broken);
-        }
+        // It lands after JER (41250) and before KID (31920): highest first, and the
+        // today's list keeps exactly its ten rows.
+        Assert.Equal(40000, highScoreTable.Today[4].Score);
+        Assert.Equal(10, highScoreTable.Today.Count);
     }
 }

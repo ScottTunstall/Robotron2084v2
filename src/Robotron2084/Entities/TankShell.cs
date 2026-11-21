@@ -1,14 +1,14 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
-using Robotron2084.Events.Models;
 using Robotron2084.Events;
+using Robotron2084.Events.Models;
 using Robotron2084.Graphics;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Entities;
@@ -54,9 +54,9 @@ public sealed class TankShell : IEntity, IAnimationFrameSource, IRemovable
     private static readonly int RowPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
 
     private readonly ArcadeFrameTimer _beatArcadeFrameTimer = new();
+    private readonly IGameEvents _gameEvents;
     private readonly ArcadeFrameTimer _moveArcadeFrameTimer = new();
     private readonly Rectangle _playfieldBounds;
-    private readonly IGameEvents _gameEvents;
     private readonly TextureSet _textureSet;
 
     /// <summary><see cref="Robotron2084.Core.ArcadeFrameTimer">Beats</see> left before the shell fizzles out.</summary>

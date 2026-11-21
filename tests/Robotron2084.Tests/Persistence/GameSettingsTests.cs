@@ -1,5 +1,4 @@
 using Robotron2084.Level.Models;
-using Robotron2084.Level;
 using Robotron2084.Persistence;
 using Xunit;
 
@@ -9,15 +8,26 @@ namespace Robotron2084.Tests.Persistence;
 public sealed class GameSettingsTests
 {
     [Fact]
-    public void FactorySettingsAreTheArcardsRecommendedStops()
+    public void AttractModeSoundIsTurnedOffByLeftAndOnByRight()
     {
-        var gameSettings = GameSettings.CreateFactoryDefaults();
+        var gameSettings = new GameSettings();
 
-        Assert.Equal(25, gameSettings.ExtraLifeEvery);
-        Assert.Equal(25_000, gameSettings.GetExtraLifeEveryPoints());
-        Assert.Equal(3, gameSettings.TurnsPerPlayer);
-        Assert.Equal(GameSettings.RecommendedDifficulty, gameSettings.Difficulty);
-        Assert.False(gameSettings.AttractModeSoundEnabled); // the port's demo is silent until the operator turns it on
+        gameSettings.BumpAttractModeSound(-1);
+        Assert.False(gameSettings.AttractModeSoundEnabled);
+
+        gameSettings.BumpAttractModeSound(1);
+        Assert.True(gameSettings.AttractModeSoundEnabled);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(10)]
+    public void DifficultyClampsToTheRomsRange(int difficulty)
+    {
+        var gameSettings = new GameSettings { Difficulty = difficulty };
+
+        gameSettings.BumpDifficulty(difficulty == 0 ? -1 : 1);
+        Assert.Equal(difficulty, gameSettings.Difficulty);
     }
 
     [Fact]
@@ -50,63 +60,16 @@ public sealed class GameSettingsTests
         Assert.Equal(30, gameSettings.ExtraLifeEvery); // steps on from the factory stop, 25
     }
 
-    [Theory]
-    [InlineData(1)]
-    [InlineData(20)]
-    public void TurnsPerPlayerClampsToTheRomsRange(int turns)
-    {
-        var gameSettings = new GameSettings { TurnsPerPlayer = turns };
-
-        gameSettings.BumpTurnsPerPlayer(turns == 1 ? -1 : 1);
-        Assert.Equal(turns, gameSettings.TurnsPerPlayer);
-    }
-
-    [Theory]
-    [InlineData(0)]
-    [InlineData(10)]
-    public void DifficultyClampsToTheRomsRange(int difficulty)
-    {
-        var gameSettings = new GameSettings { Difficulty = difficulty };
-
-        gameSettings.BumpDifficulty(difficulty == 0 ? -1 : 1);
-        Assert.Equal(difficulty, gameSettings.Difficulty);
-    }
-
     [Fact]
-    public void ResetToFactoryRestoresEverySetting()
+    public void FactorySettingsAreTheArcardsRecommendedStops()
     {
-        var gameSettings = new GameSettings
-        {
-            ExtraLifeEvery = 0,
-            TurnsPerPlayer = 20,
-            Difficulty = 10,
-            AttractModeSoundEnabled = true,
-            TankShellBugEnabled = false,
-            BrainsChaseMikeyBugEnabled = false,
-            BozoModeEnabled = false
-        };
-
-        gameSettings.ResetToFactory();
+        var gameSettings = GameSettings.CreateFactoryDefaults();
 
         Assert.Equal(25, gameSettings.ExtraLifeEvery);
+        Assert.Equal(25_000, gameSettings.GetExtraLifeEveryPoints());
         Assert.Equal(3, gameSettings.TurnsPerPlayer);
-        Assert.Equal(5, gameSettings.Difficulty);
-        Assert.False(gameSettings.AttractModeSoundEnabled);
-        Assert.True(gameSettings.TankShellBugEnabled);
-        Assert.True(gameSettings.BrainsChaseMikeyBugEnabled);
-        Assert.True(gameSettings.BozoModeEnabled);
-    }
-
-    [Fact]
-    public void AttractModeSoundIsTurnedOffByLeftAndOnByRight()
-    {
-        var gameSettings = new GameSettings();
-
-        gameSettings.BumpAttractModeSound(-1);
-        Assert.False(gameSettings.AttractModeSoundEnabled);
-
-        gameSettings.BumpAttractModeSound(1);
-        Assert.True(gameSettings.AttractModeSoundEnabled);
+        Assert.Equal(GameSettings.RecommendedDifficulty, gameSettings.Difficulty);
+        Assert.False(gameSettings.AttractModeSoundEnabled); // the port's demo is silent until the operator turns it on
     }
 
     [Theory]
@@ -136,6 +99,31 @@ public sealed class GameSettingsTests
     }
 
     [Fact]
+    public void ResetToFactoryRestoresEverySetting()
+    {
+        var gameSettings = new GameSettings
+        {
+            ExtraLifeEvery = 0,
+            TurnsPerPlayer = 20,
+            Difficulty = 10,
+            AttractModeSoundEnabled = true,
+            TankShellBugEnabled = false,
+            BrainsChaseMikeyBugEnabled = false,
+            BozoModeEnabled = false
+        };
+
+        gameSettings.ResetToFactory();
+
+        Assert.Equal(25, gameSettings.ExtraLifeEvery);
+        Assert.Equal(3, gameSettings.TurnsPerPlayer);
+        Assert.Equal(5, gameSettings.Difficulty);
+        Assert.False(gameSettings.AttractModeSoundEnabled);
+        Assert.True(gameSettings.TankShellBugEnabled);
+        Assert.True(gameSettings.BrainsChaseMikeyBugEnabled);
+        Assert.True(gameSettings.BozoModeEnabled);
+    }
+
+    [Fact]
     public void TheGameStyleStartsClassic_AndTogglesToExtendedAndBack_AndRestoringTheFactorySettingsLeavesIt()
     {
         var gameSettings = GameSettings.CreateFactoryDefaults();
@@ -149,5 +137,16 @@ public sealed class GameSettingsTests
 
         gameSettings.ToggleGameStyle();
         Assert.Equal(GameStyle.Classic, gameSettings.GameStyle);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(20)]
+    public void TurnsPerPlayerClampsToTheRomsRange(int turns)
+    {
+        var gameSettings = new GameSettings { TurnsPerPlayer = turns };
+
+        gameSettings.BumpTurnsPerPlayer(turns == 1 ? -1 : 1);
+        Assert.Equal(turns, gameSettings.TurnsPerPlayer);
     }
 }

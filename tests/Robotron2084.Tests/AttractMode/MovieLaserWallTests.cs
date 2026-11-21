@@ -1,5 +1,5 @@
-using Robotron2084.AttractMode.Models;
 using Robotron2084.AttractMode;
+using Robotron2084.AttractMode.Models;
 using Xunit;
 
 namespace Robotron2084.Tests.AttractMode;
@@ -13,7 +13,7 @@ public sealed class MovieLaserWallTests
     public void ABoltNeverLeavesThePlayfield(int startColumn, int velocity)
     {
         var boltMovieObject = new MovieObject(null, 0, startColumn << 8, 100 << 8)
-            { IsLaser = true, XVelocitySubpixels = velocity };
+        { IsLaser = true, XVelocitySubpixels = velocity };
 
         for (var frame = 0; frame < 100; frame++) AttractObjectMachine.MoveLaserWithinTheWalls(boltMovieObject);
 

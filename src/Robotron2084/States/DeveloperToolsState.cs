@@ -5,7 +5,6 @@ using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Graphics;
 using Robotron2084.Input.Models;
-using Robotron2084.Input;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
 using Robotron2084.States.Models;
@@ -99,8 +98,8 @@ public sealed class DeveloperToolsState : IGameState
     private static readonly int[] OwnedPaletteIndices = [OptionPaletteIndex, HeadingPaletteIndex];
 
     private readonly ControlSettingsStore _controlSettingsStore;
-    private readonly GameSettingsStore _gameSettingsStore;
     private readonly DefineInputsHighlight _defineInputsHighlight = new();
+    private readonly GameSettingsStore _gameSettingsStore;
     private readonly GameStateParams _gameStateParams;
     private readonly TextureSet _textureSet;
 
@@ -177,19 +176,6 @@ public sealed class DeveloperToolsState : IGameState
         _previousSnapshot = now;
     }
 
-    /// <summary>Moves the cursor, wrapping at either end of the list.</summary>
-    private static int Move(int line, int step)
-    {
-        var count = Options.Length;
-        return (line % count + count + step) % count;
-    }
-
-    /// <summary>Leaves the page for the screen the highlighted option names.</summary>
-    private void Choose(int line, GameStateManager gameStateManager)
-    {
-        gameStateManager.TransitionTo(CreateScreen(line));
-    }
-
     /// <summary>Makes the screen an option opens.</summary>
     /// <param name="line">The option's place in <see cref="Options" />.</param>
     /// <returns>The screen.</returns>
@@ -218,6 +204,19 @@ public sealed class DeveloperToolsState : IGameState
             () => new SpeechTestState(_gameStateParams, SpeechFolders.Berzerk)
         ];
         return screenMakers[line]();
+    }
+
+    /// <summary>Moves the cursor, wrapping at either end of the list.</summary>
+    private static int Move(int line, int step)
+    {
+        var count = Options.Length;
+        return (line % count + count + step) % count;
+    }
+
+    /// <summary>Leaves the page for the screen the highlighted option names.</summary>
+    private void Choose(int line, GameStateManager gameStateManager)
+    {
+        gameStateManager.TransitionTo(CreateScreen(line));
     }
 
     /// <summary>

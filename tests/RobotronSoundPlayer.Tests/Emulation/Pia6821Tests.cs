@@ -9,6 +9,18 @@ public class Pia6821Tests
     private const byte SoundRomControlB = 0x37;
 
     [Fact]
+    public void AFallingCb1_DoesNothing_WhenTheChipIsSetForRisingEdges()
+    {
+        var pia6821 = new Pia6821();
+        pia6821.SetCb1(true);
+        pia6821.WriteRegister(3, SoundRomControlB);
+
+        pia6821.SetCb1(false);
+
+        Assert.False(pia6821.IsInterruptRequested);
+    }
+
+    [Fact]
     public void ARisingCb1_RequestsAnInterrupt_WhenTheChipIsSetForRisingEdges()
     {
         var pia6821 = new Pia6821();
@@ -20,15 +32,14 @@ public class Pia6821Tests
     }
 
     [Fact]
-    public void AFallingCb1_DoesNothing_WhenTheChipIsSetForRisingEdges()
+    public void PortA_ShowsTheWrittenValueOnOutputPins_AndHighOnInputPins()
     {
         var pia6821 = new Pia6821();
-        pia6821.SetCb1(true);
-        pia6821.WriteRegister(3, SoundRomControlB);
+        pia6821.WriteRegister(0, 0x0F); // direction register: low four pins are outputs
+        pia6821.WriteRegister(1, 0x04); // select the data register
+        pia6821.WriteRegister(0, 0x05);
 
-        pia6821.SetCb1(false);
-
-        Assert.False(pia6821.IsInterruptRequested);
+        Assert.Equal(0xF5, pia6821.PortAPins);
     }
 
     [Fact]
@@ -43,16 +54,5 @@ public class Pia6821Tests
 
         Assert.Equal(0xDA, value);
         Assert.False(pia6821.IsInterruptRequested);
-    }
-
-    [Fact]
-    public void PortA_ShowsTheWrittenValueOnOutputPins_AndHighOnInputPins()
-    {
-        var pia6821 = new Pia6821();
-        pia6821.WriteRegister(0, 0x0F); // direction register: low four pins are outputs
-        pia6821.WriteRegister(1, 0x04); // select the data register
-        pia6821.WriteRegister(0, 0x05);
-
-        Assert.Equal(0xF5, pia6821.PortAPins);
     }
 }

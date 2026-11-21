@@ -5,26 +5,6 @@ namespace Robotron2084.Tests.Level;
 
 public sealed class WaveTableTests
 {
-    [Theory]
-    [InlineData(1, 1)]
-    [InlineData(40, 40)]
-    [InlineData(41, 21)]
-    [InlineData(42, 22)]
-    [InlineData(60, 40)]
-    [InlineData(61, 21)]
-    [InlineData(100, 40)]
-    [InlineData(0, 1)]
-    public void ResolveWave_AppliesArcadeRepeatRule(int wave, int expected)
-    {
-        Assert.Equal(expected, WaveTable.ResolveWave(wave));
-    }
-
-    [Fact]
-    public void ForWave_Wave41_EqualsWave21_WholeRow()
-    {
-        Assert.Equal(WaveTable.GetParameters(21), WaveTable.GetParameters(41));
-    }
-
     [Fact]
     public void ForWave_KnownArcadeValues()
     {
@@ -39,5 +19,25 @@ public sealed class WaveTableTests
         Assert.Equal(10, w40.MommyCount);
         Assert.Equal(1, w40.SpheroidCount);
         Assert.Equal(1, w40.QuarkCount);
+    }
+
+    [Fact]
+    public void ForWave_Wave41_EqualsWave21_WholeRow()
+    {
+        Assert.Equal(WaveTable.GetParameters(21), WaveTable.GetParameters(41));
+    }
+
+    [Theory]
+    [InlineData(1, 1)]
+    [InlineData(40, 40)]
+    [InlineData(41, 21)]
+    [InlineData(42, 22)]
+    [InlineData(60, 40)]
+    [InlineData(61, 21)]
+    [InlineData(100, 40)]
+    [InlineData(0, 1)]
+    public void ResolveWave_AppliesArcadeRepeatRule(int wave, int expected)
+    {
+        Assert.Equal(expected, WaveTable.ResolveWave(wave));
     }
 }

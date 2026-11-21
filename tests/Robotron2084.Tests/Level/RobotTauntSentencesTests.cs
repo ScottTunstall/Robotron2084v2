@@ -10,21 +10,13 @@ public sealed class RobotTauntSentencesTests
 {
     private static readonly BerzerkWord[] OrderWords = [Get, Charge, Attack, Destroy, Shoot, Kill];
 
-    /// <summary>Turns each sentence into its words with spaces between, so a list can be compared as text.</summary>
-    private static string[] GetSentenceTexts(IEnumerable<IReadOnlyList<BerzerkWord>> sentences)
+    [Fact]
+    public void
+            FamilyWithHulksOrBrains_IsTheOrdersAtItTheIntrudersTheFamilyOrTheHumans_AndTheHumansOrFamilyMustNotEscape()
     {
-        return [.. sentences.Select(sentence => string.Join(' ', sentence)).Order()];
-    }
+        var expected = GetExpectedTexts([[It], [The, Intruders], [The, Family], [The, Humans]], [Humans, Family]);
 
-    /// <summary>Makes the expected sentences: each order with each target, then each escaper's MUST NOT ESCAPE.</summary>
-    private static string[] GetExpectedTexts(BerzerkWord[][] targetWords, BerzerkWord[] escaperWords,
-        params BerzerkWord[][] otherSentences)
-    {
-        var orderSentences = OrderWords.SelectMany(orderWord =>
-            targetWords.Select(target => (IReadOnlyList<BerzerkWord>)[orderWord, .. target]));
-        var escapeSentences = escaperWords.Select(escaperWord => (IReadOnlyList<BerzerkWord>)
-            [The, escaperWord, Must, Not, Escape]);
-        return GetSentenceTexts([.. orderSentences, .. escapeSentences, .. otherSentences]);
+        Assert.Equal(expected, GetSentenceTexts(RobotTauntSentences.FamilyWithHulksOrBrains));
     }
 
     [Fact]
@@ -47,6 +39,19 @@ public sealed class RobotTauntSentencesTests
     }
 
     [Fact]
+    public void OnlyTheChickenLists_SayChickenOrChickens()
+    {
+        IReadOnlyList<BerzerkWord>[] notChickenSentences =
+        [
+            .. RobotTauntSentences.OnePlayer, .. RobotTauntSentences.TwoPlayers,
+            .. RobotTauntSentences.FamilyWithHulksOrBrains
+        ];
+
+        Assert.DoesNotContain(notChickenSentences,
+            sentence => sentence.Contains(Chicken) || sentence.Contains(Chickens));
+    }
+
+    [Fact]
     public void TwoPlayers_IsKillIt_TheOrdersAtTheIntrudersOrTheHumanoids_AndTheHumanoidsMustNotEscape()
     {
         var expected = GetExpectedTexts([[The, Intruders], [The, Humanoids]], [Humanoids], [Kill, It]);
@@ -62,25 +67,20 @@ public sealed class RobotTauntSentencesTests
         Assert.Equal(expected, GetSentenceTexts(RobotTauntSentences.TwoPlayersChicken));
     }
 
-    [Fact]
-    public void
-        FamilyWithHulksOrBrains_IsTheOrdersAtItTheIntrudersTheFamilyOrTheHumans_AndTheHumansOrFamilyMustNotEscape()
+    /// <summary>Makes the expected sentences: each order with each target, then each escaper's MUST NOT ESCAPE.</summary>
+    private static string[] GetExpectedTexts(BerzerkWord[][] targetWords, BerzerkWord[] escaperWords,
+        params BerzerkWord[][] otherSentences)
     {
-        var expected = GetExpectedTexts([[It], [The, Intruders], [The, Family], [The, Humans]], [Humans, Family]);
-
-        Assert.Equal(expected, GetSentenceTexts(RobotTauntSentences.FamilyWithHulksOrBrains));
+        var orderSentences = OrderWords.SelectMany(orderWord =>
+            targetWords.Select(target => (IReadOnlyList<BerzerkWord>)[orderWord, .. target]));
+        var escapeSentences = escaperWords.Select(escaperWord => (IReadOnlyList<BerzerkWord>)
+            [The, escaperWord, Must, Not, Escape]);
+        return GetSentenceTexts([.. orderSentences, .. escapeSentences, .. otherSentences]);
     }
 
-    [Fact]
-    public void OnlyTheChickenLists_SayChickenOrChickens()
+    /// <summary>Turns each sentence into its words with spaces between, so a list can be compared as text.</summary>
+    private static string[] GetSentenceTexts(IEnumerable<IReadOnlyList<BerzerkWord>> sentences)
     {
-        IReadOnlyList<BerzerkWord>[] notChickenSentences =
-        [
-            .. RobotTauntSentences.OnePlayer, .. RobotTauntSentences.TwoPlayers,
-            .. RobotTauntSentences.FamilyWithHulksOrBrains
-        ];
-
-        Assert.DoesNotContain(notChickenSentences,
-            sentence => sentence.Contains(Chicken) || sentence.Contains(Chickens));
+        return [.. sentences.Select(sentence => string.Join(' ', sentence)).Order()];
     }
 }

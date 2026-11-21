@@ -1,6 +1,5 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Palette;
 using Robotron2084.Tuning;
 
 namespace Robotron2084.Graphics;
@@ -173,6 +172,9 @@ public sealed class TextureSet
         ArcadeText = new ArcadeText(BlitterDraw, FontLargeTextures, FontSmallTextures, SpareLifeTexture);
     }
 
+    /// <summary>The arcade's text, printed in these sprites' fonts.</summary>
+    public ArcadeText ArcadeText { get; }
+
     /// <summary>
     ///     The attract movie's CRUISE MISSILE — ROM `CRUSB` ($86BA, the 9x2 sprite
     ///     the movie's own CRUSM descriptor points at; notes §95.6). The playfield's
@@ -253,6 +255,20 @@ public sealed class TextureSet
     public Texture2D[] HulkAnimationFrameTextures { get; }
 
     /// <summary>
+    ///     The attract page's large title letters — "ROBOTRON:" — as two WHITE MASKS at 1x arcade pixels,
+    ///     TRACED from an arcade screenshot by <c>tools/extract-title-logos.py</c> (notes
+    ///     §103.4): the R5 CPU ROM we hold does not contain these sprites. <see cref="LargeTitleLettersCoreTexture" />
+    ///     is the letters' body and <see cref="LargeTitleLettersRimTexture" /> the one-pixel rim round them,
+    ///     because the arcade blits a shape in a colour taken from the LIVE palette — so the page
+    ///     draws each mask in a palette index and the large title letters colour-cycles with the page's own
+    ///     colour processes (notes §104).
+    /// </summary>
+    public Texture2D LargeTitleLettersCoreTexture { get; }
+
+    /// <summary>The one-pixel rim round the large title letters' letters (see <see cref="LargeTitleLettersCoreTexture" />).</summary>
+    public Texture2D LargeTitleLettersRimTexture { get; }
+
+    /// <summary>
     ///     Player laser sprites — the four ROM sprites (R5 $35BE-$35DC, byte-identical
     ///     to old source RRG23 LLPC/ULPC/DLLPC/ULLPC). Built at arcade-pixel size (1 arcade pixel = 1 texture pixel);
     ///     <see cref="BlitterDraw.DrawSprite" /> scales by PortPixelsPerArcadePixel and centres in the laser's
@@ -269,26 +285,25 @@ public sealed class TextureSet
     public Texture2D LaserDiagonalMainTexture { get; }
 
     /// <summary>
+    ///     The menu page's picture: red robots on a green grid, 320 by 200 arcade pixels, in the arcade's own colours. The
+    ///     front robot's eyes are in the grunt's eye colour, so they flash the same way. Made from the author's painting
+    ///     by <c>tools/make-main-menu-art.py</c>. Port only.
+    /// </summary>
+    public Texture2D MainMenuRobotTexture { get; }
+
+    /// <summary>
     ///     The family members' sprites — 12 frames each (4 directions × 3 walk
     ///     frames, same layout as the player frames; Mikey = Mikey_*, Mommy =
     ///     Mommy_*, Daddy = Daddy_*).
     /// </summary>
     public Texture2D[] MikeyAnimationFrameTextures { get; }
 
-    /// <summary>
-    ///     The arcade's spare-life icon sprite — the LIVES icon (notes §58.2). ROM MNPIC
-    ///     (`$3592` metadata, `$3596` pixels): 3 bytes x 8 rows = 6x8 px, one icon per
-    ///     spare life, 8 px apart, next to that player's score. It is NOT the 8x12
-    ///     player sprite. Loaded from <c>Sprites/SpareLife</c>, which the sprite extractor cut out of the ROM listing;
-    ///     its palette index 11 body pixels carry the palette index 11 cycling marker. Each pixel keeps its own colour:
-    ///     head palette index 2, body and arms 11 (a cycling palette index, so the body shimmers), legs 8, feet 3.
-    /// </summary>
-    public Texture2D SpareLifeTexture { get; }
-
     public Texture2D[] MommyAnimationFrameTextures { get; }
 
     public Texture2D[] PlayerAnimationFrameTextures { get; }
+
     public Texture2D ProgBurstTexture { get; }
+
     public Texture2D[] QuarkAnimationFrameTextures { get; }
 
     /// <summary>
@@ -300,6 +315,16 @@ public sealed class TextureSet
 
     /// <summary>Skull &amp; crossbones family-death marker (ROM: familydeath).</summary>
     public Texture2D SkullTexture { get; }
+
+    /// <summary>
+    ///     The arcade's spare-life icon sprite — the LIVES icon (notes §58.2). ROM MNPIC
+    ///     (`$3592` metadata, `$3596` pixels): 3 bytes x 8 rows = 6x8 px, one icon per
+    ///     spare life, 8 px apart, next to that player's score. It is NOT the 8x12
+    ///     player sprite. Loaded from <c>Sprites/SpareLife</c>, which the sprite extractor cut out of the ROM listing;
+    ///     its palette index 11 body pixels carry the palette index 11 cycling marker. Each pixel keeps its own colour:
+    ///     head palette index 2, body and arms 11 (a cycling palette index, so the body shimmers), legs 8, feet 3.
+    /// </summary>
+    public Texture2D SpareLifeTexture { get; }
 
     public Texture2D[] SparkAnimationFrameTextures { get; }
     public Texture2D[] SpheroidAnimationFrameTextures { get; }
@@ -316,36 +341,12 @@ public sealed class TextureSet
     /// <summary>ROM tank shell (raw data $4FF2, 7×16 = 14×16 px; notes §11.5).</summary>
     public Texture2D TankShellTexture { get; }
 
-    /// <summary>The arcade's text, printed in these sprites' fonts.</summary>
-    public ArcadeText ArcadeText { get; }
-
     /// <summary>
     ///     The "2084" mark beneath the large title letters — COLOUR sprite, traced the same way and snapped to the
     ///     arcade's own palette (notes §103.4). Unlike the large title letters it keeps its own colours: only the
     ///     large title letters cycles.
     /// </summary>
     public Texture2D Title2084Texture { get; }
-
-    /// <summary>
-    ///     The menu page's picture: red robots on a green grid, 320 by 200 arcade pixels, in the arcade's own colours. The
-    ///     front robot's eyes are in the grunt's eye colour, so they flash the same way. Made from the author's painting
-    ///     by <c>tools/make-main-menu-art.py</c>. Port only.
-    /// </summary>
-    public Texture2D MainMenuRobotTexture { get; }
-
-    /// <summary>
-    ///     The attract page's large title letters — "ROBOTRON:" — as two WHITE MASKS at 1x arcade pixels,
-    ///     TRACED from an arcade screenshot by <c>tools/extract-title-logos.py</c> (notes
-    ///     §103.4): the R5 CPU ROM we hold does not contain these sprites. <see cref="LargeTitleLettersCoreTexture" />
-    ///     is the letters' body and <see cref="LargeTitleLettersRimTexture" /> the one-pixel rim round them,
-    ///     because the arcade blits a shape in a colour taken from the LIVE palette — so the page
-    ///     draws each mask in a palette index and the large title letters colour-cycles with the page's own
-    ///     colour processes (notes §104).
-    /// </summary>
-    public Texture2D LargeTitleLettersCoreTexture { get; }
-
-    /// <summary>The one-pixel rim round the large title letters' letters (see <see cref="LargeTitleLettersCoreTexture" />).</summary>
-    public Texture2D LargeTitleLettersRimTexture { get; }
 
     /// <summary>1x1 white pixel for the wall ring (tinted per draw call).</summary>
     public Texture2D WallPixelTexture { get; }

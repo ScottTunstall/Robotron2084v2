@@ -1,12 +1,10 @@
 using Microsoft.Xna.Framework;
 using Robotron2084.Core.Models;
-using Robotron2084.Core;
-using Robotron2084.Entities.Models;
 using Robotron2084.Entities;
+using Robotron2084.Entities.Models;
 using Robotron2084.Events.Models;
-using Robotron2084.Events;
-using Robotron2084.Level.Models;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Tests.Events;
 using Xunit;
 
@@ -16,46 +14,6 @@ namespace Robotron2084.Tests.Entities;
 public sealed class EntityGameEventTests
 {
     private static readonly IntVector2 Spot = new(120, 90);
-
-    private static FamilyMember CreateFamilyMember(RecordingGameEvents recording)
-    {
-        return new FamilyMember(TestEntityParams.Create(new Random(1), recording), Spot, FamilyMemberKind.Mommy);
-    }
-
-    [Fact]
-    public void ARescuedFamilyMemberAnnouncesTheRescueOnce()
-    {
-        var recording = new RecordingGameEvents();
-        var familyMember = CreateFamilyMember(recording);
-
-        familyMember.Rescue();
-        familyMember.Rescue();
-
-        Assert.Equal([new GameEvent(GameEventKind.FamilyMemberRescued, Spot)], recording.Events);
-    }
-
-    [Fact]
-    public void AKilledFamilyMemberAnnouncesTheDeathOnce()
-    {
-        var recording = new RecordingGameEvents();
-        var familyMember = CreateFamilyMember(recording);
-
-        familyMember.Kill();
-        familyMember.Kill();
-
-        Assert.Equal([new GameEvent(GameEventKind.FamilyMemberKilled, Spot)], recording.Events);
-    }
-
-    [Fact]
-    public void AFamilyMemberAnnouncesThatReprogrammingBegan()
-    {
-        var recording = new RecordingGameEvents();
-        var familyMember = CreateFamilyMember(recording);
-
-        familyMember.BeginReprogramming();
-
-        Assert.Equal([new GameEvent(GameEventKind.FamilyMemberReprogrammingBegan, Spot)], recording.Events);
-    }
 
     [Fact]
     public void ADeadFamilyMemberCannotBeRescued()
@@ -70,61 +28,36 @@ public sealed class EntityGameEventTests
     }
 
     [Fact]
-    public void AKilledPlayerAnnouncesTheDeath()
+    public void AFamilyMemberAnnouncesThatReprogrammingBegan()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, new LivesCounter(3)) { InvincibleForTesting = false };
+        var familyMember = CreateFamilyMember(recording);
 
-        player.Kill();
-        player.Kill();
+        familyMember.BeginReprogramming();
 
-        Assert.Equal([new GameEvent(GameEventKind.PlayerKilled, Spot)], recording.Events);
+        Assert.Equal([new GameEvent(GameEventKind.FamilyMemberReprogrammingBegan, Spot)], recording.Events);
     }
 
     [Fact]
-    public void AnInvinciblePlayerAnnouncesNothing()
+    public void AHulkThatIsKnockedBackAnnouncesIt()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, new LivesCounter(3)) { InvincibleForTesting = true };
+        var hulk = new Hulk(TestEntityParams.Create(new Random(1), recording), Spot, 2, () => Spot);
 
-        player.Kill();
+        hulk.ApplyKnockback(Direction8.Right);
 
-        Assert.Empty(recording.Events);
+        Assert.Equal([new GameEvent(GameEventKind.HulkKnockedBack, hulk.Position)], recording.Events);
     }
 
     [Fact]
-    public void AnExtraLifeIsAnnounced()
+    public void AKilledCruiseMissileAnnouncesItWasACruiseMissile()
     {
         var recording = new RecordingGameEvents();
-        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, new LivesCounter(3));
+        var cruiseMissile = new CruiseMissile(TestEntityParams.Create(new Random(1), recording), Spot, new IntVector2(300, 200));
 
-        player.AddLife();
+        cruiseMissile.Kill();
 
-        Assert.Equal([new GameEvent(GameEventKind.ExtraLifeAwarded, Spot)], recording.Events);
-    }
-
-    [Fact]
-    public void AKilledGruntAnnouncesWhichRobotDiedOnce()
-    {
-        var recording = new RecordingGameEvents();
-        var grunt = new Grunt(TestEntityParams.Create(new Random(1), recording), Spot, 10);
-
-        grunt.Kill();
-        grunt.Kill();
-
-        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.Grunt)], recording.Events);
-    }
-
-    [Fact]
-    public void AKilledProgAnnouncesItWasAProg()
-    {
-        var recording = new RecordingGameEvents();
-        var prog = new Prog(TestEntityParams.Create(new Random(1), recording), Spot, FamilyMemberKind.Daddy);
-
-        prog.Kill();
-        prog.Kill();
-
-        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.Prog)], recording.Events);
+        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.CruiseMissile)], recording.Events);
     }
 
     [Fact]
@@ -140,14 +73,15 @@ public sealed class EntityGameEventTests
     }
 
     [Fact]
-    public void AHulkThatIsKnockedBackAnnouncesIt()
+    public void AKilledFamilyMemberAnnouncesTheDeathOnce()
     {
         var recording = new RecordingGameEvents();
-        var hulk = new Hulk(TestEntityParams.Create(new Random(1), recording), Spot, 2, () => Spot);
+        var familyMember = CreateFamilyMember(recording);
 
-        hulk.ApplyKnockback(Direction8.Right);
+        familyMember.Kill();
+        familyMember.Kill();
 
-        Assert.Equal([new GameEvent(GameEventKind.HulkKnockedBack, hulk.Position)], recording.Events);
+        Assert.Equal([new GameEvent(GameEventKind.FamilyMemberKilled, Spot)], recording.Events);
     }
 
     [Fact]
@@ -161,6 +95,42 @@ public sealed class EntityGameEventTests
         gorf.Kill();
 
         Assert.Equal([new GameEvent(GameEventKind.GorfKilled, gorf.Position)], recording.Events);
+    }
+
+    [Fact]
+    public void AKilledGruntAnnouncesWhichRobotDiedOnce()
+    {
+        var recording = new RecordingGameEvents();
+        var grunt = new Grunt(TestEntityParams.Create(new Random(1), recording), Spot, 10);
+
+        grunt.Kill();
+        grunt.Kill();
+
+        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.Grunt)], recording.Events);
+    }
+
+    [Fact]
+    public void AKilledPlayerAnnouncesTheDeath()
+    {
+        var recording = new RecordingGameEvents();
+        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, new LivesCounter(3)) { InvincibleForTesting = false };
+
+        player.Kill();
+        player.Kill();
+
+        Assert.Equal([new GameEvent(GameEventKind.PlayerKilled, Spot)], recording.Events);
+    }
+
+    [Fact]
+    public void AKilledProgAnnouncesItWasAProg()
+    {
+        var recording = new RecordingGameEvents();
+        var prog = new Prog(TestEntityParams.Create(new Random(1), recording), Spot, FamilyMemberKind.Daddy);
+
+        prog.Kill();
+        prog.Kill();
+
+        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.Prog)], recording.Events);
     }
 
     [Fact]
@@ -187,17 +157,6 @@ public sealed class EntityGameEventTests
     }
 
     [Fact]
-    public void AKilledCruiseMissileAnnouncesItWasACruiseMissile()
-    {
-        var recording = new RecordingGameEvents();
-        var cruiseMissile = new CruiseMissile(TestEntityParams.Create(new Random(1), recording), Spot, new IntVector2(300, 200));
-
-        cruiseMissile.Kill();
-
-        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.CruiseMissile)], recording.Events);
-    }
-
-    [Fact]
     public void ALaserThatIsUsedUpAnnouncesItOnce()
     {
         var recording = new RecordingGameEvents();
@@ -207,6 +166,40 @@ public sealed class EntityGameEventTests
         laser.Kill();
 
         Assert.Equal([new GameEvent(GameEventKind.PlayerLaserDestroyed, Spot)], recording.Events);
+    }
+
+    [Fact]
+    public void AnExtraLifeIsAnnounced()
+    {
+        var recording = new RecordingGameEvents();
+        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, new LivesCounter(3));
+
+        player.AddLife();
+
+        Assert.Equal([new GameEvent(GameEventKind.ExtraLifeAwarded, Spot)], recording.Events);
+    }
+
+    [Fact]
+    public void AnInvinciblePlayerAnnouncesNothing()
+    {
+        var recording = new RecordingGameEvents();
+        var player = new Player(TestEntityParams.Create(new Random(1), recording), Spot, new LivesCounter(3)) { InvincibleForTesting = true };
+
+        player.Kill();
+
+        Assert.Empty(recording.Events);
+    }
+
+    [Fact]
+    public void ARescuedFamilyMemberAnnouncesTheRescueOnce()
+    {
+        var recording = new RecordingGameEvents();
+        var familyMember = CreateFamilyMember(recording);
+
+        familyMember.Rescue();
+        familyMember.Rescue();
+
+        Assert.Equal([new GameEvent(GameEventKind.FamilyMemberRescued, Spot)], recording.Events);
     }
 
     [Fact]
@@ -223,5 +216,10 @@ public sealed class EntityGameEventTests
         Assert.Equal(
             [new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.Prog), new GameEvent(GameEventKind.PlayerKilled, playField.Player.Position)],
             recording.Events);
+    }
+
+    private static FamilyMember CreateFamilyMember(RecordingGameEvents recording)
+    {
+        return new FamilyMember(TestEntityParams.Create(new Random(1), recording), Spot, FamilyMemberKind.Mommy);
     }
 }

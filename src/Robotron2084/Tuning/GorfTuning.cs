@@ -1,5 +1,4 @@
 using Robotron2084.Audio.Models;
-using Robotron2084.Audio;
 
 namespace Robotron2084.Tuning;
 
@@ -18,6 +17,33 @@ public static class GorfTuning
     /// <summary>The gap left between grunts dropped side by side, in port pixels.</summary>
     public const int DropGapPixels = 4;
 
+    /// <summary>How many places on its way across Gorf stops to drop grunts, evenly spaced.</summary>
+    public const int DropStops = 3;
+
+    /// <summary>How far a dropped grunt falls each <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, in port pixels.</summary>
+    public const int FallPixelsPerTick = 4;
+
+    /// <summary>How high every hop goes, in rows (one arcade pixel each). They are all the same height.</summary>
+    public const int HopRows = 16;
+
+    /// <summary>How many steps one hop takes, from leaving the ground to landing.</summary>
+    public const int HopSteps = 12;
+
+    /// <summary>How many electrodes the first wave, which introduces Gorf, has.</summary>
+    public const int IntroWaveElectrodeCount = 10;
+
+    /// <summary>The most grunts Gorf drops at one stop.</summary>
+    public const int MaxGruntsPerDrop = 6;
+
+    /// <summary>
+    ///     The fewest grunts a wave may hold, whatever the wave brings, so that a Gorf in a wave with no grunts can
+    ///     still drop some.
+    /// </summary>
+    public const int MinGruntCount = 6;
+
+    /// <summary>The gap left between Gorf's whole body and the player's box when it is to keep clear of the player, in port pixels.</summary>
+    public const int PlayerClearancePixels = 12;
+
     /// <summary>
     ///     How many <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see> pass between Gorf being shot, with
     ///     grunts still to drop, and a new Gorf coming on to drop them.
@@ -30,8 +56,8 @@ public static class GorfTuning
     /// </summary>
     public const int ReturnDropIntervalFifths = 4;
 
-    /// <summary>The gap left between Gorf's whole body and the player's box when it is to keep clear of the player, in port pixels.</summary>
-    public const int PlayerClearancePixels = 12;
+    /// <summary>How far Gorf goes sideways each step, in port pixels.</summary>
+    public const int StepPixels = 6;
 
     /// <summary>
     ///     The speech lines Gorf says, one of them picked by chance, when it first appears in the first wave: "Long live
@@ -48,31 +74,4 @@ public static class GorfTuning
         GorfLine.GorfiansTakeNoPrisoners,
         GorfLine.GorfianDoom
     ];
-
-    /// <summary>How many electrodes the first wave, which introduces Gorf, has.</summary>
-    public const int IntroWaveElectrodeCount = 10;
-
-    /// <summary>How many places on its way across Gorf stops to drop grunts, evenly spaced.</summary>
-    public const int DropStops = 3;
-
-    /// <summary>How far a dropped grunt falls each <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>, in port pixels.</summary>
-    public const int FallPixelsPerTick = 4;
-
-    /// <summary>How high every hop goes, in rows (one arcade pixel each). They are all the same height.</summary>
-    public const int HopRows = 16;
-
-    /// <summary>How many steps one hop takes, from leaving the ground to landing.</summary>
-    public const int HopSteps = 12;
-
-    /// <summary>The most grunts Gorf drops at one stop.</summary>
-    public const int MaxGruntsPerDrop = 6;
-
-    /// <summary>
-    ///     The fewest grunts a wave may hold, whatever the wave brings, so that a Gorf in a wave with no grunts can
-    ///     still drop some.
-    /// </summary>
-    public const int MinGruntCount = 6;
-
-    /// <summary>How far Gorf goes sideways each step, in port pixels.</summary>
-    public const int StepPixels = 6;
 }

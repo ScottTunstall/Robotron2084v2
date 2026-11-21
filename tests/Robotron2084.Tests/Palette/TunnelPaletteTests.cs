@@ -13,23 +13,27 @@ namespace Robotron2084.Tests.Palette;
 public sealed class TunnelPaletteTests
 {
     [Fact]
-    public void TheArcadeShipsTwelveRampsAndTheirStartMasks()
+    public void EachPassSlidesTheWindowOneValueAndWalksTheBlackPaletteIndexDown()
     {
-        // $576D: twelve 4-byte descriptors (address, mask, 0) — `$59B9`'s `CMPA #$0C` retries
-        // until the random index is under twelve.
-        Assert.Equal(12, TunnelPalette.Ramps.Length);
-        Assert.Equal(12, TunnelPalette.StartMasks.Length);
+        // $59D2: the stored pointer — the window's first value — goes up ONE a pass, and
+        // $59F2's `DECA / CMPA #$05 / BCS` walks the black offset 4,3,2,1,0,4...
+        var tunnelPalette = new TunnelPalette(new Random(3));
+        tunnelPalette.Start();
 
-        foreach (var ramp in TunnelPalette.Ramps)
-        {
-            // A ramp runs to its zero terminator ($59E2 skips a zero and wraps), so a ramp the
-            // port stores never CONTAINS one, and the fifteen-value window always fits.
-            Assert.True(ramp.Length >= TunnelPalette.PaletteIndexCount, $"ramp of {ramp.Length} is too short");
-            Assert.DoesNotContain((byte)0x00, ramp);
-        }
+        var pointer = tunnelPalette.WindowStartIndex;
+        Assert.Equal(4, tunnelPalette.BlackOffset);
 
-        Assert.Equal([0x1F, 0x3F, 0x3F, 0x0F, 0x0F, 0x0F, 0x0F, 0x1F, 0x1F, 0x0F, 0x1F, 0x1F],
-            TunnelPalette.StartMasks);
+        tunnelPalette.Advance();
+        Assert.Equal(pointer + 1, tunnelPalette.WindowStartIndex);
+        Assert.Equal(3, tunnelPalette.BlackOffset);
+
+        for (var i = 0; i < 3; i++) tunnelPalette.Advance();
+
+        Assert.Equal(0, tunnelPalette.BlackOffset);
+
+        tunnelPalette.Advance();
+        Assert.Equal(4, tunnelPalette.BlackOffset); // 0 wraps back to 4, never to 5
+        Assert.Equal(pointer + 5, tunnelPalette.WindowStartIndex);
     }
 
     [Fact]
@@ -59,6 +63,26 @@ public sealed class TunnelPaletteTests
     }
 
     [Fact]
+    public void TheArcadeShipsTwelveRampsAndTheirStartMasks()
+    {
+        // $576D: twelve 4-byte descriptors (address, mask, 0) — `$59B9`'s `CMPA #$0C` retries
+        // until the random index is under twelve.
+        Assert.Equal(12, TunnelPalette.Ramps.Length);
+        Assert.Equal(12, TunnelPalette.StartMasks.Length);
+
+        foreach (var ramp in TunnelPalette.Ramps)
+        {
+            // A ramp runs to its zero terminator ($59E2 skips a zero and wraps), so a ramp the
+            // port stores never CONTAINS one, and the fifteen-value window always fits.
+            Assert.True(ramp.Length >= TunnelPalette.PaletteIndexCount, $"ramp of {ramp.Length} is too short");
+            Assert.DoesNotContain((byte)0x00, ramp);
+        }
+
+        Assert.Equal([0x1F, 0x3F, 0x3F, 0x0F, 0x0F, 0x0F, 0x0F, 0x1F, 0x1F, 0x0F, 0x1F, 0x1F],
+            TunnelPalette.StartMasks);
+    }
+
+    [Fact]
     public void TheLitPaletteIndicesAreConsecutiveRampValuesSoTheyReadAsAGradient()
     {
         // $59E0: `LDA ,X+ / STA ,Y+` — fifteen CONSECUTIVE ramp values, in palette index order. The walk
@@ -84,38 +108,6 @@ public sealed class TunnelPaletteTests
         }
     }
 
-    /// <summary>The three palette indices this pass blits black — `$9801+A`, `$9806+A`, `$980B+A`.</summary>
-    private static int[] BlackedPaletteIndices(TunnelPalette tunnelPalette)
-    {
-        return TunnelPalette.BlackPaletteIndices
-            .Select(offset => TunnelPalette.FirstPaletteIndex + offset + tunnelPalette.BlackOffset)
-            .ToArray();
-    }
-
-    [Fact]
-    public void EachPassSlidesTheWindowOneValueAndWalksTheBlackPaletteIndexDown()
-    {
-        // $59D2: the stored pointer — the window's first value — goes up ONE a pass, and
-        // $59F2's `DECA / CMPA #$05 / BCS` walks the black offset 4,3,2,1,0,4...
-        var tunnelPalette = new TunnelPalette(new Random(3));
-        tunnelPalette.Start();
-
-        var pointer = tunnelPalette.WindowStartIndex;
-        Assert.Equal(4, tunnelPalette.BlackOffset);
-
-        tunnelPalette.Advance();
-        Assert.Equal(pointer + 1, tunnelPalette.WindowStartIndex);
-        Assert.Equal(3, tunnelPalette.BlackOffset);
-
-        for (var i = 0; i < 3; i++) tunnelPalette.Advance();
-
-        Assert.Equal(0, tunnelPalette.BlackOffset);
-
-        tunnelPalette.Advance();
-        Assert.Equal(4, tunnelPalette.BlackOffset); // 0 wraps back to 4, never to 5
-        Assert.Equal(pointer + 5, tunnelPalette.WindowStartIndex);
-    }
-
     [Fact]
     public void TheWindowAlwaysFitsInsideTheRamp()
     {
@@ -131,5 +123,13 @@ public sealed class TunnelPaletteTests
             Assert.InRange(tunnelPalette.WindowStartIndex, 0, ramp.Length - 1);
             tunnelPalette.Advance();
         }
+    }
+
+    /// <summary>The three palette indices this pass blits black — `$9801+A`, `$9806+A`, `$980B+A`.</summary>
+    private static int[] BlackedPaletteIndices(TunnelPalette tunnelPalette)
+    {
+        return TunnelPalette.BlackPaletteIndices
+            .Select(offset => TunnelPalette.FirstPaletteIndex + offset + tunnelPalette.BlackOffset)
+            .ToArray();
     }
 }

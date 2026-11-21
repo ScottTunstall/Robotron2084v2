@@ -1,6 +1,5 @@
 using Microsoft.Xna.Framework.Audio;
 using Robotron2084.Audio.Models;
-using Robotron2084.Audio;
 using Xunit;
 
 namespace Robotron2084.Tests.Audio.Models;
@@ -10,57 +9,6 @@ public sealed class PcmSoundTests
 {
     /// <summary>A sample rate where one millisecond is one sample, to keep the numbers small.</summary>
     private const int OneSamplePerMillisecond = 1000;
-
-    private static PcmSound CreateMono(params short[] samples)
-    {
-        return new PcmSound(ToBytes(samples), OneSamplePerMillisecond, AudioChannels.Mono);
-    }
-
-    private static byte[] ToBytes(short[] samples)
-    {
-        var bytes = new byte[samples.Length * 2];
-        Buffer.BlockCopy(samples, 0, bytes, 0, bytes.Length);
-        return bytes;
-    }
-
-    private static short[] ToSamples(byte[] bytes)
-    {
-        var samples = new short[bytes.Length / 2];
-        Buffer.BlockCopy(bytes, 0, samples, 0, bytes.Length);
-        return samples;
-    }
-
-    [Fact]
-    public void CutsTheSilenceAtBothEnds()
-    {
-        var trimmed = CreateMono(0, 0, 0, 500, -700, 300, 0, 0).GetTrimmed(64, 0);
-
-        Assert.Equal([500, -700, 300], ToSamples(trimmed.Samples));
-    }
-
-    [Fact]
-    public void KeepsTheMarginOfSilenceAtEachEnd()
-    {
-        var trimmed = CreateMono(0, 0, 0, 0, 500, 0, 0, 0, 0).GetTrimmed(64, 2);
-
-        Assert.Equal([0, 0, 500, 0, 0], ToSamples(trimmed.Samples));
-    }
-
-    [Fact]
-    public void TheMarginStopsAtTheSoundsOwnEnds()
-    {
-        var trimmed = CreateMono(0, 500, 0).GetTrimmed(64, 10);
-
-        Assert.Equal([0, 500, 0], ToSamples(trimmed.Samples));
-    }
-
-    [Fact]
-    public void KeepsQuietSamplesInsideTheSound()
-    {
-        var trimmed = CreateMono(0, 500, 0, 0, 10, 0, 500, 0).GetTrimmed(64, 0);
-
-        Assert.Equal([500, 0, 0, 10, 0, 500], ToSamples(trimmed.Samples));
-    }
 
     [Fact]
     public void ASampleAtTheSilenceLevelIsSilence()
@@ -91,6 +39,30 @@ public sealed class PcmSoundTests
     }
 
     [Fact]
+    public void CutsTheSilenceAtBothEnds()
+    {
+        var trimmed = CreateMono(0, 0, 0, 500, -700, 300, 0, 0).GetTrimmed(64, 0);
+
+        Assert.Equal([500, -700, 300], ToSamples(trimmed.Samples));
+    }
+
+    [Fact]
+    public void KeepsQuietSamplesInsideTheSound()
+    {
+        var trimmed = CreateMono(0, 500, 0, 0, 10, 0, 500, 0).GetTrimmed(64, 0);
+
+        Assert.Equal([500, 0, 0, 10, 0, 500], ToSamples(trimmed.Samples));
+    }
+
+    [Fact]
+    public void KeepsTheMarginOfSilenceAtEachEnd()
+    {
+        var trimmed = CreateMono(0, 0, 0, 0, 500, 0, 0, 0, 0).GetTrimmed(64, 2);
+
+        Assert.Equal([0, 0, 500, 0, 0], ToSamples(trimmed.Samples));
+    }
+
+    [Fact]
     public void KeepsTheSampleRate()
     {
         Assert.Equal(OneSamplePerMillisecond, CreateMono(0, 500, 0).GetTrimmed(64, 0).SampleRate);
@@ -103,5 +75,32 @@ public sealed class PcmSoundTests
 
         Assert.Equal("silenceLevel", Assert.Throws<ArgumentOutOfRangeException>(() => pcmSound.GetTrimmed(-1, 0)).ParamName);
         Assert.Equal("marginMilliseconds", Assert.Throws<ArgumentOutOfRangeException>(() => pcmSound.GetTrimmed(0, -1)).ParamName);
+    }
+
+    [Fact]
+    public void TheMarginStopsAtTheSoundsOwnEnds()
+    {
+        var trimmed = CreateMono(0, 500, 0).GetTrimmed(64, 10);
+
+        Assert.Equal([0, 500, 0], ToSamples(trimmed.Samples));
+    }
+
+    private static PcmSound CreateMono(params short[] samples)
+    {
+        return new PcmSound(ToBytes(samples), OneSamplePerMillisecond, AudioChannels.Mono);
+    }
+
+    private static byte[] ToBytes(short[] samples)
+    {
+        var bytes = new byte[samples.Length * 2];
+        Buffer.BlockCopy(samples, 0, bytes, 0, bytes.Length);
+        return bytes;
+    }
+
+    private static short[] ToSamples(byte[] bytes)
+    {
+        var samples = new short[bytes.Length / 2];
+        Buffer.BlockCopy(bytes, 0, samples, 0, bytes.Length);
+        return samples;
     }
 }

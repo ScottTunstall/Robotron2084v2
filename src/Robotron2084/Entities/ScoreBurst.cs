@@ -1,7 +1,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Robotron2084.Core.Models;
 using Robotron2084.Core;
+using Robotron2084.Core.Models;
 using Robotron2084.Entities.Extensions;
 using Robotron2084.Entities.Models;
 using Robotron2084.Graphics;
@@ -34,8 +34,8 @@ public sealed class ScoreBurst : IEntity
     // Where the points are drawn: a little to the right of the dead enemy and below it.
 
     private readonly Texture2D _pointsTexture;
-    private readonly TextureSet _textureSet;
     private readonly ArcadeFrameTimer _stepArcadeFrameTimer = new();
+    private readonly TextureSet _textureSet;
     private int _animationFrameIndex = FirstBurstAnimationFrameIndex;
     private int _burstStepsRemaining;
 
@@ -87,6 +87,9 @@ public sealed class ScoreBurst : IEntity
     /// <summary>The palette index the burst is drawn in. Its colour keeps changing, so the burst shimmers.</summary>
     internal int BurstPaletteIndex { get; }
 
+    /// <summary>True once the burst shape is over and the number is showing. (The burst shape itself is on screen before that.)</summary>
+    internal bool IsVisible { get; private set; }
+
     /// <summary>Where the points are drawn: a little to the right of the dead enemy and below it.</summary>
     internal Rectangle PointsBounds { get; }
 
@@ -95,9 +98,6 @@ public sealed class ScoreBurst : IEntity
 
     /// <summary>How many more steps the points are shown for.</summary>
     internal int PointsStepsRemaining { get; private set; }
-
-    /// <summary>True once the burst shape is over and the number is showing. (The burst shape itself is on screen before that.)</summary>
-    internal bool IsVisible { get; private set; }
 
     /// <summary>Makes the burst that a killed quark leaves. The burst and the points are drawn in the same palette index.</summary>
     /// <param name="textureSet">The shared texture set.</param>
