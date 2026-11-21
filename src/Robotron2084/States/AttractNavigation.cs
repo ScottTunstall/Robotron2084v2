@@ -49,8 +49,12 @@ internal static class AttractNavigation
     /// <summary>Makes the screen for a step.</summary>
     /// <param name="step">The step.</param>
     /// <param name="gameStateParams">The shared services the screens are made with.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The step is not one of the sequence's <see cref="StepCount" /> steps.</exception>
     public static IGameState CreateState(int step, GameStateParams gameStateParams)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(step);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(step, StepCount);
+
         if (step == TitleArcadePaneStep) return new TitleScreenState(gameStateParams, TitleTextPane.Arcade);
         if (step == TitlePortPaneStep) return new TitleScreenState(gameStateParams, TitleTextPane.Port);
         if (step == DemoStep) return new AttractState(gameStateParams);

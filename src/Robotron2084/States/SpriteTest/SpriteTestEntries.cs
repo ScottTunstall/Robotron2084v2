@@ -281,9 +281,9 @@ public static class SpriteTestEntries
 
     /// <summary>Gets the parameters of the first wave whose count in a wave table column is more than 0.</summary>
     /// <param name="countByWave">A column of <see cref="WaveTable" />, one count per wave.</param>
-    private static WaveParams GetFirstWaveWith(int[] countByWave)
+    private static WaveParams GetFirstWaveWith(IReadOnlyList<int> countByWave)
     {
-        var wave = Array.FindIndex(countByWave, count => count > 0) + 1;
+        var wave = countByWave.ToList().FindIndex(count => count > 0) + 1;
         return WaveParams.CreateFromWave(wave, WaveTable.GetParameters(wave));
     }
 
@@ -292,7 +292,7 @@ public static class SpriteTestEntries
     /// <exception cref="ArgumentOutOfRangeException">No wave shows the shape.</exception>
     private static int GetFirstWaveWithElectrodeVariant(int variant)
     {
-        var wavesBeforeTheShapesRepeat = WavePaletteTables.ElectrodeVariantByWaveMod10.Length;
+        var wavesBeforeTheShapesRepeat = WavePaletteTables.ElectrodeVariantByWaveMod10.Count;
         for (var wave = 1; wave <= wavesBeforeTheShapesRepeat; wave++)
             if (WavePaletteTables.GetElectrodeVariant(wave) == variant) return wave;
 

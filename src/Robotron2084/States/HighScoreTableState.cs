@@ -52,7 +52,7 @@ namespace Robotron2084.States;
 /// </summary>
 public sealed class HighScoreTableState : IClosableGameState, IAttractState
 {
-    private readonly GameSettings _gameSettings;
+    private readonly GameStateParams _gameStateParams;
     private readonly HighScoreFrameAnimation _highScoreFrameAnimation = new();
     private readonly HighScorePageHold _highScorePageHold = new();
     private readonly HighScorePalette _highScorePalette = new();
@@ -61,7 +61,6 @@ public sealed class HighScoreTableState : IClosableGameState, IAttractState
     private readonly HighScoreTable _highScoreTable;
     private readonly IPlayerInputSource _playerInputSource;
     private readonly int[] _postedScores;
-    private readonly Random _random;
     private readonly TextureSet _textureSet;
     private bool _rampsStarted;
 
@@ -81,11 +80,10 @@ public sealed class HighScoreTableState : IClosableGameState, IAttractState
     public HighScoreTableState(GameStateParams gameStateParams, IReadOnlyList<int>? postedScores = null,
         HighScoreTable? highScoreTable = null)
     {
+        _gameStateParams = gameStateParams;
         _playerInputSource = gameStateParams.PlayerInputSource;
         _textureSet = gameStateParams.TextureSet;
         _highScoreStore = gameStateParams.HighScoreStore;
-        _gameSettings = gameStateParams.GameSettings;
-        _random = gameStateParams.Random;
         _postedScores = [.. postedScores ?? []];
         _highScoreTable = highScoreTable ?? _highScoreStore.Load();
 
@@ -380,7 +378,7 @@ public sealed class HighScoreTableState : IClosableGameState, IAttractState
 
     private void Leave(GameStateManager gameStateManager)
     {
-        gameStateManager.TransitionTo(new TitleScreenState(new GameStateParams(_textureSet, _highScoreStore,
-            ControlSettings.CreateDefaults(), _playerInputSource, _gameSettings, _random)));
+        // The title page is given the very controls and settings this page was given, so the player's own key bindings are kept.
+        gameStateManager.TransitionTo(new TitleScreenState(_gameStateParams));
     }
 }
