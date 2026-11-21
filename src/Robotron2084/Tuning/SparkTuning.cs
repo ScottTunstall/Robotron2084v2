@@ -34,12 +34,12 @@ public static class SparkTuning
     /// </remarks>
     public const int BeatIntervalArcadeFrames = 4;
 
-    /// <summary>The most sparks that may be on the screen at once.</summary>
+    /// <summary>The most sparks that may be on the screen at once, in CLASSIC and in EXTENDED.</summary>
     /// <remarks>
-    ///     Original source: <c>RRC11.ASM</c> <c>ENFSHT</c>. Disassembly: <c>CREATE_SPARK</c> (<c>$1404</c>),
-    ///     <c>CMPA #$14</c> at <c>$1412</c>.
+    ///     The arcade's limit is 20: <c>RRC11.ASM</c> <c>ENFSHT</c>, disassembly <c>CREATE_SPARK</c> (<c>$1404</c>),
+    ///     <c>CMPA #$14</c> at <c>$1412</c>. The author lowered it to 10 because the game was too hard, in both game styles.
     /// </remarks>
-    public const int MaxActiveSparks = 20;
+    public const int MaxActiveSparks = 10;
 
     /// <summary>
     ///     The biggest change a spark's speed can get on each beat, on either axis: from minus this to just under plus
