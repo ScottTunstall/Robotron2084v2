@@ -22,6 +22,7 @@ namespace Robotron2084.Audio;
 public static class Speech
 {
     private static SpeechChannel? _speechChannel;
+    private static ISpeechVoice? _speechVoice;
 
     /// <summary>
     ///     Set by the app shell every tick, with <see cref="Sound.AttractMuted" />: true while the attract sequence is on
@@ -34,6 +35,8 @@ public static class Speech
     /// <param name="speechVoice">The voice.</param>
     public static void Initialise(ISpeechVoice speechVoice)
     {
+        Shutdown();
+        _speechVoice = speechVoice;
         _speechChannel = new SpeechChannel(speechVoice);
     }
 
@@ -106,6 +109,17 @@ public static class Speech
         _speechChannel?.Say(GorfVoice.GetLineName(gorfLine), pitchOctaves);
     }
 
+    /// <summary>
+    ///     Switches the speech service off and frees what the voice holds, if it holds anything that needs freeing. Asking
+    ///     for a line afterwards does nothing, until <see cref="Initialise" /> runs again.
+    /// </summary>
+    public static void Shutdown()
+    {
+        (_speechVoice as IDisposable)?.Dispose();
+        _speechVoice = null;
+        _speechChannel = null;
+    }
+
     /// <summary>Moves the speech on by one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</summary>
     public static void Tick()
     {
@@ -118,6 +132,7 @@ public static class Speech
     internal static void ResetForTesting()
     {
         _speechChannel = null;
+        _speechVoice = null;
         AttractMuted = false;
     }
 }

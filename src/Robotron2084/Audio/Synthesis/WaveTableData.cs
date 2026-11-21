@@ -60,13 +60,6 @@ internal static class WaveTableData
     /// <summary><c>HBTSND</c> "HUNDRED POINT SOUND".</summary>
     private static readonly byte[] HundredPointSound = [1, 1, 2, 2, 4, 4, 8, 8, 0x10, 0x10, 0x30, 0x60, 0xC0, 0xE0];
 
-    /// <summary>The pitch patterns in the order <c>GFRTAB</c> holds them.</summary>
-    private static readonly byte[][] PatternsInOrder =
-    [
-        BonusSound, HundredPointSound, SpinnerSound, TurbineStartUp, HeartbeatDistorto, BigBenSounds, HeartbeatEcho,
-        SpinnerDrip, CoolDowner, StartDistorto, EdsSoundTen, EdsSoundThirteen, Yuksnd, Sp2snd, Sspsnd, Bwssnd
-    ];
-
     /// <summary><c>SP2SND</c> (no comment in the source).</summary>
     private static readonly byte[] Sp2snd = [1, 8, 0x10, 1, 8, 0x10, 1, 8, 0x10, 1, 8, 0x10, 1, 8, 0x10, 1, 8, 0x10, 0];
 
@@ -98,7 +91,7 @@ internal static class WaveTableData
         [8, 0x80, 0x10, 0x78, 0x18, 0x70, 0x20, 0x60, 0x28, 0x58, 0x30, 0x50, 0x40, 0x48, 0];
 
     /// <summary><c>GFRTAB</c>: every pitch pattern, one after another. Each byte is the wait between two levels of the wave.</summary>
-    public static IReadOnlyList<byte> Patterns { get; } = [.. PatternsInOrder.SelectMany(pattern => pattern)];
+    public static IReadOnlyList<byte> Patterns { get; } = [.. GetPatternsInOrder().SelectMany(pattern => pattern)];
 
     /// <summary><c>SVTAB</c>: every wave table sound's settings. A sound number picks one by its place, counting from 0.</summary>
     public static IReadOnlyList<WaveTableSoundRow> Vectors { get; } =
@@ -157,11 +150,25 @@ internal static class WaveTableData
         1, 1, 2, 4, 6, 9, 12, 15, 19, 23, 28, 32, 37, 42, 48, 53, 59, 64
     ];
 
+    /// <summary>Gets the pitch patterns in the order <c>GFRTAB</c> holds them.</summary>
+    /// <remarks>
+    ///     It is a method, not a field, so that it is built from the patterns above it whenever it is asked for. A static
+    ///     field that holds other static fields must come after them, and a reformat that sorts the fields would break that.
+    /// </remarks>
+    private static byte[][] GetPatternsInOrder()
+    {
+        return
+        [
+            BonusSound, HundredPointSound, SpinnerSound, TurbineStartUp, HeartbeatDistorto, BigBenSounds, HeartbeatEcho,
+            SpinnerDrip, CoolDowner, StartDistorto, EdsSoundTen, EdsSoundThirteen, Yuksnd, Sp2snd, Sspsnd, Bwssnd
+        ];
+    }
+
     /// <summary>Where a pattern starts in <see cref="Patterns" />: the total length of the patterns before it.</summary>
-    /// <param name="pattern">One of the patterns in <see cref="PatternsInOrder" />.</param>
+    /// <param name="pattern">One of the patterns in <see cref="GetPatternsInOrder" />.</param>
     /// <returns>Its start.</returns>
     private static int StartOf(byte[] pattern)
     {
-        return PatternsInOrder.TakeWhile(earlier => !ReferenceEquals(earlier, pattern)).Sum(earlier => earlier.Length);
+        return GetPatternsInOrder().TakeWhile(earlier => !ReferenceEquals(earlier, pattern)).Sum(earlier => earlier.Length);
     }
 }

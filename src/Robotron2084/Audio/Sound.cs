@@ -21,6 +21,7 @@ namespace Robotron2084.Audio;
 /// </remarks>
 public static class Sound
 {
+    private static IAudioSink? _audioSink;
     private static SoundEngine? _soundEngine;
     private static TransporterSound _transporterSound = new();
 
@@ -41,6 +42,8 @@ public static class Sound
     /// <param name="audioSink">Where the sound numbers go.</param>
     public static void Initialise(IAudioSink audioSink)
     {
+        Shutdown();
+        _audioSink = audioSink;
         _soundEngine = new SoundEngine(audioSink);
         _transporterSound = new TransporterSound();
     }
@@ -140,6 +143,17 @@ public static class Sound
         if (!Enabled || AttractMuted) return;
 
         _soundEngine?.SendDirect(soundNumber, 0f);
+    }
+
+    /// <summary>
+    ///     Switches the sound service off and frees what the sink holds, if it holds anything that needs freeing. Asking for
+    ///     a sound afterwards does nothing, until <see cref="Initialise" /> runs again.
+    /// </summary>
+    public static void Shutdown()
+    {
+        (_audioSink as IDisposable)?.Dispose();
+        _audioSink = null;
+        _soundEngine = null;
     }
 
     /// <summary>Stops the transporter's sends where they are, so that they do not cut across the next sound.</summary>

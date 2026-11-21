@@ -163,8 +163,11 @@ public sealed class SoundBoard : ISoundBoard
     /// <summary>Runs the board on, until the next change of level or for <paramref name="maxCycles" />, whichever comes first.</summary>
     /// <param name="maxCycles">The most cycles to run; at least 1.</param>
     /// <returns>How many cycles ran.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxCycles" /> is below 1.</exception>
     public int Run(int maxCycles)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxCycles, 1);
+
         if (_cyclesLeftInChange == 0) AnswerWaitingSoundNumber();
 
         if (_cyclesLeftInChange == 0 && !TakeNextChange()) return maxCycles;

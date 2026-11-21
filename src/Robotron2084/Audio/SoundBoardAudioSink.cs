@@ -20,7 +20,7 @@ namespace Robotron2084.Audio;
 ///     ahead and the queue grows, the extra audio is dropped rather than letting the sound fall behind
 ///     the sprite.
 /// </remarks>
-public sealed class SoundBoardAudioSink : IAudioSink
+public sealed class SoundBoardAudioSink : IAudioSink, IDisposable
 {
     /// <summary>
     ///     Samples per output frame: left and right. It is multiplied by <see cref="SamplesPerPortTick" /> to give the
@@ -69,6 +69,13 @@ public sealed class SoundBoardAudioSink : IAudioSink
         for (var tick = 0; tick < MinimumQueuedTicks; tick++) QueueOnePortTick();
 
         _dynamicSoundEffectInstance.Play();
+    }
+
+    /// <summary>Stops the sound and frees the speakers' audio instance and its queued sound.</summary>
+    public void Dispose()
+    {
+        _dynamicSoundEffectInstance.Stop();
+        _dynamicSoundEffectInstance.Dispose();
     }
 
     /// <inheritdoc />

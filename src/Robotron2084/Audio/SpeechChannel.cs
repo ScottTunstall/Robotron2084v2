@@ -26,8 +26,11 @@ public sealed class SpeechChannel
 
     /// <summary>Makes a channel with nothing waiting.</summary>
     /// <param name="speechVoice">The voice that speaks the lines.</param>
+    /// <exception cref="ArgumentNullException">The voice is null.</exception>
     public SpeechChannel(ISpeechVoice speechVoice)
     {
+        ArgumentNullException.ThrowIfNull(speechVoice);
+
         _speechVoice = speechVoice;
     }
 
@@ -41,8 +44,11 @@ public sealed class SpeechChannel
     /// <param name="lineName">The name of the line.</param>
     /// <param name="pitchOctaves">How far to raise or lower the line, in octaves (<see cref="ISpeechVoice.Speak" />); 0 says it as recorded.</param>
     /// <param name="volumeShare">How loud the line is, as a share of the speech's volume (<see cref="ISpeechVoice.Speak" />); 1 is full.</param>
+    /// <exception cref="ArgumentException">The name is null or empty.</exception>
     public void Say(string lineName, float pitchOctaves = 0f, float volumeShare = 1f)
     {
+        ArgumentException.ThrowIfNullOrEmpty(lineName);
+
         _waitingEntries.Enqueue(new SpeechChannelEntry(lineName, pitchOctaves, volumeShare, 0));
     }
 
@@ -69,8 +75,11 @@ public sealed class SpeechChannel
     /// <param name="ticks">
     ///     How long the silence lasts, in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>.
     /// </param>
+    /// <exception cref="ArgumentOutOfRangeException">The ticks are below 0.</exception>
     public void Wait(int ticks)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(ticks);
+
         _waitingEntries.Enqueue(new SpeechChannelEntry(null, 0f, 0f, ticks));
     }
 }

@@ -38,9 +38,14 @@ public sealed class SoundBoardRenderer
 
     /// <summary>Creates a renderer for a board, and runs the board's start-up.</summary>
     /// <param name="soundBoard">The sound board.</param>
-    /// <param name="sampleRate">Samples a second.</param>
+    /// <param name="sampleRate">Samples a second, above 0.</param>
+    /// <exception cref="ArgumentNullException">The sound board is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The sample rate is not above 0.</exception>
     public SoundBoardRenderer(ISoundBoard soundBoard, int sampleRate)
     {
+        ArgumentNullException.ThrowIfNull(soundBoard);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(sampleRate, 0);
+
         _soundBoard = soundBoard;
         _cyclesPerSample = (double)SoundBoard.ClockHertz / sampleRate;
         WarmUp();

@@ -22,11 +22,12 @@ public sealed record PcmSound(byte[] Samples, int SampleRate, AudioChannels Chan
     /// <param name="marginMilliseconds">How much of the silence is kept at each end, in milliseconds.</param>
     /// <returns>The shorter sound, or this sound when it is all silence.</returns>
     /// <exception cref="ArgumentOutOfRangeException">
-    ///     <paramref name="silenceLevel" /> or <paramref name="marginMilliseconds" /> is less than 0.
+    ///     <paramref name="silenceLevel" /> is not from 0 to 32767, or <paramref name="marginMilliseconds" /> is less than 0.
     /// </exception>
     public PcmSound GetTrimmed(int silenceLevel, int marginMilliseconds)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(silenceLevel);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(silenceLevel, short.MaxValue);
         ArgumentOutOfRangeException.ThrowIfNegative(marginMilliseconds);
 
         var bytesPerFrame = BytesPerSample * (int)Channels;
@@ -43,9 +44,9 @@ public sealed record PcmSound(byte[] Samples, int SampleRate, AudioChannels Chan
 
         if (firstLoudFrame < 0) return this;
 
-        var marginFrames = SampleRate * marginMilliseconds / MillisecondsPerSecond;
-        var startFrame = Math.Max(0, firstLoudFrame - marginFrames);
-        var endFrame = Math.Min(frameCount, lastLoudFrame + 1 + marginFrames);
+        var marginFrames = (int)Math.Min(int.MaxValue, (long)SampleRate * marginMilliseconds / MillisecondsPerSecond);
+        var startFrame = (int)Math.Max(0L, firstLoudFrame - (long)marginFrames);
+        var endFrame = (int)Math.Min(frameCount, lastLoudFrame + 1L + marginFrames);
         var trimmedSamples = Samples.AsSpan(startFrame * bytesPerFrame, (endFrame - startFrame) * bytesPerFrame).ToArray();
         return this with { Samples = trimmedSamples };
     }

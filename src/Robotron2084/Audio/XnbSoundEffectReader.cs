@@ -19,6 +19,9 @@ public static class XnbSoundEffectReader
     /// <summary>The only sample size this reader reads, in bits.</summary>
     private const ushort BitsPerSample = 16;
 
+    /// <summary>The bytes in one sample, which is <see cref="BitsPerSample" /> bits.</summary>
+    private const int BytesPerSample = 2;
+
     /// <summary>The flag bits saying the file is compressed (LZX or LZ4), which this reader cannot read.</summary>
     private const byte CompressedFlags = 0xC0;
 
@@ -50,11 +53,43 @@ public static class XnbSoundEffectReader
         }
     }
 
-    /// <summary>Reads the file's header, skips its type readers, and reads the sound.</summary>
+    /// <summary>Gets how many bytes are left to read in the file, so a size that is larger can be refused before it is read.</summary>
+    /// <param name="reader">The reader.</param>
+    /// <returns>The bytes left, or the biggest number there is when the stream cannot say.</returns>
+    private static long GetBytesLeft(BinaryReader reader)
+    {
+        var stream = reader.BaseStream;
+        return stream.CanSeek ? stream.Length - stream.Position : long.MaxValue;
+    }
+
+    /// <summary>Reads the sound's <c>WAVEFORMATEX</c> header.</summary>
+    /// <param name="reader">The reader, at the header's size.</param>
+    /// <returns>The channels and the sample rate.</returns>
+    /// <exception cref="InvalidDataException">The header is longer than the file or too short, or the sound is not 16-bit samples in one or two channels at a rate above 0.</exception>
+    private static (int Channels, int SampleRate) ReadFormat(BinaryReader reader)
+    {
+        var formatSize = reader.ReadInt32();
+        if (formatSize < 0 || formatSize > GetBytesLeft(reader)) throw new InvalidDataException("The sound's format is longer than the file.");
+
+        if (formatSize < ShortestFormatSize) throw new InvalidDataException("The sound's format is too short.");
+
+        var format = reader.ReadBytes(formatSize);
+        var formatTag = BitConverter.ToUInt16(format, 0);
+        var channels = BitConverter.ToUInt16(format, 2);
+        var sampleRate = BitConverter.ToInt32(format, 4);
+        var bitsPerSample = BitConverter.ToUInt16(format, 14);
+        if (formatTag != PcmFormatTag || bitsPerSample != BitsPerSample || channels is < 1 or > 2)
+            throw new InvalidDataException("The sound is not 16-bit samples in one or two channels.");
+
+        if (sampleRate <= 0) throw new InvalidDataException("The sound's sample rate is not above 0.");
+
+        return (channels, sampleRate);
+    }
+
+    /// <summary>Reads the file's header, and skips its type readers, its shared resources and the sound's type reader.</summary>
     /// <param name="reader">The reader, at the file's start.</param>
-    /// <returns>The samples, their rate and their channels.</returns>
-    /// <exception cref="InvalidDataException">The file is not one this reader can read.</exception>
-    private static PcmSound ReadSound(BinaryReader reader)
+    /// <exception cref="InvalidDataException">The file is not a built file, or is compressed.</exception>
+    private static void ReadHeader(BinaryReader reader)
     {
         var signature = Encoding.ASCII.GetString(reader.ReadBytes(Signature.Length));
         if (signature != Signature) throw new InvalidDataException("This is not a built content file.");
@@ -74,22 +109,35 @@ public static class XnbSoundEffectReader
 
         _ = reader.Read7BitEncodedInt(); // the shared resources
         _ = reader.Read7BitEncodedInt(); // the sound's type reader
+    }
 
-        var formatSize = reader.ReadInt32();
-        if (formatSize < ShortestFormatSize) throw new InvalidDataException("The sound's format is too short.");
-
-        var format = reader.ReadBytes(formatSize);
-        var formatTag = BitConverter.ToUInt16(format, 0);
-        var channels = BitConverter.ToUInt16(format, 2);
-        var sampleRate = BitConverter.ToInt32(format, 4);
-        var bitsPerSample = BitConverter.ToUInt16(format, 14);
-        if (formatTag != PcmFormatTag || bitsPerSample != BitsPerSample || channels is < 1 or > 2)
-            throw new InvalidDataException("The sound is not 16-bit samples in one or two channels.");
-
+    /// <summary>Reads the sound's samples.</summary>
+    /// <param name="reader">The reader, at the samples' size.</param>
+    /// <param name="channels">The channels, which say how many bytes a whole frame has.</param>
+    /// <returns>The samples.</returns>
+    /// <exception cref="InvalidDataException">The samples are longer than the file, or do not fill whole frames.</exception>
+    private static byte[] ReadSamples(BinaryReader reader, int channels)
+    {
         var sampleBytes = reader.ReadInt32();
+        if (sampleBytes < 0 || sampleBytes > GetBytesLeft(reader)) throw new InvalidDataException("The built sound effect ends too soon.");
+
+        if (sampleBytes % (BytesPerSample * channels) != 0) throw new InvalidDataException("The sound's samples do not fill whole frames.");
+
         var samples = reader.ReadBytes(sampleBytes);
         if (samples.Length != sampleBytes) throw new InvalidDataException("The built sound effect ends too soon.");
 
+        return samples;
+    }
+
+    /// <summary>Reads the file's header, skips its type readers, and reads the sound.</summary>
+    /// <param name="reader">The reader, at the file's start.</param>
+    /// <returns>The samples, their rate and their channels.</returns>
+    /// <exception cref="InvalidDataException">The file is not one this reader can read.</exception>
+    private static PcmSound ReadSound(BinaryReader reader)
+    {
+        ReadHeader(reader);
+        var (channels, sampleRate) = ReadFormat(reader);
+        var samples = ReadSamples(reader, channels);
         return new PcmSound(samples, sampleRate, (AudioChannels)channels);
     }
 }
