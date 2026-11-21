@@ -36,6 +36,16 @@ internal sealed class FakeSpeechVoice : ISpeechVoice
         _ticksLeft = TicksPerLine;
     }
 
+    /// <summary>How many times the voice was told to stop.</summary>
+    public int StopCount { get; private set; }
+
+    /// <inheritdoc />
+    public void Stop()
+    {
+        StopCount++;
+        _ticksLeft = 0;
+    }
+
     /// <summary>Lets one tick of the line pass.</summary>
     public void Tick()
     {

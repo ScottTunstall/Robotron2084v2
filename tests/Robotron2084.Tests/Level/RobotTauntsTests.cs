@@ -350,7 +350,7 @@ public sealed class RobotTauntsTests
     private RobotTaunts CreateRobotTaunts(int seed = 1)
     {
         return new RobotTaunts(new Random(seed), () => _isSpeechBusy, () => _isWaveEndMusicPlaying,
-            (berzerkVoiceSetting, berzerkWords) =>
+            (berzerkVoiceSetting, _, berzerkWords) =>
             {
                 _saidVoiceSettings.Add(berzerkVoiceSetting);
                 _saidSentences.Add(berzerkWords);
