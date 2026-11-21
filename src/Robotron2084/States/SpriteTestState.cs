@@ -357,7 +357,8 @@ public sealed class SpriteTestState : IGameState
         switch (entry.DrawStyle)
         {
             case SpriteTestDrawStyle.Solid:
-                blitterDraw.DrawSpriteSolid(spriteBatch, texture, bounds, blitterDraw.GetPaletteIndexColour(entry.ShapePaletteIndex));
+                blitterDraw.DrawSpriteSolid(spriteBatch, texture, bounds,
+                    entry.ShapeColour ?? blitterDraw.GetPaletteIndexColour(entry.ShapePaletteIndex));
                 break;
 
             case SpriteTestDrawStyle.SolidWithBackground:
