@@ -25,7 +25,8 @@ namespace Robotron2084.Level;
 ///         <item>
 ///             What they say depends on whether a player is a chicken (<see cref="PlayerSlot.IsChicken" />), on the
 ///             <see cref="Models.GameMode" />, and on whether there is a family member on the field with a hulk or a brain
-///             (<see cref="RobotTauntSentences" />).
+///             (<see cref="RobotTauntSentences" />). A chicken is called one in about every other taunt
+///             (<see cref="ChickenCallRandomRange" />).
 ///         </item>
 ///         <item>
 ///             Each sentence is said at a random pitch and volume, the same for all its words, as the Berzerk robots'
@@ -79,6 +80,12 @@ public sealed class RobotTaunts
     ///     that marks a control byte (<c>berzerk.asm</c> <c>GENERATE_ROBOT_SPEECH</c>, <c>OR $60</c> at <c>$2BB4</c>).
     /// </summary>
     private const int TauntControlByteFixedBits = 0x60;
+
+    /// <summary>
+    ///     How rarely a chicken is called a chicken: one taunt in this many, on average. Port only: the author asked for a
+    ///     chicken to be called one regularly.
+    /// </summary>
+    public const int ChickenCallRandomRange = 2;
 
     private readonly Random _random;
     private readonly Func<bool> _isSpeechBusy;
@@ -176,16 +183,29 @@ public sealed class RobotTaunts
     /// <param name="gameSession">The game, which says the game mode and who is a chicken.</param>
     /// <param name="playField">The field being played, which says whether the family is there with a hulk or a brain.</param>
     /// <returns>The sentence's words, in order.</returns>
+    /// <remarks>
+    ///     When a player is a chicken, one taunt in <see cref="ChickenCallRandomRange" /> on average calls them a chicken,
+    ///     picked from the sentences that do; the rest are picked from the sentences that do not.
+    /// </remarks>
     public IReadOnlyList<BerzerkWord> GetRandomSentence(GameSession gameSession, PlayField playField)
     {
-        var playerSentences = GetPlayerSentences(gameSession);
-        var familySentences =
+        IReadOnlyList<IReadOnlyList<BerzerkWord>> familySentences =
             IsFamilyWithHulksOrBrains(playField) ? RobotTauntSentences.FamilyWithHulksOrBrains : [];
+        IReadOnlyList<IReadOnlyList<BerzerkWord>> sentences = [.. GetPlayerSentences(gameSession), .. familySentences];
+        if (IsChickenTaunted(gameSession))
+        {
+            var isChickenCallPicked = _random.Next(ChickenCallRandomRange) == 0;
+            sentences = [.. sentences.Where(sentence => IsChickenCall(sentence) == isChickenCallPicked)];
+        }
 
-        var sentenceIndex = _random.Next(playerSentences.Count + familySentences.Count);
-        if (sentenceIndex < playerSentences.Count) return playerSentences[sentenceIndex];
+        return sentences[_random.Next(sentences.Count)];
+    }
 
-        return familySentences[sentenceIndex - playerSentences.Count];
+    /// <summary>Says whether a sentence calls a player a chicken: it has CHICKEN or CHICKENS in it.</summary>
+    /// <param name="berzerkWords">The sentence's words.</param>
+    public static bool IsChickenCall(IReadOnlyList<BerzerkWord> berzerkWords)
+    {
+        return berzerkWords.Contains(BerzerkWord.Chicken) || berzerkWords.Contains(BerzerkWord.Chickens);
     }
 
     /// <summary>
@@ -216,15 +236,34 @@ public sealed class RobotTaunts
     /// <param name="gameSession">The game.</param>
     private static IReadOnlyList<IReadOnlyList<BerzerkWord>> GetPlayerSentences(GameSession gameSession)
     {
-        if (gameSession.GameMode == GameMode.TwoPlayerSimultaneous)
-        {
-            var isEitherPlayerChicken = gameSession.PlayerSlots.Any(playerSlot => playerSlot.IsChicken);
-            return isEitherPlayerChicken ? RobotTauntSentences.TwoPlayersChicken : RobotTauntSentences.TwoPlayers;
-        }
+        var isChickenTaunted = IsChickenTaunted(gameSession);
+        if (IsTwoPlayersOnField(gameSession))
+            return isChickenTaunted ? RobotTauntSentences.TwoPlayersChicken : RobotTauntSentences.TwoPlayers;
 
-        return gameSession.GetCurrent().IsChicken
-            ? RobotTauntSentences.OnePlayerChicken
-            : RobotTauntSentences.OnePlayer;
+        return isChickenTaunted ? RobotTauntSentences.OnePlayerChicken : RobotTauntSentences.OnePlayer;
+    }
+
+    /// <summary>
+    ///     Says whether two players are on the field at once: a two-player simultaneous game in which both players still
+    ///     have lives. When only one is left, the robots taunt that one player alone.
+    /// </summary>
+    /// <param name="gameSession">The game.</param>
+    private static bool IsTwoPlayersOnField(GameSession gameSession)
+    {
+        return gameSession.GameMode == GameMode.TwoPlayerSimultaneous &&
+               gameSession.PlayerSlots.All(playerSlot => playerSlot.HasLives());
+    }
+
+    /// <summary>
+    ///     Says whether the robots taunt a chicken: with two players on the field at once, either of them is a chicken;
+    ///     otherwise the current player is.
+    /// </summary>
+    /// <param name="gameSession">The game.</param>
+    private static bool IsChickenTaunted(GameSession gameSession)
+    {
+        if (IsTwoPlayersOnField(gameSession)) return gameSession.PlayerSlots.Any(playerSlot => playerSlot.IsChicken);
+
+        return gameSession.GetCurrent().IsChicken;
     }
 
     /// <summary>Says whether a family member is on the field with at least one hulk or brain.</summary>
