@@ -3280,6 +3280,12 @@
 /processorParam:Quality=Best
 /build:Speech/Berzerk/intruder.ogg
 
+#begin Speech/Berzerk/intruders.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/intruders.ogg
+
 #begin Speech/Berzerk/is.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
