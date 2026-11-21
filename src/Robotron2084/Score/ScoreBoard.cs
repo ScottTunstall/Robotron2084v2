@@ -5,7 +5,8 @@ namespace Robotron2084.Score;
 /// <summary>Keeps a player's score, and says when it has earned a spare life.</summary>
 /// <remarks>
 ///     A spare life is earned each time the score passes a multiple of the extra life setting (notes §131).
-///     <see cref="Add" /> reports it, so the caller can give the life.
+///     <see cref="Add" /> reports it, so the caller can give the life. A score never goes below 0 or above the biggest
+///     number a score can hold.
 /// </remarks>
 public sealed class ScoreBoard
 {
@@ -21,8 +22,13 @@ public sealed class ScoreBoard
     ///     How many points earn a spare life: the EXTRA MAN EVERY setting. Nothing earns one
     ///     when it is 0.
     /// </param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    ///     <paramref name="startingScore" /> or <paramref name="extraLifeEveryPoints" /> is below 0.
+    /// </exception>
     public ScoreBoard(int startingScore, int extraLifeEveryPoints = GameSettings.FactoryExtraLifeEveryPoints)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(extraLifeEveryPoints);
+
         _extraLifeEveryPoints = extraLifeEveryPoints;
         SetScore(startingScore);
     }
@@ -30,19 +36,23 @@ public sealed class ScoreBoard
     /// <summary>The player's score.</summary>
     public int Score { get; private set; }
 
-    /// <summary>Adds points to the score.</summary>
+    /// <summary>Adds points to the score. A score that would go past the biggest number it can hold stays at that number.</summary>
     /// <param name="points">The points to add.</param>
     /// <returns>True when the new score has earned a spare life.</returns>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="points" /> is below 0.</exception>
+    /// <remarks>
+    ///     A score is only ever added to, and the most it is given at once is far below the extra life setting, so one
+    ///     call earns one spare life at most. If it did pass more than one multiple, the later ones are not given.
+    /// </remarks>
     public bool Add(int points)
     {
-        Score += points;
-        if (Score >= _nextExtraLifeThreshold)
-        {
-            _nextExtraLifeThreshold += _extraLifeEveryPoints;
-            return true;
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(points);
 
-        return false;
+        Score = (int)Math.Min(int.MaxValue, (long)Score + points);
+        if (Score < _nextExtraLifeThreshold) return false;
+
+        _nextExtraLifeThreshold = GetNextThreshold(Score);
+        return true;
     }
 
     /// <summary>
@@ -56,7 +66,17 @@ public sealed class ScoreBoard
         ArgumentOutOfRangeException.ThrowIfNegative(score);
 
         Score = score;
-        _nextExtraLifeThreshold = int.MaxValue;
-        if (_extraLifeEveryPoints > 0) _nextExtraLifeThreshold = (score / _extraLifeEveryPoints + 1) * _extraLifeEveryPoints;
+        _nextExtraLifeThreshold = GetNextThreshold(score);
+    }
+
+    /// <summary>Gets the score that earns the next spare life: the first multiple of the extra life setting above a score.</summary>
+    /// <param name="score">The score.</param>
+    /// <returns>The next multiple, or the biggest number a score can hold when no spare life is to be had.</returns>
+    private int GetNextThreshold(int score)
+    {
+        if (_extraLifeEveryPoints == 0) return int.MaxValue;
+
+        var nextThreshold = ((long)score / _extraLifeEveryPoints + 1) * _extraLifeEveryPoints;
+        return (int)Math.Min(int.MaxValue, nextThreshold);
     }
 }
