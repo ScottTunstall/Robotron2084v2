@@ -184,6 +184,7 @@ public sealed class PlayingState : IGameState
 
         WaveStartSpeech.Say(_gameSession, _playField.WaveParams);
         _playField.Update(gameTime);
+        _gameSession.RobotTaunts.Tick(_gameSession, _playField);
 
         // The HUD is drawn from the session's slots. The field changes the slot's own score board and lives counter,
         // so what is drawn is always up to date (notes §97).
@@ -328,15 +329,15 @@ public sealed class PlayingState : IGameState
     }
 
     /// <summary>
-    ///     Records whether the player saved every family member in the wave just cleared: none lost on any of their lives in
-    ///     it, and none left on the field. Then starts the next wave's count of lost family members from 0.
+    ///     Records the wave just cleared on the player's slot, with whether they rescued every family member in it: none lost
+    ///     on any of their lives in it, and none left on the field.
     /// </summary>
     /// <param name="playerSlot">The player who cleared the wave.</param>
-    private void RecordFamilySaved(PlayerSlot playerSlot)
+    private void RecordWaveCleared(PlayerSlot playerSlot)
     {
         var familyMembersLost = playerSlot.FamilyMembersLostThisWave + _playField.GetFamilyMembersLost();
-        playerSlot.SavedWholeFamilyLastWave = familyMembersLost == 0 && !_playField.FieldEntities.FamilyList.AnyAlive();
-        playerSlot.FamilyMembersLostThisWave = 0;
+        var hasRescuedWholeFamily = familyMembersLost == 0 && !_playField.FieldEntities.FamilyList.AnyAlive();
+        playerSlot.RecordWaveCleared(hasRescuedWholeFamily);
     }
 
     /// <summary>
@@ -352,7 +353,7 @@ public sealed class PlayingState : IGameState
         // ROM GEXX/GEXX1: INC PWAV,X / BNE / INC PWAV,X — a byte counter that skips 0.
         playerSlot.Wave = playerSlot.Wave % WaveCounterWrap + 1;
         playerSlot.SavedWaveParams = null;
-        RecordFamilySaved(playerSlot);
+        RecordWaveCleared(playerSlot);
 
         _gameEventHub.Raise(new GameEvent(GameEventKind.WaveCompleted, IntVector2.Zero));
         gameStateManager.TransitionTo(new WaveClearState(_textureSet, _highScoreStore, _gameSession, _random));
