@@ -2,17 +2,22 @@ using Robotron2084.Audio.Models;
 
 namespace Robotron2084.Audio;
 
-/// <summary>The Berzerk robot's voice setting: the pitch the game asks its speech board for, from 0 to 7.</summary>
+/// <summary>
+///     The Berzerk robot's voice: the pitch and the volume the game asks its speech board for, each from 0 to 7
+///     (<see cref="BerzerkVoiceSetting" />).
+/// </summary>
 /// <remarks>
 ///     <list type="bullet">
 ///         <item>
 ///             Original source: MAME <c>berzerk.cpp</c>, <c>berzerk_state::audio_w</c>. The game writes the pitch to its
 ///             speech board, which divides the speech chip's clock by 16 less the pitch. The chip makes one sample a clock,
-///             so the pitch changes how fast the same samples play: a higher pitch is higher and quicker.
+///             so the pitch changes how fast the same samples play: a higher pitch is higher and quicker. The volume sets
+///             the board's loudness to the volume's sevenths: 0 is silent and 7 is full.
 ///         </item>
 ///         <item>
-///             The word samples in <c>Content/Speech/Berzerk/</c> were recorded at <see cref="SamplePitch" />. Another pitch
-///             plays them faster or slower by the ratio of the two clocks, so nothing is lost or made up.
+///             The word samples in <c>Content/Speech/Berzerk/</c> were recorded at <see cref="SamplePitch" /> and
+///             <see cref="SampleVolume" />. Another pitch plays them faster or slower by the ratio of the two clocks, so
+///             nothing is lost or made up, and a lower volume plays them more quietly.
 ///         </item>
 ///     </list>
 /// </remarks>
@@ -26,6 +31,19 @@ public static class BerzerkVoice
 
     /// <summary>The pitch the word samples were recorded at. It is the game's pitch for "INTRUDER ALERT".</summary>
     public const int SamplePitch = 3;
+
+    /// <summary>The lowest volume: silent.</summary>
+    public const int MinimumVolume = 0;
+
+    /// <summary>The highest volume: the board as loud as it goes.</summary>
+    public const int MaximumVolume = 7;
+
+    /// <summary>
+    ///     The volume the word samples are taken to have been recorded at: the loudest. It is the game's volume for
+    ///     "INTRUDER ALERT", which is said at <see cref="SamplePitch" />.
+    /// </summary>
+    /// <remarks>Original source: the author's Berzerk disassembly, <c>berzerk.asm</c> <c>INTRUDER_ALERT_INTRUDER_ALERT</c>, whose control byte is <c>$7B</c>. Disassembly: <c>$2C4A</c>.</remarks>
+    public const int SampleVolume = 7;
 
     /// <summary>
     ///     How long a <see cref="BerzerkWord.Pause" /> lasts, in <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">ticks</see>:
@@ -59,5 +77,17 @@ public static class BerzerkVoice
         double sampleDivider = PitchDividerBase - SamplePitch;
         double divider = PitchDividerBase - pitch;
         return (float)Math.Log2(sampleDivider / divider);
+    }
+
+    /// <summary>Gets how loud to play the word samples at a volume, as a share of how loud they were recorded.</summary>
+    /// <param name="volume">The volume, from <see cref="MinimumVolume" /> to <see cref="MaximumVolume" />.</param>
+    /// <returns>The share, from 0 (silent) to 1 at <see cref="SampleVolume" />.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">The volume is not from 0 to 7.</exception>
+    public static float GetVolumeShare(int volume)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(volume, MinimumVolume);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(volume, MaximumVolume);
+
+        return (float)volume / SampleVolume;
     }
 }

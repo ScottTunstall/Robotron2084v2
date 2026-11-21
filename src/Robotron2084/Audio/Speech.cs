@@ -70,25 +70,28 @@ public static class Speech
     }
 
     /// <summary>
-    ///     Asks for the Berzerk robot to say words, one after another, at the pitch its samples were recorded at
-    ///     (<see cref="BerzerkVoice.SamplePitch" />), after anything already waiting.
+    ///     Asks for the Berzerk robot to say words, one after another, at the pitch and volume its samples were recorded at
+    ///     (<see cref="BerzerkVoiceSetting.Sample" />), after anything already waiting.
     /// </summary>
     /// <param name="berzerkWords">The words, in order, such as The, Humanoid, Must, Not, Escape. A Pause is a short silence.</param>
     public static void SayBerzerk(params BerzerkWord[] berzerkWords)
     {
-        SayBerzerk(BerzerkVoice.SamplePitch, berzerkWords);
+        SayBerzerk(BerzerkVoiceSetting.Sample, berzerkWords);
     }
 
-    /// <summary>Asks for the Berzerk robot to say words, one after another, at one of its pitches, after anything already waiting.</summary>
-    /// <param name="pitch">
-    ///     The pitch, from <see cref="BerzerkVoice.MinimumPitch" /> to <see cref="BerzerkVoice.MaximumPitch" />: higher is
-    ///     higher and quicker.
+    /// <summary>
+    ///     Asks for the Berzerk robot to say words, one after another, at one of its pitches and volumes, after anything
+    ///     already waiting.
+    /// </summary>
+    /// <param name="berzerkVoiceSetting">
+    ///     The pitch, where higher is higher and quicker, and the volume, each from 0 to 7.
     /// </param>
     /// <param name="berzerkWords">The words, in order, such as The, Humanoid, Must, Not, Escape. A Pause is a short silence.</param>
-    /// <exception cref="ArgumentOutOfRangeException">The pitch is not from 0 to 7.</exception>
-    public static void SayBerzerk(int pitch, params BerzerkWord[] berzerkWords)
+    /// <exception cref="ArgumentOutOfRangeException">The pitch or the volume is not from 0 to 7.</exception>
+    public static void SayBerzerk(BerzerkVoiceSetting berzerkVoiceSetting, params BerzerkWord[] berzerkWords)
     {
-        var pitchOctaves = BerzerkVoice.GetPitchOctaves(pitch);
+        var pitchOctaves = BerzerkVoice.GetPitchOctaves(berzerkVoiceSetting.Pitch);
+        var volumeShare = BerzerkVoice.GetVolumeShare(berzerkVoiceSetting.Volume);
         if (AttractMuted || _speechChannel is not { } speechChannel) return;
 
         foreach (var berzerkWord in berzerkWords)
@@ -99,7 +102,7 @@ public static class Speech
                 continue;
             }
 
-            speechChannel.Say(BerzerkVoice.GetLineName(berzerkWord), pitchOctaves);
+            speechChannel.Say(BerzerkVoice.GetLineName(berzerkWord), pitchOctaves, volumeShare);
         }
     }
 

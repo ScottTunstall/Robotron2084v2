@@ -40,9 +40,10 @@ public sealed class SpeechChannel
     /// <summary>Asks for a line to be spoken after anything already waiting. It never stops the line being spoken.</summary>
     /// <param name="lineName">The name of the line.</param>
     /// <param name="pitchOctaves">How far to raise or lower the line, in octaves (<see cref="ISpeechVoice.Speak" />); 0 says it as recorded.</param>
-    public void Say(string lineName, float pitchOctaves = 0f)
+    /// <param name="volumeShare">How loud the line is, as a share of the speech's volume (<see cref="ISpeechVoice.Speak" />); 1 is full.</param>
+    public void Say(string lineName, float pitchOctaves = 0f, float volumeShare = 1f)
     {
-        _waitingEntries.Enqueue(new SpeechChannelEntry(lineName, pitchOctaves, 0));
+        _waitingEntries.Enqueue(new SpeechChannelEntry(lineName, pitchOctaves, volumeShare, 0));
     }
 
     /// <summary>Asks for a silence after anything already waiting, before the next line.</summary>
@@ -51,7 +52,7 @@ public sealed class SpeechChannel
     /// </param>
     public void Wait(int ticks)
     {
-        _waitingEntries.Enqueue(new SpeechChannelEntry(null, 0f, ticks));
+        _waitingEntries.Enqueue(new SpeechChannelEntry(null, 0f, 0f, ticks));
     }
 
     /// <summary>Counts a silence down, or gives the voice the next waiting line if it has finished the last one.</summary>
@@ -70,6 +71,6 @@ public sealed class SpeechChannel
             return;
         }
 
-        _speechVoice.Speak(lineName, nextEntry.PitchOctaves);
+        _speechVoice.Speak(lineName, nextEntry.PitchOctaves, nextEntry.VolumeShare);
     }
 }

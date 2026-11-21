@@ -47,6 +47,9 @@ public sealed class SoundEngine
     /// <summary>True while the board is still playing the last number sent to it.</summary>
     public bool IsBoardPlaying() => _audioSink.IsPlaying();
 
+    /// <summary>True while the voice is kept for a sound that outlives its table (<see cref="HoldVoice" />).</summary>
+    public bool IsVoiceHeld() => _holdTicksLeft > 0;
+
     /// <summary>
     ///     Keeps the voice for <paramref name="ticks" /> more port ticks. A table's end normally frees the
     ///     voice, but some sounds outlive their table on the BOARD — the wave-end music is a looping sound

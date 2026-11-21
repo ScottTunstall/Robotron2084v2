@@ -40,6 +40,12 @@ public static class Sound
     /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying" />).</summary>
     public static bool IsPlaying() => _soundEngine?.IsBoardPlaying() ?? false;
 
+    /// <summary>
+    ///     True while the wave-end music is still playing: from <see cref="PlayWaveEnd" /> until it has played out, which is
+    ///     into the start of the next wave, or until a more important sound cuts it off.
+    /// </summary>
+    public static bool IsWaveEndMusicPlaying() => _soundEngine?.IsVoiceHeld() ?? false;
+
     /// <summary>Sets up the sound service with the sink that will play the sound numbers.</summary>
     /// <param name="audioSink">Where the sound numbers go.</param>
     public static void Initialise(IAudioSink audioSink)
