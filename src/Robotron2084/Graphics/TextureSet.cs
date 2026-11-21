@@ -110,7 +110,7 @@ public sealed class TextureSet
     /// </param>
     public TextureSet(ITextureSource textureSource)
     {
-        PlayerAnimationFrameTextures = textureSource.LoadAll(GetNumberedNames("Sprites/Player", PlayerAnimationFrameCount));
+        PlayerAnimationFrameTextures = textureSource.LoadAll(GetNumberedNames("Sprites/Player_1", PlayerAnimationFrameCount));
         GruntAnimationFrameTextures = textureSource.LoadAll(GetNumberedNames("Sprites/Grunt", GruntAnimationFrameCount));
         GorfAnimationFrameTextures = textureSource.LoadAll(GetNumberedNames("Sprites/Gorf", 2));
         BerzerkRobotIdleAnimationFrameTextures = textureSource.LoadAll(GetNumberedNames("Sprites/BerzerkRobot_Idle", 6));
