@@ -6,8 +6,10 @@ using Robotron2084.Level.Models;
 namespace Robotron2084.Level;
 
 /// <summary>
-///     The Berzerk robot's taunts during a game: when the robots speak next, and what they say. Port only: only a wave with
-///     <see cref="WaveParams.EnableBerzerkSpeak" /> on has them, so a <see cref="GameStyle.Classic" /> game never does.
+///     The Berzerk robot's taunts during a game: when the robots speak next, and what they say, including what they say
+///     when a player is killed (<see cref="SayPlayerKilled" />). Port only. The taunts during a wave are only for a wave with
+///     <see cref="WaveParams.EnableBerzerkSpeak" /> on, and what they say when a player is killed is for a
+///     <see cref="GameStyle.Extended" /> game: a <see cref="GameStyle.Classic" /> game never has either.
 /// </summary>
 /// <remarks>
 ///     <list type="bullet">
@@ -87,10 +89,33 @@ public sealed class RobotTaunts
     /// </summary>
     private const int TauntControlByteRandomRange = 0x20;
 
+    /// <summary>"GOT THE HUMANOID": what the robots say when a player is killed (one of two sentences).</summary>
+    private static readonly BerzerkWord[] GotTheHumanoid = [BerzerkWord.Got, BerzerkWord.The, BerzerkWord.Humanoid];
+
+    /// <summary>"GOT THE HUMANOIDS": said when every player is killed.</summary>
+    private static readonly BerzerkWord[] GotTheHumanoids = [BerzerkWord.Got, BerzerkWord.The, BerzerkWord.Humanoids];
+
+    /// <summary>"GOT THE INTRUDER": what the robots say when a player is killed (the other of two sentences).</summary>
+    private static readonly BerzerkWord[] GotTheIntruder = [BerzerkWord.Got, BerzerkWord.The, BerzerkWord.Intruder];
+
+    /// <summary>"GOT THE INTRUDERS": said when every player is killed.</summary>
+    private static readonly BerzerkWord[] GotTheIntruders = [BerzerkWord.Got, BerzerkWord.The, BerzerkWord.Intruders];
+
+    /// <summary>The voice of "GOT THE HUMANOID": Berzerk's own control byte for it, <c>$7B</c> (pitch 3, volume 7).</summary>
+    /// <remarks>
+    ///     Original source: the author's Berzerk disassembly, <c>berzerk.asm</c>
+    ///     <c>GOT_THE_HUMANOID_GOT_THE_INTRUDER_SPEECH_BYTES</c>. Disassembly: <c>$2C40</c>.
+    /// </remarks>
+    private static readonly BerzerkVoiceSetting HumanoidVoiceSetting = BerzerkVoiceSetting.CreateFromControlByte(0x7B);
+
+    /// <summary>The voice of "GOT THE INTRUDER": Berzerk's own control byte for it, <c>$7D</c> (pitch 5, volume 7).</summary>
+    /// <remarks>The same routine as <see cref="HumanoidVoiceSetting" />, at <c>$2C45</c>.</remarks>
+    private static readonly BerzerkVoiceSetting IntruderVoiceSetting = BerzerkVoiceSetting.CreateFromControlByte(0x7D);
+
     private readonly Func<bool> _isSpeechBusy;
     private readonly Func<bool> _isWaveEndMusicPlaying;
     private readonly Random _random;
-    private readonly Action<BerzerkVoiceSetting, IReadOnlyList<BerzerkWord>> _sayBerzerkWords;
+    private readonly Action<BerzerkVoiceSetting, SpeechPriority, IReadOnlyList<BerzerkWord>> _sayBerzerkWords;
 
     /// <summary>
     ///     The talk timer: seconds the robots must be allowed to taunt for before they say the next sentence.
@@ -116,10 +141,11 @@ public sealed class RobotTaunts
     /// <param name="isSpeechBusy">Says whether anything is being said or waiting to be said.</param>
     /// <param name="isWaveEndMusicPlaying">Says whether the wave-end music is still playing.</param>
     /// <param name="sayBerzerkWords">
-    ///     Has the Berzerk robot say a sentence's words, one after another, at a pitch and volume.
+    ///     Has the Berzerk robot say a sentence's words, one after another, at a pitch and volume, and how much the sentence
+    ///     matters (<see cref="SpeechPriority" />).
     /// </param>
     public RobotTaunts(Random random, Func<bool> isSpeechBusy, Func<bool> isWaveEndMusicPlaying,
-        Action<BerzerkVoiceSetting, IReadOnlyList<BerzerkWord>> sayBerzerkWords)
+        Action<BerzerkVoiceSetting, SpeechPriority, IReadOnlyList<BerzerkWord>> sayBerzerkWords)
     {
         _random = random;
         _isSpeechBusy = isSpeechBusy;
@@ -135,7 +161,7 @@ public sealed class RobotTaunts
     public static RobotTaunts CreateWithGameSpeech()
     {
         return new RobotTaunts(new Random(), Speech.IsBusy, Sound.IsWaveEndMusicPlaying,
-            (berzerkVoiceSetting, berzerkWords) => Speech.SayBerzerk(berzerkVoiceSetting, [.. berzerkWords]));
+            (berzerkVoiceSetting, speechPriority, berzerkWords) => Speech.SayBerzerk(berzerkVoiceSetting, speechPriority, [.. berzerkWords]));
     }
 
     /// <summary>Says whether a sentence calls a player a chicken: it has CHICKEN or CHICKENS in it.</summary>
@@ -209,6 +235,40 @@ public sealed class RobotTaunts
     }
 
     /// <summary>
+    ///     In EXTENDED, has the robots say they have got the player they have just killed: "GOT THE HUMANOID" or "GOT THE
+    ///     INTRUDER", picked at random. When every player of a two player game has been killed, they say both, in the plural:
+    ///     "GOT THE HUMANOIDS" and "GOT THE INTRUDERS".
+    /// </summary>
+    /// <param name="gameSession">The game, which says which game style it is and whether any player has lives left.</param>
+    /// <remarks>
+    ///     <list type="bullet">
+    ///         <item>
+    ///             Original source: the author's Berzerk disassembly, <c>berzerk.asm</c> <c>SAY_GOT_THE_HUMANOID_GOT_THE_INTRUDER</c>
+    ///             (<c>$2C1F</c>), which the game calls when the player is killed by a robot (<c>$1FB3</c>).
+    ///         </item>
+    ///         <item>
+    ///             They are <see cref="SpeechPriority.Important" />: they stop a taunt being said, and anything waiting to be
+    ///             said, so they are heard at once. A CLASSIC game never says them.
+    ///         </item>
+    ///     </list>
+    /// </remarks>
+    public void SayPlayerKilled(GameSession gameSession)
+    {
+        ArgumentNullException.ThrowIfNull(gameSession);
+        if (gameSession.GameSettings.GameStyle != GameStyle.Extended) return;
+
+        if (gameSession.IsTwoPlayer() && !gameSession.AnyPlayerSlotHasLives())
+        {
+            _sayBerzerkWords(HumanoidVoiceSetting, SpeechPriority.Important, GotTheHumanoids);
+            _sayBerzerkWords(IntruderVoiceSetting, SpeechPriority.Important, GotTheIntruders);
+            return;
+        }
+
+        if (_random.Next(2) == 0) _sayBerzerkWords(HumanoidVoiceSetting, SpeechPriority.Important, GotTheHumanoid);
+        else _sayBerzerkWords(IntruderVoiceSetting, SpeechPriority.Important, GotTheIntruder);
+    }
+
+    /// <summary>
     ///     Moves the taunts on by one tick. On each whole second, while the robots are allowed to taunt, counts the talk
     ///     timer down; when it reaches 0, starts it again and says a sentence at a random pitch and volume.
     /// </summary>
@@ -229,7 +289,7 @@ public sealed class RobotTaunts
         if (--_talkTimerSeconds > 0) return;
 
         _talkTimerSeconds = GetRandomTalkTimerSeconds();
-        _sayBerzerkWords(GetRandomVoiceSetting(), GetRandomSentence(gameSession, playField));
+        _sayBerzerkWords(GetRandomVoiceSetting(), SpeechPriority.Normal, GetRandomSentence(gameSession, playField));
     }
 
     /// <summary>Gets the sentences about the players: for one player or two on the field, and for a chicken or not.</summary>
