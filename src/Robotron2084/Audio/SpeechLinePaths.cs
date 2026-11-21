@@ -14,6 +14,7 @@ public static class SpeechLinePaths
         "Speech/Berzerk/attack",
         "Speech/Berzerk/charge",
         "Speech/Berzerk/chicken",
+        "Speech/Berzerk/chickens",
         "Speech/Berzerk/coins",
         "Speech/Berzerk/destroy",
         "Speech/Berzerk/detected",
