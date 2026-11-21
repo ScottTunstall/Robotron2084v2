@@ -122,7 +122,7 @@ public static class SpriteTestEntries
 
     private static SpriteTestEntry CreatePlayer(TextureSet textureSet)
     {
-        return CreateSteerable("PLAYER", Player.GetWalkSequence, walkSequence => SpriteTestCycle.CreateFromArcadeFrames(
+        return CreateSteerable("PLAYER 1", Player.GetWalkSequence, walkSequence => SpriteTestCycle.CreateFromArcadeFrames(
             Enumerable.Range(0, Player.WalkCycleLength)
                 .Select(step => textureSet.PlayerAnimationFrameTextures[Player.GetWalkAnimationFrameIndex(walkSequence, step)]),
             Player.WalkAnimationIntervalArcadeFrames)) with
