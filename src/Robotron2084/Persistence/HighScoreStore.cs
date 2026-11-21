@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Robotron2084.Persistence.Models;
 
@@ -57,8 +58,8 @@ public sealed class HighScoreStore
             highScoreTable.TopScoreEntry,
             [.. highScoreTable.AllTime.Take(HighScoreTable.AllTimeCapacity)]);
 
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, JsonSerializer.Serialize(savedTable, new JsonSerializerOptions { WriteIndented = true }));
+        AtomicFile.WriteAllText(path, JsonSerializer.Serialize(savedTable, new JsonSerializerOptions { WriteIndented = true }),
+            new UTF8Encoding(false));
     }
 
     /// <summary>The table: the saved all-time list + top entry, and the ROM's factory today's list.</summary>

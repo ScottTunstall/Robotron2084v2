@@ -39,6 +39,9 @@ public sealed class HighScoreTable
     /// <summary>ROM `SETBOT`'s `LDA #4` — the maximum when the initials are the top entry's own.</summary>
     public const int MaxAllTimeTopInitials = 4;
 
+    /// <summary>The biggest score an entry can hold: the ROM keeps a score in seven digits.</summary>
+    public const int MaxScore = 9_999_999;
+
     /// <summary>
     ///     ROM `TODAYS`: the screen shows 10 (5 per column × 2 columns). It is how many entries <see cref="_today" /> is
     ///     filled to.
@@ -130,10 +133,16 @@ public sealed class HighScoreTable
     ///     factory table (the ROM reloads it at power-up), the all-time list and the
     ///     top entry come from the saved data when there is any.
     /// </summary>
+    /// <remarks>
+    ///     The saved file can be edited by hand, so what it holds is made fit to use: an entry that is missing is left out,
+    ///     initials are made three characters, a score is kept from 0 to <see cref="MaxScore" />, the top name is cut to
+    ///     <see cref="TopNameLength" /> characters, and the all-time list is put in order, highest first.
+    /// </remarks>
     public static HighScoreTable CreateFromSaved(TopScoreEntry? topScoreEntry, IReadOnlyList<HighScoreEntry>? allTime)
     {
-        return new HighScoreTable(topScoreEntry ?? FactoryTopScoreEntry, FactoryToday,
-            PadToCapacity(allTime, AllTimeCapacity, FactoryAllTime));
+        var usableTopScoreEntry = topScoreEntry is null ? FactoryTopScoreEntry : MakeUsable(topScoreEntry);
+        var usableAllTime = allTime?.Where(entry => entry is not null).Select(MakeUsable).OrderByDescending(entry => entry.Score).ToList();
+        return new HighScoreTable(usableTopScoreEntry, FactoryToday, PadToCapacity(usableAllTime, AllTimeCapacity, FactoryAllTime));
     }
 
     /// <summary>The ROM's factory table: today's list, the all-time list and the top entry.</summary>
@@ -225,6 +234,21 @@ public sealed class HighScoreTable
     private static int FindLowestInitialsIndex(List<HighScoreEntry> list, string initials)
     {
         return list.FindLastIndex(highScoreEntry => highScoreEntry.Initials == initials);
+    }
+
+    /// <summary>Makes an entry read from the saved file fit to use: its initials three characters and its score from 0 to <see cref="MaxScore" />.</summary>
+    /// <param name="entry">The entry as it was saved.</param>
+    private static HighScoreEntry MakeUsable(HighScoreEntry entry)
+    {
+        return new HighScoreEntry(GetInitialsOf(entry.Initials ?? string.Empty), Math.Clamp(entry.Score, 0, MaxScore));
+    }
+
+    /// <summary>Makes the top entry read from the saved file fit to use: its name at most <see cref="TopNameLength" /> characters and its score from 0 to <see cref="MaxScore" />.</summary>
+    /// <param name="entry">The entry as it was saved.</param>
+    private static TopScoreEntry MakeUsable(TopScoreEntry entry)
+    {
+        var name = entry.Name ?? string.Empty;
+        return new TopScoreEntry(name.Length > TopNameLength ? name[..TopNameLength] : name, Math.Clamp(entry.Score, 0, MaxScore));
     }
 
     /// <summary>The three initials a name starts with (the ROM's `GODINT`, three CMOS characters).</summary>

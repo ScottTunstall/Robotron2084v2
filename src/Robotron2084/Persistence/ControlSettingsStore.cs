@@ -90,8 +90,7 @@ public sealed class ControlSettingsStore
     /// <summary>Saves to a given file — the seam the tests use.</summary>
     public static void Save(string path, ControlSettings controlSettings)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, Write(controlSettings), new UTF8Encoding(false));
+        AtomicFile.WriteAllText(path, Write(controlSettings), new UTF8Encoding(false));
     }
 
     /// <summary>Builds the file's text (also the tests' seam).</summary>

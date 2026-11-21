@@ -87,8 +87,7 @@ public sealed class GameSettingsStore
     /// <summary>Saves to a given file — the seam the tests use.</summary>
     public static void Save(string path, GameSettings gameSettings)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, Write(gameSettings), new UTF8Encoding(false));
+        AtomicFile.WriteAllText(path, Write(gameSettings), new UTF8Encoding(false));
     }
 
     /// <summary>Builds the file's text (also the tests' seam).</summary>
