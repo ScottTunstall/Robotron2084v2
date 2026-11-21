@@ -110,7 +110,8 @@ public sealed class Gorf : IExplodable, IRemovable
         _totalSteps = (playfield.Bounds.Width + CollisionSize.Width) / StepPixels;
 
         _dropIntervalSteps = drops.DropIntervalSteps;
-        if (_dropIntervalSteps <= 0 && drops.GruntDropCount > 0) _dropIntervalSteps = _totalSteps / (drops.GruntDropCount + 1);
+        if (_dropIntervalSteps <= 0 && drops.GruntDropCount > 0)
+            _dropIntervalSteps = Math.Max(1, _totalSteps / (drops.GruntDropCount + 1));
 
         if (drops.GruntDropCount > 0) PlanGradualDrops(drops.GruntDropCount);
         else PlanDropStops();

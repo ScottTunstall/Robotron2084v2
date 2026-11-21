@@ -13,9 +13,13 @@ public sealed class SpheroidList : EntityList<Spheroid>
     /// <param name="enforcersLeft">How many enforcers are still alive.</param>
     /// <param name="startedWith">How many spheroids the life began with, which is the most there can be.</param>
     /// <returns>How many spheroids there are.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Either number is below 0.</exception>
     /// <remarks>Original source: <c>RRG23.ASM</c> <c>PLEND</c> (notes §134).</remarks>
     public int CountForNextLife(int enforcersLeft, int startedWith)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(enforcersLeft);
+        ArgumentOutOfRangeException.ThrowIfNegative(startedWith);
+
         var spheroids = CountAlive();
         if (enforcersLeft == 0) return spheroids;
 

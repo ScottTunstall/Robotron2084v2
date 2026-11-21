@@ -402,7 +402,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
             case PlayerDeathPhase.White:
                 // After the white flash, pick a random palette index for the coloured flash.
                 _deathFlashPaletteIndex =
-                    PlayerTuning.PlayerDeathFlashPaletteIndices[_random.Next(PlayerTuning.PlayerDeathFlashPaletteIndices.Length)];
+                    PlayerTuning.PlayerDeathFlashPaletteIndices[_random.Next(PlayerTuning.PlayerDeathFlashPaletteIndices.Count)];
                 _deathStage = PlayerDeathPhase.Colour;
                 break;
 
@@ -418,7 +418,7 @@ public sealed class Player : IEntity, IAnimationFrameSource
                 // Show the next colour of the fade. The last colour is black, and after it the Player is dead.
                 _deathFadeIndex++;
                 WriteDeathFade(playField);
-                if (_deathFadeIndex >= PlayerTuning.PlayerDeathFadeValues.Length - 1)
+                if (_deathFadeIndex >= PlayerTuning.PlayerDeathFadeValues.Count - 1)
                 {
                     playField.GamePalette?.ResumePaletteIndex(PlayerTuning.PlayerDeathFadePaletteIndex);
                     LifeState = EntityLifeState.Dead;

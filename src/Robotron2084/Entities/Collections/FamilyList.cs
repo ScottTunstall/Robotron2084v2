@@ -45,10 +45,13 @@ public sealed class FamilyList : EntityList<FamilyMember>
 
     /// <summary>Puts a member in the next free place.</summary>
     /// <param name="entity">The member to add.</param>
+    /// <exception cref="ArgumentNullException">The member is null.</exception>
+    /// <exception cref="InvalidOperationException">Every one of the <see cref="SlotCount" /> places is taken.</exception>
     /// <remarks>Original source: <c>RRH11.ASM</c> <c>HUMSTV</c>.</remarks>
     public override void Add(FamilyMember entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
+        if (_nextSlot >= SlotCount) throw new InvalidOperationException($"The family list has only {SlotCount} places.");
 
         entity.FamilySlot = _nextSlot++;
         base.Add(entity);

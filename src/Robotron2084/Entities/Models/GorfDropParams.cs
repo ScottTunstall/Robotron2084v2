@@ -3,6 +3,9 @@ namespace Robotron2084.Entities.Models;
 /// <summary>How many grunts a Gorf drops, and how its drops are spaced along its way across.</summary>
 public sealed record GorfDropParams
 {
+    /// <summary>The smallest limit there can be: the number of drops is picked from 1 up to it, so a limit of 0 has nothing to pick.</summary>
+    private const int MinimumMaxDropsX2 = 1;
+
     /// <summary>Makes the plan for a Gorf's drops.</summary>
     /// <param name="maxDropsX2">
     ///     This wave's limit on how many grunts it drops at once. The number is picked the way a spheroid
@@ -17,10 +20,12 @@ public sealed record GorfDropParams
     ///     How many steps pass between one drop and the next, or 0 to spread the drops evenly over its way across. A Gorf
     ///     that comes back is given a shorter one than the Gorf it follows.
     /// </param>
-    /// <exception cref="ArgumentOutOfRangeException">Any of them is below 0.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    ///     <paramref name="maxDropsX2" /> is below 1, or either of the others is below 0.
+    /// </exception>
     public GorfDropParams(int maxDropsX2, int gruntDropCount = 0, int dropIntervalSteps = 0)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(maxDropsX2);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxDropsX2, MinimumMaxDropsX2);
         ArgumentOutOfRangeException.ThrowIfNegative(gruntDropCount);
         ArgumentOutOfRangeException.ThrowIfNegative(dropIntervalSteps);
 

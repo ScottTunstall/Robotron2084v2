@@ -44,8 +44,11 @@ public abstract class EntityList<T> : IEntityList, IReadOnlyList<T>
 
     /// <summary>Adds an entity to the list.</summary>
     /// <param name="entity">The entity to add.</param>
+    /// <exception cref="ArgumentNullException">The entity is null.</exception>
     public virtual void Add(T entity)
     {
+        ArgumentNullException.ThrowIfNull(entity);
+
         _items.Add(entity);
     }
 
