@@ -10750,9 +10750,11 @@ Every walking frame is now named by the way it faces. `BerzerkRobot_Stand` is th
 `Entities/BerzerkRobot` is a new kind (`RobotKind.BerzerkRobot`, last in the enum and in `RobotKinds.All`, so the arcade's laser-hit order is untouched).
 It is a grunt in everything but its look:
 
-- **It moves as a grunt does.** The grunt's step is now `GruntChaseStep` (the same code, moved out of `Grunt` so the two cannot drift apart): 2 columns sideways and
-  4 rows up or down towards the player every beat, a beat being 4 ROM frames, after a random 1..N beat wait. N is the wave's grunt wait (`GruntMoveDelay`); it does
-  not take part in the grunts' speed-up, because that is the arcade's grunt rule and the robot is not a grunt.
+- **It moves at a steady, slow pace, not as a grunt does** (changed 2026-11-21, ledger D-054). Every 2 beats (8 ROM frames, `BerzerkRobot.StepIntervalBeats`) it takes a
+  1-pixel step towards the player, with no random wait, so it glides like a robot in the Berzerk arcade game (about 6 pixels a second, near a wave-1 grunt's average).
+  A step is sideways when the player is at least as far away sideways as up or down, and up or down otherwise: never on a slant (`BerzerkRobot.GetNextPosition`), and the
+  walk it shows is the way it steps. A step never passes the player's line, and one that would leave the playfield is not taken. It is meant to be a little cleverer
+  than a grunt; how is still to be decided. (It first moved exactly as a grunt does, through `GruntChaseStep`, after a random 1..N beat wait.)
 - **It dies as a grunt does.** A laser kills it with the strip explosion and the grunt's hit sound, and walking onto an electrode kills both (`BerzerkRobotHitElectrodeResult`),
   without the speed-up. A touch kills the player. Its kill is worth 100 (`ScoreValues.BerzerkRobot`, the grunt's score for now). The wave is not won while one is left.
 - **Its look is its own** (the port's decision; the sheet gave no rules). It stands in the six-frame idle cycle (one frame a beat) until it first steps, then shows the walk for
@@ -10761,7 +10763,7 @@ It is a grunt in everything but its look:
   with the strip appear) and `WaveSurvivors` keeps the survivors of a death.
 - **Shooting is not built.** The collision box is the 8 x 12 frame (`CollisionSizes.BerzerkRobotCollisionSize`).
 
-`BerzerkRobotTests` pins that it steps exactly as a grunt does for 200 ticks, the frame orders, the facing, the electrode death and the survivors; the registry tests cover the kind's row.
+`BerzerkRobotTests` pins its steady pace, its one-pixel steps that are never on a slant, the frame orders, the facing, the electrode death and the survivors; the registry tests cover the kind's row.
 
 ### 138.2 The Gorf entity (author, 2026-10-03)
 
