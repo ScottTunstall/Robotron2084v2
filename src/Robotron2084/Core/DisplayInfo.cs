@@ -25,7 +25,7 @@ public static class DisplayInfo
     /// <summary>Available desktop area (work area) as width/height in pixels.</summary>
     public static Point GetWorkArea()
     {
-        if (SystemParametersInfo(SpiGetWorkArea, SpiGetWorkArea, out var workArea, 0) && workArea.GetWidth() > 0 &&
+        if (SystemParametersInfo(SpiGetWorkArea, 0, out var workArea, 0) && workArea.GetWidth() > 0 &&
             workArea.GetHeight() > 0) return new Point(workArea.GetWidth(), workArea.GetHeight());
 
         return GetDesktopResolution();

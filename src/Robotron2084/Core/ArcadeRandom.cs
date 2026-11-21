@@ -20,10 +20,18 @@ public static class ArcadeRandom
 
     /// <summary>Picks a number from 1 up to <paramref name="limit" />, the way the arcade does.</summary>
     /// <param name="random">Where the random byte comes from.</param>
-    /// <param name="limit">The biggest number that can be picked.</param>
+    /// <param name="limit">
+    ///     The biggest number that can be picked. A limit of 0 gives 1, as in the arcade, and a limit above 255 is as good as 255,
+    ///     because the byte it starts from is never bigger.
+    /// </param>
     /// <returns>A number from 1 up to the limit.</returns>
+    /// <exception cref="ArgumentNullException">The random source is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">The limit is below 0, which would never stop halving.</exception>
     public static int PickUpTo(Random random, int limit)
     {
+        ArgumentNullException.ThrowIfNull(random);
+        ArgumentOutOfRangeException.ThrowIfNegative(limit);
+
         var value = random.Next(MaxValue);
         while (value > limit) value >>= 1;
 
