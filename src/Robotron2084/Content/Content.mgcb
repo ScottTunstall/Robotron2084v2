@@ -3220,6 +3220,12 @@
 /processorParam:Quality=Best
 /build:Speech/Berzerk/escape.ogg
 
+#begin Speech/Berzerk/family.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/family.ogg
+
 #begin Speech/Berzerk/fight.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
@@ -3255,6 +3261,12 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Speech/Berzerk/humanoids.ogg
+
+#begin Speech/Berzerk/humans.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Speech/Berzerk/humans.ogg
 
 #begin Speech/Berzerk/in.ogg
 /importer:OggImporter
