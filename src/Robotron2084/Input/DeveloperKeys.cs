@@ -51,4 +51,10 @@ public static class DeveloperKeys
 
     /// <summary>True while the attract fast-forward key is held (set by the app shell every tick).</summary>
     public static bool AttractFastForward { get; set; }
+
+    /// <summary>
+    ///     True while the player cannot be killed. TEMPORARY: it is switched by the Caps Lock key and starts as
+    ///     <see cref="Robotron2084.Tuning.PlayerTuning.PlayerInvincibleForTesting" />. It will be removed when the author says so.
+    /// </summary>
+    public static bool PlayerInvincible { get; set; } = Robotron2084.Tuning.PlayerTuning.PlayerInvincibleForTesting;
 }
