@@ -39,6 +39,15 @@ public sealed class GameSession
     /// </summary>
     public ControlSettings ControlSettings { get; private init; } = ControlSettings.CreateDefaults();
 
+    /// <summary>How many people are playing, and whether two of them play together or take turns.</summary>
+    public GameMode GameMode { get; private init; }
+
+    /// <summary>
+    ///     The Berzerk robot's taunts. They belong to the game, not to a wave, so the talk timer carries from one wave to
+    ///     the next, as Berzerk's carries from room to room.
+    /// </summary>
+    public RobotTaunts RobotTaunts { get; } = RobotTaunts.CreateWithGameSpeech();
+
     /// <summary>The place in <see cref="PlayerSlots" /> of the player whose turn it is.</summary>
     /// <remarks>
     ///     <list type="bullet">
@@ -145,6 +154,7 @@ public sealed class GameSession
         return new GameSession(playerSlots)
         {
             ControlSettings = controlSettings ?? ControlSettings.CreateDefaults(),
+            GameMode = mode,
             GameSettings = chosenGameSettings
         };
     }

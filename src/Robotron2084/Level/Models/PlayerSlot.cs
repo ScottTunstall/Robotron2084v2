@@ -61,23 +61,23 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource
     public int Lives => LivesCounter.Lives;
 
     /// <summary>
-    ///     True when the player saved every family member in their last wave. It is true before their first wave, and is
-    ///     set again each time they clear a wave. It is what the robots' speech reacts to.
+    ///     True when the player is a chicken: they did not rescue every family member in the last wave they cleared. It is
+    ///     false before their first wave, and is set again each time they clear a wave (<see cref="RecordWaveCleared" />).
     /// </summary>
     /// <remarks>
     ///     <list type="bullet">
     ///         <item>Port only: the arcade does not keep it.</item>
     ///         <item>
     ///             A family member left on the field when the wave ends, as well as one lost to a hulk or a brain, means the
-    ///             family was not all saved.
+    ///             family was not all rescued.
     ///         </item>
     ///         <item>
-    ///             The author expects what counts as a good wave to change. For now it is saving the whole family. A wave
+    ///             The author expects what makes a chicken to change. For now it is not rescuing the whole family. A wave
     ///             always ends with every robot that can die dead, so "killed all the robots" is not part of it.
     ///         </item>
     ///     </list>
     /// </remarks>
-    public bool SavedWholeFamilyLastWave { get; set; } = true;
+    public bool IsChicken { get; private set; }
 
     /// <summary>
     ///     How many family members the player has lost in the wave they are on, over the lives they have lost in it so far.
@@ -99,6 +99,17 @@ public sealed record PlayerSlot(int Number, IPlayerInputSource PlayerInputSource
     ///     </list>
     /// </remarks>
     public WaveParams? SavedWaveParams { get; set; }
+
+    /// <summary>
+    ///     Records the end of a wave the player cleared: they are a chicken unless they rescued every family member in it.
+    ///     The count of family members lost starts again from 0 for the next wave.
+    /// </summary>
+    /// <param name="hasRescuedWholeFamily">True when the player rescued every family member in the wave.</param>
+    public void RecordWaveCleared(bool hasRescuedWholeFamily)
+    {
+        IsChicken = !hasRescuedWholeFamily;
+        FamilyMembersLostThisWave = 0;
+    }
 
     /// <summary>True while the player can still be given a turn.</summary>
     public bool HasLives()
