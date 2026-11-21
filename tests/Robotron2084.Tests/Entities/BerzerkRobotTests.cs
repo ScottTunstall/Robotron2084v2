@@ -37,30 +37,63 @@ public sealed class BerzerkRobotTests
                 berzerkRobot.Update(new GameTime(), playField);
     }
 
+    /// <summary>Ticks in one step of the robot: <see cref="BerzerkRobot.StepIntervalBeats" /> beats.</summary>
+    private static readonly int StepIntervalTicks =
+        ArcadeClock.ToPortTicks(BerzerkRobot.StepIntervalBeats * BerzerkRobot.BeatIntervalArcadeFrames);
+
+    /// <summary>One arcade pixel, in port pixels: how far one step goes.</summary>
+    private static readonly int StepPixels = ScreenSize.ToPortPixelsFromArcadePixels(1);
+
     [Fact]
-    public void ItStepsTowardsThePlayerExactlyAsAGruntDoes()
+    public void ItStepsAtASteadyPace_WithNoRandomWait()
     {
         var playField = CreateFieldInPlay();
-        IntVector2 start = new(playField.Player.Position.X + 120, playField.Player.Position.Y - 90);
-        var grunt = new Grunt(TestEntityParams.Create(new Random(11)), start, 6);
-        var berzerkRobot = new BerzerkRobot(TestEntityParams.Create(new Random(11)), start, 6);
+        IntVector2 start = new(playField.Player.Position.X + 120, playField.Player.Position.Y);
+        var berzerkRobot = new BerzerkRobot(TestEntityParams.Create(new Random(11)), start);
+        List<int> stepTicks = [];
 
-        for (var tick = 0; tick < 200; tick++)
+        for (var tick = 0; tick < 300; tick++)
         {
-            grunt.Update(new GameTime(), playField);
             berzerkRobot.Update(new GameTime(), playField);
-            Assert.Equal(grunt.Position, berzerkRobot.Position);
-            Assert.Equal(grunt.SteppedThisUpdate, berzerkRobot.SteppedThisUpdate);
+            if (berzerkRobot.SteppedThisUpdate) stepTicks.Add(tick);
         }
 
-        Assert.NotEqual(start, berzerkRobot.Position);
+        var gapsInTicks = stepTicks.Zip(stepTicks.Skip(1), (earlierTick, laterTick) => laterTick - earlierTick).ToList();
+        Assert.True(gapsInTicks.Count > 10);
+        Assert.All(gapsInTicks, gapInTicks => Assert.InRange(gapInTicks, StepIntervalTicks, StepIntervalTicks + 1));
+        Assert.Equal(start.X - stepTicks.Count * StepPixels, berzerkRobot.Position.X);
+    }
+
+    [Theory]
+    [InlineData(40, -10, 1, 0)] // further away sideways: steps right
+    [InlineData(-40, 10, -1, 0)] // further away sideways, to the left: steps left
+    [InlineData(10, 40, 0, 1)] // further away below: steps down
+    [InlineData(-10, -40, 0, -1)] // further away above: steps up
+    [InlineData(30, 30, 1, 0)] // as far either way: steps sideways, never on a slant
+    public void EachStep_IsOnePixelSidewaysOrUpOrDown_NeverOnASlant(int gapX, int gapY, int stepsX, int stepsY)
+    {
+        IntVector2 position = new(200, 200);
+        IntVector2 playerPosition = new(position.X + gapX * StepPixels, position.Y + gapY * StepPixels);
+
+        var nextPosition = BerzerkRobot.GetNextPosition(position, playerPosition, new Rectangle(0, 0, 2000, 2000));
+
+        Assert.Equal(new IntVector2(position.X + stepsX * StepPixels, position.Y + stepsY * StepPixels), nextPosition);
+    }
+
+    [Fact]
+    public void AStep_NeverGoesPastThePlayersLine()
+    {
+        IntVector2 position = new(200, 200);
+        IntVector2 playerPosition = new(position.X + StepPixels - 1, position.Y);
+
+        Assert.Equal(playerPosition, BerzerkRobot.GetNextPosition(position, playerPosition, new Rectangle(0, 0, 2000, 2000)));
     }
 
     [Fact]
     public void ItStandsStillInTheIdleCycleUntilItFirstMoves_ThenWalks()
     {
         var playField = CreateFieldInPlay();
-        var berzerkRobot = new BerzerkRobot(TestEntityParams.Create(new Random(2)), new IntVector2(playField.Player.Position.X + 100, playField.Player.Position.Y), 3);
+        var berzerkRobot = new BerzerkRobot(TestEntityParams.Create(new Random(2)), new IntVector2(playField.Player.Position.X + 100, playField.Player.Position.Y));
         var start = berzerkRobot.Position;
 
         Tick(playField, 1, berzerkRobot);

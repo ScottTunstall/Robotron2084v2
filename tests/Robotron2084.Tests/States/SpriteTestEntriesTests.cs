@@ -116,6 +116,17 @@ public sealed class SpriteTestEntriesTests
         Assert.Equal(TestTextures.SharedTextureSet.BerzerkRobotIdleAnimationFrameTextures.Length, berzerkRobot.GetCycle(null)!.Frames.Count);
     }
 
+    [Fact]
+    public void TheBerzerkRobotWalksAtASteadyPace_OneSmallStepEveryTwoBeats_WithNoRandomWait()
+    {
+        var walkCycle = GetEntry("BERZERK ROBOT").GetCycle(Direction8.Left)!;
+        var stepClockUnits = ArcadeClock.ToClockUnits(BerzerkRobot.StepIntervalBeats * BerzerkRobot.BeatIntervalArcadeFrames);
+
+        Assert.Equal(1, walkCycle.RandomHoldMax);
+        Assert.All(walkCycle.Frames, frame => Assert.Equal(stepClockUnits, frame.HoldClockUnits));
+        Assert.Equal([BerzerkRobot.StepPixels], GetEntry("BERZERK ROBOT").WalkOn!.StepPortPixels);
+    }
+
     [Theory]
     [InlineData("ENFORCER GROWING", EnforcerTuning.GrowSteps, EnforcerTuning.GrowIntervalArcadeFrames)]
     [InlineData("TANK GROWING", TankTuning.GrowSteps, TankTuning.GrowIntervalArcadeFrames)]
