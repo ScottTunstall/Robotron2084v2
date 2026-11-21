@@ -76,6 +76,19 @@ public static class Speech
     /// <exception cref="ArgumentOutOfRangeException">The pitch or the volume is not from 0 to 7.</exception>
     public static void SayBerzerk(BerzerkVoiceSetting berzerkVoiceSetting, params BerzerkWord[] berzerkWords)
     {
+        SayBerzerk(berzerkVoiceSetting, SpeechPriority.Normal, berzerkWords);
+    }
+
+    /// <summary>
+    ///     Asks for the Berzerk robot to say words, one after another, at one of its pitches and volumes. They wait behind
+    ///     anything already waiting, unless they matter more than what is being said: then that is stopped and dropped.
+    /// </summary>
+    /// <param name="berzerkVoiceSetting">The pitch, where higher is higher and quicker, and the volume, each from 0 to 7.</param>
+    /// <param name="speechPriority">How much the words matter.</param>
+    /// <param name="berzerkWords">The words, in order. A Pause is a short silence.</param>
+    /// <exception cref="ArgumentOutOfRangeException">The pitch or the volume is not from 0 to 7.</exception>
+    public static void SayBerzerk(BerzerkVoiceSetting berzerkVoiceSetting, SpeechPriority speechPriority, params BerzerkWord[] berzerkWords)
+    {
         var pitchOctaves = BerzerkVoice.GetPitchOctaves(berzerkVoiceSetting.Pitch);
         var volumeShare = BerzerkVoice.GetVolumeShare(berzerkVoiceSetting.Volume);
         if (AttractMuted || _speechChannel is not { } speechChannel) return;
@@ -84,11 +97,11 @@ public static class Speech
         {
             if (berzerkWord == BerzerkWord.Pause)
             {
-                speechChannel.Wait(BerzerkVoice.PauseTicks);
+                speechChannel.Wait(BerzerkVoice.PauseTicks, speechPriority);
                 continue;
             }
 
-            speechChannel.Say(BerzerkVoice.GetLineName(berzerkWord), pitchOctaves, volumeShare);
+            speechChannel.Say(BerzerkVoice.GetLineName(berzerkWord), pitchOctaves, volumeShare, speechPriority);
         }
     }
 

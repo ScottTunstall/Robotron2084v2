@@ -14,4 +14,7 @@ public interface ISpeechVoice
     /// <param name="pitchOctaves">How far to raise (more than 0) or lower (less than 0) the line, in octaves, from -1 to 1. It plays faster when raised and slower when lowered.</param>
     /// <param name="volumeShare">How loud the line is, from 0 (silent) to 1 (the speech's full volume).</param>
     void Speak(string lineName, float pitchOctaves, float volumeShare);
+
+    /// <summary>Stops the line being spoken at once. A voice that is not speaking is left as it is.</summary>
+    void Stop();
 }

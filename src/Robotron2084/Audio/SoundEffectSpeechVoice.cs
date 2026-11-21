@@ -78,6 +78,12 @@ public sealed class SoundEffectSpeechVoice : ISpeechVoice, IDisposable
         _soundEffectInstance.Play();
     }
 
+    /// <inheritdoc />
+    public void Stop()
+    {
+        _soundEffectInstance?.Stop();
+    }
+
     /// <summary>Makes a line from its built file, with the silence around it cut off.</summary>
     /// <param name="contentManager">The content manager, whose folder holds the built files.</param>
     /// <param name="linePath">The line's path in that folder, without the extension.</param>
