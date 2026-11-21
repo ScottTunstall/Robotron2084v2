@@ -10759,6 +10759,10 @@ It is a grunt in everything but its look:
   without the speed-up. A touch kills the player. Its kill is worth 100 (`ScoreValues.BerzerkRobot`, the grunt's score for now). The wave is not won while one is left.
 - **Its look is its own** (the port's decision; the sheet gave no rules). It stands in the six-frame idle cycle (one frame a beat) until it first steps, then shows the walk for
   the way it is heading: the larger of its two gaps to the player picks right, left, down or up. Right and left play frames 1, 2; up and down play 1, 2, 3, 2.
+  **Each robot has a colour of its own** (2026-11-21, ledger D-055), given when it is made and blue unless another is given (`BerzerkRobot.DefaultColour`, arcade byte
+  `$C0`, (0, 0, 240)). Every pixel of its sprite is drawn in it through the colour-cycle effect's one-colour pass (`SolidRemap`, the blitter's op `$1A`; `BlitterDraw.DrawSpriteSolid`),
+  and the strips of its appear and its explosion are drawn in it too (`IStripDrawer`, `BlitterDraw.DrawSpriteSolidPiece`). The sprite PNGs stay red. The sprite test page shows it
+  in its default colour.
 - **It is ready for a wave but in none.** `LevelParameters.BerzerkRobotCount` is 0 in every wave; `BerzerkRobotWaveSpawner` puts them on the field (off the electrodes, away from the player,
   with the strip appear) and `WaveSurvivors` keeps the survivors of a death.
 - **Shooting is not built.** The collision box is the 8 x 12 frame (`CollisionSizes.BerzerkRobotCollisionSize`).
