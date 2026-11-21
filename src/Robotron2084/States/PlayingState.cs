@@ -81,6 +81,7 @@ public sealed class PlayingState : IGameState
         _gameSession = gameSession;
         _random = random;
         _gameSettings = gameSession.GameSettings;
+        _gameEventHub.Subscribe(new PlayerKilledSpeech(gameSession));
         _playField = BuildField();
         if (isStartOfTurn) AnnounceTurn();
     }
@@ -183,6 +184,7 @@ public sealed class PlayingState : IGameState
         }
 
         WaveStartSpeech.Say(_gameSession, _playField.WaveParams);
+        _playField.Player.InvincibleForTesting = DeveloperKeys.PlayerInvincible;
         _playField.Update(gameTime);
         _gameSession.RobotTaunts.Tick(_gameSession, _playField);
 
