@@ -1,7 +1,9 @@
 # Robotron: 2084 — a from-source port in MonoGame
 
-![A started wave: orange boundary, grunts closing in, the family loose in the middle, "1 WAVE" at the
-bottom](docs/images/gameplay.png)
+<img width="1916" height="1200" alt="title page 1" src="https://github.com/user-attachments/assets/ad77ae6d-e5de-407f-a417-c2a1043a598c" />
+
+
+
 
 **Robotron: 2084** (Williams Electronics, 1982) re-implemented in C# / MonoGame
 (`net10.0`, desktop OpenGL) — **not an emulator, and not a re-skin.** Nothing here
