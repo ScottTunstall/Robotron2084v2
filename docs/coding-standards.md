@@ -23,6 +23,30 @@ Before you write or change behaviour, read what the arcade does in `ref/original
 write code that does that. If the two sources disagree, or neither says, stop and ask the author; do not guess, and do
 not copy a number forward from a comment, a test or the notes without checking it against the sources (CMT-11).
 
+**FID-1a. CLASSIC must be the arcade; EXTENDED need not be.** The game has two styles (`GameStyle`, chosen on the main
+menu). **CLASSIC** is the arcade game and must stay faithful to it: every rule in this section applies in full, and a
+change that alters what CLASSIC does is a defect, however small and however much it looks like an improvement.
+**EXTENDED** is the author's own version, and it is allowed to differ from the arcade: FID-1 and FID-2 do not apply to
+what EXTENDED adds, and nothing in the arcade sources has to back it. Anyone changing code, an AI agent above all, must
+therefore ask of every change which style it affects, and:
+
+- Never let an EXTENDED feature change CLASSIC. A feature that exists only in EXTENDED is switched on by its own flag
+  (for example an extra `WaveParams` flag), and that flag is always false for CLASSIC, in the wave tables, in the
+  defaults and in every test of CLASSIC.
+- Never change a CLASSIC wave parameter, timing, count, table value or random roll to make something in EXTENDED
+  easier to build. Put the difference behind the EXTENDED flag instead.
+- **Forbidden: an EXTENDED change that has a knock-on effect on CLASSIC.** If changing something for EXTENDED would change
+  what CLASSIC does, even slightly, the change must not be made there. Subclass the entity that needs to change instead,
+  put the EXTENDED behaviour in the subclass, and leave the arcade's entity as it is. Do not add a conditional inside the
+  arcade's entity to tell the two styles apart when a subclass can do the job. Before finishing, check that every
+  CLASSIC test still passes without being edited.
+- Code that both styles run is CLASSIC code. Treat it as the arcade's, and check it against the sources (FID-1) before
+  changing it.
+- If a request does not say which style it is for, and the change would alter behaviour the arcade has, stop and ask
+  the author before changing anything.
+- A test of CLASSIC pins the arcade's value (FID-3). A test of EXTENDED pins what the author chose, and says that it is
+  not the arcade (FID-4).
+
 **FID-2. A timing is counted from the arcade's own event, in the arcade's own unit.** Find the ROM event the count
 starts at (a `NAP`, a `MAKP`, `CLR STATUS`) and start the port's count at the port's version of that event, not at
 whatever moment is handy, such as when an object is made. Count it in arcade frames or beats on the clock-unit timer
