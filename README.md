@@ -40,6 +40,7 @@ The factory settings reproduce the arcade as it shipped. To change the number of
 | Page | What it covers |
 |---|---|
 | [Main menu](docs/main-menu.md) | Starting a game, the player modes, the game style and the other menu rows |
+| [Define inputs](docs/define-inputs.md) | Choosing the keys, controller buttons and sticks for both players |
 | [Settings](docs/settings.md) | Every adjustable setting, with a page for each one explaining what it does |
 
 The settings that reproduce arcade secrets and bugs have their own pages:
@@ -50,9 +51,11 @@ The settings that reproduce arcade secrets and bugs have their own pages:
 ## Controls
 
 **Controls:** `WASD` move · `IJKL` aim and fire (8-way; Space also fires) ·
-`F1` / `F2` / `F3` start a one player, two player alternate or two player simultaneous game ·
+`F1` / `F2` / `F3` start a one player, two player alternate or two player simultaneous game
+(`1` and `2` also start a one or two player game) ·
 `P` pauses (port-only; the arcade has no pause) · `F11` cycles the window scale · `Esc` quits.
-Controls can be redefined from the developer tools and are stored in
+The keys, buttons and sticks can be changed on the [Define inputs](docs/define-inputs.md) page,
+which is a row on the [main menu](docs/main-menu.md). Your choices are stored in
 `%LocalAppData%\Robotron2084\controls.ini`.
 
 **Screens and function keys:**
@@ -61,12 +64,9 @@ Controls can be redefined from the developer tools and are stored in
 - `F5` opens the [settings](docs/settings.md), which are saved to `%LocalAppData%\Robotron2084\settings.ini`.
 - `F4` sound test and `F6` speech test play every sound or speech line one at a time
   (`Enter`, `Space`, `Right` or `Down` advance, `Left` or `Up` go back, `A` is auto-up).
-- `F10` opens the developer tools: the attract screens, `DEFINE INPUTS`, `GAME ADJUSTMENT`,
+- `F10` opens the developer tools: the attract screens, [`DEFINE INPUTS`](docs/define-inputs.md), `GAME ADJUSTMENT`,
   `SOUND TEST` and `SPEECH TEST`.
 - `F1` to `F6` work from every attract screen, and `F10` from every screen.
-- **Define inputs:** every MOVE/SHOOT direction of both players has its own line. `Enter` arms a line
-  and the next key, pad button or stick push becomes it; `Del` clears it, `R` restores the factory
-  scheme and `F10` saves and returns.
 
 Keys for jumping around the attract sequence are listed in the
 [technical details](docs/technical/technical-details.md#attract-dev-keys).
