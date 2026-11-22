@@ -55,7 +55,7 @@ Changes are saved when they are made and again when the page is left.
 
 These are fixed and are not listed on the page:
 
-- `Space` and the controller's `A` button, and the right trigger, also fire.
+- The controller's `A` button and right trigger also fire.
 - `1` and `2` (and `NumPad1` and `NumPad2`) start a one or two player game. On the controller these are the Start and Back buttons.
 - `Insert` skips the current wave.
 - The function keys, described in the [main menu](main-menu.md) and the [README](../README.md).
