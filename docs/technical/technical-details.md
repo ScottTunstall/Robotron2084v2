@@ -1,6 +1,6 @@
 # Technical details
 
-[Back to the README](../README.md)
+[Back to the README](../../README.md)
 
 This page is for readers who want to know how the port is built and how it was verified against the original.
 
@@ -25,13 +25,13 @@ The rules the project follows, developed over about 90 documented decode rounds:
 | **Attract** | The arcade's whole attract sequence, driven by its own script: the title screen, then the story movie (the 2084 text crawl, the hero, the family and their name popups, the grunts, the hulk, the spheroid/tank/enforcer scene with a human reprogrammed into a prog, and the score posts, about 96 s), then the machine's demo game. Both script interpreters run the ROM's own bytes. Each page waits until the page before it is done, however long that takes (in the arcade's own timing the waits change nothing, and a test checks it frame for frame) |
 | **Sound** | The ROM's priority sound sequencer (`$D3C7`/`$D3E0`) and its tables drive a native C# sound board, ported routine by routine from the sound ROM's own source (`VSNDRM3.SRC`: the wave table synth, square wave, noise, radio, hyper and scream routines) and timed in the board's clock cycles. It matches the real ROM change for change, needs no ROM, and plays through MonoGame on Windows and Linux. Sounds are placed in stereo by their maker's position |
 | **Speech** | Port-only (the arcade has no speech chip): a separate voice, apart from the sound board, plays the speech lines in `Content/Speech/` (built by the content pipeline). A line is never cut off by a sound effect or by the next line; sound effects still cut each other off, as on the arcade's one-voice board |
-| **Game adjustment** | The cabinet's service-mode GAME ADJUSTMENT page (minus its coin/pricing rows), on `F5`: extra-man score, turns per player, difficulty of play (the ROM's own `$2C20` wave-table scaling) and the factory/high-score resets, plus a port-only attract-sound switch and switches for three arcade behaviours (Bozo mode and two bugs). See [Settings](settings.md) |
+| **Game adjustment** | The cabinet's service-mode GAME ADJUSTMENT page (minus its coin/pricing rows), on `F5`: extra-man score, turns per player, difficulty of play (the ROM's own `$2C20` wave-table scaling) and the factory/high-score resets, plus a port-only attract-sound switch and switches for three arcade behaviours (Bozo mode and two bugs). See [Settings](../settings.md) |
 
 **Deliberately absent:** the self-test and bookkeeping screens, coin counting and the pricing rows of the adjustment page (its gameplay rows are built, press `F5`), and the marquee art claim (author asset pending).
 
 ## The decode log
 
-The main record of the project is the decode log. Every finding, false start and retraction is in [arcade-fidelity-notes.md](arcade-fidelity-notes.md): 96 numbered sections of ROM analysis, many of them ending with a correction to an earlier section.
+The main record of the project is the decode log. Every finding, false start and retraction is in [arcade-fidelity-notes.md](../arcade-fidelity-notes.md): 96 numbered sections of ROM analysis, many of them ending with a correction to an earlier section.
 
 Some of the findings that took the longest, and what they showed:
 
