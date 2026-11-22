@@ -8,6 +8,26 @@ is run: the robots, timers, explosions and colours are re-derived from the origi
 assembly listings and checked against the shipped ROM image and the author's own
 annotated 6809 disassembly.
 
+## Quick start
+
+1. Install the [.NET 10 SDK](https://dotnet.microsoft.com/download).
+2. Build and run the game from the repository folder:
+
+   ```bash
+   dotnet build Robotron2084.slnx
+   ./src/Robotron2084/bin/Debug/net10.0/Robotron2084.exe
+   ```
+
+3. On the [main menu](docs/main-menu.md), press `Enter` to start a one player game, or `F2` for two players taking turns.
+4. Play:
+   - `WASD` moves.
+   - `IJKL` aims and fires (Space also fires).
+   - `P` pauses and `Esc` quits.
+
+The factory settings reproduce the arcade as it shipped. To change the number of lives, the difficulty or the secrets and bugs, open the [settings](docs/settings.md) with `F5`.
+
+A ROM image is not needed to play.
+
 ## About the author
 
 I reverse engineered Robotron: 2084. I have read its code routine by routine, so I
@@ -37,12 +57,7 @@ How the port is built, how it was checked against the original, the decode log a
 the repository layout are on a separate page:
 [Technical details](docs/technical-details.md).
 
-## Build and run
-
-```bash
-dotnet build Robotron2084.slnx
-./src/Robotron2084/bin/Debug/net10.0/Robotron2084.exe
-```
+## Controls
 
 **Controls:** `WASD` move · `IJKL` aim and fire (8-way; Space also fires) ·
 `F1` / `F2` / `F3` start a one player, two player alternate or two player simultaneous game ·
