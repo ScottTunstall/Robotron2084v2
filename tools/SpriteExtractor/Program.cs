@@ -25,14 +25,14 @@
 //   dotnet run --project tools/SpriteExtractor                                full run
 //   dotnet run --project tools/SpriteExtractor -- --sprite NAME [NAME ...]    one or more
 //   [--quiet] suppresses the ASCII previews (summary line per sprite only)
-// NAME is a name from docs/robotronsprites.txt (e.g. "familydeath"),
+// NAME is a name from docs/technical/robotronsprites.txt (e.g. "familydeath"),
 // case-insensitive; prints the ASCII preview + PNG path for validation.
 //
 // Pass A (primary): the DEFINITIVE sprite source (author directive) is
 //   C:\Users\scott\source\repos\WmsGfxSpriteEditor\WmsGfxSpriteEditor.Roms.Robotron2084\
 //   Shared\Sprites\RobotronBlueLabelSpriteRepository.cs
 // (_sprites.Add(new(id, name, offset, widthInBytes, height, BitsPerPixel));
-//  id and BitsPerPixel ignored — bpp is always 4). docs/robotronsprites.txt
+//  id and BitsPerPixel ignored — bpp is always 4). docs/technical/robotronsprites.txt
 // is a committed mirror verified byte-identical to it (2026-09-06, 215
 // entries: name, DECIMAL offset into the 64K ROM, width bytes, height px).
 // Data is read straight from ref/rom/robotron64k.bin (byte-level authority).
@@ -54,7 +54,7 @@ internal static class Program
     {
         string repoRoot = FindRepoRoot();
         string romPath = Path.Combine(repoRoot, "ref/rom/robotron64k.bin");
-        string listPath = Path.Combine(repoRoot, "docs/robotronsprites.txt");
+        string listPath = Path.Combine(repoRoot, "docs/technical/robotronsprites.txt");
         string pngDir = Path.Combine(repoRoot, "src/Robotron2084/Content/Sprites");
         string mapPath = Path.Combine(repoRoot, "docs/technical/sprite-map.md");
 
@@ -107,7 +107,7 @@ internal static class Program
         map.AppendLine();
         map.AppendLine("- **Pass A**: offsets from the definitive sprite source (author directive) —");
         map.AppendLine("  `WmsGfxSpriteEditor.../Shared/Sprites/RobotronBlueLabelSpriteRepository.cs`");
-        map.AppendLine("  (215 entries); `docs/robotronsprites.txt` is a committed mirror verified identical.");
+        map.AppendLine("  (215 entries); `docs/technical/robotronsprites.txt` is a committed mirror verified identical.");
         map.AppendLine("  Offsets are decimal into `ref/rom/robotron64k.bin`; width in bytes, height in px.");
         map.AppendLine("- **Pass B**: frames located in the original source listings, emitted only when the");
         map.AppendLine("  byte sequence is found verbatim in the ROM.");
