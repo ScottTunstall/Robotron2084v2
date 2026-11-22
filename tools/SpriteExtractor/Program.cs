@@ -56,7 +56,7 @@ internal static class Program
         string romPath = Path.Combine(repoRoot, "ref/rom/robotron64k.bin");
         string listPath = Path.Combine(repoRoot, "docs/robotronsprites.txt");
         string pngDir = Path.Combine(repoRoot, "src/Robotron2084/Content/Sprites");
-        string mapPath = Path.Combine(repoRoot, "docs/sprite-map.md");
+        string mapPath = Path.Combine(repoRoot, "docs/technical/sprite-map.md");
 
         byte[] rom = File.ReadAllBytes(romPath);
 
