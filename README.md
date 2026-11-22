@@ -69,13 +69,13 @@ Controls can be redefined from the developer tools and are stored in
   scheme and `F10` saves and returns.
 
 Keys for jumping around the attract sequence are listed in the
-[technical details](docs/technical-details.md#attract-dev-keys).
+[technical details](docs/technical/technical-details.md#attract-dev-keys).
 
 ## Technical details
 
 How the port is built, how it was checked against the original, the decode log and
 the repository layout are on a separate page:
-[Technical details](docs/technical-details.md).
+[Technical details](docs/technical/technical-details.md).
 
 ## Credits
 
