@@ -6,31 +6,28 @@
 
 Next to GORF, Robotron: 2084 is my favourite arcade game of all time.
 I reverse engineered Robotron: 2084 back in 2014. Or most of it anyway. That work
-gave me a detailed understanding of how the game runs internally. I know secrets.
+gave me a detailed understanding of how the game runs internally. 
 
-Anyhow, thanks to the advent of AI coding, I thought I'd create something I always dreamt of: my own version.
+**I know secrets.**
+
+Anyhow, thanks to the advent of AI coding, I thought I'd create something I always dreamt of: my own version. 
 
 I hope you enjoy.
 
 Oh yes: in case you think this is AI slop, you might want to check my [coding standards](docs/coding-standards) and my code review documents. I keep hands on in the code and review it myself. I **aggressively refactor** the code I deem unacceptable.
 
-Anybody who knows me IRL knows I won't tolerate substandard code.
+Anybody who knows me IRL knows I don't tolerate substandard code. So worry not.
 
 
 ## Quick start
 
-1. Install the [.NET 10 SDK](https://dotnet.microsoft.com/download).
-2. Build and run the game from the repository folder:
+1. If you haven't already, install the [.NET 10 SDK](https://dotnet.microsoft.com/download).
+2. Open the solution with VS Code or Visual Studio 2026, then run.  **I will be creating an installer for this game soon, when I feel its ready to release.**
 
-   ```bash
-   dotnet build Robotron2084.slnx
-   ./src/Robotron2084/bin/Debug/net10.0/Robotron2084.exe
-   ```
-
-3. On the [main menu](docs/main-menu.md), press `F1` or `Enter` to start a one player game, or `F2` for two players taking turns.
+3. On the [main menu](docs/main-menu.md), press `F1` or `Enter` to start a one player game, or `F2` for two players taking turns. F3 for simultaneous two player mode doesn't work yet.
 4. Play:
    - `WASD` moves.
-   - `IJKL` aims and fires (Space also fires).  You can change the controls by using [Define Inputs
+   - `IJKL` aims and fires (Space also fires).  
    - `P` pauses and `Esc` quits.
 
 The factory settings reproduce the arcade as it shipped. To change the number of lives, the difficulty or the secrets and bugs, open the [settings](docs/settings.md) with `F5`.
