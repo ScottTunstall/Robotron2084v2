@@ -11,6 +11,7 @@ public sealed class MainMenuStateTests
 {
     [Theory]
     [InlineData(MainMenuLine.Settings)]
+    [InlineData(MainMenuLine.DefineInputs)]
     [InlineData(MainMenuLine.DeveloperTools)]
     public void ARowThatOpensAPageHasNoValue(MainMenuLine line)
     {
@@ -21,6 +22,7 @@ public sealed class MainMenuStateTests
     [InlineData(MainMenuLine.StartGame, "PLAYER MODE")]
     [InlineData(MainMenuLine.GameStyle, "GAME STYLE")]
     [InlineData(MainMenuLine.Settings, "SETTINGS")]
+    [InlineData(MainMenuLine.DefineInputs, "DEFINE INPUTS")]
     [InlineData(MainMenuLine.DeveloperTools, "F10 - DEVELOPER TOOLS")]
     public void EachRowSaysItsShortcutKeysAndWhatItDoes(MainMenuLine line, string text)
     {
