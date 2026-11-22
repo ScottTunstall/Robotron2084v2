@@ -27,10 +27,8 @@ Anybody who knows me IRL knows I don't tolerate substandard code. So worry not.
 3. On the [main menu](docs/main-menu.md), press `F1` or `Enter` to start a one player game, or `F2` for two players taking turns. F3 for simultaneous two player mode doesn't work yet.
 4. Play:
    - `WASD` moves.
-   - `IJKL` aims and fires (Space also fires).  (You can change controls in [Define inputs](docs/define-inputs.md))
+   - `IJKL` aims and fires. You can change the controls on the [Define inputs](docs/define-inputs.md) page.
    - `P` pauses and `Esc` quits.
-
-The factory settings reproduce the arcade as it shipped. To change the number of lives, the difficulty or the secrets and bugs, open the [settings](docs/settings.md) with `F5`.
 
 ## Menus and settings
 
@@ -47,7 +45,7 @@ The settings that reproduce arcade secrets and bugs have their own pages:
 
 ## Controls
 
-**Controls:** `WASD` move · `IJKL` aim and fire (8-way; Space also fires) ·
+**Controls:** `WASD` move · `IJKL` aim and fire (8-way) ·
 `F1` / `F2` / `F3` start a one player, two player alternate or two player simultaneous game
 (`1` and `2` also start a one or two player game) ·
 `P` pauses (port-only; the arcade has no pause) · `F11` cycles the window scale · `Esc` quits.
