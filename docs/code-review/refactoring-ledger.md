@@ -1,7 +1,7 @@
 # Refactoring ledger
 
 This is the record of code that was changed because it broke the coding standard, not because the game had
-to behave differently. [coding-standards.md](coding-standards.md) rule **PROC-5** says every such change is
+to behave differently. [coding-standards.md](../coding-standards.md) rule **PROC-5** says every such change is
 written down here, in the same set of commits.
 
 It is here for two reasons:
@@ -22,7 +22,7 @@ Add a new `##` section at the top of the entries, with the date and a short titl
 4. **What was left alone, and why.**
 5. **How it was checked**: the build and the tests.
 6. **Why the author chose it**, in the author's own words, in the "Decisions and why" section of
-   [coding-standards.md](coding-standards.md). If the author gave no reason, say so there.
+   [coding-standards.md](../coding-standards.md). If the author gave no reason, say so there.
 
 ---
 
@@ -428,7 +428,7 @@ Debug build with 0 warnings and 0 errors; tests unchanged.
 
 ### What was wrong
 
-Five items from [terminology-duplicates-2026-10-31.md](terminology-duplicates-2026-10-31.md) where a standard already decided the word
+Five items from [terminology-duplicates-2026-10-31.md](../terminology-duplicates-2026-10-31.md) where a standard already decided the word
 (NAM-12, NAM-5, NAM-19, NAM-16), so no new decision was needed.
 
 ### What was changed
@@ -471,9 +471,9 @@ The shader is loaded only when the game runs, so the renamed `Effects/ColourCycl
 
 The author reviews code on paper and in diffs, with no IntelliSense, and could not tell the type of a parameter from its name:
 "in WaveSpawnContext there is a parameter named \"Field\" - but what field?" (the reason is in "Decisions and why" in
-[coding-standards.md](coding-standards.md)). `field` was also a bad name for a second reason: since C# 14 it is a keyword inside a
+[coding-standards.md](../coding-standards.md)). `field` was also a bad name for a second reason: since C# 14 it is a keyword inside a
 property accessor. NAM-25 had even listed `PlayField field` as a good name. Audit item R07 in
-[terminology-duplicates-2026-10-31.md](terminology-duplicates-2026-10-31.md) counted about 270 of the commonest.
+[terminology-duplicates-2026-10-31.md](../terminology-duplicates-2026-10-31.md) counted about 270 of the commonest.
 
 ### What was changed
 
@@ -530,7 +530,7 @@ Debug and Release builds with 0 warnings and 0 errors, then `Robotron2084.Tests`
 ### What was wrong
 
 The author does not like "roll" for random numbers. NAM-24 already retired it, but it was still in names and comments
-(audit item R02 in [terminology-duplicates-2026-10-31.md](terminology-duplicates-2026-10-31.md)). NAM-24 now says it is the
+(audit item R02 in [terminology-duplicates-2026-10-31.md](../terminology-duplicates-2026-10-31.md)). NAM-24 now says it is the
 author's preference and applies everywhere the word could stand for a random number.
 
 ### What was changed
@@ -558,7 +558,7 @@ random number" (the quark and spheroid spawners, `WaveParameters`, `WaveTable`, 
 
 ### What was wrong
 
-`Slot` meant five things (audit item D07 in [terminology-duplicates-2026-10-31.md](terminology-duplicates-2026-10-31.md)). The
+`Slot` meant five things (audit item D07 in [terminology-duplicates-2026-10-31.md](../terminology-duplicates-2026-10-31.md)). The
 sharpest clash was `PlayerTuning.LaserSlot`, a colour (palette entry 10), beside `LaserSlots`, the store of three lasers. The author
 chose **palette index** for the colour meaning, in every name.
 
@@ -597,7 +597,7 @@ Comments follow: "palette slot" and "slot" for a colour now read "palette index"
 
 ### What was wrong
 
-[terminology-duplicates-2026-10-31.md](terminology-duplicates-2026-10-31.md) found three ideas with two or more words in
+[terminology-duplicates-2026-10-31.md](../terminology-duplicates-2026-10-31.md) found three ideas with two or more words in
 our own names (NAM-7, NAM-9). The author chose the word for each:
 
 - **Wave, not level.** `LevelParameters`' own summary said "everything that makes one wave", and `LevelParameterGenerator`

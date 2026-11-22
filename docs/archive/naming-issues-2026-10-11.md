@@ -1,6 +1,6 @@
 # Naming: identifiers that do not say what they hold (2026-10-11)
 
-This is a work list, in the shape of [code-review-issues.md](code-review/code-review-issues.md), for one kind of
+This is a work list, in the shape of [code-review-issues.md](../code-review/code-review-issues.md), for one kind of
 finding only: **parameters, fields, properties and (where a fix has to include them) local variables
 whose names do not tell the reader what they are.**
 
@@ -10,8 +10,8 @@ moment in time; the value is one poll of the input. The author renamed it to `cu
 commit `a194193`). The same shape appears in the four pages that read `InputSnapshot` — they all call
 the poll `now` — and in some 250 declarations across the solution, which is what this list is for.
 
-The standard being applied is §3 of [coding-standards.md](coding-standards.md) (NAM-1 to NAM-22),
-with [glossary.md](glossary.md) for the words and unit suffixes. Every item names the rule it breaks.
+The standard being applied is §3 of [coding-standards.md](../coding-standards.md) (NAM-1 to NAM-22),
+with [glossary.md](../glossary.md) for the words and unit suffixes. Every item names the rule it breaks.
 
 ## How this list was made
 
@@ -50,14 +50,14 @@ Section H lists what was looked at and deliberately **not** made into an item, s
    running the assembly directly works — `dotnet tests/Robotron2084.Tests/bin/Debug/net10.0/Robotron2084.Tests.dll`
    (808 tests, 1 skipped for the missing ROM dump) and the same for `RobotronSoundPlayer.Tests.dll`
    (121 tests, 102 skipped). A rename must not change any of those numbers.
-7. **Record it:** every rename goes in [refactoring-ledger.md](refactoring-ledger.md) (old name → new
+7. **Record it:** every rename goes in [refactoring-ledger.md](../code-review/refactoring-ledger.md) (old name → new
    name, and why), as PROC-5 requires.
 8. **Do not edit** the dated records (`arcade-fidelity-notes.md`, the ledgers, `status.md`, `plan.md`,
    the handoffs, and this file) — the author keeps those.
 9. **Line numbers are from the working tree on 2026-10-11.** Find the code by the member name and the
    quoted text, not by the number.
 10. **Suggested names are suggestions.** If the name after `*Fix:*` fights an existing word in
-    [glossary.md](glossary.md), the glossary wins; use the glossary's word and say so in the commit.
+    [glossary.md](../glossary.md), the glossary wins; use the glossary's word and say so in the commit.
 
 ### Suggested order
 
@@ -481,6 +481,6 @@ exclusive, so `MaxValue` is one more than the biggest value that comes out. `Max
 ## What is not in this list
 
 Method names, class names and comments are covered by their own rules (NAM-1, NAM-13, NAM-18, CMT)
-and by [code-review-issues.md](code-review/code-review-issues.md); this file is only about the names of values.
+and by [code-review-issues.md](../code-review/code-review-issues.md); this file is only about the names of values.
 Nothing here changes what the game does: every item is a rename, and the build and the tests are the
 proof.

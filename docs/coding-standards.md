@@ -399,7 +399,7 @@ method does and gives back. A field called `_facing` that holds a `WalkSequence`
 - **Where a name of ours sits beside a type of the same name, that is allowed and wanted**: `ScoreBoard ScoreBoard`,
   `GameSettings GameSettings`.
 A name that needs a comment to say what it holds is wrong; rename it (§114). The corrections made when this rule came in
-are listed in [refactoring-ledger.md](refactoring-ledger.md), which is also a list of examples.
+are listed in [refactoring-ledger.md](code-review/refactoring-ledger.md), which is also a list of examples.
 
 **NAM-20. A method that works on a collection names what the collection holds.** If a method loops over, counts,
 searches, filters or changes a collection of things, and the class it is on is not itself a collection, the method's
@@ -981,7 +981,7 @@ folders, commit each folder on its own: one commit for `docs`, one for each fold
 - **Do not push** unless asked.
 
 **PROC-5. Refactoring and bad code are tracked.** When code is changed because it broke this standard, and not because
-the game's behaviour had to change, the change is written down in [refactoring-ledger.md](refactoring-ledger.md), in the
+the game's behaviour had to change, the change is written down in [refactoring-ledger.md](code-review/refactoring-ledger.md), in the
 same set of commits. This covers a sweep of renames, a split class, repaired comments, and any batch of code that was
 written badly and had to be put right, whoever or whatever wrote it. An entry says:
 - **what was wrong**, with the rule it broke and how it was found;

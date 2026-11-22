@@ -1,6 +1,6 @@
 # Terminology audit: one idea, two words (2026-10-31)
 
-This is a work list for a fixer. It is in the shape of [naming-issues-2026-10-11.md](naming-issues-2026-10-11.md), but it
+This is a work list for a fixer. It is in the shape of [naming-issues-2026-10-11.md](archive/naming-issues-2026-10-11.md), but it
 is about **words**, not about single names: places where the code uses two or more different words for one idea, or
 one word for several ideas. [coding-standards.md](coding-standards.md) NAM-7 and NAM-9 are the rules it applies
 ("near-synonyms must mean different things"; "one word per concept, everywhere"). The glossary
@@ -10,7 +10,7 @@ It is not the same as [terminology-ledger.md](terminology-ledger.md), which comp
 ours. This list only compares our own words with each other.
 
 > **Update, same day.** The author decided D01 (wave), D02 (lives) and D03 (Max and Min), and they were done in one change; see
-> [refactoring-ledger.md](refactoring-ledger.md). D12 turned out to need no rename: every `SoundTables` field was already named
+> [refactoring-ledger.md](code-review/refactoring-ledger.md). D12 turned out to need no rename: every `SoundTables` field was already named
 > after its ROM label's comment, so the table does not mix two vocabularies. The items below are left as they were written,
 > because they are the record of what was found. Their status:
 > D01 **done** (the namespace `Robotron2084.Level` was left), D02 **done** (`TurnsPerPlayer` and the arcade's on-screen words were left),
@@ -69,7 +69,7 @@ Read all of this before touching anything.
    On this machine `dotnet test` may report "Zero tests ran" (exit 5). If so run the assembly directly:
    `dotnet tests/Robotron2084.Tests/bin/Debug/net10.0/Robotron2084.Tests.dll` and the same for
    `RobotronSoundPlayer.Tests`.
-8. **Record it.** Every rename goes in [refactoring-ledger.md](refactoring-ledger.md) as a new section at the top
+8. **Record it.** Every rename goes in [refactoring-ledger.md](code-review/refactoring-ledger.md) as a new section at the top
    (PROC-5: old name, new name, why). If a rename retires a word, add it to the glossary's "Retired words" table in the
    same commit (NAM-22). If it settles a word, add it to the glossary once (CMT-6, CMT-11); every other place links there.
 9. **Comments follow the memory of how this project writes them:** plain English a child of ten could read, no arcade

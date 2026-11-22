@@ -5,7 +5,7 @@ Palette per WmsGfxSpriteEditor RobotronPaletteService (seanriddle.com ripper con
 
 - **Pass A**: offsets from the definitive sprite source (author directive) —
   `WmsGfxSpriteEditor.../Shared/Sprites/RobotronBlueLabelSpriteRepository.cs`
-  (215 entries); `docs/robotronsprites.txt` is a committed mirror verified identical.
+  (215 entries); `docs/technical/robotronsprites.txt` is a committed mirror verified identical.
   Offsets are decimal into `ref/rom/robotron64k.bin`; width in bytes, height in px.
 - **Pass B**: frames located in the original source listings, emitted only when the
   byte sequence is found verbatim in the ROM.

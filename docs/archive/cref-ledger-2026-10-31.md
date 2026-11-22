@@ -1,9 +1,9 @@
 # Broken cref audit: `<see cref>` links that do not resolve (2026-10-31)
 
 This is a work list for a fixer, in the shape of
-[xmldoc-audit-entities-2026-10-31.md](xmldoc-audit-entities-2026-10-31.md). It lists every `<see cref="…" />` in
+[xmldoc-audit-entities-2026-10-31.md](../xmldoc-audit-entities-2026-10-31.md). It lists every `<see cref="…" />` in
 `src/Robotron2084/` that the compiler cannot bind. The rules it applies are
-[coding-standards.md](coding-standards.md) **CMT-8** ("`cref`s resolve", and "`GenerateDocumentationFile` must be on, so
+[coding-standards.md](../coding-standards.md) **CMT-8** ("`cref`s resolve", and "`GenerateDocumentationFile` must be on, so
 the compiler enforces all of this"), **NAM-8** ("after a rename, the old word is gone
 everywhere: identifiers, comments, **crefs** …") and the release check in §"Before a release" ("crefs point at things that
 exist").
@@ -49,7 +49,7 @@ Line numbers are from the working tree on 2026-10-31. Find each place by the quo
 | Cause | Links |
 |---|---|
 | The timer fields were renamed `…Timer` → `…ArcadeFrameTimer` (the NAM-26 change recorded in
-  [refactoring-ledger.md](refactoring-ledger.md) §2026-10-31, which lists exactly these fields); the doc comments were left
+  [refactoring-ledger.md](../code-review/refactoring-ledger.md) §2026-10-31, which lists exactly these fields); the doc comments were left
   behind — a NAM-8 break. | 30 |
 | The namespace `Robotron2084.FieldEntities` was retired: entities live in `Robotron2084.Entities`, and `FieldEntities` is now a class in `Robotron2084.Level`. | 3 |
 | The linked member was renamed, or was never named that. | 6 |
@@ -78,7 +78,7 @@ Line numbers are from the working tree on 2026-10-31. Find each place by the quo
 ## A. Timer fields renamed to `…ArcadeFrameTimer` — **READY · done** (30 links)
 
 The field in the doc comment does not exist; the class holds the `…ArcadeFrameTimer` name (the rename is in
-[refactoring-ledger.md](refactoring-ledger.md) §2026-10-31, "every object is named with its whole type name"). All 30 are
+[refactoring-ledger.md](../code-review/refactoring-ledger.md) §2026-10-31, "every object is named with its whole type name"). All 30 are
 one text substitution inside `cref="…"` on the line named.
 
 | ID | File | Line | Broken `cref` | Should point to |
