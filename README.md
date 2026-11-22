@@ -27,7 +27,7 @@ Anybody who knows me IRL knows I don't tolerate substandard code. So worry not.
 3. On the [main menu](docs/main-menu.md), press `F1` or `Enter` to start a one player game, or `F2` for two players taking turns. F3 for simultaneous two player mode doesn't work yet.
 4. Play:
    - `WASD` moves.
-   - `IJKL` aims and fires (Space also fires).  
+   - `IJKL` aims and fires (Space also fires).  (You can change controls in [Define inputs](docs/define-inputs.md))
    - `P` pauses and `Esc` quits.
 
 The factory settings reproduce the arcade as it shipped. To change the number of lives, the difficulty or the secrets and bugs, open the [settings](docs/settings.md) with `F5`.
