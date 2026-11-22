@@ -6,15 +6,37 @@
 
 
 **Robotron: 2084** (Williams Electronics, 1982) re-implemented in C# / MonoGame
-(`net10.0`, desktop OpenGL) — **not an emulator, and not a re-skin.** Nothing here
-runs 6809 code: every robot, every timer, every explosion and every colour is
-re-derived from the original assembly listings, cross-checked against the shipped
-ROM image and the author's own annotated 6809 disassembly, and then validated by
-playtest, by unit tests and by render gates.
+(`net10.0`, desktop OpenGL). It is not an emulator and not a re-skin. No 6809 code
+is run: the robots, timers, explosions and colours are re-derived from the original
+assembly listings, checked against the shipped ROM image and the author's own
+annotated 6809 disassembly, and then validated by playtest, unit tests and render
+checks.
 
-This repository is one person's reverse-engineering study of the machine — *"I
-don't need you to emulate Robotron's hardware, just the functionality and
-gameplay"* — built in tandem with AI coding agents (see [Credits](#credits--provenance)).
+## About the author
+
+I reverse engineered Robotron: 2084. I have read its code routine by routine, so I
+know more than most about how the game works internally: how each enemy chooses its
+target, how the wave tables and timers drive the difficulty, and the behaviours the
+game never explains to the player. These include its secrets, such as **Bozo mode**,
+a hidden mercy that slows the early waves for a player who is losing lives. The
+original bugs are also kept, and each can be switched off from the settings
+(see below).
+
+This repository is that study turned into a playable game. It was built in tandem
+with AI coding agents (see [Credits](#credits--provenance)); the decisions about what
+the original does were mine.
+
+## Menus and settings
+
+| Page | What it covers |
+|---|---|
+| [Main menu](docs/main-menu.md) | Starting a game, the player modes, the game style and the other menu rows |
+| [Settings](docs/settings.md) | Every adjustable setting, with a page for each one explaining what it does |
+
+The settings that reproduce arcade secrets and bugs have their own pages:
+[Bozo mode](docs/settings/bozo-mode.md),
+[Brains chase Mikey bug](docs/settings/brains-chase-mikey-bug.md) and
+[Tank shell bug](docs/settings/tank-shell-bug.md).
 
 ---
 
@@ -54,7 +76,7 @@ The house rules, learned the hard way over ~90 documented decode rounds:
 | **Attract** | The arcade's whole attract sequence, driven by its own script: the title screen, then the **story movie** — the 2084 text crawl, the hero, the family and their name popups, the grunts, the hulk, the spheroid/tank/enforcer scene with a human reprogrammed into a prog, and the score posts (~96 s) — then the machine's phony-player demo game. Both script interpreters run the ROM's own bytes. Each page waits until the page before it is done, however long that takes (in the arcade's own timing the waits change nothing, and a test checks it frame for frame) |
 | **Sound** | The ROM's priority sound sequencer ($D3C7/$D3E0) and its tables drive a **native C# sound board**, ported routine by routine from the sound ROM's own source (`VSNDRM3.SRC`: the wave table synth, square wave, noise, radio, hyper and scream routines) and timed in the board's clock cycles — it matches the real ROM change for change, needs no ROM, and plays through MonoGame on Windows and Linux. Sounds are placed in stereo by their maker's position |
 | **Speech** | **Port-only** (the arcade has no speech chip): a separate voice, apart from the sound board, plays the speech lines in `Content/Speech/` (built by the content pipeline). A line is never cut off by a sound effect or by the next line; sound effects still cut each other off, as on the arcade's one-voice board. Nothing in the game asks for a line yet — the `F6` SPEECH TEST page plays them |
-| **Game adjustment** | The cabinet's service-mode GAME ADJUSTMENT page (minus its coin/pricing rows), on `F5`: extra-man score, turns per player, difficulty of play (the ROM's own `$2C20` wave-table scaling) and the factory/high-score resets, plus a port-only attract-sound switch. Saved to `settings.ini` |
+| **Game adjustment** | The cabinet's service-mode GAME ADJUSTMENT page (minus its coin/pricing rows), on `F5`: extra-man score, turns per player, difficulty of play (the ROM's own `$2C20` wave-table scaling) and the factory/high-score resets, plus a port-only attract-sound switch, and switches for three arcade behaviours (Bozo mode and two bugs). See [Settings](docs/settings.md) |
 
 **Deliberately absent:** the self-test and bookkeeping screens, coin counting and the pricing rows of
 the adjustment page (its gameplay rows are built — press `F5`), and the marquee art claim (author
@@ -122,42 +144,24 @@ dotnet build Robotron2084.slnx                     # 0 warnings, warnings-as-err
 ```
 
 **Controls:** `WASD` move · `IJKL` aim *and* fire (8-way; Space also fires) ·
-`1` / `2` start a one- or two-player game · `F11` cycle window scale · `Esc` quit.
-**The title screen (notes §101):** `F1` one player game · `F2` two player game
-(alternate) · `F3` two player game (simultaneous — the mode is offered, the sharing
-is not built yet) · `F4` sound test · `F5` game settings (notes §131) · `F6` speech
-test (port-only) · `F10` developer tools. `F1` to `F6` work from **every** attract screen —
-title, storyline movie, demo game and high score table — and `F10` opens the developer
-tools from every screen. `P` pauses a game (the arcade has no pause; port-only).
-**Developer tools (`F10`, notes §101):** a menu of the attract screens (the two title
-panes, the story, the demo, the high scores), `DEFINE INPUTS`, `GAME ADJUSTMENT`, `SOUND TEST`
-and `SPEECH TEST`. `Up`/`Down` and `Enter` choose, `1` to `9` choose a line directly and
-`F10` closes it.
-**Sound test (`F4`) and speech test (`F6`):** every board sound (and the transporter), or every
-speech line, one at a time. `Enter`, `Space`, `Right` or `Down` advance, `Left` or `Up` go
-back, `A` is auto-up and `F10` returns to the developer tools.
-**Define inputs (from the developer tools, notes §101):** every MOVE/SHOOT UP, DN, LEFT, RIGHT of both
-players on its own line. `Up`/`Down` scroll (player 2's block is beneath player 1's,
-then the pause line), `Enter` arms the highlighted line and the next key, pad button
-or stick push becomes it, `Del` clears the line, `R` restores the factory scheme and
-`F10` saves and returns. Definitions live in
-`%LocalAppData%\Robotron2084\controls.ini`, hand-editable and reloaded at start-up.
-**Game settings (`F5`, notes §131):** the cabinet's GAME ADJUSTMENT page, in its own
-dress — the arcade's gameplay rows minus coins. `Up`/`Down` select, `Left`/`Right`
-change, `Enter` activates `RESTORE FACTORY SETTINGS` / `HIGH SCORE TABLE RESET` once
-they read `YES`, and `F10` saves and returns:
-`EXTRA MAN EVERY` (25000 points, the arcade's recommended stop), `TURNS PER PLAYER`
-(3 lives), `DIFFICULTY OF PLAY` (0-10, 5 recommended — the wave tables move exactly as
-the ROM's `$2B7C` moves them), `ATTRACT MODE SOUND` (port-only: off by default, so the demo
-machine playing itself is silent; turn it on to hear it), `BOZO MODE` (port-only: on by
-default, as the arcade — the early-wave mercy for a player losing ships; off, it is never
-given), `BRAINS CHASE MIKEY BUG` (port-only: on by default, as the arcade — every brain starts
-the wave chasing the first Mikey; off, each starts on the nearest family member),
-`TANK SHELL BUG` (port-only: on by default, as the arcade — a shell that fizzles out stays on
-the wave's shell count, so the tanks stop firing after 21; off, only the shells on the field count),
-`RESTORE FACTORY SETTINGS` and `HIGH SCORE TABLE RESET`.
-Settings live in `%LocalAppData%\Robotron2084\settings.ini`, hand-editable and
-reloaded at start-up.
+`F1` / `F2` / `F3` start a one player, two player alternate or two player simultaneous game ·
+`P` pauses (port-only; the arcade has no pause) · `F11` cycles the window scale · `Esc` quits.
+Controls can be redefined from the developer tools and are stored in
+`%LocalAppData%\Robotron2084\controls.ini`.
+
+**Screens and function keys:**
+
+- The [main menu](docs/main-menu.md) starts a game and chooses the game style.
+- `F5` opens the [settings](docs/settings.md), which are saved to `%LocalAppData%\Robotron2084\settings.ini`.
+- `F4` sound test and `F6` speech test play every sound or speech line one at a time
+  (`Enter`, `Space`, `Right` or `Down` advance, `Left` or `Up` go back, `A` is auto-up).
+- `F10` opens the developer tools: the attract screens, `DEFINE INPUTS`, `GAME ADJUSTMENT`,
+  `SOUND TEST` and `SPEECH TEST`.
+- `F1` to `F6` work from every attract screen, and `F10` from every screen.
+- **Define inputs:** every MOVE/SHOOT direction of both players has its own line. `Enter` arms a line
+  and the next key, pad button or stick push becomes it; `Del` clears it, `R` restores the factory
+  scheme and `F10` saves and returns.
+
 **Attract dev keys (port-only, notes §97/§98):** `End` jump straight into the attract
 storyline movie · `Home` jump straight into the attract demo game · `PgUp` (held)
 fast-forward the movie 8× — the hulk's walk arrives in ~7 s instead of ~51 s ·
