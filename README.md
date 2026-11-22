@@ -4,21 +4,18 @@
 
 ## About this project
 
-I reverse engineered Robotron: 2084, reading its code routine by routine. That work
-gave me a detailed understanding of how the game runs internally: how each enemy
-chooses its target, how the wave tables and timers set the difficulty, and the
-behaviours the game never explains to the player. These include its secrets, such as
-**Bozo mode**, a hidden mercy that slows the early waves for a player who is losing
-lives. The original bugs are also kept, and each can be switched off from the
-settings.
+Next to GORF, Robotron: 2084 is my favourite arcade game of all time.
+I reverse engineered Robotron: 2084 back in 2014. Or most of it anyway. That work
+gave me a detailed understanding of how the game runs internally. I know secrets.
 
-This repository is that study turned into a playable game.
+Anyhow, thanks to the advent of AI coding, I thought I'd create something I always dreamt of: my own version.
 
-**Robotron: 2084** (Williams Electronics, 1982) re-implemented in C# / MonoGame
-(`net10.0`, desktop OpenGL). It is not an emulator and not a re-skin. No 6809 code
-is run: the robots, timers, explosions and colours are re-derived from the original
-assembly listings and checked against the shipped ROM image and the author's own
-annotated 6809 disassembly.
+I hope you enjoy.
+
+Oh yes: in case you think this is AI slop, you might want to check my [coding standards](docs/coding-standards) and my code review documents. I keep hands on in the code and review it myself. I **aggressively refactor** the code I deem unacceptable.
+
+Anybody who knows me IRL knows I won't tolerate substandard code.
+
 
 ## Quick start
 
@@ -33,7 +30,7 @@ annotated 6809 disassembly.
 3. On the [main menu](docs/main-menu.md), press `F1` or `Enter` to start a one player game, or `F2` for two players taking turns.
 4. Play:
    - `WASD` moves.
-   - `IJKL` aims and fires (Space also fires).
+   - `IJKL` aims and fires (Space also fires).  You can change the controls by using [Define Inputs
    - `P` pauses and `Esc` quits.
 
 The factory settings reproduce the arcade as it shipped. To change the number of lives, the difficulty or the secrets and bugs, open the [settings](docs/settings.md) with `F5`.
