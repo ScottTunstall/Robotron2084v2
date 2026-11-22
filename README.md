@@ -14,7 +14,7 @@ Anyhow, thanks to the advent of AI coding, I thought I'd create something I alwa
 
 I hope you enjoy.
 
-Oh yes: in case you think this is AI slop, you might want to check my [coding standards](docs/coding-standards) and my code review documents. I keep hands on in the code and review it myself. I **aggressively refactor** the code I deem unacceptable.
+Oh yes: in case you think this is AI slop, you might want to check my [coding standards](docs/coding-standards.md) and my [code review documents](docs/code-review/). I keep hands on in the code and review it myself. I **aggressively refactor** the code I deem unacceptable.
 
 Anybody who knows me IRL knows I don't tolerate substandard code. So worry not.
 
