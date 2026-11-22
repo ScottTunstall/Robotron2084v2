@@ -2,12 +2,13 @@
 
 [Back to the README](../README.md)
 
-The main menu is the page from which a game is started. It shows the cabinet artwork behind four rows. Each row has a name on the left and, where it has one, a value on the right.
+The main menu is the page from which a game is started. It shows the cabinet artwork behind five rows. Each row has a name on the left and, where it has one, a value on the right.
 
 | Row | Value | What it does |
 |---|---|---|
 | **PLAYER MODE** | One player, two player alternate, or two player simultaneous | Chooses how the next game is played. `Enter` starts it. |
 | **GAME STYLE** | CLASSIC or EXTENDED | Chooses which game is played. The choice is saved as soon as it changes. |
+| **DEFINE INPUTS** | none | Opens the page where the keys, controller buttons and sticks for both players are chosen. |
 | **SETTINGS** | none | Opens the [settings pages](settings.md). |
 | **F10 - DEVELOPER TOOLS** | none | Opens the developer tools (attract screens, input definitions, sound test, speech test). |
 
