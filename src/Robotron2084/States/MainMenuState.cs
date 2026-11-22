@@ -14,8 +14,8 @@ using Robotron2084.States.Models;
 namespace Robotron2084.States;
 
 /// <summary>
-///     The menu page: the cabinet art's robot over the game to start, the CLASSIC or EXTENDED choice, the settings and the
-///     developer tools. It works like the GAME ADJUSTMENT page: a row for each choice, with its value beside it.
+///     The menu page: the cabinet art's robot over the game to start, the CLASSIC or EXTENDED choice, the input
+///     definitions, the settings and the developer tools. It works like the GAME ADJUSTMENT page: a row for each choice, with its value beside it.
 /// </summary>
 /// <remarks>
 ///     <list type="bullet">
@@ -114,6 +114,7 @@ public sealed class MainMenuState : IGameState
     [
         MainMenuLine.StartGame,
         MainMenuLine.GameStyle,
+        MainMenuLine.DefineInputs,
         MainMenuLine.Settings,
         MainMenuLine.DeveloperTools
     ];
@@ -249,6 +250,7 @@ public sealed class MainMenuState : IGameState
             MainMenuLine.StartGame => "PLAYER MODE",
             MainMenuLine.GameStyle => "GAME STYLE",
             MainMenuLine.Settings => "SETTINGS",
+            MainMenuLine.DefineInputs => "DEFINE INPUTS",
             _ => "F10 - DEVELOPER TOOLS"
         };
     }
@@ -309,6 +311,10 @@ public sealed class MainMenuState : IGameState
 
             case MainMenuLine.Settings:
                 gameStateManager.TransitionTo(new SettingsState(_gameStateParams, _gameSettingsStore));
+                return true;
+
+            case MainMenuLine.DefineInputs:
+                gameStateManager.TransitionTo(new DefineInputsState(_gameStateParams, new ControlSettingsStore()));
                 return true;
 
             default:

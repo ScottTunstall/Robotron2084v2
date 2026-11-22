@@ -11,6 +11,9 @@ public enum MainMenuLine
     /// <summary>Switches between the CLASSIC and EXTENDED games.</summary>
     GameStyle,
 
+    /// <summary>Opens the DEFINE INPUTS page, where the keys, buttons and sticks are chosen.</summary>
+    DefineInputs,
+
     /// <summary>Opens the GAME ADJUSTMENT page.</summary>
     Settings,
 
