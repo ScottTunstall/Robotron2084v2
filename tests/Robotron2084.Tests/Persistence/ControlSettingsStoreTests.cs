@@ -163,14 +163,14 @@ public sealed class ControlSettingsStoreTests
     }
 
     [Fact]
-    public void SpaceAndInsert_StayAsPortAliases()
+    public void InsertSkipsTheWave_AndSpaceDoesNotFire()
     {
         var controlSettings = ControlSettings.CreateDefaults();
 
         var playerInputState = controlSettings.ReadPlayer(0, new KeyboardState(Keys.Space, Keys.Insert), new GamePadState(),
             new GamePadState());
 
-        Assert.True(playerInputState.FireHeld); // Space has always fired
+        Assert.False(playerInputState.FireHeld); // Space is not a fire key
         Assert.True(playerInputState.SkipWaveHeld); // Insert is the skip-wave key since P became PAUSE
     }
 
