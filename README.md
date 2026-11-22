@@ -2,6 +2,18 @@
 
 <img width="1916" height="1200" alt="title page 1" src="https://github.com/user-attachments/assets/ad77ae6d-e5de-407f-a417-c2a1043a598c" />
 
+## About this project
+
+I reverse engineered Robotron: 2084, reading its code routine by routine. That work
+gave me a detailed understanding of how the game runs internally: how each enemy
+chooses its target, how the wave tables and timers set the difficulty, and the
+behaviours the game never explains to the player. These include its secrets, such as
+**Bozo mode**, a hidden mercy that slows the early waves for a player who is losing
+lives. The original bugs are also kept, and each can be switched off from the
+settings.
+
+This repository is that study turned into a playable game.
+
 **Robotron: 2084** (Williams Electronics, 1982) re-implemented in C# / MonoGame
 (`net10.0`, desktop OpenGL). It is not an emulator and not a re-skin. No 6809 code
 is run: the robots, timers, explosions and colours are re-derived from the original
@@ -18,26 +30,13 @@ annotated 6809 disassembly.
    ./src/Robotron2084/bin/Debug/net10.0/Robotron2084.exe
    ```
 
-3. On the [main menu](docs/main-menu.md), press `Enter` to start a one player game, or `F2` for two players taking turns.
+3. On the [main menu](docs/main-menu.md), press `F1` or `Enter` to start a one player game, or `F2` for two players taking turns.
 4. Play:
    - `WASD` moves.
    - `IJKL` aims and fires (Space also fires).
    - `P` pauses and `Esc` quits.
 
 The factory settings reproduce the arcade as it shipped. To change the number of lives, the difficulty or the secrets and bugs, open the [settings](docs/settings.md) with `F5`.
-
-A ROM image is not needed to play.
-
-## About the author
-
-I reverse engineered Robotron: 2084. I have read its code routine by routine, so I
-know more than most about how the game works internally: how each enemy chooses its
-target, how the wave tables and timers drive the difficulty, and the behaviours the
-game never explains to the player. These include its secrets, such as **Bozo mode**,
-a hidden mercy that slows the early waves for a player who is losing lives. The
-original bugs are also kept, and each can be switched off from the settings.
-
-This repository is that study turned into a playable game.
 
 ## Menus and settings
 
@@ -50,12 +49,6 @@ The settings that reproduce arcade secrets and bugs have their own pages:
 [Bozo mode](docs/settings/bozo-mode.md),
 [Brains chase Mikey bug](docs/settings/brains-chase-mikey-bug.md) and
 [Tank shell bug](docs/settings/tank-shell-bug.md).
-
-## Technical details
-
-How the port is built, how it was checked against the original, the decode log and
-the repository layout are on a separate page:
-[Technical details](docs/technical-details.md).
 
 ## Controls
 
@@ -81,7 +74,13 @@ Controls can be redefined from the developer tools and are stored in
 Keys for jumping around the attract sequence are listed in the
 [technical details](docs/technical-details.md#attract-dev-keys).
 
-## Credits and provenance
+## Technical details
+
+How the port is built, how it was checked against the original, the decode log and
+the repository layout are on a separate page:
+[Technical details](docs/technical-details.md).
+
+## Credits
 
 **Robotron: 2084** was designed by Eugene Jarvis and Larry DeMar (Vid Kidz) and
 released by **Williams Electronics in 1982**. All of the art, the tables and the
