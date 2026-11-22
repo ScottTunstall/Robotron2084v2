@@ -2,7 +2,7 @@
 
 This is a work list for an AI agent. Each item says **where**, **what is wrong**, **what to do** and
 **how you know it is done**. Read the rules in section 0 before touching anything. The standards that
-these issues are measured against are in [coding-standards.md](coding-standards.md).
+these issues are measured against are in [coding-standards.md](../coding-standards.md).
 
 ---
 

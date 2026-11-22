@@ -1,7 +1,7 @@
 # Code review against `docs/coding-standards.md` (2026-10-11)
 
 Full-repository review of `src/`, `tools/` and `tests/` against the standard in
-[coding-standards.md](coding-standards.md). Every finding cites the rule ID from that document.
+[coding-standards.md](../coding-standards.md). Every finding cites the rule ID from that document.
 Findings are ranked most severe first. Format is the one the standard's Part 2 prescribes.
 
 **Baseline:** `dotnet build Robotron2084.slnx -c Debug` — 0 warnings, 0 errors. Working tree

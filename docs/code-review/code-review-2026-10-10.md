@@ -1,7 +1,7 @@
 # Code review against `docs/coding-standards.md` (2026-10-10)
 
 Full-repository review of `src/`, `tests/` and `tools/` against the standard in
-[coding-standards.md](coding-standards.md). Every rule ID below cites that document.
+[coding-standards.md](../coding-standards.md). Every rule ID below cites that document.
 
 **Baseline:** `dotnet build Robotron2084.slnx -c Debug` — 0 warnings, 0 errors.
 `dotnet test Robotron2084.slnx` — 786 passed, 0 failed, 51 skipped.

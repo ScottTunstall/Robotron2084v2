@@ -1,6 +1,6 @@
 # Naming: identifiers that do not say what they hold (2026-10-11)
 
-This is a work list, in the shape of [code-review-issues.md](code-review-issues.md), for one kind of
+This is a work list, in the shape of [code-review-issues.md](code-review/code-review-issues.md), for one kind of
 finding only: **parameters, fields, properties and (where a fix has to include them) local variables
 whose names do not tell the reader what they are.**
 
@@ -481,6 +481,6 @@ exclusive, so `MaxValue` is one more than the biggest value that comes out. `Max
 ## What is not in this list
 
 Method names, class names and comments are covered by their own rules (NAM-1, NAM-13, NAM-18, CMT)
-and by [code-review-issues.md](code-review-issues.md); this file is only about the names of values.
+and by [code-review-issues.md](code-review/code-review-issues.md); this file is only about the names of values.
 Nothing here changes what the game does: every item is a rename, and the build and the tests are the
 proof.

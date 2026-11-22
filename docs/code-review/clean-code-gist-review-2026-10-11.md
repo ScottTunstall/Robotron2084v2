@@ -6,7 +6,7 @@ guidelines"). Rules are cited by the gist's own section and number, e.g. *Names 
 "Replace magic numbers with named constants".
 
 **Authority.** This file is a checklist pass, not the project standard. Where a gist rule
-and [coding-standards.md](coding-standards.md) disagree, **the repo standard wins** and the
+and [coding-standards.md](../coding-standards.md) disagree, **the repo standard wins** and the
 disagreement is recorded in "Where the checklist and the repo standard disagree" — that
 section is the part that needs the author's eye, because a checker running the gist alone
 would "fix" things the repo has decided deliberately.

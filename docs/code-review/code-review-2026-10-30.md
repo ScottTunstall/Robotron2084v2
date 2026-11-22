@@ -1,7 +1,7 @@
 # Code review against `docs/coding-standards.md` (2026-10-30)
 
 Targeted review of the entity layer — `src/Robotron2084/Entities/` (23 entity types) and the
-`Level/` code that orchestrates it — against the standard in [coding-standards.md](coding-standards.md).
+`Level/` code that orchestrates it — against the standard in [coding-standards.md](../coding-standards.md).
 The question asked was whether entities are implemented consistently, and whether the entity layer
 is SOLID, clean, idiomatic and free of surprise. Every finding cites the rule ID from the standard.
 Findings are ranked most severe first, in the format the standard's Part 2 prescribes.
@@ -43,7 +43,7 @@ No entity body reads `gameTime`.
 **Relation to earlier reviews:** this document is the fourth. It does not repeat findings already
 recorded in [code-review-2026-10-10.md](code-review-2026-10-10.md),
 [code-review-2026-10-11.md](code-review-2026-10-11.md),
-[naming-issues-2026-10-11.md](naming-issues-2026-10-11.md) and
+[naming-issues-2026-10-11.md](../naming-issues-2026-10-11.md) and
 [clean-code-gist-review-2026-10-11.md](clean-code-gist-review-2026-10-11.md), except where the
 same defect was re-verified and is worth restating because it is severe. Those are marked
 **confirms**. The following were re-checked and are **unchanged since 2026-10-11**: the playtest
