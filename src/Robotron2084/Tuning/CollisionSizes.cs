@@ -5,7 +5,7 @@ namespace Robotron2084.Tuning;
 ///     Original source: <c>RRS22.ASM</c> <c>COL0V</c> (about line 1038). The ROM does not use a fixed square. It
 ///     intersects each object's own sprite size (<c>ADDD OBJW,U</c> and <c>ADDD [OPICT,X]</c>), so the collision box
 ///     is the sprite. The sizes here are the sizes of the animation frames that are showing, taken from
-///     <c>docs/sprite-map.md</c>, in arcade pixels. Lasers and sparks keep the spec's 4 by 4 box.
+///     <c>docs/technical/sprite-map.md</c>, in arcade pixels. Lasers and sparks keep the spec's 4 by 4 box.
 /// </remarks>
 public static class CollisionSizes
 {

@@ -7,7 +7,7 @@ namespace Robotron2084.Graphics;
 /// <summary>
 ///     ROM sprite textures loaded from the content pipeline (extracted from
 ///     ref/rom/robotron64k.bin by tools/SpriteExtractor — definitive source and
-///     per-sprite ROM offsets in docs/sprite-map.md), plus runtime-generated
+///     per-sprite ROM offsets in docs/technical/sprite-map.md), plus runtime-generated
 ///     textures for the four player laser sprites (ROM data R5 $35BE-$35DC,
 ///     see the Laser* properties) and the 1x1 wall pixel.
 ///     Arcade fidelity: animation frames are drawn at PortPixelsPerArcadePixel× arcade pixels (the
