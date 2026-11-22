@@ -14,15 +14,12 @@ public sealed class ControlSettings
     /// <summary>How many players the page shows columns for (the arcade's PLRCNT maximum).</summary>
     public const int PlayerCount = 2;
 
-    /// <inheritdoc cref="FireAliasKey" />
-    private const Buttons FireAliasButton = Buttons.A;
-
     /// <summary>
-    ///     The port's fire alias: SPACE and the pad's A button, on top of the bound SHOOT directions.
+    ///     The port's fire alias: the pad's A button, on top of the bound SHOOT directions.
     ///     Fixed, not rebindable — the DEFINITIONS page binds the eight stick directions and the pause
-    ///     line, and these two are the fallbacks a player expects without setting anything up.
+    ///     line, and this is the fallback a player expects without setting anything up.
     /// </summary>
-    private const Keys FireAliasKey = Keys.Space;
+    private const Buttons FireAliasButton = Buttons.A;
 
     /// <summary>How far the pad's trigger must be pulled to count as fire (a trigger is an axis).</summary>
     private const float FireTriggerThreshold = 0.5f;
@@ -92,7 +89,6 @@ public sealed class ControlSettings
         if (playerIndex == 1) ownPad = playerTwoGamePadState;
 
         var fire = controls.IsFiring(keyboardState, playerOneGamePadState, playerTwoGamePadState)
-                   || keyboardState.IsKeyDown(FireAliasKey)
                    || ownPad.IsButtonDown(FireAliasButton)
                    || ownPad.Triggers.Right > FireTriggerThreshold;
 
