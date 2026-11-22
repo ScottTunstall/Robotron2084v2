@@ -33,9 +33,10 @@ public static class SoundTuning
     /// <remarks>
     ///     Port only. Measured: the player's laser is about 0.35 loud (the square root of the mean of the squared samples)
     ///     at <see cref="MasterVolume" />, and the Berzerk words about 0.17 at a <see cref="SpeechVolume" /> of 1. At this
-    ///     share the laser drops to about 0.14, below the words.
+    ///     share the laser drops to about 0.07, well below the words. It was 0.4, which left the laser at about 0.14,
+    ///     close enough to the words that they could hardly be heard over the game.
     /// </remarks>
-    public const float BoardVolumeWhileSpeaking = 0.4f;
+    public const float BoardVolumeWhileSpeaking = 0.2f;
 
     /// <summary>How loud the sound board plays, from 0 (silent) to 1 (as loud as the output allows).</summary>
     public const float MasterVolume = 0.5f;
