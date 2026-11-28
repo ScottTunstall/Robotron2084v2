@@ -65,13 +65,29 @@ public sealed class SparkTests
         IntVector2 origin = new(inner.X + 300, inner.Y + 100);
         playField.SpawnSpark(origin, new IntVector2(inner.X, inner.Y + 100));
         var spark = playField.FieldEntities.Sparks[^1];
+        var start = spark.Position;
 
         for (var tick = 0; tick < 4; tick++) playField.Update(OneTick());
 
-        Assert.InRange(spark.Position.X - origin.X, -24, -13);
+        Assert.InRange(spark.Position.X - start.X, -24, -13);
         // Y had zero aim distance: only the jitter (±64 port px → ±1 px per
         // frame) can have shown.
-        Assert.InRange(spark.Position.Y - origin.Y, -5, 5);
+        Assert.InRange(spark.Position.Y - start.Y, -5, 5);
+    }
+
+    [Fact]
+    public void Spark_SpriteStartsAtTheEnforcersTopLeftCorner()
+    {
+        var playField = CreateField(1);
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
+        IntVector2 enforcer = new(inner.X + 100, inner.Y + 100);
+
+        playField.SpawnSpark(enforcer, new IntVector2(inner.X + 200, inner.Y + 100));
+        var box = Assert.Single(playField.FieldEntities.Sparks).GetBounds();
+
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SparkSpriteSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SparkSpriteSize.Height);
+        Assert.Equal(enforcer, new IntVector2(box.Center.X - width / 2, box.Center.Y - height / 2));
     }
 
     [Fact]
@@ -111,7 +127,10 @@ public sealed class SparkTests
         var playField = CreateField(1);
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         IntVector2 corner = new(inner.X + cornerX * inner.Width, inner.Y + cornerY * inner.Height);
-        playField.SpawnSpark(corner, corner);
+        var enforcerWidth = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EnforcerCollisionSize.Width);
+        var enforcerHeight = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.EnforcerCollisionSize.Height);
+        IntVector2 enforcer = new(corner.X - cornerX * enforcerWidth, corner.Y - cornerY * enforcerHeight);
+        playField.SpawnSpark(enforcer, corner);
         var spark = Assert.Single(playField.FieldEntities.Sparks);
         var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SparkSpriteSize.Width);
         var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SparkSpriteSize.Height);

@@ -73,25 +73,25 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="entityParams">
     ///     What the spark shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: it stands in for the arcade's own random numbers (<c>SEED</c>, <c>LSEED</c> and <c>HSEED</c>).
     /// </param>
-    /// <param name="position">
-    ///     Where it starts, which is where the enforcer that fired it is. If its sprite would overlap the wall there, it
-    ///     starts just clear of the wall.
+    /// <param name="spritePosition">
+    ///     Where the top-left corner of the spark's sprite starts, which is the top-left corner of the enforcer that fired
+    ///     it. The spark's box is in the middle of the sprite.
     /// </param>
     /// <param name="playerPosition">Where the player is, which the spark is aimed at.</param>
     /// <param name="playfieldBounds">
-    ///     The inside of the wall. The spark starts inside it, and when the player is near the left wall, the spark's aim
-    ///     is not moved sideways. If this is null, neither rule is used.
+    ///     The inside of the wall. When the player is near the left wall, the spark's aim is not
+    ///     moved sideways. If this is null, that rule is not used.
     /// </param>
     public Spark(
         EntityParams entityParams,
-        IntVector2 position,
+        IntVector2 spritePosition,
         IntVector2 playerPosition,
         Rectangle? playfieldBounds = null)
     {
         _textureSet = entityParams.TextureSet;
         _gameEvents = entityParams.GameEvents;
-        if (playfieldBounds is { } startBounds) position = KeepSpriteInside(position, startBounds);
-        _position = position;
+        // ROM CREATE_SPARK ($1429): the sprite starts at the enforcer's top-left corner, and is aimed from there.
+        _position = new IntVector2(spritePosition.X + OverhangX, spritePosition.Y + OverhangY);
         _random = entityParams.Random;
 
         // The spark is not aimed exactly at the Player. Its aim is moved a random amount sideways and a random amount up or down. There is no sideways change when the Player is near the left wall.
@@ -101,8 +101,8 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
             playerPosition.X < bounds.X + ScreenSize.ToPortPixelsFromColumns(SparkTuning.SparkLeftWallJitterColumns))
             jitterX = 0;
 
-        var deltaX = playerPosition.X + ScreenSize.ToPortPixelsFromColumns(jitterX) - position.X;
-        var deltaY = playerPosition.Y + ScreenSize.ToPortPixelsFromArcadePixels(jitterY) - position.Y;
+        var deltaX = playerPosition.X + ScreenSize.ToPortPixelsFromColumns(jitterX) - spritePosition.X;
+        var deltaY = playerPosition.Y + ScreenSize.ToPortPixelsFromArcadePixels(jitterY) - spritePosition.Y;
 
         // The starting speed is set so that, if it never changed, the spark would reach the spot it is aimed at after SparkTuning.SparkAimDivisor moves.
         var subpixelsPerPortPixelPerMove = ScreenSize.SubpixelsPerPixel / SparkTuning.SparkAimDivisor;
@@ -203,14 +203,6 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
             _velocitySubpixels.X + _accelerationSubpixels.X,
             _velocitySubpixels.Y + _accelerationSubpixels.Y);
         _animationFrameIndex = (_animationFrameIndex + 1) % TextureSet.SparkAnimationFrameCount;
-    }
-
-    /// <summary>Gets the nearest position to the one given at which the whole sprite is inside the playfield.</summary>
-    private static IntVector2 KeepSpriteInside(IntVector2 position, Rectangle inner)
-    {
-        return new IntVector2(
-            Math.Clamp(position.X, inner.X + OverhangX, inner.Right - Size - OverhangX),
-            Math.Clamp(position.Y, inner.Y + OverhangY, inner.Bottom - Size - OverhangY));
     }
 
     /// <summary>

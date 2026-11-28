@@ -141,7 +141,7 @@ public sealed class EntityGameEventTests
 
         spark.Kill();
 
-        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, Spot, RobotKind.Spark)], recording.Events);
+        Assert.Equal([new GameEvent(GameEventKind.RobotKilled, spark.Position, RobotKind.Spark)], recording.Events);
     }
 
     [Fact]
