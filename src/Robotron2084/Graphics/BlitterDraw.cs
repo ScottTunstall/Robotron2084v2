@@ -167,6 +167,17 @@ public sealed class BlitterDraw
         spriteBatch.Draw(texture, GetDrawnBounds(bounds, texture), null, tint, 0f, Vector2.Zero, SpriteEffects.None, 0f);
     }
 
+    /// <summary>Draws one animation frame stretched to fill <paramref name="destination" />.</summary>
+    /// <param name="spriteBatch">The batch to draw into.</param>
+    /// <param name="texture">The animation frame.</param>
+    /// <param name="destination">The rectangle to fill, in port pixels.</param>
+    /// <param name="tint">The colour the frame is tinted with.</param>
+    public void DrawSpriteStretched(SpriteBatch spriteBatch, Texture2D texture, Rectangle destination, Color tint)
+    {
+        UsePassThrough();
+        spriteBatch.Draw(texture, destination, tint);
+    }
+
     /// <summary>
     ///     Blitter op <c>$1A</c> — "SOLID + TRANSPARENT" (RRS22 <c>MPCTNV</c>,
     ///     "ON MONOCHROME PICT"; notes §47): draws the sprite's SHAPE in one

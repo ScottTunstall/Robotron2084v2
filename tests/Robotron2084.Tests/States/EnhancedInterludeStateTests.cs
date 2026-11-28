@@ -59,6 +59,19 @@ public sealed class EnhancedInterludeStateTests
     }
 
     [Fact]
+    public void PlayerIsDrawnAtDoubleSize()
+    {
+        var interlude = new EnhancedInterludeState(TestTextures.SharedTextureSet, null!,
+            CreateSession(GameStyle.Extended), new Random(1));
+        var player = Assert.Single(interlude.PlayerSpriteBounds);
+
+        Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.PlayerCollisionSize.Width) * 2,
+            player.Width);
+        Assert.Equal(ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.PlayerCollisionSize.Height) * 2,
+            player.Height);
+    }
+
+    [Fact]
     public void FamilyAndBrainsRunInOneRow_WithBrainsQueuedBehindTheFamily()
     {
         var interlude = new EnhancedInterludeState(TestTextures.SharedTextureSet, null!,

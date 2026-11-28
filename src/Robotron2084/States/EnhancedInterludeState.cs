@@ -26,6 +26,9 @@ internal sealed class EnhancedInterludeState : IClosableGameState
     private const int ChaseGap = 48;
     private const int BrainQueueGap = 8;
 
+    // How many times its normal width and height the player is drawn.
+    private const int PlayerScale = 2;
+
     private readonly GameSession _gameSession;
     private readonly HighScoreStore _highScoreStore;
     private readonly List<InterludeSprite> _brains;
@@ -111,8 +114,10 @@ internal sealed class EnhancedInterludeState : IClosableGameState
         foreach (var sprite in _brains)
             DrawSprite(spriteBatch, sprite);
 
+        // The player is stretched to fill its box, which is bigger than its animation frame.
         foreach (var sprite in _players)
-            DrawSprite(spriteBatch, sprite);
+            _textureSet.BlitterDraw.DrawSpriteStretched(spriteBatch, sprite.Frames[sprite.AnimationStep], sprite.Bounds,
+                Color.White);
     }
 
     public void Update(GameTime gameTime, GameStateManager gameStateManager)
@@ -248,8 +253,10 @@ internal sealed class EnhancedInterludeState : IClosableGameState
             playerCount = 2;
         }
 
-        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.PlayerCollisionSize.Width);
-        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.PlayerCollisionSize.Height);
+        var arcadeWidth = CollisionSizes.PlayerCollisionSize.Width * PlayerScale;
+        var arcadeHeight = CollisionSizes.PlayerCollisionSize.Height * PlayerScale;
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(arcadeWidth);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(arcadeHeight);
         var x = -width - ChaseGap;
         var rowY = field.Top + field.Height / 2;
         return Enumerable.Range(0, playerCount).Select(index =>
@@ -259,8 +266,7 @@ internal sealed class EnhancedInterludeState : IClosableGameState
                 .Select(step => _textureSet.PlayerAnimationFrameTextures[
                     Player.GetWalkAnimationFrameIndex(WalkSequence.Right, step)])
                 .ToArray();
-            return CreateSprite(frames, x, y - height / 2, CollisionSizes.PlayerCollisionSize.Width,
-                CollisionSizes.PlayerCollisionSize.Height, Player.WalkCycleLength);
+            return CreateSprite(frames, x, y, arcadeWidth, arcadeHeight, Player.WalkCycleLength);
         }).ToList();
     }
 
