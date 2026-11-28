@@ -745,8 +745,8 @@ public sealed class PlayFieldBrainProgMissileTests
     [Fact]
     public void SkipWaveHeld_CarriesTheFlagTheWaveClearPathReads()
     {
-        // The KEY itself is read in ControlSettings.ReadPlayer (Insert — P is PAUSE; see
-        // SpaceAndInsert_StayAsPortAliases); PlayingState's wave-clear check reads the flag this state
+        // The KEY itself is read in ControlSettings.ReadPlayer (N or Enter — P is PAUSE; see
+        // NOrEnterSkipsTheWave_AndSpaceDoesNotFire); PlayingState's wave-clear check reads the flag this state
         // carries.
         Assert.False(default(PlayerInputState).SkipWaveHeld);
         Assert.True(new PlayerInputState(IntVector2.Zero, IntVector2.Zero, false, true).SkipWaveHeld);

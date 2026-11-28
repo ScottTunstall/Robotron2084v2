@@ -8524,6 +8524,10 @@ banner via `ArcadeHud.DrawMessageText`.
 so it moved to **`Insert`** — noted in the README, in `ControlSettings.ReadPlayer`'s comment and
 in §101.7, because a playtester who reaches for `P` will now pause the game.
 
+**Since changed (2026-11-28):** skip-wave is now **`N` or `Enter`**, and `Insert` no longer skips. It acts once for each
+press (`SkipWaveDetector`), and a key already down when the wave starts must be let go first, so the menu's `Enter` does
+not skip wave 1. A press made with Alt down is ignored, so Alt+Enter only changes full screen.
+
 #### 101.5 The INI file
 
 `Persistence/ControlSettingsStore` writes `%LocalAppData%\Robotron2084\controls.ini` — plain

@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Robotron2084.Audio;
 using Robotron2084.Audio.Models;
 using Robotron2084.Core;
@@ -49,6 +50,7 @@ public sealed class PlayingState : IGameState
     private readonly HighScoreStore _highScoreStore;
     private readonly PauseToggle _pauseToggle = new();
     private readonly Random _random;
+    private readonly SkipWaveDetector _skipWaveDetector = new();
     private readonly TextureSet _textureSet;
     private readonly WaveParamsGenerator _waveParamsGenerator = new();
     private int _playerOutMessageTicks;
@@ -193,9 +195,12 @@ public sealed class PlayingState : IGameState
 
         var playerInputState = _gameSession.GetCurrent().PlayerInputSource.Poll();
 
-        // Wave clear — checked before the death check. The P key (the port's test
-        // key) takes the same path so waves can be skipped.
-        if (_playField.IsWaveCleared() || playerInputState.SkipWaveHeld)
+        var isAltHeld = snapshot.KeyboardState.IsKeyDown(Keys.LeftAlt) || snapshot.KeyboardState.IsKeyDown(Keys.RightAlt);
+        var isSkipWavePressed = _skipWaveDetector.Advance(playerInputState.SkipWaveHeld, isAltHeld);
+
+        // Wave clear — checked before the death check. The port's skip-wave test keys
+        // (N or Enter) take the same path.
+        if (_playField.IsWaveCleared() || isSkipWavePressed)
         {
             HandleWaveCleared(gameStateManager);
             return;

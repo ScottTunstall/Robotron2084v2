@@ -20,7 +20,7 @@ namespace Robotron2084.Input.Models;
 /// <param name="MoveDirection">The way the move stick is pushed, or <see cref="IntVector2.Zero" /> when it is not.</param>
 /// <param name="ShootDirection">The way the aim stick is pushed, or <see cref="IntVector2.Zero" /> when it is not.</param>
 /// <param name="FireHeld">Whether the fire control is held.</param>
-/// <param name="SkipWaveHeld">Whether the port's skip-wave key is held.</param>
+/// <param name="SkipWaveHeld">Whether one of the port's skip-wave keys is held.</param>
 /// <param name="StartOnePlayerHeld">Whether START 1 is held.</param>
 /// <param name="StartTwoPlayersHeld">Whether START 2 is held.</param>
 public readonly record struct PlayerInputState(

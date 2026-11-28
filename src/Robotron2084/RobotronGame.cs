@@ -243,8 +243,8 @@ public sealed class RobotronGame : Game
     /// <remarks>
     ///     End and Home drop straight into the attract sequence so a scene can be inspected without
     ///     sitting out the title's 12-second idle, and Page Up is how the hulk's walk (movie frame ~2574) is reached
-    ///     in seconds rather than after the text crawl. They are live on the attract screens only: Insert is also
-    ///     the skip-a-wave key and Delete clears a line on the DEFINE INPUTS page, so they must not act anywhere else.
+    ///     in seconds rather than after the text crawl. They are live on the attract screens only: Delete also
+    ///     clears a line on the DEFINE INPUTS page, so they must not act anywhere else.
     ///     Right and Left step through the whole attract sequence by hand (<see cref="AttractNavigation" />).
     ///     The only function keys are F1, F2 and F3 (start a game) and F10 (the DEVELOPER TOOLS page).
     /// </remarks>

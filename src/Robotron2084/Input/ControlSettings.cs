@@ -24,8 +24,13 @@ public sealed class ControlSettings
     /// <summary>How far the pad's trigger must be pulled to count as fire (a trigger is an axis).</summary>
     private const float FireTriggerThreshold = 0.5f;
 
-    /// <summary>The port's skip-wave test key. Fixed, like the other port-only keys in this block.</summary>
-    private const Keys SkipWaveKey = Keys.Insert;
+    /// <summary>
+    ///     The port's skip-wave test keys: either one skips the wave. Fixed, like the other port-only keys in this block.
+    /// </summary>
+    private const Keys SkipWaveKey = Keys.N;
+
+    /// <inheritdoc cref="SkipWaveKey" />
+    private const Keys SkipWaveEnterKey = Keys.Enter;
 
     /// <inheritdoc cref="StartOneKey" />
     private const Buttons StartOneButton = Buttons.Start;
@@ -77,8 +82,8 @@ public sealed class ControlSettings
     ///     Reads one player's controls into the state the game consumes. The start buttons
     ///     are NOT bindable (the arcade's START 1 / START 2 have their own keys), so they stay
     ///     hardwired here, as do the two
-    ///     long-standing port aliases: Space as a fire button and <c>Insert</c> as the
-    ///     skip-wave test key (<c>P</c> is PAUSE, not skip-wave).
+    ///     long-standing port aliases: Space as a fire button and <c>N</c> or <c>Enter</c> as the
+    ///     skip-wave test keys (<c>P</c> is PAUSE, not skip-wave).
     /// </summary>
     public PlayerInputState ReadPlayer(int playerIndex, KeyboardState keyboardState, GamePadState playerOneGamePadState, GamePadState playerTwoGamePadState)
     {
@@ -96,7 +101,7 @@ public sealed class ControlSettings
             move,
             shoot,
             fire,
-            keyboardState.IsKeyDown(SkipWaveKey),
+            keyboardState.IsKeyDown(SkipWaveKey) || keyboardState.IsKeyDown(SkipWaveEnterKey),
             keyboardState.IsKeyDown(StartOneKey) || keyboardState.IsKeyDown(StartOneNumPadKey) || playerOneGamePadState.IsButtonDown(StartOneButton),
             keyboardState.IsKeyDown(StartTwoKey) || keyboardState.IsKeyDown(StartTwoNumPadKey) || playerOneGamePadState.IsButtonDown(StartTwoButton));
     }

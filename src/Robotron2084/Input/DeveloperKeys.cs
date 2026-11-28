@@ -4,7 +4,7 @@ namespace Robotron2084.Input;
 ///     Port-only DEVELOPMENT switches (notes §97, re-keyed in §101, §131 and §137). Nothing here has an
 ///     arcade counterpart — these exist so the attract sequence can be inspected without
 ///     sitting out the title's 12-second idle, and they are read only by the attract
-///     states, and only while one of them is up (Insert is also the skip-a-wave key, and Delete clears a line on
+///     states, and only while one of them is up (Delete also clears a line on
 ///     the DEFINE INPUTS page). The keys themselves are handled in <c>RobotronGame.Update</c>:
 ///     <list type="bullet">
 ///         <item>
