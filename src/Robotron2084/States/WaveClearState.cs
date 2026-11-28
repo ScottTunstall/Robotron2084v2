@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Robotron2084.Audio;
 using Robotron2084.Graphics;
 using Robotron2084.Level;
+using Robotron2084.Level.Models;
 using Robotron2084.Palette;
 using Robotron2084.Persistence;
 using Robotron2084.States.Models;
@@ -123,6 +124,11 @@ public sealed class WaveClearState : IClosableGameState
         if (--_ticksRemaining <= 0 && _tunnelEffect.IsFinished)
         {
             IGameState nextGameState = new PlayingState(_textureSet, _highScoreStore, _gameSession, _random);
+            if (!_isAttractMode &&
+                _gameSession.GameSettings.GameStyle == GameStyle.Extended &&
+                _gameSession.GetCurrent().Wave == 4)
+                nextGameState = new EnhancedInterludeState(_textureSet, _highScoreStore, _gameSession, _random);
+
             if (_isAttractMode)
                 nextGameState = new AttractState(GameStateParams.CreateFrom(_gameSession, _textureSet, _highScoreStore,
                     _gameSession.GetCurrent().PlayerInputSource, _random));

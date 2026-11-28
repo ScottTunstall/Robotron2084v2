@@ -41,6 +41,7 @@ public sealed class AttractScreenTests
     [
         typeof(PlayingState),
         typeof(WaveClearState),
+        typeof(EnhancedInterludeState),
         typeof(GameOverState),
         typeof(InitialsEntryState),
         typeof(EntriesMaximumState),
