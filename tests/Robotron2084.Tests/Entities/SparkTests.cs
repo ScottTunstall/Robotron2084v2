@@ -101,6 +101,30 @@ public sealed class SparkTests
         Assert.Equal(EntityLifeState.Dead, spark.LifeState);
     }
 
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(1, 0)]
+    [InlineData(0, 1)]
+    [InlineData(1, 1)]
+    public void Spark_SpriteNeverOverlapsTheWall(int cornerX, int cornerY)
+    {
+        var playField = CreateField(1);
+        var inner = playField.PlayfieldWall.PlayfieldBounds;
+        IntVector2 corner = new(inner.X + cornerX * inner.Width, inner.Y + cornerY * inner.Height);
+        playField.SpawnSpark(corner, corner);
+        var spark = Assert.Single(playField.FieldEntities.Sparks);
+        var width = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SparkSpriteSize.Width);
+        var height = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SparkSpriteSize.Height);
+
+        for (var tick = 0; tick <= 250 && !spark.IsDead(); tick++)
+        {
+            var box = spark.GetBounds();
+            Rectangle sprite = new(box.Center.X - width / 2, box.Center.Y - height / 2, width, height);
+            Assert.True(inner.Contains(sprite), $"tick {tick}: sprite {sprite} is outside {inner}");
+            playField.Update(OneTick());
+        }
+    }
+
     [Fact]
     public void Spark_Flicker_CyclesAllFourAnimationFrames_AtFourArcadeFramesPerAnimationFrame()
     {

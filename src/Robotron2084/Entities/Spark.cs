@@ -33,6 +33,13 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
 {
     private static readonly int Size = ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.MissileSizeArcadePixels);
 
+    // How far the spark's sprite sticks out beyond each side of its box.
+    private static readonly int OverhangX =
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SparkSpriteSize.Width) - Size) / 2;
+
+    private static readonly int OverhangY =
+        (ScreenSize.ToPortPixelsFromArcadePixels(CollisionSizes.SparkSpriteSize.Height) - Size) / 2;
+
     // How much the spark's speed changes by each time it changes: one amount for sideways and one for up or down, in 256ths of a pixel (ROM: PD2/PD4).
     private readonly IntVector2 _accelerationSubpixels;
 
@@ -66,11 +73,14 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     /// <param name="entityParams">
     ///     What the spark shares with the rest of the game: its sprites, where it announces what happens to it, and its random numbers. The random numbers: it stands in for the arcade's own random numbers (<c>SEED</c>, <c>LSEED</c> and <c>HSEED</c>).
     /// </param>
-    /// <param name="position">Where it starts, which is where the enforcer that fired it is.</param>
+    /// <param name="position">
+    ///     Where it starts, which is where the enforcer that fired it is. If its sprite would overlap the wall there, it
+    ///     starts just clear of the wall.
+    /// </param>
     /// <param name="playerPosition">Where the player is, which the spark is aimed at.</param>
     /// <param name="playfieldBounds">
-    ///     The inside of the wall. When the player is near the left wall, the spark's aim is not
-    ///     moved sideways. If this is null, that rule is not used.
+    ///     The inside of the wall. The spark starts inside it, and when the player is near the left wall, the spark's aim
+    ///     is not moved sideways. If this is null, neither rule is used.
     /// </param>
     public Spark(
         EntityParams entityParams,
@@ -80,6 +90,7 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
     {
         _textureSet = entityParams.TextureSet;
         _gameEvents = entityParams.GameEvents;
+        if (playfieldBounds is { } startBounds) position = KeepSpriteInside(position, startBounds);
         _position = position;
         _random = entityParams.Random;
 
@@ -194,9 +205,17 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         _animationFrameIndex = (_animationFrameIndex + 1) % TextureSet.SparkAnimationFrameCount;
     }
 
+    /// <summary>Gets the nearest position to the one given at which the whole sprite is inside the playfield.</summary>
+    private static IntVector2 KeepSpriteInside(IntVector2 position, Rectangle inner)
+    {
+        return new IntVector2(
+            Math.Clamp(position.X, inner.X + OverhangX, inner.Right - Size - OverhangX),
+            Math.Clamp(position.Y, inner.Y + OverhangY, inner.Bottom - Size - OverhangY));
+    }
+
     /// <summary>
-    ///     Makes one move. The sideways part is made only if it keeps the spark inside the playfield, and the same goes
-    ///     for the up-or-down part.
+    ///     Makes one move. The sideways part is made only if it keeps the spark's sprite inside the playfield, and the same
+    ///     goes for the up-or-down part.
     /// </summary>
     /// <param name="playField">The playfield, whose walls the spark stays inside.</param>
     /// <param name="stepX">How many pixels to go left or right on this move.</param>
@@ -207,13 +226,13 @@ public sealed class Spark : IEntity, IAnimationFrameSource, IRemovable
         stepX = Math.Clamp(stepX, -SparkTuning.SparkMaxSpeed, SparkTuning.SparkMaxSpeed);
         stepY = Math.Clamp(stepY, -SparkTuning.SparkMaxSpeed, SparkTuning.SparkMaxSpeed);
 
-        // The sideways move is made only if it keeps the spark inside the playfield. The same goes for the up-or-down move. The spark does not bounce.
+        // The sideways move is made only if it keeps the whole sprite inside the playfield. The same goes for the up-or-down move. The spark does not bounce.
         var inner = playField.PlayfieldWall.PlayfieldBounds;
         var x = _position.X;
         var y = _position.Y;
-        if (_position.X + stepX >= inner.X && _position.X + stepX + Size <= inner.Right) x += stepX;
+        if (x + stepX - OverhangX >= inner.X && x + stepX + Size + OverhangX <= inner.Right) x += stepX;
 
-        if (_position.Y + stepY >= inner.Y && _position.Y + stepY + Size <= inner.Bottom) y += stepY;
+        if (y + stepY - OverhangY >= inner.Y && y + stepY + Size + OverhangY <= inner.Bottom) y += stepY;
 
         _position = new IntVector2(x, y);
     }

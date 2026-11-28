@@ -111,6 +111,13 @@ public static class CollisionSizes
     /// <summary>The skull's collision box, in arcade pixels.</summary>
     public static readonly (int Width, int Height) SkullCollisionSize = (12, 11);
 
+    /// <summary>The size of the spark's sprite, in arcade pixels. It is bigger than the spark's collision box.</summary>
+    /// <remarks>
+    ///     This is the size of <c>Sprites/Spark_1</c> to <c>Spark_4</c>. The sprite is drawn centred on the
+    ///     <see cref="MissileSizeArcadePixels" /> box, and it is the sprite, not the box, that stops at the wall.
+    /// </remarks>
+    public static readonly (int Width, int Height) SparkSpriteSize = (8, 7);
+
     /// <summary>The spheroid's collision box, in arcade pixels.</summary>
     public static readonly (int Width, int Height) SpheroidCollisionSize = (16, 15);
 
