@@ -32,6 +32,13 @@ internal sealed class TickedBoardRecorder(ISoundBoard soundBoard) : IAudioSink
         soundBoard.SendSoundNumber(soundNumber);
     }
 
+    /// <summary>Stops the board and clears the time carried into the next tick.</summary>
+    public void StopAllSounds()
+    {
+        soundBoard.Stop();
+        _overrunCycles = 0;
+    }
+
     /// <summary>Runs the board for one port tick and records it.</summary>
     public void Tick()
     {

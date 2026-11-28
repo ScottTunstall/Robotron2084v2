@@ -21,6 +21,13 @@ internal sealed class BoardSink(ISoundBoard soundBoard, SoundBoardRenderer sound
         soundBoard.SendSoundNumber(soundNumber);
     }
 
+    /// <summary>Stops the board and clears the renderer's buffered audio state.</summary>
+    public void StopAllSounds()
+    {
+        soundBoard.Stop();
+        soundBoardRenderer.Reset();
+    }
+
     /// <summary>Runs the board for one port tick and keeps what it played.</summary>
     public void Tick()
     {

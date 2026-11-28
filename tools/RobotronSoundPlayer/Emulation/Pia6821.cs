@@ -93,6 +93,13 @@ public sealed class Pia6821
         _inputB = value;
     }
 
+    /// <summary>Forces port A to drive silence while the emulated board is being stopped.</summary>
+    public void StopOutput()
+    {
+        _directionA = byte.MaxValue;
+        _outputA = 0;
+    }
+
     /// <summary>Writes one of the chip's four registers.</summary>
     /// <param name="register">The register, 0 to 3.</param>
     /// <param name="value">The value to write.</param>

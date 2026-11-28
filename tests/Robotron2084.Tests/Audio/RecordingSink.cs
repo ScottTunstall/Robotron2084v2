@@ -10,12 +10,20 @@ internal sealed class RecordingSink : IAudioSink
     /// <summary>Every sound number sent, in order, with its pan and the tick (counting from 1) it was sent on.</summary>
     public List<(int SoundNumber, float Pan, int Tick)> Sends { get; } = [];
 
+    /// <summary>How many times active audio was stopped.</summary>
+    public int StopCount { get; private set; }
+
     /// <summary>Always false: this sink only records, and plays nothing.</summary>
     public bool IsPlaying() => false;
 
     public void SendSoundNumber(int soundNumber, float pan)
     {
         Sends.Add((soundNumber, pan, _tick));
+    }
+
+    public void StopAllSounds()
+    {
+        StopCount++;
     }
 
     /// <summary>The ticks the sound numbers went out on, in order.</summary>

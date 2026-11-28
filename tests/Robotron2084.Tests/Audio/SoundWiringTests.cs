@@ -33,6 +33,17 @@ public sealed class SoundWiringTests : IDisposable
     }
 
     [Fact]
+    public void StoppingRobotronSounds_ClearsBoardVoiceAndStopsTheSink()
+    {
+        Sound.PlayWaveEnd();
+
+        Sound.StopRobotronSounds();
+
+        Assert.False(Sound.IsWaveEndMusicPlaying());
+        Assert.Equal(1, _recordingSink.StopCount);
+    }
+
+    [Fact]
     public void ASoundFromTheLeftOfThePlayfield_IsHeardOnTheLeft()
     {
         var playField = new PlayFieldBuilder().WithParameters(new WaveParams(1)).WithSeed(99).Build();

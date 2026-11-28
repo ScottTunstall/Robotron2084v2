@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Robotron2084.Audio;
 using Robotron2084.Core;
 using Robotron2084.Core.Models;
 using Robotron2084.Entities;
@@ -14,7 +15,7 @@ using Robotron2084.Tuning;
 namespace Robotron2084.States;
 
 /// <summary>Shows the family fleeing the brains after wave 3 in Extended mode.</summary>
-internal sealed class EnhancedInterludeState : IGameState
+internal sealed class EnhancedInterludeState : IClosableGameState
 {
     private const int FamilyAndBrainSpeed = PlayerTuning.PlayerSpeedX * 2;
     private const int BrainChaseSpeed = PlayerTuning.PlayerSpeedX;
@@ -32,9 +33,18 @@ internal sealed class EnhancedInterludeState : IGameState
     private readonly List<InterludeSprite> _players;
     private readonly Random _random;
     private readonly TextureSet _textureSet;
+    private readonly int? _musicDurationTicks;
+    private int _firstPhaseTicks;
+    private int _phaseDistance;
+    private int _phaseDurationTicks;
+    private int _phaseTicksElapsed;
+    private int _phaseTravelled;
+    private int _secondPhaseTicks;
+    private bool _hasStartedMusic;
     private InterludePhase _phase;
 
-    public EnhancedInterludeState(TextureSet textureSet, HighScoreStore highScoreStore, GameSession gameSession, Random random)
+    public EnhancedInterludeState(TextureSet textureSet, HighScoreStore highScoreStore, GameSession gameSession, Random random,
+        TimeSpan? musicDuration = null)
     {
         _textureSet = textureSet;
         _highScoreStore = highScoreStore;
@@ -57,6 +67,23 @@ internal sealed class EnhancedInterludeState : IGameState
             CreateBrainSprite(firstBrainX + index * brainSpacing, rowY)).ToList();
 
         _players = CreatePlayerSprites(field);
+
+        var trackDuration = musicDuration ?? Sound.FamilyChaseMusicDuration;
+        if (trackDuration is { } duration && duration > TimeSpan.Zero)
+        {
+            _musicDurationTicks = Math.Max(2,
+                (int)Math.Round(duration.TotalSeconds * ArcadeClock.PortTicksPerSecond, MidpointRounding.AwayFromZero));
+            _phaseDistance = _family.Concat(_brains).Max(sprite => sprite.Bounds.Right);
+            var trailingBrainX = -_brains[0].Bounds.Width - (_brains.Count - 1) * brainSpacing;
+            var trailingPlayerX = trailingBrainX - ChaseGap - _players[0].Bounds.Width;
+            var secondPhaseDistance = ScreenSize.Width - trailingPlayerX;
+            var totalDistance = _phaseDistance + secondPhaseDistance;
+            _firstPhaseTicks = Math.Clamp(
+                (int)Math.Round(_musicDurationTicks.Value * (double)_phaseDistance / totalDistance), 1,
+                _musicDurationTicks.Value - 1);
+            _secondPhaseTicks = _musicDurationTicks.Value - _firstPhaseTicks;
+            _phaseDurationTicks = _firstPhaseTicks;
+        }
     }
 
     internal bool IsBrainChasePhase => _phase == InterludePhase.BrainsChasingPlayers;
@@ -64,6 +91,16 @@ internal sealed class EnhancedInterludeState : IGameState
     internal IReadOnlyList<Rectangle> FamilySpriteBounds => _family.Select(sprite => sprite.Bounds).ToArray();
     internal IReadOnlyList<Rectangle> BrainSpriteBounds => _brains.Select(sprite => sprite.Bounds).ToArray();
     internal IReadOnlyList<Rectangle> PlayerSpriteBounds => _players.Select(sprite => sprite.Bounds).ToArray();
+
+    public void Close()
+    {
+        Sound.StopFamilyChaseMusic();
+    }
+
+    internal void StartBeforeFirstDraw()
+    {
+        StartAtFamilyEntry();
+    }
 
     public void Draw(SpriteBatch spriteBatch, SpriteFont font)
     {
@@ -80,26 +117,88 @@ internal sealed class EnhancedInterludeState : IGameState
 
     public void Update(GameTime gameTime, GameStateManager gameStateManager)
     {
-        if (_phase == InterludePhase.FamilyFleeing)
+        if (!_hasStartedMusic && _phase == InterludePhase.FamilyFleeing)
         {
-            foreach (var sprite in _family)
-                Advance(sprite, -FamilyAndBrainSpeed, FamilyAnimationIntervalTicks);
-            foreach (var sprite in _brains)
-                Advance(sprite, -FamilyAndBrainSpeed, BrainAnimationIntervalTicks);
-
-            if (_family.All(IsCompletelyOffscreenLeft) && _brains.All(IsCompletelyOffscreenLeft))
-                StartBrainChase();
-
+            StartAtFamilyEntry();
             return;
         }
 
-        foreach (var sprite in _brains)
-            Advance(sprite, BrainChaseSpeed, BrainAnimationIntervalTicks);
-        foreach (var sprite in _players)
-            Advance(sprite, BrainChaseSpeed, PlayerAnimationIntervalTicks);
+        if (_phase == InterludePhase.FamilyFleeing)
+        {
+            UpdateFamilyFleeing();
+            return;
+        }
 
-        if (_brains.All(IsCompletelyOffscreenRight) && _players.All(IsCompletelyOffscreenRight))
+        UpdateBrainChase(gameStateManager);
+    }
+
+    private void StartAtFamilyEntry()
+    {
+        // Move the formation one pixel so Mikey is visible when the music starts.
+        foreach (var sprite in _family)
+            Advance(sprite, -1, FamilyAnimationIntervalTicks);
+        foreach (var sprite in _brains)
+            Advance(sprite, -1, BrainAnimationIntervalTicks);
+
+        if (_musicDurationTicks.HasValue) _phaseDistance--;
+        StartMusicIfNeeded();
+    }
+
+    private void UpdateFamilyFleeing()
+    {
+        var displacement = GetPhaseDisplacement(-1, FamilyAndBrainSpeed);
+        foreach (var sprite in _family)
+            Advance(sprite, displacement, FamilyAnimationIntervalTicks);
+        foreach (var sprite in _brains)
+            Advance(sprite, displacement, BrainAnimationIntervalTicks);
+
+        var hasLeftScreen = _family.All(IsCompletelyOffscreenLeft) && _brains.All(IsCompletelyOffscreenLeft);
+        if ((_musicDurationTicks.HasValue && HasTimedPhaseEnded()) || (!_musicDurationTicks.HasValue && hasLeftScreen))
+            StartBrainChase();
+    }
+
+    private void UpdateBrainChase(GameStateManager gameStateManager)
+    {
+        var displacement = GetPhaseDisplacement(1, BrainChaseSpeed);
+        foreach (var sprite in _brains)
+            Advance(sprite, displacement, BrainAnimationIntervalTicks);
+        foreach (var sprite in _players)
+            Advance(sprite, displacement, PlayerAnimationIntervalTicks);
+
+        var hasLeftScreen = _players.All(IsCompletelyOffscreenRight);
+        if ((_musicDurationTicks.HasValue && HasTimedPhaseEnded()) || (!_musicDurationTicks.HasValue && hasLeftScreen))
+        {
+            Sound.StopFamilyChaseMusic();
             gameStateManager.TransitionTo(new PlayingState(_textureSet, _highScoreStore, _gameSession, _random));
+        }
+    }
+
+    private int GetPhaseDisplacement(int direction, int fallbackSpeed)
+    {
+        if (!_musicDurationTicks.HasValue) return direction * fallbackSpeed;
+
+        _phaseTicksElapsed++;
+        var travelled = _phaseTicksElapsed == _phaseDurationTicks
+            ? _phaseDistance
+            : (int)((long)_phaseDistance * _phaseTicksElapsed / _phaseDurationTicks);
+        var displacement = travelled - _phaseTravelled;
+        _phaseTravelled = travelled;
+        return direction * displacement;
+    }
+
+    private bool HasTimedPhaseEnded()
+    {
+        return _phaseTicksElapsed >= _phaseDurationTicks;
+    }
+
+    private void StartMusicIfNeeded()
+    {
+        if (_hasStartedMusic) return;
+
+        Sound.StopRobotronSounds();
+        Speech.Stop();
+        Sound.PlayFamilyChaseMusic();
+        _hasStartedMusic = true;
     }
 
     private static void Advance(InterludeSprite sprite, int dx, int animationIntervalTicks)
@@ -201,6 +300,14 @@ internal sealed class EnhancedInterludeState : IGameState
             };
             player.AnimationStep = 0;
             player.AnimationTicks = 0;
+        }
+
+        if (_musicDurationTicks.HasValue)
+        {
+            _phaseDistance = ScreenSize.Width - _brains.Concat(_players).Min(sprite => sprite.Bounds.Left);
+            _phaseDurationTicks = _secondPhaseTicks;
+            _phaseTicksElapsed = 0;
+            _phaseTravelled = 0;
         }
     }
 

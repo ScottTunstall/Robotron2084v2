@@ -127,7 +127,11 @@ public sealed class WaveClearState : IClosableGameState
             if (!_isAttractMode &&
                 _gameSession.GameSettings.GameStyle == GameStyle.Extended &&
                 _gameSession.GetCurrent().Wave == 4)
-                nextGameState = new EnhancedInterludeState(_textureSet, _highScoreStore, _gameSession, _random);
+            {
+                var interlude = new EnhancedInterludeState(_textureSet, _highScoreStore, _gameSession, _random);
+                interlude.StartBeforeFirstDraw();
+                nextGameState = interlude;
+            }
 
             if (_isAttractMode)
                 nextGameState = new AttractState(GameStateParams.CreateFrom(_gameSession, _textureSet, _highScoreStore,

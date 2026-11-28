@@ -158,6 +158,7 @@ public sealed class RobotronGame : Game
         _gameStateManager = new GameStateManager(new TitleScreenState(_gameStateParams));
 
         StartSound();
+        StartFamilyChaseMusic();
         StartSpeech();
     }
 
@@ -213,6 +214,19 @@ public sealed class RobotronGame : Game
         catch (NoAudioHardwareException exception)
         {
             Debug.WriteLine($"No sound: {exception.Message}");
+        }
+    }
+
+    /// <summary>Loads the looping music for the Extended-mode interlude.</summary>
+    private void StartFamilyChaseMusic()
+    {
+        try
+        {
+            Sound.InitialiseFamilyChaseMusic(Content.Load<SoundEffect>("Interludes/familychase"));
+        }
+        catch (NoAudioHardwareException exception)
+        {
+            Debug.WriteLine($"No family chase music: {exception.Message}");
         }
     }
 

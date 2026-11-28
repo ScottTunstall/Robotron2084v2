@@ -104,6 +104,19 @@ public class SoundBoardTests
     }
 
     [Fact]
+    public void Stop_ClearsTheCurrentSoundAndReturnsTheBoardToSilence()
+    {
+        var soundBoard = new SoundBoard();
+        soundBoard.SendSoundNumber(0x04);
+        soundBoard.Run(1);
+
+        soundBoard.Stop();
+
+        Assert.False(soundBoard.IsPlaying());
+        Assert.Equal((byte)0, soundBoard.OutputLevel);
+    }
+
+    [Fact]
     public void TheBoardIsSilent_UntilItIsSentASoundNumber()
     {
         var (_, soundBoardRenderer) = StartBoard();

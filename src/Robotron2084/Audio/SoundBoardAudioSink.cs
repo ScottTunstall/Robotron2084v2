@@ -45,7 +45,7 @@ public sealed class SoundBoardAudioSink : IAudioSink, IDisposable
     private const int SamplesPerPortTick = SampleRate / Robotron2084.Core.ArcadeClock.PortTicksPerSecond;
 
     private readonly BoardVolumeDuringSpeech _boardVolumeDuringSpeech = new();
-    private readonly DynamicSoundEffectInstance _dynamicSoundEffectInstance;
+    private DynamicSoundEffectInstance _dynamicSoundEffectInstance;
     private readonly Func<bool> _isSpeechTalking;
     private readonly float[] _monoSamples = new float[SamplesPerPortTick];
     private readonly ISoundBoard _soundBoard;
@@ -88,6 +88,19 @@ public sealed class SoundBoardAudioSink : IAudioSink, IDisposable
     {
         _stereoPanner.PanTo(pan);
         _soundBoard.SendSoundNumber(soundNumber);
+    }
+
+    /// <inheritdoc />
+    public void StopAllSounds()
+    {
+        _soundBoard.Stop();
+        _soundBoardRenderer.Reset();
+        _dynamicSoundEffectInstance.Stop();
+        _dynamicSoundEffectInstance.Dispose();
+        _dynamicSoundEffectInstance = new DynamicSoundEffectInstance(SampleRate, AudioChannels.Stereo);
+        for (var tick = 0; tick < MinimumQueuedTicks; tick++) QueueOnePortTick();
+
+        _dynamicSoundEffectInstance.Play();
     }
 
     /// <summary>Runs the board for one port tick and queues what it played, topping the queue up if it is running low.</summary>

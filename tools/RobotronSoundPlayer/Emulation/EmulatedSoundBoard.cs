@@ -113,6 +113,13 @@ public sealed class EmulatedSoundBoard : IMc6800Bus, ISoundBoard
         SetSoundLines(~soundNumber & SoundLines);
     }
 
+    /// <inheritdoc />
+    public void Stop()
+    {
+        _pia6821.StopOutput();
+        _mc6800Cpu.Reset();
+    }
+
     /// <summary>Writes a byte to an address in the board's memory; the ROM and unwired addresses ignore it.</summary>
     /// <param name="address">The address.</param>
     /// <param name="value">The byte.</param>

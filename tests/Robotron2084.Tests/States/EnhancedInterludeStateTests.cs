@@ -1,3 +1,4 @@
+using Robotron2084.Core;
 using Robotron2084.Core.Models;
 using Robotron2084.Input;
 using Robotron2084.Input.Models;
@@ -21,6 +22,8 @@ public sealed class EnhancedInterludeStateTests
         AdvanceUntil<EnhancedInterludeState>(stateManager);
 
         var interlude = Assert.IsType<EnhancedInterludeState>(stateManager.CurrentGameState);
+        Assert.True(interlude.FamilySpriteBounds[0].Left < ScreenSize.Width);
+
         for (var tick = 0; tick < 1000 && !interlude.IsBrainChasePhase; tick++)
             stateManager.Update(new Microsoft.Xna.Framework.GameTime());
 
@@ -29,6 +32,7 @@ public sealed class EnhancedInterludeStateTests
         AdvanceUntil<PlayingState>(stateManager);
 
         Assert.IsType<PlayingState>(stateManager.CurrentGameState);
+        Assert.All(interlude.PlayerSpriteBounds, sprite => Assert.True(sprite.Left >= ScreenSize.Width));
     }
 
     [Fact]
@@ -93,6 +97,30 @@ public sealed class EnhancedInterludeStateTests
         var playerAfter = interlude.PlayerSpriteBounds[0];
         var trailingBrainAfter = interlude.BrainSpriteBounds[^1];
         Assert.Equal(initialGap, trailingBrainAfter.Left - playerAfter.Right);
+    }
+
+    [Fact]
+    public void InterludeCompletesOnTheMusicDuration()
+    {
+        var duration = TimeSpan.FromSeconds(10);
+        var interlude = new EnhancedInterludeState(TestTextures.SharedTextureSet, null!,
+            CreateSession(GameStyle.Extended), new Random(1), duration);
+        var stateManager = new GameStateManager(interlude);
+        var musicTicks = (int)(duration.TotalSeconds * Robotron2084.Core.ArcadeClock.PortTicksPerSecond);
+
+        stateManager.Update(new Microsoft.Xna.Framework.GameTime());
+        Assert.Equal(ScreenSize.Width - 1, interlude.FamilySpriteBounds[0].Left);
+
+        for (var tick = 0; tick < musicTicks - 1; tick++)
+            stateManager.Update(new Microsoft.Xna.Framework.GameTime());
+
+        Assert.Same(interlude, stateManager.CurrentGameState);
+        Assert.Contains(interlude.PlayerSpriteBounds, sprite => sprite.Left < ScreenSize.Width);
+
+        stateManager.Update(new Microsoft.Xna.Framework.GameTime());
+
+        Assert.IsType<PlayingState>(stateManager.CurrentGameState);
+        Assert.All(interlude.PlayerSpriteBounds, sprite => Assert.True(sprite.Left >= ScreenSize.Width));
     }
 
     private static GameSession CreateSession(GameStyle gameStyle, GameMode gameMode = GameMode.OnePlayer)

@@ -201,6 +201,24 @@ public sealed class SoundBoard : ISoundBoard
         if (!IsWriteUnderWay()) _cyclesLeftInChange = 0;
     }
 
+    /// <inheritdoc />
+    public void Stop()
+    {
+        _outputChanges?.Dispose();
+        _outputChanges = null;
+        _waitingSoundNumber = NoSoundNumber;
+        _cyclesLeftInChange = 0;
+        _nextWriteCycles = 0;
+        _nextLevel = 0;
+        OutputLevel = 0;
+        _boardOutput.Restart(0);
+        _boardMemory.Background2Level = 0;
+        _boardMemory.IsBackground1On = false;
+        _boardMemory.IsLaserBallBonusRepeating = false;
+        _boardMemory.IsOrganTuneNext = false;
+        _boardMemory.SpinnerSends = 0;
+    }
+
     /// <summary>The sounds <c>JMPTB1</c> holds (<c>$2C</c> to <c>$3E</c>), which the handler reaches by the high range.</summary>
     /// <param name="routines">The routines to add them to.</param>
     private void AddHighJumpTableRoutines(Dictionary<int, Func<IEnumerable<OutputChange>>> routines)

@@ -101,6 +101,15 @@ public sealed class SpeechChannel
         _waitingEntries.Enqueue(new SpeechChannelEntry(null, 0f, 0f, ticks));
     }
 
+    /// <summary>Stops the current line and drops every queued line and silence.</summary>
+    public void Stop()
+    {
+        _waitingEntries.Clear();
+        _silenceTicksLeft = 0;
+        _speechPriority = SpeechPriority.Normal;
+        _speechVoice.Stop();
+    }
+
     /// <summary>
     ///     Clears the way for something that matters more than what is being said: stops the line being spoken, ends any
     ///     silence and drops what is waiting. Then remembers how much what is now being said matters.

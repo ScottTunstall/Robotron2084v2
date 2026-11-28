@@ -92,6 +92,19 @@ public sealed class SoundEngine
         _audioSink.SendSoundNumber(soundNumber, pan);
     }
 
+    /// <summary>Stops the active sequence and resets the board voice so later sounds can play normally.</summary>
+    public void Stop()
+    {
+        _entries = [];
+        _entryIndex = -1;
+        _holdTicksLeft = 0;
+        _pan = 0;
+        _repetitionsLeft = 0;
+        _ticksLeftInSend = 0;
+        CurrentPriority = 0;
+        _audioSink.StopAllSounds();
+    }
+
     /// <summary>One port tick (one vblank): counts the current send down, and sends the next sound number when it is due.</summary>
     public void Tick()
     {

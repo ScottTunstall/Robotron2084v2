@@ -53,6 +53,23 @@ public sealed class SpeechChannelTests
     }
 
     [Fact]
+    public void Stop_CutsOffTheCurrentLineAndDropsQueuedSpeech()
+    {
+        var voice = new FakeSpeechVoice();
+        var channel = new SpeechChannel(voice);
+        channel.Say("CURRENT");
+        channel.Tick();
+        channel.Say("QUEUED");
+
+        channel.Stop();
+        channel.Tick();
+
+        Assert.False(channel.IsBusy());
+        Assert.Equal(["CURRENT"], voice.SpokenLineNames);
+        Assert.Equal(1, voice.StopCount);
+    }
+
+    [Fact]
     public void ASilence_HoldsTheNextLineBackForItsTicks_AfterTheLineBeforeIt()
     {
         var voice = new FakeSpeechVoice { TicksPerLine = 2 };
@@ -139,5 +156,21 @@ public sealed class SpeechChannelTests
         Assert.True(Speech.IsBusy());
         Speech.Tick();
         Assert.Equal(["HELLO"], voice.SpokenLineNames);
+    }
+
+    [Fact]
+    public void TheSpeechService_Stop_CancelsTheCurrentAndQueuedLines()
+    {
+        var voice = new FakeSpeechVoice();
+        Speech.Initialise(voice);
+        Speech.Say("CURRENT");
+        Speech.Tick();
+        Speech.Say("QUEUED");
+
+        Speech.Stop();
+
+        Assert.False(Speech.IsBusy());
+        Assert.Equal(["CURRENT"], voice.SpokenLineNames);
+        Assert.Equal(1, voice.StopCount);
     }
 }

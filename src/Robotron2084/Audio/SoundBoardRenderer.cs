@@ -62,6 +62,15 @@ public sealed class SoundBoardRenderer
         }
     }
 
+    /// <summary>Clears the renderer's buffered time and filter tail after the board is stopped.</summary>
+    public void Reset()
+    {
+        _level = 0;
+        _previousInput = 0;
+        _previousOutput = 0;
+        _unspentCycles = 0;
+    }
+
     /// <summary>
     ///     Runs the board for one sample's worth of time and averages its output level. A level holds while
     ///     the board runs towards its next change, and the new level counts from the moment it is made.

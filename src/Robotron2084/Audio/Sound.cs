@@ -1,3 +1,4 @@
+using Microsoft.Xna.Framework.Audio;
 using Robotron2084.Audio.Models;
 using Robotron2084.Tuning;
 
@@ -22,6 +23,8 @@ namespace Robotron2084.Audio;
 public static class Sound
 {
     private static IAudioSink? _audioSink;
+    private static SoundEffectInstance? _familyChaseMusic;
+    private static TimeSpan? _familyChaseMusicDuration;
     private static SoundEngine? _soundEngine;
     private static TransporterSound _transporterSound = new();
 
@@ -38,6 +41,9 @@ public static class Sound
     /// </summary>
     public static bool Enabled { get; set; } = true;
 
+    /// <summary>The family chase music's duration, or null when it is unavailable.</summary>
+    public static TimeSpan? FamilyChaseMusicDuration => _familyChaseMusicDuration;
+
     /// <summary>Sets up the sound service with the sink that will play the sound numbers.</summary>
     /// <param name="audioSink">Where the sound numbers go.</param>
     public static void Initialise(IAudioSink audioSink)
@@ -46,6 +52,37 @@ public static class Sound
         _audioSink = audioSink;
         _soundEngine = new SoundEngine(audioSink);
         _transporterSound = new TransporterSound();
+    }
+
+    /// <summary>Sets the looping music used by the Extended-mode interlude.</summary>
+    /// <param name="soundEffect">The family chase music loaded from the content pipeline.</param>
+    public static void InitialiseFamilyChaseMusic(SoundEffect soundEffect)
+    {
+        _familyChaseMusic?.Dispose();
+        _familyChaseMusic = soundEffect.CreateInstance();
+        _familyChaseMusic.IsLooped = false;
+        _familyChaseMusicDuration = soundEffect.Duration;
+    }
+
+    /// <summary>Starts the family chase music if sound is enabled.</summary>
+    public static void PlayFamilyChaseMusic()
+    {
+        if (!Enabled || AttractMuted) return;
+
+        _familyChaseMusic?.Play();
+    }
+
+    /// <summary>Stops the family chase music.</summary>
+    public static void StopFamilyChaseMusic()
+    {
+        _familyChaseMusic?.Stop();
+    }
+
+    /// <summary>Stops Robotron board sounds, including wave-end music and the transporter.</summary>
+    public static void StopRobotronSounds()
+    {
+        _soundEngine?.Stop();
+        _transporterSound.Stop();
     }
 
     /// <summary>True while the last sound sent is still playing (see <see cref="IAudioSink.IsPlaying" />).</summary>
@@ -151,6 +188,9 @@ public static class Sound
     /// </summary>
     public static void Shutdown()
     {
+        _familyChaseMusic?.Dispose();
+        _familyChaseMusic = null;
+        _familyChaseMusicDuration = null;
         (_audioSink as IDisposable)?.Dispose();
         _audioSink = null;
         _soundEngine = null;

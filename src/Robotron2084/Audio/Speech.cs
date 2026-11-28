@@ -122,6 +122,12 @@ public static class Speech
         _speechChannel?.Say(GorfVoice.GetLineName(gorfLine), pitchOctaves);
     }
 
+    /// <summary>Stops Berzerk or Gorf speech and drops anything waiting to be spoken.</summary>
+    public static void Stop()
+    {
+        _speechChannel?.Stop();
+    }
+
     /// <summary>
     ///     Switches the speech service off and frees what the voice holds, if it holds anything that needs freeing. Asking
     ///     for a line afterwards does nothing, until <see cref="Initialise" /> runs again.

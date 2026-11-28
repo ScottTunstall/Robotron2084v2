@@ -26,4 +26,7 @@ public interface ISoundBoard
     /// <summary>Sends the board a sound number. The sound playing stops at once and the new one starts.</summary>
     /// <param name="soundNumber">The sound number (the original source's <c>SND#</c>), 0 to 63.</param>
     void SendSoundNumber(int soundNumber);
+
+    /// <summary>Immediately silences the board and clears active and repeating sounds.</summary>
+    void Stop();
 }

@@ -11,6 +11,9 @@ public interface IAudioSink
     /// <param name="pan">Where the sound is heard: -1 is wholly left, 0 the middle, 1 wholly right.</param>
     void SendSoundNumber(int soundNumber, float pan);
 
+    /// <summary>Stops the current sound and clears any queued audio.</summary>
+    void StopAllSounds();
+
     /// <summary>Moves the sound on by one <see cref="Robotron2084.Core.ArcadeClock.PortTicksPerSecond">tick</see>.</summary>
     void Tick();
 }
