@@ -3429,3 +3429,9 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Speech/GORF/prepareyourself.ogg
+
+#begin Interludes/familychase.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Interludes/familychase.ogg
